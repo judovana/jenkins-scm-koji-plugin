@@ -27,11 +27,18 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
 
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
+    private final Predicate<RPM> excludeNvrPredicate;
 
     public KojiBuildDownloader(WebLog log, KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
         super(log);
         this.config = config;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
+        if (config.getExcludeNvr() == null || config.getExcludeNvr().isEmpty()) {
+            excludeNvrPredicate = i -> true;
+        } else {
+            GlobPredicate nvrPredicate = new GlobPredicate(config.getExcludeNvr());
+            excludeNvrPredicate = rpm -> nvrPredicate.test(rpm.getNvr());
+        }
     }
 
     @Override
@@ -57,6 +64,7 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
         return build.getRpms()
                 .stream()
                 .parallel()
+                .filter(excludeNvrPredicate.negate())
                 .map((r) -> downloadRPM(workspace, build, r))
                 .collect(Collectors.toList());
     }

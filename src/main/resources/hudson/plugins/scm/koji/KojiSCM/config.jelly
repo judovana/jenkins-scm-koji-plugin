@@ -22,4 +22,8 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="Excluding files" field="excludeNvr">
+        <f:textbox/>
+    </f:entry>
+
 </j:jelly>
