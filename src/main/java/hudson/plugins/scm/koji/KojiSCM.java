@@ -195,13 +195,13 @@ public class KojiSCM extends SCM {
         this.tag = tag;
     }
 
-    public String getExcludeFiles() {
+    public String getExcludeNvr() {
         return excludeNvr;
     }
 
     @DataBoundSetter
-    public void setExcludeFiles(String excludeFiles) {
-        this.excludeNvr = excludeFiles;
+    public void setExcludeNvr(String excludeNvr) {
+        this.excludeNvr = excludeNvr;
     }
 
 }

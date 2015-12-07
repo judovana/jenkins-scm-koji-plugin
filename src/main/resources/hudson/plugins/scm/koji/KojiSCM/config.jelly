@@ -22,7 +22,7 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Excluding files" field="excludeNvr">
+    <f:entry title="Excluding NVRs" field="excludeNvr">
         <f:textbox/>
     </f:entry>
 
