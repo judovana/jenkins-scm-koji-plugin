@@ -55,21 +55,45 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
             }
         }
         // we got the build info in workspace, downloading:
+        File targetDir = workspace;
+        if (config.getDownloadDir() != null && config.getDownloadDir().length() > 0) {
+            // target dir was specified,
+            targetDir = new File(targetDir, config.getDownloadDir());
+            // do not delete the workspace dir if user specified '.' :
+            if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists()) {
+                cleanDirRecursively(targetDir);
+            }
+            targetDir.mkdirs();
+        }
         Build build = buildOpt.get();
-        List<File> rpmFiles = downloadRPMs(workspace, build);
+        List<File> rpmFiles = downloadRPMs(targetDir, build);
         return Optional.of(new KojiBuildDownloadResult(build, rpmFiles));
     }
 
-    private List<File> downloadRPMs(File workspace, Build build) {
+    private void cleanDirRecursively(File file) {
+        if (file.isFile()) {
+            file.delete();
+            return;
+        }
+        // if we are still here - we have a directory:
+        File[] files = file.listFiles();
+        if (files != null && files.length > 0) {
+            for (int i = 0; i < files.length; i++) {
+                cleanDirRecursively(files[i]);
+            }
+        }
+    }
+
+    private List<File> downloadRPMs(File targetDir, Build build) {
         return build.getRpms()
                 .stream()
                 .parallel()
                 .filter(excludeNvrPredicate.negate())
-                .map((r) -> downloadRPM(workspace, build, r))
+                .map((r) -> downloadRPM(targetDir, build, r))
                 .collect(Collectors.toList());
     }
 
-    private File downloadRPM(File workspace, Build build, RPM rpm) {
+    private File downloadRPM(File targetDir, Build build, RPM rpm) {
         HttpURLConnection httpConn = null;
         try {
             String urlString = composeUrl(build, rpm);
@@ -83,11 +107,6 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
                 throw new Exception("Error downloading RPM, got response code: " + response);
             }
 
-            File targetDir = workspace;
-            if (config.getDownloadDir() != null && config.getDownloadDir().length() > 0) {
-                targetDir = new File(workspace, config.getDownloadDir());
-                targetDir.mkdirs();
-            }
             File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
             log("Saving RPM '" + rpm.getNvr() + "' to file: " + targetFile.getAbsolutePath());
             try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
