@@ -83,7 +83,12 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
                 throw new Exception("Error downloading RPM, got response code: " + response);
             }
 
-            File targetFile = new File(workspace, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
+            File targetDir = workspace;
+            if (config.getDownloadDir() != null && config.getDownloadDir().length() > 0) {
+                targetDir = new File(workspace, config.getDownloadDir());
+                targetDir.mkdirs();
+            }
+            File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
             log("Saving RPM '" + rpm.getNvr() + "' to file: " + targetFile.getAbsolutePath());
             try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
                     InputStream in = httpConn.getInputStream()) {

@@ -18,6 +18,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64",
                 "f22-updates*",
+                null,
                 null
         );
     }

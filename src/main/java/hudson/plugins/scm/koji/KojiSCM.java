@@ -41,15 +41,17 @@ public class KojiSCM extends SCM {
     private String arch;
     private String tag;
     private String excludeNvr;
+    private String downloadDir;
 
     @DataBoundConstructor
-    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr) {
+    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
         this.arch = arch;
         this.tag = tag;
         this.excludeNvr = excludeNvr;
+        this.downloadDir = downloadDir;
     }
 
     @Override
@@ -147,7 +149,7 @@ public class KojiSCM extends SCM {
     }
 
     private KojiScmConfig createConfig() {
-        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr);
+        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, downloadDir);
     }
 
     public String getKojiTopUrl() {
@@ -202,6 +204,15 @@ public class KojiSCM extends SCM {
     @DataBoundSetter
     public void setExcludeNvr(String excludeNvr) {
         this.excludeNvr = excludeNvr;
+    }
+
+    public String getDownloadDir() {
+        return downloadDir;
+    }
+
+    @DataBoundSetter
+    public void setDownloadDir(String downloadDir) {
+        this.downloadDir = downloadDir;
     }
 
 }

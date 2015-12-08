@@ -26,4 +26,8 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="Download directory" field="downloadDir">
+        <f:textbox/>
+    </f:entry>
+
 </j:jelly>
