@@ -4,9 +4,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Job;
-import hudson.model.ParametersAction;
 import hudson.model.Run;
-import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 import hudson.plugins.scm.koji.client.KojiBuildDownloader;
 import hudson.plugins.scm.koji.client.KojiListBuilds;
@@ -35,9 +33,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static hudson.plugins.scm.koji.Constants.BUILD_ENV_NVR;
-import static hudson.plugins.scm.koji.Constants.BUILD_ENV_RPMS_DIR;
-import static hudson.plugins.scm.koji.Constants.BUILD_ENV_RPM_FILES;
 import static hudson.plugins.scm.koji.Constants.KOJI_CHECKOUT_NVR;
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 
@@ -120,11 +115,9 @@ public class KojiSCM extends SCM {
             new BuildsSerializer().write(build, changelogFile);
         }
 
-        run.addAction(new ParametersAction(new StringParameterValue(BUILD_ENV_NVR, build.getNvr())));
-        run.addAction(new ParametersAction(new StringParameterValue(BUILD_ENV_RPMS_DIR,
-                downloadResult.getRpmsDirectory())));
-        run.addAction(new ParametersAction(new StringParameterValue(BUILD_ENV_RPM_FILES,
-                downloadResult.getRpmFiles().stream().sequential().collect(Collectors.joining(File.pathSeparator)))));
+        run.addAction(new KojiEnvVarsAction(build.getNvr(), downloadResult.getRpmsDirectory(),
+                downloadResult.getRpmFiles().stream().sequential().collect(Collectors.joining(File.pathSeparator))));
+
     }
 
     @Override
