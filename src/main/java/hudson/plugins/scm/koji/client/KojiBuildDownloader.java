@@ -2,9 +2,10 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
 import hudson.plugins.scm.koji.BuildsSerializer;
-import static hudson.plugins.scm.koji.Constants.BUILD_XML;
-import hudson.plugins.scm.koji.model.KojiScmConfig;
+import hudson.plugins.scm.koji.WebLog;
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
+import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.remoting.VirtualChannel;
 import java.io.BufferedOutputStream;
@@ -17,11 +18,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.jenkinsci.remoting.RoleChecker;
-import hudson.plugins.scm.koji.WebLog;
-import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
-import java.util.function.Predicate;
+
+import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 
 public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePath.FileCallable<Optional<KojiBuildDownloadResult>> {
 
@@ -94,23 +95,14 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
     }
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
-        HttpURLConnection httpConn = null;
         try {
             String urlString = composeUrl(build, rpm);
             log("Downloading RPM '" + rpm.getNvr() + "' from URL: " + urlString);
-            URL url = new URL(urlString);
-            httpConn = (HttpURLConnection) url.openConnection();
-            httpConn.setRequestMethod("GET");
-            int response = httpConn.getResponseCode();
-            if (response < 200 || response > 299) {
-                log("Cancelling because of server response: " + response);
-                throw new Exception("Error downloading RPM, got response code: " + response);
-            }
 
             File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
             log("Saving RPM '" + rpm.getNvr() + "' to file: " + targetFile.getAbsolutePath());
             try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
-                    InputStream in = httpConn.getInputStream()) {
+                    InputStream in = httpDownloadStream(urlString)) {
                 byte[] buffer = new byte[8192];
                 int read;
                 while ((read = in.read(buffer)) != -1) {
@@ -119,13 +111,52 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
             }
             log("Finished downloading of RPM '" + rpm.getNvr() + "'");
             return targetFile;
+        } catch (RuntimeException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new RuntimeException("Exception while downloading RPM", ex);
-        } finally {
-            if (httpConn != null) {
-                httpConn.disconnect();
+        }
+    }
+
+    private InputStream httpDownloadStream(String urlString) {
+        HttpURLConnection httpConn = null;
+        boolean keepConnection = false;
+        for (int i = 0; i < 50; i++) {
+            try {
+                URL url = new URL(urlString);
+                httpConn = (HttpURLConnection) url.openConnection();
+                httpConn.setRequestMethod("GET");
+                int response = httpConn.getResponseCode();
+                switch (response) {
+                    case 200: {
+                        keepConnection = true;
+                        return httpConn.getInputStream();
+                    }
+                    case 301: {
+                        String location = httpConn.getHeaderField("Location");
+                        if (location == null || location.isEmpty()) {
+                            throw new Exception("Invalid Location header for response 301");
+                        }
+                        if (urlString.equals(location)) {
+                            throw new Exception("Infinite redirection loop detected for URL: " + urlString);
+                        }
+                        urlString = location;
+                        break;
+                    }
+                    default:
+                        throw new Exception("Unsupported HTTP response " + response + " for URL: " + urlString);
+                }
+            } catch (RuntimeException ex) {
+                throw ex;
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            } finally {
+                if (!keepConnection && httpConn != null) {
+                    httpConn.disconnect();
+                }
             }
         }
+        throw new RuntimeException("Too many redirects for URL: " + urlString);
     }
 
     private String composeUrl(Build build, RPM rpm) {

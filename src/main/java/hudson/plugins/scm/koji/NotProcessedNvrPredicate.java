@@ -23,71 +23,20 @@
  */
 package hudson.plugins.scm.koji;
 
-import hudson.FilePath;
-import hudson.remoting.VirtualChannel;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.util.Collections;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import org.jenkinsci.remoting.RoleChecker;
-
-import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 
 public class NotProcessedNvrPredicate implements Predicate<String> {
 
-    private final FilePath workspace;
-    private volatile Set<String> processedNvrs;
+    private final Set<String> processedNvrs;
 
-    public NotProcessedNvrPredicate(FilePath workspace) {
-        this.workspace = workspace;
+    public NotProcessedNvrPredicate(Set<String> processedNvrs) {
+        this.processedNvrs = processedNvrs;
     }
 
     @Override
     public boolean test(String nvr) {
-        Set<String> processed = this.processedNvrs;
-        if (processed == null) {
-            synchronized (this) {
-                processed = this.processedNvrs;
-                if (processed == null) {
-                    try {
-                        processed = workspace.act(new ReadProcessedCallable());
-                    } catch (Exception ex) {
-                        throw new RuntimeException("Exception while reading '" + PROCESSED_BUILDS_HISTORY + "' file from workspace", ex);
-                    }
-                    this.processedNvrs = processed;
-                }
-            }
-        }
-        return !processed.contains(nvr);
-    }
-
-    private Set<String> readProcessedNvrs(File workspace) throws IOException, InterruptedException {
-        File processedFile = new File(workspace, PROCESSED_BUILDS_HISTORY);
-        if (!processedFile.exists() || !processedFile.isFile() || processedFile.length() < 1) {
-            return Collections.emptySet();
-        }
-        Set<String> set = Files
-                .lines(processedFile.toPath(), Charset.forName("UTF-8"))
-                .collect(Collectors.toSet());
-        return set;
-    }
-
-    private class ReadProcessedCallable implements FilePath.FileCallable<Set<String>> {
-
-        @Override
-        public Set<String> invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
-            return readProcessedNvrs(workspace);
-        }
-
-        @Override
-        public void checkRoles(RoleChecker checker) throws SecurityException {
-            // TODO maybe implement?
-        }
-
+        return !processedNvrs.contains(nvr);
     }
 
 }

@@ -10,9 +10,9 @@ import hudson.model.StringParameterValue;
 import hudson.model.TaskListener;
 import hudson.plugins.scm.koji.client.KojiBuildDownloader;
 import hudson.plugins.scm.koji.client.KojiListBuilds;
+import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
-import hudson.plugins.scm.koji.model.Build;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
 import hudson.scm.SCM;
@@ -20,15 +20,24 @@ import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_ENV_NVR;
-import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 import static hudson.plugins.scm.koji.Constants.KOJI_CHECKOUT_NVR;
+import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 
 public class KojiSCM extends SCM {
 
@@ -72,8 +81,8 @@ public class KojiSCM extends SCM {
         }
 
         // TODO add some flag to allow checkout on local or remote machine
-
-        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(listener.getLogger()::println, createConfig(), new NotProcessedNvrPredicate(workspace));
+        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(listener.getLogger()::println, createConfig(),
+                createNotProcessedNvrPredicate(run.getParent()));
         Optional<KojiBuildDownloadResult> buildOpt = workspace.act(downloadWorker);
 
         if (!buildOpt.isPresent()) {
@@ -87,10 +96,17 @@ public class KojiSCM extends SCM {
         LOG.info("Checkout downloaded build: {}", build);
 
         LOG.info("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
-        workspace.act(new KojiProcessedAppender(build));
+        Files.write(
+                new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
+                Arrays.asList(build.getNvr()),
+                StandardCharsets.UTF_8,
+                StandardOpenOption.APPEND, StandardOpenOption.CREATE);
 
         LOG.info("Saving the nvr of checked out build to workspace: {} > {}", build.getNvr(), KOJI_CHECKOUT_NVR);
-        workspace.act(new KojiCheckoutNvr(build));
+        Files.write(new File(run.getParent().getRootDir(), KOJI_CHECKOUT_NVR).toPath(),
+                Arrays.asList(build.getNvr()),
+                Charset.forName("UTF-8"),
+                StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
 
         // if there is a changelog file - write it:
         if (changelogFile != null) {
@@ -109,7 +125,8 @@ public class KojiSCM extends SCM {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        KojiListBuilds worker = new KojiListBuilds(listener.getLogger()::println, createConfig(), new NotProcessedNvrPredicate(workspace));
+        KojiListBuilds worker = new KojiListBuilds(listener.getLogger()::println, createConfig(),
+                createNotProcessedNvrPredicate(project));
         Optional<Build> buildOpt = workspace.act(worker);
 
         if (buildOpt.isPresent()) {
@@ -145,7 +162,23 @@ public class KojiSCM extends SCM {
 
     @Override
     public boolean requiresWorkspaceForPolling() {
-        return false;
+        return true;
+    }
+
+    private Predicate<String> createNotProcessedNvrPredicate(Job<?, ?> job) throws IOException {
+        File processedNvrFile = new File(job.getRootDir(), PROCESSED_BUILDS_HISTORY);
+        if (processedNvrFile.exists()) {
+            if (processedNvrFile.isFile() && processedNvrFile.canRead()) {
+                Set<String> nvrsSet = Files
+                        .lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)
+                        .collect(Collectors.toSet());
+                return new NotProcessedNvrPredicate(nvrsSet);
+            } else {
+                throw new IOException("Processed NVRs is not readable: " + processedNvrFile.getAbsolutePath());
+            }
+        } else {
+            return new NotProcessedNvrPredicate(new HashSet<>());
+        }
     }
 
     private KojiScmConfig createConfig() {
