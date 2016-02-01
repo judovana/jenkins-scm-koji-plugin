@@ -30,4 +30,12 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="Clean download directory" field="cleanDownloadDir">
+        <f:checkbox/>
+    </f:entry>
+
+    <f:entry title="Create subdirectory for each NVR" field="dirPerNvr">
+        <f:checkbox/>
+    </f:entry>
+
 </j:jelly>

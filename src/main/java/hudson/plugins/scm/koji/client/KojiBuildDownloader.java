@@ -55,20 +55,24 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
                 return Optional.empty();
             }
         }
+        Build build = buildOpt.get();
         // we got the build info in workspace, downloading:
         File targetDir = workspace;
         if (config.getDownloadDir() != null && config.getDownloadDir().length() > 0) {
             // target dir was specified,
             targetDir = new File(targetDir, config.getDownloadDir());
+            // checkbox for dir per nvr was specified:
+            if (config.isDirPerNvr()) {
+                targetDir = new File(targetDir, build.getNvr());
+            }
             // do not delete the workspace dir if user specified '.' :
-            if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists()) {
+            if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists() && config.isCleanDownloadDir()) {
                 cleanDirRecursively(targetDir);
             }
             targetDir.mkdirs();
         }
-        Build build = buildOpt.get();
-        List<File> rpmFiles = downloadRPMs(targetDir, build);
-        return Optional.of(new KojiBuildDownloadResult(build, rpmFiles));
+        List<String> rpmFiles = downloadRPMs(targetDir, build);
+        return Optional.of(new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles));
     }
 
     private void cleanDirRecursively(File file) {
@@ -85,12 +89,13 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
         }
     }
 
-    private List<File> downloadRPMs(File targetDir, Build build) {
+    private List<String> downloadRPMs(File targetDir, Build build) {
         return build.getRpms()
                 .stream()
                 .parallel()
                 .filter(excludeNvrPredicate.negate())
-                .map((r) -> downloadRPM(targetDir, build, r))
+                .map(r -> downloadRPM(targetDir, build, r))
+                .map(f -> f.getAbsolutePath())
                 .collect(Collectors.toList());
     }
 

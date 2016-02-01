@@ -1,7 +1,7 @@
 package hudson.plugins.scm.koji.client;
 
-import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.KojiScmConfig;
 import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,7 +19,9 @@ public class KojiListBuildsTest {
                 "x86_64",
                 "f22-updates*",
                 null,
-                null
+                null,
+                false,
+                false
         );
     }
 

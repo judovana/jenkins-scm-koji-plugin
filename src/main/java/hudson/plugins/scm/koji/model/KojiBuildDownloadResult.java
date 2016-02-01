@@ -1,18 +1,18 @@
 package hudson.plugins.scm.koji.model;
 
-import java.io.File;
 import java.util.List;
 
 public class KojiBuildDownloadResult {
 
     private final Build build;
-    private final List<File> rpmFiles;
+    private final String rpmsDirectory;
+    private final List<String> rpmFiles;
 
-    public KojiBuildDownloadResult(Build build, List<File> rpmFiles) {
+    public KojiBuildDownloadResult(Build build, String rpmsDirectory, List<String> rpmFiles) {
         this.build = build;
+        this.rpmsDirectory = rpmsDirectory;
         this.rpmFiles = rpmFiles;
     }
-
 
     public boolean isEmpty() {
         return build == null || rpmFiles == null || rpmFiles.isEmpty();
@@ -22,7 +22,11 @@ public class KojiBuildDownloadResult {
         return build;
     }
 
-    public List<File> getRpmFiles() {
+    public String getRpmsDirectory() {
+        return rpmsDirectory;
+    }
+
+    public List<String> getRpmFiles() {
         return rpmFiles;
     }
 

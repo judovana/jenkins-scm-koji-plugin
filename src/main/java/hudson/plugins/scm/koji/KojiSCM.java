@@ -36,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_ENV_NVR;
+import static hudson.plugins.scm.koji.Constants.BUILD_ENV_RPMS_DIR;
+import static hudson.plugins.scm.koji.Constants.BUILD_ENV_RPM_FILES;
 import static hudson.plugins.scm.koji.Constants.KOJI_CHECKOUT_NVR;
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 
@@ -51,9 +53,11 @@ public class KojiSCM extends SCM {
     private String tag;
     private String excludeNvr;
     private String downloadDir;
+    private boolean cleanDownloadDir;
+    private boolean dirPerNvr;
 
     @DataBoundConstructor
-    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir) {
+    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
@@ -61,6 +65,8 @@ public class KojiSCM extends SCM {
         this.tag = tag;
         this.excludeNvr = excludeNvr;
         this.downloadDir = downloadDir;
+        this.cleanDownloadDir = cleanDownloadDir;
+        this.dirPerNvr = dirPerNvr;
     }
 
     @Override
@@ -114,8 +120,11 @@ public class KojiSCM extends SCM {
             new BuildsSerializer().write(build, changelogFile);
         }
 
-        LOG.info("Adding env variable to the build: '{}={}'", BUILD_ENV_NVR, build.getNvr());
         run.addAction(new ParametersAction(new StringParameterValue(BUILD_ENV_NVR, build.getNvr())));
+        run.addAction(new ParametersAction(new StringParameterValue(BUILD_ENV_RPMS_DIR,
+                downloadResult.getRpmsDirectory())));
+        run.addAction(new ParametersAction(new StringParameterValue(BUILD_ENV_RPM_FILES,
+                downloadResult.getRpmFiles().stream().sequential().collect(Collectors.joining(File.pathSeparator)))));
     }
 
     @Override
@@ -182,7 +191,8 @@ public class KojiSCM extends SCM {
     }
 
     private KojiScmConfig createConfig() {
-        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, downloadDir);
+        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, downloadDir,
+                cleanDownloadDir, dirPerNvr);
     }
 
     public String getKojiTopUrl() {
@@ -246,6 +256,24 @@ public class KojiSCM extends SCM {
     @DataBoundSetter
     public void setDownloadDir(String downloadDir) {
         this.downloadDir = downloadDir;
+    }
+
+    public boolean isCleanDownloadDir() {
+        return cleanDownloadDir;
+    }
+
+    @DataBoundSetter
+    public void setCleanDownloadDir(boolean cleanDownloadDir) {
+        this.cleanDownloadDir = cleanDownloadDir;
+    }
+
+    public boolean isDirPerNvr() {
+        return dirPerNvr;
+    }
+
+    @DataBoundSetter
+    public void setDirPerNvr(boolean dirPerNvr) {
+        this.dirPerNvr = dirPerNvr;
     }
 
 }

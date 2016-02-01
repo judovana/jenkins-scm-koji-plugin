@@ -9,8 +9,10 @@ public class KojiScmConfig {
     private final String tag;
     private final String excludeNvr;
     private final String downloadDir;
+    private final boolean cleanDownloadDir;
+    private final boolean dirPerNvr;
 
-    public KojiScmConfig(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir) {
+    public KojiScmConfig(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
@@ -18,6 +20,8 @@ public class KojiScmConfig {
         this.tag = tag;
         this.excludeNvr = excludeNvr;
         this.downloadDir = downloadDir;
+        this.cleanDownloadDir = cleanDownloadDir;
+        this.dirPerNvr = dirPerNvr;
     }
 
     public String getKojiTopUrl() {
@@ -46,6 +50,14 @@ public class KojiScmConfig {
 
     public String getDownloadDir() {
         return downloadDir;
+    }
+
+    public boolean isCleanDownloadDir() {
+        return cleanDownloadDir;
+    }
+
+    public boolean isDirPerNvr() {
+        return dirPerNvr;
     }
 
 }
