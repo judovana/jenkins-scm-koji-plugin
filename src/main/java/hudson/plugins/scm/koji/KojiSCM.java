@@ -96,6 +96,10 @@ public class KojiSCM extends SCM {
         Build build = downloadResult.getBuild();
         LOG.info("Checkout downloaded build: {}", build);
 
+        String displayName = build.getVersion() + "-" + build.getRelease();
+        LOG.info("Updating the build name to: {}", displayName);
+        run.setDisplayName(displayName);
+
         LOG.info("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
         Files.write(
                 new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
