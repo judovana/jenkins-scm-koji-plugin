@@ -18,7 +18,6 @@ import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -33,7 +32,6 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static hudson.plugins.scm.koji.Constants.KOJI_CHECKOUT_NVR;
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 
 public class KojiSCM extends SCM {
@@ -106,12 +104,6 @@ public class KojiSCM extends SCM {
                 Arrays.asList(build.getNvr()),
                 StandardCharsets.UTF_8,
                 StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-
-        LOG.info("Saving the nvr of checked out build to workspace: {} > {}", build.getNvr(), KOJI_CHECKOUT_NVR);
-        Files.write(new File(run.getParent().getRootDir(), KOJI_CHECKOUT_NVR).toPath(),
-                Arrays.asList(build.getNvr()),
-                Charset.forName("UTF-8"),
-                StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE);
 
         // if there is a changelog file - write it:
         if (changelogFile != null) {
