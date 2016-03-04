@@ -1,5 +1,6 @@
 package hudson.plugins.scm.koji;
 
+import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -87,7 +88,7 @@ public class KojiSCM extends SCM {
         if (!buildOpt.isPresent()) {
             LOG.info("Checkout finished without any results");
             listener.getLogger().println("No updates.");
-            return;
+            throw new AbortException("Checkout was invoked but no remote changes found");
         }
 
         KojiBuildDownloadResult downloadResult = buildOpt.get();
