@@ -26,7 +26,7 @@ package hudson.plugins.scm.koji;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class NotProcessedNvrPredicate implements Predicate<String> {
+public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Serializable {
 
     private final Set<String> processedNvrs;
 

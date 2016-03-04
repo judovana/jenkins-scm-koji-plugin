@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class RPM {
+public class RPM implements java.io.Serializable {
 
     @XmlElement(name = "name")
     private final String name;

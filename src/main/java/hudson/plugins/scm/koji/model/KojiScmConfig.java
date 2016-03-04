@@ -1,6 +1,6 @@
 package hudson.plugins.scm.koji.model;
 
-public class KojiScmConfig {
+public class KojiScmConfig implements java.io.Serializable {
 
     private final String kojiTopUrl;
     private final String kojiDownloadUrl;

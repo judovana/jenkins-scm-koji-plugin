@@ -14,7 +14,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "build")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Build implements Comparable<Build> {
+public class Build implements Comparable<Build>, java.io.Serializable {
 
     @XmlElement(name = "id")
     private final Integer id;

@@ -81,17 +81,16 @@ public class KojiSCM extends SCM {
         }
 
         // TODO add some flag to allow checkout on local or remote machine
-        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(listener.getLogger()::println, createConfig(),
+        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
                 createNotProcessedNvrPredicate(run.getParent()));
-        Optional<KojiBuildDownloadResult> buildOpt = workspace.act(downloadWorker);
+        KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
-        if (!buildOpt.isPresent()) {
+        if (downloadResult == null) {
             LOG.info("Checkout finished without any results");
             listener.getLogger().println("No updates.");
             throw new AbortException("Checkout was invoked but no remote changes found");
         }
 
-        KojiBuildDownloadResult downloadResult = buildOpt.get();
         Build build = downloadResult.getBuild();
         LOG.info("Checkout downloaded build: {}", build);
 
@@ -124,12 +123,11 @@ public class KojiSCM extends SCM {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        KojiListBuilds worker = new KojiListBuilds(listener.getLogger()::println, createConfig(),
+        KojiListBuilds worker = new KojiListBuilds(createConfig(),
                 createNotProcessedNvrPredicate(project));
-        Optional<Build> buildOpt = workspace.act(worker);
+        Build build = workspace.act(worker);
 
-        if (buildOpt.isPresent()) {
-            Build build = buildOpt.get();
+        if (build != null) {
             LOG.info("Got new remote build: {}", build);
             return new PollingResult(baseline, new KojiRevisionState(build), PollingResult.Change.INCOMPARABLE);
         }
