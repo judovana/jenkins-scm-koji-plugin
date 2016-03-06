@@ -2,12 +2,13 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
 import hudson.plugins.scm.koji.BuildsSerializer;
-import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.remoting.VirtualChannel;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -18,14 +19,28 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.ws.commons.util.NamespaceContextImpl;
+import org.apache.xmlrpc.client.XmlRpcClient;
+import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+import org.apache.xmlrpc.common.TypeFactoryImpl;
+import org.apache.xmlrpc.common.XmlRpcController;
+import org.apache.xmlrpc.common.XmlRpcStreamConfig;
+import org.apache.xmlrpc.parser.AtomicParser;
+import org.apache.xmlrpc.parser.TypeParser;
+import org.apache.xmlrpc.serializer.I4Serializer;
+import org.apache.xmlrpc.serializer.TypeSerializer;
+import org.apache.xmlrpc.serializer.TypeSerializerImpl;
 import org.jenkinsci.remoting.RoleChecker;
-import static hudson.plugins.scm.koji.Constants.BUILD_XML;
-import hudson.plugins.scm.koji.WebLog;
-import java.util.function.Predicate;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
-public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileCallable<Optional<Build>> {
+import static hudson.plugins.scm.koji.Constants.BUILD_XML;
+
+public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
     private static final DateTimeFormatter DTF = new DateTimeFormatterBuilder()
             .appendValue(ChronoField.YEAR, 4)
@@ -47,15 +62,14 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
     private final GlobPredicate tagPredicate;
     private final Predicate<String> notProcessedNvrPredicate;
 
-    public KojiListBuilds(WebLog log, KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
-        super(log, config.getKojiTopUrl());
+    public KojiListBuilds(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
         this.config = config;
         this.tagPredicate = new GlobPredicate(config.getTag());
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
     }
 
     @Override
-    public Optional<Build> invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
+    public Build invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         Optional<Build> buildOpt = listMatchingBuilds()
                 .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
                 .findFirst();
@@ -63,20 +77,12 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
             Build build = buildOpt.get();
             new BuildsSerializer().write(build, new File(workspace, BUILD_XML));
         }
-        return buildOpt;
+        return buildOpt.get();
     }
 
     private Stream<Build> listMatchingBuilds() {
-        log("Starting listing of builds");
-        log("Package name: " + config.getPackageName());
-        log("Arch: " + config.getArch());
-        log("Tag: " + config.getTag());
-
-        log("Requesting package id...");
         Integer packageId = (Integer) execute("getPackageID", config.getPackageName());
-        log("Package ID: " + packageId);
 
-        log("Requesting list of builds...");
         Map paramsMap = new HashMap();
         paramsMap.put("packageID", packageId);
         paramsMap.put("state", 1);
@@ -84,10 +90,8 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
 
         Object[] results = (Object[]) execute("listBuilds", paramsMap);
         if (results == null || results.length < 1) {
-            log("List of builds is empty, finishing.");
             return Stream.empty();
         }
-        log("Builds list size: " + results.length);
         // ok, obvious over-engineering here:
         return Arrays
                 .stream(results)
@@ -115,7 +119,6 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
 
         Map m = (Map) o;
         Object buildName = m.get("nvr");
-        log("Requesting tags for build: " + buildName);
 
         Map paramsMap = new HashMap();
         paramsMap.put("build", m.get("build_id"));
@@ -123,12 +126,7 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
 
         Object res = execute("listTags", paramsMap);
         if (res != null && (res instanceof Object[]) && ((Object[]) res).length > 0) {
-            log("Tags: " + Arrays.stream((Object[]) res)
-                    .map(t -> ((Map<String, String>) t).get("name"))
-                    .collect(Collectors.joining(", ")));
             m.put("tags", res);
-        } else {
-            log("Build has no tags");
         }
         return o;
     }
@@ -141,14 +139,12 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
         Object buildName = m.get("name");
         Object[] tags = (Object[]) m.get("tags");
         if (tags == null) {
-            log(buildName + " has no tags, filtered out");
             return false;
         }
         boolean tagMatch = Arrays
                 .stream(tags)
                 .map(t -> ((Map<String, String>) t).get("name"))
                 .anyMatch(tagPredicate);
-        log(buildName + (tagMatch ? " tags match." : " has no matching tags, filtered out"));
         return tagMatch;
     }
 
@@ -158,7 +154,6 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
         }
         Map m = (Map) o;
         Object buildName = m.get("nvr");
-        log("Requesting RPMs for build: " + buildName);
 
         Map paramsMap = new HashMap();
         paramsMap.put("buildID", m.get("build_id"));
@@ -170,12 +165,7 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
 
         Object res = execute("listRPMs", paramsMap);
         if (res != null && (res instanceof Object[]) && ((Object[]) res).length > 0) {
-            log("RPMs: " + Arrays.stream((Object[]) res)
-                    .map(r -> ((Map<String, String>) r).get("nvr"))
-                    .collect(Collectors.joining(", ")));
             m.put("rpms", res);
-        } else {
-            log("Build has no RPMs");
         }
 
         return o;
@@ -191,9 +181,6 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
         }
         Map m = (Map) o;
         boolean hasRpms = m.get("rpms") != null;
-        if (!hasRpms) {
-            log("Build has no RPMs, filtered out");
-        }
         return hasRpms;
     }
 
@@ -320,6 +307,72 @@ public class KojiListBuilds extends AbstractKojiClient implements FilePath.FileC
     @Override
     public void checkRoles(RoleChecker checker) throws SecurityException {
         // TODO maybe implement?
+    }
+
+    protected Object execute(String methodName, Object... args) {
+        try {
+            XmlRpcClient client = createClient();
+            Object res = client.execute(methodName, Arrays.asList(args));
+            return res;
+        } catch (Exception ex) {
+            throw new RuntimeException("Exception while executing " + methodName, ex);
+        }
+    }
+
+    private XmlRpcClient createClient() throws Exception {
+        XmlRpcClientConfigImpl xmlRpcConfig = new XmlRpcClientConfigImpl();
+        xmlRpcConfig.setServerURL(new URL(config.getKojiTopUrl()));
+        XmlRpcClient client = new XmlRpcClient();
+        client.setConfig(xmlRpcConfig);
+        client.setTypeFactory(new KojiTypeFactory(client));
+        return client;
+    }
+
+    private static class KojiTypeFactory extends TypeFactoryImpl {
+
+        public KojiTypeFactory(XmlRpcController pController) {
+            super(pController);
+        }
+
+        @Override
+        public TypeParser getParser(XmlRpcStreamConfig pConfig, NamespaceContextImpl pContext, String pURI, String pLocalName) {
+            switch (pLocalName) {
+                case "nil":
+                    return new NilParser();
+                default:
+                    return super.getParser(pConfig, pContext, pURI, pLocalName);
+            }
+        }
+
+        @Override
+        public TypeSerializer getSerializer(XmlRpcStreamConfig pConfig, Object pObject) throws SAXException {
+            if (pObject instanceof Integer) {
+                return new IntSerializer();
+            }
+            return super.getSerializer(pConfig, pObject);
+        }
+
+    }
+
+    private static class NilParser extends AtomicParser {
+
+        @Override
+        public void setResult(String pResult) throws SAXException {
+            if (pResult != null && pResult.trim().length() > 0) {
+                throw new SAXParseException("Unexpected characters in nil element.", getDocumentLocator());
+            }
+            super.setResult((Object) null);
+        }
+
+    }
+
+    private static class IntSerializer extends TypeSerializerImpl {
+
+        @Override
+        public void write(ContentHandler pHandler, Object pObject) throws SAXException {
+            write(pHandler, I4Serializer.INT_TAG, pObject.toString());
+        }
+
     }
 
 }

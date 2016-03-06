@@ -2,7 +2,6 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
 import hudson.plugins.scm.koji.BuildsSerializer;
-import hudson.plugins.scm.koji.WebLog;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
@@ -24,35 +23,27 @@ import org.jenkinsci.remoting.RoleChecker;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 
-public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePath.FileCallable<Optional<KojiBuildDownloadResult>> {
+public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult> {
 
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
-    private final Predicate<RPM> excludeNvrPredicate;
 
-    public KojiBuildDownloader(WebLog log, KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
-        super(log);
+    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
         this.config = config;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
-        if (config.getExcludeNvr() == null || config.getExcludeNvr().isEmpty()) {
-            excludeNvrPredicate = i -> true;
-        } else {
-            GlobPredicate nvrPredicate = new GlobPredicate(config.getExcludeNvr());
-            excludeNvrPredicate = rpm -> nvrPredicate.test(rpm.getNvr());
-        }
     }
 
     @Override
-    public Optional<KojiBuildDownloadResult> invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
+    public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         File checkoutBuildFile = new File(workspace, BUILD_XML);
         Optional<Build> buildOpt = new BuildsSerializer().read(checkoutBuildFile);
         if (!buildOpt.isPresent()) {
             // if we are here - it is the first build ever,
             // have to pull the koji and download whatever we'll find:
-            buildOpt = new KojiListBuilds(getLog(), config, notProcessedNvrPredicate).invoke(workspace, channel);
-            if (!buildOpt.isPresent()) {
+            Build build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
+            if (build == null) {
                 // if we are here - no remote changes on first build, exiting:
-                return Optional.empty();
+                return null;
             }
         }
         Build build = buildOpt.get();
@@ -72,7 +63,7 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
             targetDir.mkdirs();
         }
         List<String> rpmFiles = downloadRPMs(targetDir, build);
-        return Optional.of(new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles));
+        return new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles);
     }
 
     private void cleanDirRecursively(File file) {
@@ -90,10 +81,15 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
     }
 
     private List<String> downloadRPMs(File targetDir, Build build) {
+        Predicate<RPM> nvrPredicate = i -> true;
+        if (config.getExcludeNvr() != null && !config.getExcludeNvr().isEmpty()) {
+            GlobPredicate glob = new GlobPredicate(config.getExcludeNvr());
+            nvrPredicate = rpm -> !glob.test(rpm.getNvr());
+        }
         return build.getRpms()
                 .stream()
                 .parallel()
-                .filter(excludeNvrPredicate.negate())
+                .filter(nvrPredicate)
                 .map(r -> downloadRPM(targetDir, build, r))
                 .map(f -> f.getAbsolutePath())
                 .collect(Collectors.toList());
@@ -102,10 +98,8 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
             String urlString = composeUrl(build, rpm);
-            log("Downloading RPM '" + rpm.getNvr() + "' from URL: " + urlString);
 
             File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
-            log("Saving RPM '" + rpm.getNvr() + "' to file: " + targetFile.getAbsolutePath());
             try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
                     InputStream in = httpDownloadStream(urlString)) {
                 byte[] buffer = new byte[8192];
@@ -114,7 +108,6 @@ public class KojiBuildDownloader extends AbstractLoggingWorker implements FilePa
                     out.write(buffer, 0, read);
                 }
             }
-            log("Finished downloading of RPM '" + rpm.getNvr() + "'");
             return targetFile;
         } catch (RuntimeException ex) {
             throw ex;

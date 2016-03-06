@@ -2,12 +2,11 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
-import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 public class KojiListBuildsTest {
 
@@ -30,9 +29,9 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuilds() throws Exception {
-        KojiListBuilds worker = new KojiListBuilds(System.out::println, createConfig(), s -> true);
-        Optional<Build> buildOpt = worker.invoke(temporaryFolder.newFolder(), null);
-        assertTrue(buildOpt.isPresent());
+        KojiListBuilds worker = new KojiListBuilds(createConfig(), s -> true);
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
     }
 
 }

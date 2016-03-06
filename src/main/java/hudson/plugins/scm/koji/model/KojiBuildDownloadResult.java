@@ -2,7 +2,7 @@ package hudson.plugins.scm.koji.model;
 
 import java.util.List;
 
-public class KojiBuildDownloadResult {
+public class KojiBuildDownloadResult implements java.io.Serializable {
 
     private final Build build;
     private final String rpmsDirectory;
