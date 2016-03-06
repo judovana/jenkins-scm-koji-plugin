@@ -5,15 +5,14 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.remoting.VirtualChannel;
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 import org.jenkinsci.remoting.RoleChecker;
 
-public class KojiRevisionFromBuild implements FilePath.FileCallable<Optional<Build>> {
+public class KojiRevisionFromBuild implements FilePath.FileCallable<Build> {
 
     @Override
-    public Optional<Build> invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
-        Optional<Build> buildOpt = new BuildsSerializer().read(new File(workspace, "changelog.xml"));
-        return buildOpt;
+    public Build invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
+        Build build = new BuildsSerializer().read(new File(workspace, "changelog.xml"));
+        return build;
     }
 
     @Override
