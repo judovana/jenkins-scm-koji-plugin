@@ -12,7 +12,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.lang.ref.SoftReference;
-import java.util.Optional;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 
@@ -33,14 +32,14 @@ public class BuildsSerializer {
         }
     }
 
-    public Optional<Build> read(File file) {
+    public Build read(File file) {
         if (!file.exists() || !file.isFile() || file.length() < 1) {
-            return Optional.empty();
+            return null;
         }
         try (Reader reader = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), "UTF-8")) {
             Object result = jaxbContext().createUnmarshaller().unmarshal(reader);
             if (result == null || result instanceof Build) {
-                return Optional.of((Build) result);
+                return (Build) result;
             }
             // if we are still here - something went wrong:
             throw new RuntimeException("Deserialization expected Build but got: " + result);

@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -142,9 +141,8 @@ public class KojiSCM extends SCM {
         LOG.info("Calculating revision for project '{}' from build: {}", run.getParent().getName(), run.getNumber());
         KojiRevisionFromBuild worker = new KojiRevisionFromBuild();
         FilePath buildWorkspace = new FilePath(run.getRootDir());
-        Optional<Build> buildOpt = buildWorkspace.act(worker);
-        if (buildOpt.isPresent()) {
-            Build build = buildOpt.get();
+        Build build = buildWorkspace.act(worker);
+        if (build != null) {
             LOG.info("Got revision from build {}: {}", run.getNumber(), build.getNvr());
             return new KojiRevisionState(build);
         }

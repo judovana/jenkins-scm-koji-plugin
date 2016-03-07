@@ -16,7 +16,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.jenkinsci.remoting.RoleChecker;
@@ -36,17 +35,16 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         File checkoutBuildFile = new File(workspace, BUILD_XML);
-        Optional<Build> buildOpt = new BuildsSerializer().read(checkoutBuildFile);
-        if (!buildOpt.isPresent()) {
+        Build build = new BuildsSerializer().read(checkoutBuildFile);
+        if (build == null) {
             // if we are here - it is the first build ever,
             // have to pull the koji and download whatever we'll find:
-            Build build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
+            build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
             if (build == null) {
                 // if we are here - no remote changes on first build, exiting:
                 return null;
             }
         }
-        Build build = buildOpt.get();
         // we got the build info in workspace, downloading:
         File targetDir = workspace;
         if (config.getDownloadDir() != null && config.getDownloadDir().length() > 0) {
