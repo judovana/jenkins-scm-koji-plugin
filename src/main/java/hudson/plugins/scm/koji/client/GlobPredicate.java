@@ -4,7 +4,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class GlobPredicate implements Predicate<CharSequence> {
+public class GlobPredicate implements Predicate<CharSequence>, java.io.Serializable {
 
     private final String globExpr;
     private final Pattern globPattern;
@@ -172,6 +172,6 @@ public class GlobPredicate implements Predicate<CharSequence> {
     private static boolean isGlobMeta(char c) {
         return globMetaChars.indexOf(c) != -1;
     }
-    private static char EOL = 0;  //TBD
+    private static final char EOL = 0;  //TBD
 
 }
