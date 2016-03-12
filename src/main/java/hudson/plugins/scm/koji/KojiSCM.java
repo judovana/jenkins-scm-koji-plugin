@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -164,10 +165,10 @@ public class KojiSCM extends SCM {
         File processedNvrFile = new File(job.getRootDir(), PROCESSED_BUILDS_HISTORY);
         if (processedNvrFile.exists()) {
             if (processedNvrFile.isFile() && processedNvrFile.canRead()) {
-                Set<String> nvrsSet = Files
-                        .lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)
-                        .collect(Collectors.toSet());
-                return new NotProcessedNvrPredicate(nvrsSet);
+                try (Stream<String> stream = Files.lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)) {
+                    Set<String> nvrsSet = stream.collect(Collectors.toSet());
+                    return new NotProcessedNvrPredicate(nvrsSet);
+                }
             } else {
                 throw new IOException("Processed NVRs is not readable: " + processedNvrFile.getAbsolutePath());
             }
