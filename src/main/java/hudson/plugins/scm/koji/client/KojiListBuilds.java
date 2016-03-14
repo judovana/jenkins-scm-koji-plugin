@@ -76,8 +76,9 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         if (buildOpt.isPresent()) {
             Build build = buildOpt.get();
             new BuildsSerializer().write(build, new File(workspace, BUILD_XML));
+            return build;
         }
-        return buildOpt.get();
+        return null;
     }
 
     private Stream<Build> listMatchingBuilds() {
