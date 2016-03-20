@@ -13,9 +13,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.StringTokenizer;
@@ -154,13 +156,12 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
             throw new RuntimeException("Map instance expected, got: " + o);
         }
         Map m = (Map) o;
-        Object buildName = m.get("nvr");
 
         Map paramsMap = new HashMap();
         paramsMap.put("buildID", m.get("build_id"));
-        String arch = config.getArch();
-        if (arch != null && arch.length() > 0) {
-            paramsMap.put("arches", config.getArch());
+        String[] arches = composeArchesArray();
+        if (arches != null) {
+            paramsMap.put("arches", arches);
         }
         paramsMap.put("__starstar", Boolean.TRUE);
 
@@ -294,6 +295,22 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
             return 1;
         }
         return 0;
+    }
+
+    private String[] composeArchesArray() {
+        if (config.getArch() == null || config.getArch().trim().isEmpty()) {
+            return null;
+        }
+        List<String> list = new ArrayList<>();
+        StringTokenizer tokenizer = new StringTokenizer(config.getArch(), ",;\n\r\t ");
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            String trimmed = token.trim();
+            if (!trimmed.isEmpty()) {
+                list.add(trimmed);
+            }
+        }
+        return list.toArray(new String[list.size()]);
     }
 
     private boolean allDigits(String str) {
