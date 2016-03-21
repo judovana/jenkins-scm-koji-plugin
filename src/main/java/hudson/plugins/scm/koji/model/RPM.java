@@ -56,7 +56,7 @@ public class RPM implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return nvr + ".rpm";
+        return nvr + '.' + arch + ".rpm";
     }
 
 }
