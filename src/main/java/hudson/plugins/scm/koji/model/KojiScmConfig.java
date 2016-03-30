@@ -11,8 +11,9 @@ public class KojiScmConfig implements java.io.Serializable {
     private final String downloadDir;
     private final boolean cleanDownloadDir;
     private final boolean dirPerNvr;
+    private final int maxPreviousBuilds;
 
-    public KojiScmConfig(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr) {
+    public KojiScmConfig(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr, int maxPreviousBuilds) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
@@ -22,6 +23,7 @@ public class KojiScmConfig implements java.io.Serializable {
         this.downloadDir = downloadDir;
         this.cleanDownloadDir = cleanDownloadDir;
         this.dirPerNvr = dirPerNvr;
+        this.maxPreviousBuilds = maxPreviousBuilds;
     }
 
     public String getKojiTopUrl() {
@@ -58,6 +60,10 @@ public class KojiScmConfig implements java.io.Serializable {
 
     public boolean isDirPerNvr() {
         return dirPerNvr;
+    }
+
+    public int getMaxPreviousBuilds() {
+        return maxPreviousBuilds;
     }
 
 }

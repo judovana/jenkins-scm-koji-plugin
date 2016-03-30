@@ -20,7 +20,8 @@ public class KojiListBuildsTest {
                 null,
                 null,
                 false,
-                false
+                false,
+                10
         );
     }
 
