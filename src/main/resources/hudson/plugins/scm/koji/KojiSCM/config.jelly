@@ -30,6 +30,10 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="Max previous builds to use" field="maxPreviousBuilds">
+        <f:textbox/>
+    </f:entry>
+
     <f:entry title="Clean download directory" field="cleanDownloadDir">
         <f:checkbox/>
     </f:entry>

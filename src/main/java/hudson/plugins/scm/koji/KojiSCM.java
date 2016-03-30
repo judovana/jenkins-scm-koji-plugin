@@ -49,9 +49,10 @@ public class KojiSCM extends SCM {
     private String downloadDir;
     private boolean cleanDownloadDir;
     private boolean dirPerNvr;
+    private int maxPreviousBuilds;
 
     @DataBoundConstructor
-    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr) {
+    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr, int maxPreviousBuilds) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
@@ -61,6 +62,7 @@ public class KojiSCM extends SCM {
         this.downloadDir = downloadDir;
         this.cleanDownloadDir = cleanDownloadDir;
         this.dirPerNvr = dirPerNvr;
+        this.maxPreviousBuilds = maxPreviousBuilds;
     }
 
     @Override
@@ -179,7 +181,7 @@ public class KojiSCM extends SCM {
 
     private KojiScmConfig createConfig() {
         return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, downloadDir,
-                cleanDownloadDir, dirPerNvr);
+                cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
     }
 
     public String getKojiTopUrl() {
@@ -261,6 +263,15 @@ public class KojiSCM extends SCM {
     @DataBoundSetter
     public void setDirPerNvr(boolean dirPerNvr) {
         this.dirPerNvr = dirPerNvr;
+    }
+
+    public int getMaxPreviousBuilds() {
+        return maxPreviousBuilds;
+    }
+
+    @DataBoundSetter
+    public void setMaxPreviousBuilds(int maxPreviousBuilds) {
+        this.maxPreviousBuilds = maxPreviousBuilds;
     }
 
 }

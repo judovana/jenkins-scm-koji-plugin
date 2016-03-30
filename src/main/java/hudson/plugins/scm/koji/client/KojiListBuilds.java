@@ -108,7 +108,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                 .map(this::retrieveRPMs)
                 .filter(this::filterByArch)
                 // do not go too far away into the past:
-                .limit(10)
+                .limit(config.getMaxPreviousBuilds())
                 // composing final stream of builds:
                 .map(this::toBuild)
                 // sorting in reverse order:
