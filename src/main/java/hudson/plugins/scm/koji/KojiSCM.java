@@ -40,6 +40,7 @@ public class KojiSCM extends SCM {
     @Extension
     public static final KojiScmDescriptor DESCRIPTOR = new KojiScmDescriptor();
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
+    private static final boolean verbose = true;
     private String kojiTopUrl;
     private String kojiDownloadUrl;
     private String packageName;
@@ -50,6 +51,43 @@ public class KojiSCM extends SCM {
     private boolean cleanDownloadDir;
     private boolean dirPerNvr;
     private int maxPreviousBuilds;
+    private TaskListener currentListener;
+
+    private boolean canLog() {
+        return (verbose && currentListener != null && currentListener.getLogger() != null);
+    }
+
+    private void print(String s) {
+        try {
+            currentListener.getLogger().println(s);
+        } catch (Exception ex) {
+            LOG.error("During printing of log to TaskListener", ex);
+        }
+    }
+
+    private void log(String s) {
+        LOG.info(s);
+        if (canLog()) {
+            print("[KojiSCM] " + s);
+        }
+    }
+
+    private void log(String s, Object o) {
+        LOG.info(s, o);
+        if (canLog()) {
+            print("[KojiSCM] " + s + ": "+ o.toString());
+        }
+    }
+
+    private void log(String s, Object... o) {
+        LOG.info(s, o);
+        if (canLog()) {
+            print("[KojiSCM] " + s);
+            for (Object object : o) {
+                print("[KojiSCM]   " + object.toString());    
+            }
+        }
+    }
 
     @DataBoundConstructor
     public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr, int maxPreviousBuilds) {
@@ -77,7 +115,8 @@ public class KojiSCM extends SCM {
 
     @Override
     public void checkout(Run<?, ?> run, Launcher launcher, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException {
-        LOG.info("Checking out remote revision");
+        currentListener = listener;
+        log("Checking out remote revision");
         if (baseline != null && !(baseline instanceof KojiRevisionState)) {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
@@ -88,19 +127,19 @@ public class KojiSCM extends SCM {
         KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
         if (downloadResult == null) {
-            LOG.info("Checkout finished without any results");
+            log("Checkout finished without any results");
             listener.getLogger().println("No updates.");
             throw new AbortException("Checkout was invoked but no remote changes found");
         }
 
         Build build = downloadResult.getBuild();
-        LOG.info("Checkout downloaded build: {}", build);
+        log("Checkout downloaded build: {}", build);
 
         String displayName = build.getVersion() + "-" + build.getRelease();
-        LOG.info("Updating the build name to: {}", displayName);
+        log("Updating the build name to: {}", displayName);
         run.setDisplayName(displayName);
 
-        LOG.info("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
+        log("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
         Files.write(
                 new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
                 Arrays.asList(build.getNvr()),
@@ -109,7 +148,7 @@ public class KojiSCM extends SCM {
 
         // if there is a changelog file - write it:
         if (changelogFile != null) {
-            LOG.info("Saving the build info to changelog file: {}", changelogFile.getAbsolutePath());
+            log("Saving the build info to changelog file: {}", changelogFile.getAbsolutePath());
             new BuildsSerializer().write(build, changelogFile);
         }
 
@@ -120,7 +159,8 @@ public class KojiSCM extends SCM {
 
     @Override
     public PollingResult compareRemoteRevisionWith(Job<?, ?> project, Launcher launcher, FilePath workspace, TaskListener listener, SCMRevisionState baseline) throws IOException, InterruptedException {
-        LOG.info("Comparing remote revision with: {}", baseline);
+        currentListener = listener;
+        log("Comparing remote revision with: {}", baseline);
         if (!(baseline instanceof KojiRevisionState)) {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
@@ -130,26 +170,27 @@ public class KojiSCM extends SCM {
         Build build = workspace.act(worker);
 
         if (build != null) {
-            LOG.info("Got new remote build: {}", build);
+            log("Got new remote build: {}", build);
             return new PollingResult(baseline, new KojiRevisionState(build), PollingResult.Change.INCOMPARABLE);
         }
         // if we are still here - no remote changes:
-        LOG.info("No remote changes");
+        log("No remote changes");
         return new PollingResult(baseline, null, PollingResult.Change.NONE);
     }
 
     @Override
     @SuppressWarnings("UseSpecificCatch")
     public SCMRevisionState calcRevisionsFromBuild(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
-        LOG.info("Calculating revision for project '{}' from build: {}", run.getParent().getName(), run.getNumber());
+        currentListener = listener;
+        log("Calculating revision for project '{}' from build: {}", run.getParent().getName(), run.getNumber());
         KojiRevisionFromBuild worker = new KojiRevisionFromBuild();
         FilePath buildWorkspace = new FilePath(run.getRootDir());
         Build build = buildWorkspace.act(worker);
         if (build != null) {
-            LOG.info("Got revision from build {}: {}", run.getNumber(), build.getNvr());
+            log("Got revision from build {}: {}", run.getNumber(), build.getNvr());
             return new KojiRevisionState(build);
         }
-        LOG.info("No build info found");
+        log("No build info found");
         return new KojiRevisionState(null);
     }
 
