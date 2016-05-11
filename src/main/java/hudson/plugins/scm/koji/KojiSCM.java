@@ -124,7 +124,14 @@ public class KojiSCM extends SCM {
         // TODO add some flag to allow checkout on local or remote machine
         KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
                 createNotProcessedNvrPredicate(run.getParent()));
-        KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
+        // when requiresWorkspaceForPolling was set to false, worksapce may be null.
+        // but not always.  So If it os not null, the path to it is passed on.
+        // however, its usage may be invalid. See KojiListBuilds.invole comemnt about BUILD_XML
+        File wFile = null;
+        if (workspace != null) {
+            wFile = new File(workspace.toURI().getPath());
+        }
+        KojiBuildDownloadResult downloadResult = downloadWorker.invoke(wFile, null);
 
         if (downloadResult == null) {
             log("Checkout finished without any results");
@@ -167,7 +174,14 @@ public class KojiSCM extends SCM {
 
         KojiListBuilds worker = new KojiListBuilds(createConfig(),
                 createNotProcessedNvrPredicate(project));
-        Build build = workspace.act(worker);
+        // when requiresWorkspaceForPolling was set to false, worksapce may be null.
+        // but not always.  So If it os not null, the path to it is passed on.
+        // however, its usage may be invalid. See KojiListBuilds.invole comemnt about BUILD_XML
+        File wFile = null;
+        if (workspace != null) {
+            wFile = new File(workspace.toURI().getPath());
+        }
+        Build build = worker.invoke(wFile, null);
 
         if (build != null) {
             log("Got new remote build: {}", build);
@@ -201,7 +215,9 @@ public class KojiSCM extends SCM {
 
     @Override
     public boolean requiresWorkspaceForPolling() {
-        return true;
+        // this is merchandize - if it is true, then the jobs can not run in parallel (se "Execute concurrent builds if necessary" in project settings)
+        // when it is false, projects can run inparalel, but pooling operation do not have workspace
+        return false;
     }
 
     private Predicate<String> createNotProcessedNvrPredicate(Job<?, ?> job) throws IOException {
