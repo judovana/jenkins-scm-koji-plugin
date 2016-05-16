@@ -21,9 +21,14 @@ import java.util.stream.Collectors;
 import org.jenkinsci.remoting.RoleChecker;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
+import hudson.plugins.scm.koji.KojiSCM;
+import java.net.InetAddress;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
 
@@ -96,8 +101,10 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
             String urlString = composeUrl(build, rpm);
-
+            LOG.info(InetAddress.getLocalHost().getHostName());
+            LOG.info("Downloading: ",urlString);
             File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
+            LOG.info("To: ",targetFile);
             try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
                     InputStream in = httpDownloadStream(urlString)) {
                 byte[] buffer = new byte[8192];

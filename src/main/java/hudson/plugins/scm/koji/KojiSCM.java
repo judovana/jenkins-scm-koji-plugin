@@ -34,8 +34,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
+import java.net.InetAddress;
 
-public class KojiSCM extends SCM {
+public class KojiSCM extends SCM implements LoggerHelp {
 
     @Extension
     public static final KojiScmDescriptor DESCRIPTOR = new KojiScmDescriptor();
@@ -57,7 +58,20 @@ public class KojiSCM extends SCM {
         return (verbose && currentListener != null && currentListener.getLogger() != null);
     }
 
-    private void print(String s) {
+    private String host() {
+        try {
+            String h = InetAddress.getLocalHost().getHostName();
+            if (h == null) {
+                return "null";
+            } else {
+                return h;
+            }
+        } catch (Exception ex) {
+            return ex.toString();
+        }
+    }
+
+    void print(String s) {
         try {
             currentListener.getLogger().println(s);
         } catch (Exception ex) {
@@ -65,26 +79,29 @@ public class KojiSCM extends SCM {
         }
     }
 
-    private void log(String s) {
+    @Override
+    public void log(String s) {
         LOG.info(s);
         if (canLog()) {
-            print("[KojiSCM] " + s);
+            print("[KojiSCM][" + host() + "] " + s);
         }
     }
 
-    private void log(String s, Object o) {
+    @Override
+    public void log(String s, Object o) {
         LOG.info(s, o);
         if (canLog()) {
-            print("[KojiSCM] " + s + ": "+ o.toString());
+            print("[KojiSCM][" + host() + "] " + s + ": " + o.toString());
         }
     }
 
-    private void log(String s, Object... o) {
+    @Override
+    public void log(String s, Object... o) {
         LOG.info(s, o);
         if (canLog()) {
-            print("[KojiSCM] " + s);
+            print("[KojiSCM][" + host() + "] " + s);
             for (Object object : o) {
-                print("[KojiSCM]   " + object.toString());    
+                print("[KojiSCM]   " + object.toString());
             }
         }
     }
@@ -124,14 +141,7 @@ public class KojiSCM extends SCM {
         // TODO add some flag to allow checkout on local or remote machine
         KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
                 createNotProcessedNvrPredicate(run.getParent()));
-        // when requiresWorkspaceForPolling was set to false, worksapce may be null.
-        // but not always.  So If it os not null, the path to it is passed on.
-        // however, its usage may be invalid. See KojiListBuilds.invole comemnt about BUILD_XML
-        File wFile = null;
-        if (workspace != null) {
-            wFile = new File(workspace.toURI().getPath());
-        }
-        KojiBuildDownloadResult downloadResult = downloadWorker.invoke(wFile, null);
+        KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
         if (downloadResult == null) {
             log("Checkout finished without any results");

@@ -16,7 +16,7 @@ public class KojiListBuildsTest {
                 "https://kojipkgs.fedoraproject.org/packages/",
                 "java-1.8.0-openjdk",
                 "x86_64,src",
-                "f22-updates*",
+                "f24*",
                 null,
                 null,
                 false,
