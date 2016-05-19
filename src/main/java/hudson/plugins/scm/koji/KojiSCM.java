@@ -141,6 +141,7 @@ public class KojiSCM extends SCM implements LoggerHelp {
         // TODO add some flag to allow checkout on local or remote machine
         KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
                 createNotProcessedNvrPredicate(run.getParent()));
+        downloadWorker.setListener(listener);
         KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
         if (downloadResult == null) {

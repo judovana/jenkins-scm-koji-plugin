@@ -1,6 +1,7 @@
 package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
+import hudson.model.TaskListener;
 import hudson.plugins.scm.koji.BuildsSerializer;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
@@ -22,15 +23,18 @@ import org.jenkinsci.remoting.RoleChecker;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import hudson.plugins.scm.koji.KojiSCM;
+import hudson.plugins.scm.koji.LoggerHelp;
 import java.net.InetAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult> {
+public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp{
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
+    private TaskListener currentListener;
+    private final boolean verbose = true;
 
     public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
         this.config = config;
@@ -101,10 +105,10 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
             String urlString = composeUrl(build, rpm);
-            LOG.info(InetAddress.getLocalHost().getHostName());
-            LOG.info("Downloading: ",urlString);
+            log(InetAddress.getLocalHost().getHostName());
+            log("Downloading: ",urlString);
             File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
-            LOG.info("To: ",targetFile);
+            log("To: ",targetFile);
             try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
                     InputStream in = httpDownloadStream(urlString)) {
                 byte[] buffer = new byte[8192];
@@ -181,5 +185,61 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     @Override
     public void checkRoles(RoleChecker checker) throws SecurityException {
         // TODO maybe implement?
+    }
+
+    public void setListener(TaskListener listener) {
+        this.currentListener = listener;
+    }
+
+    private boolean canLog() {
+        return (verbose && currentListener != null && currentListener.getLogger() != null);
+    }
+
+    private String host() {
+        try {
+            String h = InetAddress.getLocalHost().getHostName();
+            if (h == null) {
+                return "null";
+            } else {
+                return h;
+            }
+        } catch (Exception ex) {
+            return ex.toString();
+        }
+    }
+
+    void print(String s) {
+        try {
+            currentListener.getLogger().println(s);
+        } catch (Exception ex) {
+            LOG.error("During printing of log to TaskListener", ex);
+        }
+    }
+
+    @Override
+    public void log(String s) {
+        LOG.info(s);
+        if (canLog()) {
+            print("[KojiSCM][" + host() + "] " + s);
+        }
+    }
+
+    @Override
+    public void log(String s, Object o) {
+        LOG.info(s, o);
+        if (canLog()) {
+            print("[KojiSCM][" + host() + "] " + s + ": " + o.toString());
+        }
+    }
+
+    @Override
+    public void log(String s, Object... o) {
+        LOG.info(s, o);
+        if (canLog()) {
+            print("[KojiSCM][" + host() + "] " + s);
+            for (Object object : o) {
+                print("[KojiSCM]   " + object.toString());
+            }
+        }
     }
 }
