@@ -25,6 +25,7 @@ import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.LoggerHelp;
 import java.net.InetAddress;
+import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +107,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         try {
             String urlString = composeUrl(build, rpm);
             log(InetAddress.getLocalHost().getHostName());
+            log(new Date().toString());
             log("Downloading: ",urlString);
             File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
             log("To: ",targetFile);
