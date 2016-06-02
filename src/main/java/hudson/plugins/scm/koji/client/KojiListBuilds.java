@@ -297,6 +297,10 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         return 0;
     }
 
+    private String[] composePkgsArray() {
+        return composeArray(config.getPackageName());
+    }
+
     private String[] composeArchesArray() {
         return composeArray(config.getArch());
     }
