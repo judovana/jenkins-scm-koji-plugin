@@ -77,14 +77,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                 .findFirst();
         if (buildOpt.isPresent()) {
             Build build = buildOpt.get();
-            // do NOT save save BUILD_XML. By creating it, you will  cause the ater pooling to fail
-            // and most suprisingly  - NVR get comelty lost
-            // I dont know what exactly is causing the lsot of NVRE, but following NPEs missing builds, even not  called koiscm.checkout ...
-            // ..fatality. See the rest of "I have no idea what I have done" commit
-            // and good neew at the end. The  file is writtne later, to workspace anyway....
-            if (workspace != null) {
-                //new BuildsSerializer().write(build, new File(workspace, BUILD_XML));
-            }
+            new BuildsSerializer().write(build, new File(workspace, BUILD_XML));
             return build;
         }
         return null;

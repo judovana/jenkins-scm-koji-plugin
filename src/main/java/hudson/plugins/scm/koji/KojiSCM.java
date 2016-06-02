@@ -185,15 +185,8 @@ public class KojiSCM extends SCM implements LoggerHelp {
 
         KojiListBuilds worker = new KojiListBuilds(createConfig(),
                 createNotProcessedNvrPredicate(project));
-        // when requiresWorkspaceForPolling was set to false, worksapce may be null.
-        // but not always.  So If it os not null, the path to it is passed on.
-        // however, its usage may be invalid. See KojiListBuilds.invole comemnt about BUILD_XML
-        File wFile = null;
-        if (workspace != null) {
-            wFile = new File(workspace.toURI().getPath());
-        }
-        Build build = worker.invoke(wFile, null);
-
+        Build build = workspace.act(worker);
+        
         if (build != null) {
             log("Got new remote build: {}", build);
             return new PollingResult(baseline, new KojiRevisionState(build), PollingResult.Change.INCOMPARABLE);
@@ -228,7 +221,7 @@ public class KojiSCM extends SCM implements LoggerHelp {
     public boolean requiresWorkspaceForPolling() {
         // this is merchandize - if it is true, then the jobs can not run in parallel (se "Execute concurrent builds if necessary" in project settings)
         // when it is false, projects can run inparalel, but pooling operation do not have workspace
-        return false;
+        return true;
     }
 
     private Predicate<String> createNotProcessedNvrPredicate(Job<?, ?> job) throws IOException {
