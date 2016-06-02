@@ -298,11 +298,14 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     }
 
     private String[] composeArchesArray() {
-        if (config.getArch() == null || config.getArch().trim().isEmpty()) {
+        return composeArray(config.getArch());
+    }
+    private static String[] composeArray(String values) {
+        if (values == null || values.trim().isEmpty()) {
             return null;
         }
         List<String> list = new ArrayList<>();
-        StringTokenizer tokenizer = new StringTokenizer(config.getArch(), ",;\n\r\t ");
+        StringTokenizer tokenizer = new StringTokenizer(values, ",;\n\r\t ");
         while (tokenizer.hasMoreTokens()) {
             String token = tokenizer.nextToken();
             String trimmed = token.trim();
