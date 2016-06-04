@@ -23,11 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
@@ -186,7 +183,7 @@ public class KojiSCM extends SCM implements LoggerHelp {
         KojiListBuilds worker = new KojiListBuilds(createConfig(),
                 createNotProcessedNvrPredicate(project));
         Build build = workspace.act(worker);
-        
+
         if (build != null) {
             log("Got new remote build: {}", build);
             return new PollingResult(baseline, new KojiRevisionState(build), PollingResult.Change.INCOMPARABLE);
@@ -226,18 +223,7 @@ public class KojiSCM extends SCM implements LoggerHelp {
 
     private Predicate<String> createNotProcessedNvrPredicate(Job<?, ?> job) throws IOException {
         File processedNvrFile = new File(job.getRootDir(), PROCESSED_BUILDS_HISTORY);
-        if (processedNvrFile.exists()) {
-            if (processedNvrFile.isFile() && processedNvrFile.canRead()) {
-                try (Stream<String> stream = Files.lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)) {
-                    Set<String> nvrsSet = stream.collect(Collectors.toSet());
-                    return new NotProcessedNvrPredicate(nvrsSet);
-                }
-            } else {
-                throw new IOException("Processed NVRs is not readable: " + processedNvrFile.getAbsolutePath());
-            }
-        } else {
-            return new NotProcessedNvrPredicate(new HashSet<>());
-        }
+        return NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(processedNvrFile);
     }
 
     private KojiScmConfig createConfig() {

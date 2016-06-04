@@ -23,10 +23,36 @@
  */
 package hudson.plugins.scm.koji;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Serializable {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NotProcessedNvrPredicate.class);
+
+    public static Predicate<String> createNotProcessedNvrPredicateFromFile(File processedNvrFile) throws IOException {
+        if (processedNvrFile.exists()) {
+            if (processedNvrFile.isFile() && processedNvrFile.canRead()) {
+                try (Stream<String> stream = Files.lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)) {
+                    Set<String> nvrsSet = stream.collect(Collectors.toSet());
+                    return new NotProcessedNvrPredicate(nvrsSet);
+                }
+            } else {
+                throw new IOException("Processed NVRs is not readable: " + processedNvrFile.getAbsolutePath());
+            }
+        } else {
+            return new NotProcessedNvrPredicate(new HashSet<>());
+        }
+    }
 
     private final Set<String> processedNvrs;
 
@@ -36,7 +62,10 @@ public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Seri
 
     @Override
     public boolean test(String nvr) {
-        return !processedNvrs.contains(nvr);
+        LOG.info("Searching for " + nvr + " in " + processedNvrs.toString());
+        boolean result = !processedNvrs.contains(nvr);
+        LOG.info("found["+nvr+"]: " + !result);
+        return result;
     }
 
 }

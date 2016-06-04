@@ -41,8 +41,12 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KojiListBuilds implements FilePath.FileCallable<Build> {
+
+    private static final Logger LOG = LoggerFactory.getLogger(KojiListBuilds.class);
 
     private static final DateTimeFormatter DTF = new DateTimeFormatterBuilder()
             .appendValue(ChronoField.YEAR, 4)
@@ -72,11 +76,13 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
     @Override
     public Build invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
-        Optional<Build> buildOpt = listMatchingBuilds()
+        Stream<Build> results = listMatchingBuilds();
+        Optional<Build> buildOpt = results
                 .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
                 .findFirst();
         if (buildOpt.isPresent()) {
             Build build = buildOpt.get();
+            LOG.info("oldest not processed build: " + build.getNvr());
             new BuildsSerializer().write(build, new File(workspace, BUILD_XML));
             return build;
         }
@@ -304,6 +310,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     private String[] composeArchesArray() {
         return composeArray(config.getArch());
     }
+
     private static String[] composeArray(String values) {
         if (values == null || values.trim().isEmpty()) {
             return null;
