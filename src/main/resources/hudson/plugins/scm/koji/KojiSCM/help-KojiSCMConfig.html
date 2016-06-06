@@ -1,0 +1,22 @@
+<div>
+    <h3>If checked, then KojiSCM plugin requires workspace for pooling.</h3>
+    <ul>
+        <li>By default selected</li>
+        <li>If KojiSCM requires workspace, then the <b>single exact job</b> can not be run in parallel</li>
+        <li>If KojiSCM <i>don't</i> requires workspace, then the <b>single exact job</b> can be run in parallel</li>
+        <li>if you unselect it (so it <i>don't require workspace</i>), you may run the same job in parallel</li>
+        <li>In that case, be sure, that <b>next pooling</b> is invoked <b>after the checkout</b> is finished, otherwise you end with same build in queue</li>
+        <li>General usecase is:</li>
+        <ul>
+            <li>some long job is running, but otherwise the host is bored</li>
+            <li>everything else is done except next <i>this</i> job</li>
+            <li>in desired project select "Execute concurrent builds if necessary"</li>
+            <li>unselect this</li>
+            <li>schedule/let schedule another job and wait until it is in execution (in parallel)</li>
+            <li>select this</li>
+            <li>in desired project unselect "Execute concurrent builds if necessary"</li>
+            <li>after its checkout is done, verify processed.txt in job's folder</li>
+        </ul>
+        <li>this option is not exactly best tested</li>
+    </ul>
+</div>
