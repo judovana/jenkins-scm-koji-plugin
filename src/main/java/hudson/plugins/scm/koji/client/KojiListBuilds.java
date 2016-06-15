@@ -78,6 +78,11 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     @Override
     public Build invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         Stream<Build> results = listMatchingBuilds();
+
+//        List<Build> l = results
+//                .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
+//                .collect(Collectors.toList());
+
         Optional<Build> buildOpt = results
                 .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
                 .findFirst();

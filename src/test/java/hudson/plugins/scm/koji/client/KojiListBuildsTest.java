@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.HashSet;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -63,6 +64,51 @@ public class KojiListBuildsTest {
         );
     }
 
+    KojiScmConfig createConfigR6_ibm6() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "java-1.6.0-ibm",
+                "x86_64",
+                "rhel-6.*-supp*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
+    KojiScmConfig createConfigR5_ibm6() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "java-1.6.0-ibm",
+                "i386",
+                "dist-5*-extras*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
+    KojiScmConfig createConfigR7_ibm71() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "java-1.7.1-ibm",
+                "x86_64",
+                "supp-rhel-7.*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
     KojiScmConfig createConfigR6() {
         return new KojiScmConfig(
                 "https://brewhub.engineering.redhat.com/brewhub",
@@ -70,6 +116,52 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "RHEL-6.*-candidate",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
+
+    KojiScmConfig createConfigR6_oracle7() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "java-1.7.0-oracle",
+                "i586",
+                "oracle-java-rhel-6.*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
+    KojiScmConfig createConfigR5_sun6() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "java-1.6.0-sun",
+                "x86_64",
+                "oracle-java-rhel-5*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
+    KojiScmConfig createConfigR7_oracle8() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "java-1.8.0-oracle",
+                "x86_64",
+                "oracle-java-rhel-7.*",
                 null,
                 null,
                 false,
@@ -176,6 +268,49 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR6() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testListMatchingBuildsR6_ibm6() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigR6_ibm6(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testListMatchingBuildsR5_ibm6() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigR5_ibm6(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testListMatchingBuildsR7_ibm() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigR7_ibm71(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+
+       @Test
+    public void testListMatchingBuildsR5_sun6() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigR5_sun6(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testListMatchingBuildsR6_oracle7() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigR6_oracle7(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testListMatchingBuildsR7_oracle8() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigR7_oracle8(), new NotProcessedNvrPredicate(new HashSet<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
