@@ -31,9 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
+import java.io.Serializable;
 import java.net.InetAddress;
 
-public class KojiSCM extends SCM implements LoggerHelp {
+public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
     @Extension
     public static final KojiScmDescriptor DESCRIPTOR = new KojiScmDescriptor();
@@ -49,7 +50,7 @@ public class KojiSCM extends SCM implements LoggerHelp {
     private boolean cleanDownloadDir;
     private boolean dirPerNvr;
     private int maxPreviousBuilds;
-    private TaskListener currentListener;
+    private transient TaskListener currentListener;
 
     private boolean canLog() {
         return (verbose && currentListener != null && currentListener.getLogger() != null);
