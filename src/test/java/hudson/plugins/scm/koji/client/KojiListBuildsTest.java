@@ -130,7 +130,7 @@ public class KojiListBuildsTest {
                 "https://brewhub.engineering.redhat.com/brewhub",
                 "http://download.eng.bos.redhat.com/brewroot/packages/",
                 "java-1.7.0-oracle",
-                "i586",
+                "i686",
                 "oracle-java-rhel-6.*",
                 null,
                 null,
