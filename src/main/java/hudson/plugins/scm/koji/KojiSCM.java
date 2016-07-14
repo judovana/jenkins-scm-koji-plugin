@@ -158,14 +158,16 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         } else {
         run.setDisplayName(displayName);
         }
-
-        log("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
-        Files.write(
-                new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
-                Arrays.asList(build.getNvr()),
-                StandardCharsets.UTF_8,
-                StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-
+        if (build.isManual()) {
+            log("manual mode -  not saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
+        } else {
+            log("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
+            Files.write(
+                    new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
+                    Arrays.asList(build.getNvr()),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+        }
         // if there is a changelog file - write it:
         if (changelogFile != null) {
             log("Saving the build info to changelog file: {}", changelogFile.getAbsolutePath());
