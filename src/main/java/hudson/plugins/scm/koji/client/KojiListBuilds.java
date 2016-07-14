@@ -226,6 +226,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                 .stream((Object[]) ((Map) o).get("tags"))
                 .map(t -> ((Map<String, String>) t).get("name"))
                 .collect(Collectors.toSet())
+                , null
         );
     }
 

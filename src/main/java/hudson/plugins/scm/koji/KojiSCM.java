@@ -153,7 +153,11 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
         String displayName = build.getVersion() + "-" + build.getRelease();
         log("Updating the build name to: {}", displayName);
+        if (build.isManual()){
+            run.setDisplayName(displayName+"(manual)");    
+        } else {
         run.setDisplayName(displayName);
+        }
 
         log("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
         Files.write(

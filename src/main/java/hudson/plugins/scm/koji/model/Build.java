@@ -16,6 +16,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Build implements Comparable<Build>, java.io.Serializable {
 
+    @XmlElement(name = "manual")
+    private final Boolean manual;
     @XmlElement(name = "id")
     private final Integer id;
     @XmlElement(name = "name")
@@ -36,13 +38,14 @@ public class Build implements Comparable<Build>, java.io.Serializable {
     private final Set<String> tags;
 
     public Build(Integer id, String name, String version, String release, String nvr, String completionTime,
-            List<RPM> rpms, Set<String> tags) {
+            List<RPM> rpms, Set<String> tags, Boolean manual) {
         this.id = id;
         this.name = name;
         this.version = version;
         this.release = release;
         this.nvr = nvr;
         this.completionTime = completionTime;
+        this.manual = manual;
         this.rpms = rpms == null ? Collections.emptyList() : new ArrayList<>(rpms);
         this.tags = tags == null ? Collections.emptySet() : new HashSet<>(tags);
     }
@@ -56,6 +59,14 @@ public class Build implements Comparable<Build>, java.io.Serializable {
         this.completionTime = null;
         this.rpms = null;
         this.tags = null;
+        this.manual = null;
+    }
+    
+    public boolean isManual(){
+        if (manual == null){
+            return false;
+        }
+        return manual;
     }
 
     public Integer getId() {

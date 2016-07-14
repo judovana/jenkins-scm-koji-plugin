@@ -66,7 +66,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             }
             // do not delete the workspace dir if user specified '.' :
             if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists() && config.isCleanDownloadDir()) {
-                cleanDirRecursively(targetDir);
+                if (!build.isManual()){
+                    cleanDirRecursively(targetDir);
+                }
             }
             targetDir.mkdirs();
         }
@@ -108,15 +110,21 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             String urlString = composeUrl(build, rpm);
             log(InetAddress.getLocalHost().getHostName());
             log(new Date().toString());
-            log("Downloading: ",urlString);
+            if (build.isManual()) {
+                log("Manual tag provided - skipping download of ", urlString);
+            } else {
+                log("Downloading: ", urlString);
+            }
             File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
-            log("To: ",targetFile);
-            try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
-                    InputStream in = httpDownloadStream(urlString)) {
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
+            log("To: ", targetFile);
+            if (!build.isManual()) {
+                try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
+                        InputStream in = httpDownloadStream(urlString)) {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
                 }
             }
             return targetFile;
