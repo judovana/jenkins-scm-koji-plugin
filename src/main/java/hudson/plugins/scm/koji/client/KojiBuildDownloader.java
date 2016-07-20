@@ -66,8 +66,18 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             }
             // do not delete the workspace dir if user specified '.' :
             if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists() && config.isCleanDownloadDir()) {
-                if (!build.isManual()){
+                if (!build.isManual()) {
+                    log("cleaning " + targetDir.toString());
                     cleanDirRecursively(targetDir);
+                } else {
+                    log("manual tag detected, not cleaning : " + targetDir.toString());
+                    String[] l = targetDir.list();
+                    if (l == null) {
+                        l = new String[]{"Error reading"};
+                    }
+                    for (String file : l) {
+                        log("  " + file);
+                    }
                 }
             }
             targetDir.mkdirs();
