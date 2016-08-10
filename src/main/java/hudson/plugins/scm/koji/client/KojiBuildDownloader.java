@@ -79,6 +79,8 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                         log("  " + file);
                     }
                 }
+            } else {
+                log("NOT cleaning " + targetDir.toString() + " - cleaning scipped by `.`, workspace or manually");
             }
             targetDir.mkdirs();
         }
