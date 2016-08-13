@@ -64,7 +64,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             if (config.isDirPerNvr()) {
                 targetDir = new File(targetDir, build.getNvr());
             }
-            // do not delete the workspace dir if user specified '.' :
+            // do not delete the workspace dir if user specified '.' or hardcoded workspace:
             if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists() && config.isCleanDownloadDir()) {
                 if (!build.isManual()) {
                     log("cleaning " + targetDir.toString());
@@ -80,7 +80,13 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                     }
                 }
             } else {
-                log("NOT cleaning " + targetDir.toString() + " - cleaning scipped by `.`, workspace or manually");
+                log("NOT cleaning " + targetDir.toString() + ":");
+                log(""+!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()));
+                log(""+targetDir.getAbsoluteFile());
+                log(""+workspace.getAbsoluteFile());
+                log(""+targetDir.exists());
+                log(""+config.isCleanDownloadDir());
+                
             }
             targetDir.mkdirs();
         }
