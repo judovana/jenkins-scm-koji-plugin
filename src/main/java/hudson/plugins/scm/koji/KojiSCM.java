@@ -89,6 +89,9 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     public void log(String s, Object o) {
         LOG.info(s, o);
         if (canLog()) {
+            if (o == null) {
+                o = "null";
+            }
             print("[KojiSCM][" + host() + "] " + s + ": " + o.toString());
         }
     }
@@ -99,6 +102,9 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         if (canLog()) {
             print("[KojiSCM][" + host() + "] " + s);
             for (Object object : o) {
+                if (object == null) {
+                    object = "null";
+                }
                 print("[KojiSCM]   " + object.toString());
             }
         }
@@ -153,10 +159,10 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
         String displayName = build.getVersion() + "-" + build.getRelease();
         log("Updating the build name to: {}", displayName);
-        if (build.isManual()){
-            run.setDisplayName(displayName+"(manual)");    
+        if (build.isManual()) {
+            run.setDisplayName(displayName + "(manual)");
         } else {
-        run.setDisplayName(displayName);
+            run.setDisplayName(displayName);
         }
         if (build.isManual()) {
             log("manual mode -  not saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
