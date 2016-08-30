@@ -39,22 +39,41 @@ public class GlobPredicateTest {
     }
 
     @Test
+    public void testTwoTags() {
+        String glob = "{no_Build-f23-*,x86_64.Built-f23-*}";
+        String input1 = "no_Build-f23-tag";
+        String input2 = "x86_64.Built-f23-tag";
+        String input3 = "i686.Built-f23-tag";
+        assertTrue(new GlobPredicate(glob).test(input1));
+        assertTrue(new GlobPredicate(glob).test(input2));
+        assertFalse(new GlobPredicate(glob).test(input3));
+    }
+
+    private final List<String> input = Arrays.asList(
+            "java-1.8.0-openjdk-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-accessibility-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-accessibility-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-debuginfo-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-demo-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-demo-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-devel-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-devel-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-headless-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-headless-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-src-1.8.0.65-3.b17.fc23.x86_64.rpm",
+            "java-1.8.0-openjdk-src-debug-1.8.0.65-3.b17.fc23.x86_64.rpm"
+    );
+
+    @Test
     public void testCurlyBrackets() {
-        List<String> input = Arrays.asList(
-                "java-1.8.0-openjdk-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-accessibility-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-accessibility-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-debuginfo-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-demo-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-demo-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-devel-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-devel-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-headless-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-headless-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-src-1.8.0.65-3.b17.fc23.x86_64.rpm",
-                "java-1.8.0-openjdk-src-debug-1.8.0.65-3.b17.fc23.x86_64.rpm"
-        );
+        //see difference, debuginfo will be included
+        String glob = "{*debug-*,*accessibility*,*src*,*demo*}";
+        GlobPredicate predicate = new GlobPredicate(glob);
+        assertEquals(9, input.stream().filter(predicate).count());
+    }
+
+    public void testCurlyBracketsAndNegation() {
         String glob = "{*debug*,*accessibility*,*src*,*demo*}";
         GlobPredicate predicate = new GlobPredicate(glob);
         assertEquals(3, input.stream().filter(predicate.negate()).count());
