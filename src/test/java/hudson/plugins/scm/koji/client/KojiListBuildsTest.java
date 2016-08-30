@@ -34,6 +34,50 @@ public class KojiListBuildsTest {
         }
     }
 
+    KojiScmConfig createConfigCustomFedora() {
+        return new KojiScmConfig(
+                "http://localhost:9848/RPC2",
+                "https://localhost:9849/download/",
+                "java-1.8.0-openjdk",
+                "x86_64,src",
+                "f24*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+    
+    KojiScmConfig createConfigCustomFedoraSrcOnly() {
+        return new KojiScmConfig(
+                "http://localhost:9848/RPC2",
+                "https://localhost:9849/download/",
+                "java-1.8.0-openjdk",
+                "src",
+                "f24*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
+    KojiScmConfig createConfigCustomRhel7() {
+        return new KojiScmConfig(
+                "http://localhost:9848/RPC2",
+                "https://localhost:9849/download/",
+                "java-1.8.0-openjdk",
+                "x86_64,src",
+                "rhel-7.*-candidate",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
     KojiScmConfig createConfigF() {
         return new KojiScmConfig(
                 "http://koji.fedoraproject.org/kojihub",
@@ -123,7 +167,6 @@ public class KojiListBuildsTest {
                 10
         );
     }
-
 
     KojiScmConfig createConfigR6_oracle7() {
         return new KojiScmConfig(
@@ -250,6 +293,30 @@ public class KojiListBuildsTest {
         );
 
     }
+//FIXME enable those three tests by launching solid test server with some fake data
+//    @Test
+    public void testListMatchingBuildsCustomF() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+    
+//    @Test
+    public void testListMatchingBuildsCustomFsrcOnly() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedoraSrcOnly(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+//        KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigCustomFedoraSrcOnly(), new NotProcessedNvrPredicate(new HashSet<>()));
+        //dwldr.downloadRPMs(new File("/tmp"), build);
+        assertNotNull(build);
+    }
+    
+//      @Test
+    public void testListMatchingBuildsCustomRhel() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigCustomRhel7(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
 
     @Test
     public void testListMatchingBuildsF() throws Exception {
@@ -293,8 +360,7 @@ public class KojiListBuildsTest {
         assertNotNull(build);
     }
 
-
-       @Test
+    @Test
     public void testListMatchingBuildsR5_sun6() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigR5_sun6(), new NotProcessedNvrPredicate(new HashSet<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
