@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.HashSet;
+import org.fakekoji.xmlrpc.server.JavaServer;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -36,8 +37,8 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigCustomFedora() {
         return new KojiScmConfig(
-                "http://localhost:9848/RPC2",
-                "https://localhost:9849/download/",
+                "http://localhost:"+JavaServer.DFAULT_RP2C_PORT+"/RPC2",
+                "https://localhost:"+JavaServer.DFAULT_DWNLD_PORT,
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "f24*",
@@ -51,8 +52,8 @@ public class KojiListBuildsTest {
     
     KojiScmConfig createConfigCustomFedoraSrcOnly() {
         return new KojiScmConfig(
-                "http://localhost:9848/RPC2",
-                "https://localhost:9849/download/",
+                "http://localhost:"+JavaServer.DFAULT_RP2C_PORT+"/RPC2",
+                "https://localhost:"+JavaServer.DFAULT_DWNLD_PORT,
                 "java-1.8.0-openjdk",
                 "src",
                 "f24*",
@@ -66,8 +67,8 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigCustomRhel7() {
         return new KojiScmConfig(
-                "http://localhost:9848/RPC2",
-                "https://localhost:9849/download/",
+                "http://localhost:"+JavaServer.DFAULT_RP2C_PORT+"/RPC2",
+                "https://localhost:"+JavaServer.DFAULT_DWNLD_PORT,
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "rhel-7.*-candidate",

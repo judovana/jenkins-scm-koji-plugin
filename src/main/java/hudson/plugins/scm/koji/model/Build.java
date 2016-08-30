@@ -1,5 +1,6 @@
 package hudson.plugins.scm.koji.model;
 
+import hudson.plugins.scm.koji.Constants;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -12,7 +13,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
-@XmlRootElement(name = "build")
+@XmlRootElement(name = Constants.build)
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Build implements Comparable<Build>, java.io.Serializable {
 
@@ -20,17 +21,17 @@ public class Build implements Comparable<Build>, java.io.Serializable {
     private final Boolean manual;
     @XmlElement(name = "id")
     private final Integer id;
-    @XmlElement(name = "name")
+    @XmlElement(name = Constants.name)
     private final String name;
-    @XmlElement(name = "version")
+    @XmlElement(name = Constants.version)
     private final String version;
-    @XmlElement(name = "release")
+    @XmlElement(name = Constants.release)
     private final String release;
-    @XmlElement(name = "nvr")
+    @XmlElement(name = Constants.nvr)
     private final String nvr;
     @XmlElement(name = "completion")
     private final String completionTime;
-    @XmlElementWrapper(name = "rpms")
+    @XmlElementWrapper(name = Constants.rpms)
     @XmlElement(name = "rpm")
     private final List<RPM> rpms;
     @XmlElementWrapper(name = "tags")

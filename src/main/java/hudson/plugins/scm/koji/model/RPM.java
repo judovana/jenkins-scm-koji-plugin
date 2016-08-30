@@ -1,5 +1,6 @@
 package hudson.plugins.scm.koji.model;
 
+import hudson.plugins.scm.koji.Constants;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -7,15 +8,15 @@ import javax.xml.bind.annotation.XmlElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class RPM implements java.io.Serializable {
 
-    @XmlElement(name = "name")
+    @XmlElement(name = Constants.name)
     private final String name;
-    @XmlElement(name = "version")
+    @XmlElement(name = Constants.version)
     private final String version;
-    @XmlElement(name = "release")
+    @XmlElement(name = Constants.release)
     private final String release;
-    @XmlElement(name = "nvr")
+    @XmlElement(name = Constants.nvr)
     private final String nvr;
-    @XmlElement(name = "arch")
+    @XmlElement(name = Constants.arch)
     private final String arch;
 
     public RPM(String name, String version, String release, String nvr, String arch) {

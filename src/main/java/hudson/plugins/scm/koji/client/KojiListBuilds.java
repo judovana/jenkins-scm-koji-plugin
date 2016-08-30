@@ -2,6 +2,7 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
 import hudson.plugins.scm.koji.BuildsSerializer;
+import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
@@ -11,8 +12,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -49,22 +48,6 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiListBuilds.class);
 
-    private static final DateTimeFormatter DTF = new DateTimeFormatterBuilder()
-            .appendValue(ChronoField.YEAR, 4)
-            .appendLiteral('-')
-            .appendValue(ChronoField.MONTH_OF_YEAR, 2)
-            .appendLiteral('-')
-            .appendValue(ChronoField.DAY_OF_MONTH, 2)
-            .appendLiteral(' ')
-            .appendValue(ChronoField.HOUR_OF_DAY, 2)
-            .appendLiteral(':')
-            .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
-            .appendLiteral(':')
-            .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
-            .appendLiteral('.')
-            .appendValue(ChronoField.MICRO_OF_SECOND)
-            .toFormatter();
-
     private final KojiScmConfig config;
     private final GlobPredicate tagPredicate;
     private final Predicate<String> notProcessedNvrPredicate;
@@ -82,7 +65,6 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
 //        List<Build> l = results
 //                .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
 //                .collect(Collectors.toList());
-
         Optional<Build> buildOpt = results
                 .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
                 .findFirst();
@@ -104,14 +86,14 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     }
 
     private Stream<Build> listMatchingBuilds() {
-        Integer packageId = (Integer) execute("getPackageID", config.getPackageName());
+        Integer packageId = (Integer) execute(Constants.getPackageID, config.getPackageName());
 
         Map paramsMap = new HashMap();
-        paramsMap.put("packageID", packageId);
+        paramsMap.put(packageId, packageId);
         paramsMap.put("state", 1);
         paramsMap.put("__starstar", Boolean.TRUE);
 
-        Object[] results = (Object[]) execute("listBuilds", paramsMap);
+        Object[] results = (Object[]) execute(Constants.listBuilds, paramsMap);
         if (results == null || results.length < 1) {
             return Stream.empty();
         }
@@ -141,13 +123,13 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         }
 
         Map m = (Map) o;
-        //Object buildName = m.get("nvr");
+        //Object buildName = m.get(nvr);
 
         Map paramsMap = new HashMap();
-        paramsMap.put("build", m.get("build_id"));
+        paramsMap.put(Constants.build, m.get(Constants.build_id));
         paramsMap.put("__starstar", Boolean.TRUE);
 
-        Object res = execute("listTags", paramsMap);
+        Object res = execute(Constants.listTags, paramsMap);
         if (res != null && (res instanceof Object[]) && ((Object[]) res).length > 0) {
             m.put("tags", res);
         }
@@ -159,14 +141,14 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
             throw new RuntimeException("Map instance expected, got: " + o);
         }
         Map m = (Map) o;
-        Object buildName = m.get("name");
+        Object buildName = m.get(Constants.name);
         Object[] tags = (Object[]) m.get("tags");
         if (tags == null) {
             return false;
         }
         boolean tagMatch = Arrays
                 .stream(tags)
-                .map(t -> ((Map<String, String>) t).get("name"))
+                .map(t -> ((Map<String, String>) t).get(Constants.name))
                 .anyMatch(tagPredicate);
         return tagMatch;
     }
@@ -178,16 +160,16 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         Map m = (Map) o;
 
         Map paramsMap = new HashMap();
-        paramsMap.put("buildID", m.get("build_id"));
+        paramsMap.put(Constants.buildID, m.get(Constants.build_id));
         String[] arches = composeArchesArray();
         if (arches != null) {
-            paramsMap.put("arches", arches);
+            paramsMap.put(Constants.arches, arches);
         }
         paramsMap.put("__starstar", Boolean.TRUE);
 
-        Object res = execute("listRPMs", paramsMap);
+        Object res = execute(Constants.listRPMs, paramsMap);
         if (res != null && (res instanceof Object[]) && ((Object[]) res).length > 0) {
-            m.put("rpms", res);
+            m.put(Constants.rpms, res);
         }
 
         return o;
@@ -202,7 +184,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
             throw new RuntimeException("Arch cannot be empty");
         }
         Map m = (Map) o;
-        boolean hasRpms = m.get("rpms") != null;
+        boolean hasRpms = m.get(Constants.rpms) != null;
         return hasRpms;
     }
 
@@ -212,21 +194,20 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         }
 
         Map<String, String> m = (Map) o;
-        return new Build((Integer) ((Map) o).get("build_id"),
-                m.get("name"),
-                m.get("version"),
-                m.get("release"),
-                m.get("nvr"),
-                dateKojiToIso(m.get("completion_time")),
+        return new Build((Integer) ((Map) o).get(Constants.build_id),
+                m.get(Constants.name),
+                m.get(Constants.version),
+                m.get(Constants.release),
+                m.get(Constants.nvr),
+                dateKojiToIso(m.get(Constants.completion_time)),
                 Arrays
-                .stream((Object[]) ((Map) o).get("rpms"))
+                .stream((Object[]) ((Map) o).get(Constants.rpms))
                 .map(this::toRPM)
                 .collect(Collectors.toList()),
                 Arrays
                 .stream((Object[]) ((Map) o).get("tags"))
-                .map(t -> ((Map<String, String>) t).get("name"))
-                .collect(Collectors.toSet())
-                , null
+                .map(t -> ((Map<String, String>) t).get(Constants.name))
+                .collect(Collectors.toSet()), null
         );
     }
 
@@ -236,15 +217,15 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         }
         Map<String, String> m = (Map) o;
         return new RPM(
-                m.get("name"),
-                m.get("version"),
-                m.get("release"),
-                m.get("nvr"),
-                m.get("arch"));
+                m.get(Constants.name),
+                m.get(Constants.version),
+                m.get(Constants.release),
+                m.get(Constants.nvr),
+                m.get(Constants.arch));
     }
 
     private String dateKojiToIso(String kojiDate) {
-        LocalDateTime date = LocalDateTime.parse(kojiDate, DTF);
+        LocalDateTime date = LocalDateTime.parse(kojiDate, Constants.DTF);
         return DateTimeFormatter.ISO_DATE_TIME.format(date);
     }
 
@@ -268,12 +249,12 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         Map<String, String> m2 = (Map) o2;
 
         // comparing versions:
-        int res = compareStrings(m1.get("version"), m2.get("version"));
+        int res = compareStrings(m1.get(Constants.version), m2.get(Constants.version));
         if (res != 0) {
             return res;
         }
         // version are identical, comparing releases:
-        return compareStrings(m1.get("release"), m2.get("release"));
+        return compareStrings(m1.get(Constants.release), m2.get(Constants.release));
     }
 
     private int compareStrings(String o1, String o2) {
