@@ -25,11 +25,12 @@ import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.LoggerHelp;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp{
+public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private final KojiScmConfig config;
@@ -81,12 +82,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 }
             } else {
                 log("NOT cleaning " + targetDir.toString() + ":");
-                log(""+!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()));
-                log(""+targetDir.getAbsoluteFile());
-                log(""+workspace.getAbsoluteFile());
-                log(""+targetDir.exists());
-                log(""+config.isCleanDownloadDir());
-                
+                log("" + !targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()));
+                log("" + targetDir.getAbsoluteFile());
+                log("" + workspace.getAbsoluteFile());
+                log("" + targetDir.exists());
+                log("" + config.isCleanDownloadDir());
+
             }
             targetDir.mkdirs();
         }
@@ -108,7 +109,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         }
     }
 
-    private List<String> downloadRPMs(File targetDir, Build build) {
+    public List<String> downloadRPMs(File targetDir, Build build) {
         Predicate<RPM> nvrPredicate = i -> true;
         if (config.getExcludeNvr() != null && !config.getExcludeNvr().isEmpty()) {
             GlobPredicate glob = new GlobPredicate(config.getExcludeNvr());
@@ -125,32 +126,40 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
-            String urlString = composeUrl(build, rpm);
-            log(InetAddress.getLocalHost().getHostName());
-            log(new Date().toString());
-            if (build.isManual()) {
-                log("Manual tag provided - skipping download of ", urlString);
-            } else {
-                log("Downloading: ", urlString);
-            }
-            File targetFile = new File(targetDir, rpm.getNvr() + '.' + rpm.getArch() + ".rpm");
-            log("To: ", targetFile);
-            if (!build.isManual()) {
-                try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
-                        InputStream in = httpDownloadStream(urlString)) {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
+            //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
+            for (String suffix : new String[]{"rpm", "tarxz"}) {
+                String urlString = composeUrl(build, rpm, suffix);
+                log(InetAddress.getLocalHost().getHostName());
+                log(new Date().toString());
+                if (build.isManual()) {
+                    log("Manual tag provided - skipping download of ", urlString);
+                } else {
+                    log("Downloading: ", urlString);
+                }
+                if (!isUrlReachable(urlString)) {
+                    log("Not accessible, trying another suffix in: ", rpm.getFilename(suffix));
+                    continue;
+                }
+                File targetFile = new File(targetDir, rpm.getFilename(suffix));
+                log("To: ", targetFile);
+                if (!build.isManual()) {
+                    try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
+                            InputStream in = httpDownloadStream(urlString)) {
+                        byte[] buffer = new byte[8192];
+                        int read;
+                        while ((read = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, read);
+                        }
                     }
                 }
+                return targetFile;
             }
-            return targetFile;
         } catch (RuntimeException ex) {
             throw ex;
         } catch (Exception ex) {
             throw new RuntimeException("Exception while downloading RPM", ex);
         }
+        return null;
     }
 
     private InputStream httpDownloadStream(String urlString) {
@@ -194,7 +203,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         throw new RuntimeException("Too many redirects for URL: " + urlString);
     }
 
-    private String composeUrl(Build build, RPM rpm) {
+    private String composeUrl(Build build, RPM rpm, String suffix) {
         String kojiDownloadUrl = config.getKojiDownloadUrl();
         StringBuilder sb = new StringBuilder(255);
         sb.append(kojiDownloadUrl);
@@ -205,8 +214,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         sb.append(build.getVersion()).append('/');
         sb.append(build.getRelease()).append('/');
         sb.append(rpm.getArch()).append('/');
-        sb.append(rpm.getNvr()).append('.');
-        sb.append(rpm.getArch()).append(".rpm");
+        sb.append(rpm.getFilename(suffix));
         return sb.toString();
     }
 
@@ -269,5 +277,23 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 print("[KojiSCM]   " + object.toString());
             }
         }
+    }
+
+    private boolean isUrlReachable(String urlString) {
+        try {
+            return isUrlReachableImpl(urlString);
+        } catch (Exception e) {
+            LOG.info(e.toString());
+            return false;
+        }
+    }
+
+    private boolean isUrlReachableImpl(String urlString) throws MalformedURLException, IOException {
+        URL u = new URL(urlString);
+        HttpURLConnection huc = (HttpURLConnection) u.openConnection();
+        huc.setRequestMethod("GET");  //OR  huc.setRequestMethod ("HEAD"); 
+        huc.connect();
+        int code = huc.getResponseCode();
+        return code == 200;
     }
 }

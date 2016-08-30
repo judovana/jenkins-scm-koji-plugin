@@ -141,7 +141,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         }
 
         Map m = (Map) o;
-        Object buildName = m.get("nvr");
+        //Object buildName = m.get("nvr");
 
         Map paramsMap = new HashMap();
         paramsMap.put("build", m.get("build_id"));
