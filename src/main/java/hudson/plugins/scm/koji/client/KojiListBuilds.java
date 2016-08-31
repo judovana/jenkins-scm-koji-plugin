@@ -89,7 +89,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         Integer packageId = (Integer) execute(Constants.getPackageID, config.getPackageName());
 
         Map paramsMap = new HashMap();
-        paramsMap.put(packageId, packageId);
+        paramsMap.put(Constants.packageID, packageId);
         paramsMap.put("state", 1);
         paramsMap.put("__starstar", Boolean.TRUE);
 
