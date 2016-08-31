@@ -46,7 +46,9 @@ public class JavaServer {
 
     private static File dbFileRoot;
     public static final int DFAULT_RP2C_PORT = 9848;
-    public static final int DFAULT_DWNLD_PORT = DFAULT_RP2C_PORT + 1;
+    public static final int DFAULT_DWNLD_PORT = deductDwPort(DFAULT_RP2C_PORT);
+    private static int realXPort;
+    private static int realDPort;
 
     /**
      * Testing method (see JavaClient) to verify if server works at all.
@@ -59,10 +61,9 @@ public class JavaServer {
         return x + y;
     }
 
-    
     /**
      * xmlrpc api for sum.
-     * 
+     *
      * @param x
      * @param y
      * @return x+y
@@ -72,22 +73,32 @@ public class JavaServer {
     }
 
     public static void main(String[] args) {
+        realXPort = DFAULT_RP2C_PORT;
+        realDPort = DFAULT_DWNLD_PORT;
         if (args.length < 1) {
-            throw new RuntimeException("expected at least one argument - directory with koji-like \"database\"");
+            throw new RuntimeException("expected at least one argument - directory with koji-like \"database\".\n"
+                    + "second is optional xml-rpcport port (then download port is deducted by +1).\n"
+                    + "third is optional download port.\n");
         } else {
             dbFileRoot = new File(args[0]);
             System.out.println("testing koji-like databse " + dbFileRoot.getAbsolutePath());
             //cache FS
             FakeKojiDB test = new FakeKojiDB(dbFileRoot);
             test.checkAll();
-
         }
-
+        if (args.length == 2) {
+            realXPort = Integer.valueOf(args[1]);
+            realDPort = deductDwPort(realXPort);
+        }
+        if (args.length == 3) {
+            realXPort = Integer.valueOf(args[1]);
+            realDPort = Integer.valueOf(args[2]);
+        }
         try {
 
             System.out.println("Attempting to start XML-RPC Server...");
 
-            WebServer server = new WebServer(DFAULT_RP2C_PORT);
+            WebServer server = new WebServer(realXPort);
             server.setParanoid(false);
             XmlRpcHandlerMapping xxx = new XmlRpcHandlerMapping() {
                 @Override
@@ -142,17 +153,21 @@ public class JavaServer {
             server.getXmlRpcServer().setHandlerMapping(xxx);
             //server.addHandler("sample", new JavaServer());
             server.start();
-            System.out.println("Started successfully.");
+            System.out.println("Started successfully on " + realXPort);
             System.out.println("Starting http server to return files.");
-            HttpServer hs = HttpServer.create(new InetSocketAddress(DFAULT_DWNLD_PORT), 0);
+            HttpServer hs = HttpServer.create(new InetSocketAddress(realDPort), 0);
             hs.createContext("/", new FileReturningHandler(dbFileRoot));
             hs.start();
-            System.out.println("Started successfully.");
+            System.out.println("Started successfully on " + realDPort);
             System.out.println("Accepting requests. (Halt program to stop.)");
 
         } catch (Exception exception) {
             System.err.println("JavaServer: " + exception);
             exception.printStackTrace();
         }
+    }
+
+    private static int deductDwPort(int xport) {
+        return xport + 1;
     }
 }
