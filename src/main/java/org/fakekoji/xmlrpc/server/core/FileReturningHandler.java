@@ -30,6 +30,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 
 /**
@@ -80,6 +85,10 @@ public class FileReturningHandler implements HttpHandler {
             String requestedFile = t.getRequestURI().getPath();
             File f = new File(root + "/" + requestedFile);
             System.out.println(new Date().toString() + "attempting: " + requestedFile);
+            if (f.getName().equals("ALL")) {
+                sentFullLIst(f, requestedFile, t);
+                return;
+            }
             if (f.exists() && f.isDirectory()) {
                 sentDirListing(f, requestedFile, t);
                 return;
@@ -102,15 +111,70 @@ public class FileReturningHandler implements HttpHandler {
                 }
             }
         }
+
+    }
+
+    private static void sentFullLIst(File ff, final String requestedFile, HttpExchange t) throws IOException {
+        File f = ff.getParentFile();
+        System.out.println(f.getAbsolutePath() + " listing all files!");
+        StringBuilder sb = generateHtmlAllFiles(requestedFile, f);
+        String result = sb.toString();
+        long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
+        t.sendResponseHeaders(200, size);
+        try (OutputStream os = t.getResponseBody()) {
+            os.write(result.getBytes());
+        }
+
+    }
+
+    private static StringBuilder generateHtmlAllFiles(final String requestedFile, final File f) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("<html>\n");
+        sb.append("  <body>\n");
+        sb.append("  <h2>").append(requestedFile).append("</h2>\n");
+        sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
+        sb.append("..");
+        sb.append("    </a><br/>\n");
+        Files.walkFileTree(f.toPath(), new FileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                String fileChunk = file.toAbsolutePath().toString().substring(f.getAbsolutePath().length());
+                String rf = new File(requestedFile).getParent();
+                String path = "/" + rf + "/" + fileChunk;
+                path = path.replaceAll("/+", "/");
+                sb.append("    <a href=\"").append(path).append("\">");
+                sb.append(fileChunk);
+                sb.append("    </a><br/>\n");
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        sb.append("  </body>\n");
+        sb.append("</html>\n");
+        return sb;
     }
 
     private static void sentFile(File f, HttpExchange t) throws IOException {
         long size = f.length();
         System.out.println(f.getAbsolutePath() + " is " + size + " bytes long");
         t.sendResponseHeaders(200, size);
-        OutputStream os = t.getResponseBody();
-        copy(new FileInputStream(f), os);
-        os.close();
+        try (OutputStream os = t.getResponseBody()) {
+            copy(new FileInputStream(f), os);
+        }
     }
 
     private static final int BUF_SIZE = 0x1000; // 4K
@@ -130,26 +194,39 @@ public class FileReturningHandler implements HttpHandler {
         return total;
     }
 
-    private void sentDirListing(File f, String requestedFile, HttpExchange t) throws IOException {
+    private static void sentDirListing(File f, String requestedFile, HttpExchange t) throws IOException {
         System.out.println(f.getAbsolutePath() + " listing directory!");
-        String[] s = f.list();
+        String[] files = f.list();
+        String[] s = new String[files.length + 1];
+        s[0] = "ALL";
+        System.arraycopy(files, 0, s, 1, files.length);
+        StringBuilder sb = generateHtmlFromArray(requestedFile, s);
+        String result = sb.toString();
+        long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
+        t.sendResponseHeaders(200, size);
+        try (OutputStream os = t.getResponseBody()) {
+            os.write(result.getBytes());
+        }
+    }
+
+    private static StringBuilder generateHtmlFromArray(String requestedFile, String[] s) {
         StringBuilder sb = new StringBuilder();
         sb.append("<html>\n");
         sb.append("  <body>\n");
+        sb.append("  <h2>").append(requestedFile).append("</h2>\n");
+        sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
+        sb.append("..");
+        sb.append("    </a><br/>\n");
         for (String string : s) {
-            sb.append("    <a href=\"").append(requestedFile).append("/").append(string).append("\">");
+            String path = "/" + requestedFile + "/" + string;
+            path = path.replaceAll("/+", "/");
+            sb.append("    <a href=\"").append(path).append("\">");
             sb.append(string);
             sb.append("    </a><br/>\n");
         }
         sb.append("  </body>\n");
         sb.append("</html>\n");
-        String result = sb.toString();
-        long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
-        t.sendResponseHeaders(200, size);
-        OutputStream os = t.getResponseBody();
-        os.write(result.getBytes());
-        os.close();
-
+        return sb;
     }
 
 }
