@@ -204,7 +204,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     }
 
     private String composeUrl(Build build, RPM rpm, String suffix) {
-        String kojiDownloadUrl = config.getKojiDownloadUrl();
+        String kojiDownloadUrl = config.getKojiDownloadUrlInterpreted();
         StringBuilder sb = new StringBuilder(255);
         sb.append(kojiDownloadUrl);
         if (kojiDownloadUrl.charAt(kojiDownloadUrl.length() - 1) != '/') {

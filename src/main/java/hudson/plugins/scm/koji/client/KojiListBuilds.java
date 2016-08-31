@@ -349,7 +349,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
     private XmlRpcClient createClient() throws Exception {
         XmlRpcClientConfigImpl xmlRpcConfig = new XmlRpcClientConfigImpl();
-        xmlRpcConfig.setServerURL(new URL(config.getKojiTopUrl()));
+        xmlRpcConfig.setServerURL(new URL(config.getKojiTopUrlInterpreted()));
         XmlRpcClient client = new XmlRpcClient();
         client.setConfig(xmlRpcConfig);
         client.setTypeFactory(new KojiTypeFactory(client));
