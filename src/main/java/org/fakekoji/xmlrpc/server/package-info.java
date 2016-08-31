@@ -35,8 +35,8 @@ package org.fakekoji.xmlrpc.server;
  * To simplyfy the packaging, you can use included maven assembly .
  * This is not exactly automated, as you need to change packaging to jar.
  * then:
- * mvn assembly:assembly -DskipTests
- * java -Xmx1g -cp jenkins-scm-koji-plugin-jar-with-dependencies.jar:/usr/share/java/apache-commons-logging.jar org.fakekoji.xmlrpc.serv.JavaServer ~/NetBeansProjects/CustomXmlRpc-Deprecated-movedToKojiPlugin/src/test/resources/local-builds/
+ * mvn clean && mvn assembly:assembly -DskipTests
+ * cd target && ava -Xmx1g -cp jenkins-scm-koji-plugin-jar-with-dependencies.jar:/usr/share/java/apache-commons-logging.jar org.fakekoji.xmlrpc.serv.JavaServer ~/NetBeansProjects/CustomXmlRpc-Deprecated-movedToKojiPlugin/src/test/resources/local-builds/
  *
  * where logging.jar is any logging implementation. Apache xmlrpc are happy with apache logging.
  * 
