@@ -76,4 +76,19 @@ public class KojiScmConfig implements java.io.Serializable {
         return maxPreviousBuilds;
     }
 
+    @Override
+    public String toString() {
+        return "KojiScmConfig{" +
+                "kojiTopUrl='" + kojiTopUrl + '\'' +
+                ", kojiDownloadUrl='" + kojiDownloadUrl + '\'' +
+                ", packageName='" + packageName + '\'' +
+                ", arch='" + arch + '\'' +
+                ", tag='" + tag + '\'' +
+                ", excludeNvr='" + excludeNvr + '\'' +
+                ", downloadDir='" + downloadDir + '\'' +
+                ", cleanDownloadDir=" + cleanDownloadDir +
+                ", dirPerNvr=" + dirPerNvr +
+                ", maxPreviousBuilds=" + maxPreviousBuilds +
+                '}';
+    }
 }

@@ -8,6 +8,7 @@ import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.remoting.VirtualChannel;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,20 +20,26 @@ import java.net.URL;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
 import org.jenkinsci.remoting.RoleChecker;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
+
 import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.LoggerHelp;
+
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.util.Date;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
+    private static final int MAX_REDIRECTIONS = 10;
+
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
@@ -165,7 +172,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private InputStream httpDownloadStream(String urlString) {
         HttpURLConnection httpConn = null;
         boolean keepConnection = false;
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < MAX_REDIRECTIONS; i++) {
             try {
                 URL url = new URL(urlString);
                 httpConn = (HttpURLConnection) url.openConnection();
@@ -281,19 +288,26 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     private boolean isUrlReachable(String urlString) {
         try {
-            return isUrlReachableImpl(urlString);
+            return isUrlReachableImpl(urlString, MAX_REDIRECTIONS);
         } catch (Exception e) {
             LOG.info(e.toString());
             return false;
         }
     }
 
-    private boolean isUrlReachableImpl(String urlString) throws MalformedURLException, IOException {
+    private boolean isUrlReachableImpl(String urlString, int redirectionsRemaining) throws MalformedURLException, IOException {
         URL u = new URL(urlString);
         HttpURLConnection huc = (HttpURLConnection) u.openConnection();
-        huc.setRequestMethod("GET");  //OR  huc.setRequestMethod ("HEAD"); 
-        huc.connect();
-        int code = huc.getResponseCode();
-        return code == 200;
+        try {
+            huc.setRequestMethod("GET");  //OR  huc.setRequestMethod ("HEAD");
+            huc.connect();
+            int code = huc.getResponseCode();
+            if (code == 301 && redirectionsRemaining > 0) {
+                return isUrlReachableImpl(huc.getHeaderField("Location"), redirectionsRemaining - 1);
+            }
+            return code == 200;
+        } finally {
+            huc.disconnect();
+        }
     }
 }

@@ -213,6 +213,21 @@ public class KojiListBuildsTest {
         );
     }
 
+    KojiScmConfig createConfigWindows() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "openjdk8-win",
+                "win",
+                "openjdk-win*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -381,4 +396,10 @@ public class KojiListBuildsTest {
         assertNotNull(build);
     }
 
+    @Test
+    public void testListMatchingBuildsWindows() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigWindows(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
 }
