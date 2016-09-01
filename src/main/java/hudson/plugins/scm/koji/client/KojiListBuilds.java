@@ -7,6 +7,7 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.remoting.VirtualChannel;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -23,6 +24,7 @@ import java.util.StringTokenizer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.apache.ws.commons.util.NamespaceContextImpl;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -30,6 +32,7 @@ import org.apache.xmlrpc.common.TypeFactoryImpl;
 import org.apache.xmlrpc.common.XmlRpcController;
 import org.apache.xmlrpc.common.XmlRpcStreamConfig;
 import org.apache.xmlrpc.parser.AtomicParser;
+import org.apache.xmlrpc.parser.ObjectArrayParser;
 import org.apache.xmlrpc.parser.TypeParser;
 import org.apache.xmlrpc.serializer.I4Serializer;
 import org.apache.xmlrpc.serializer.TypeSerializer;
@@ -40,7 +43,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
+import static hudson.plugins.scm.koji.Constants.arch;
 import static hudson.plugins.scm.koji.KojiSCM.DESCRIPTOR;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +67,6 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     public Build invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         Stream<Build> results = listMatchingBuilds();
 
-//        List<Build> l = results
-//                .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
-//                .collect(Collectors.toList());
         Optional<Build> buildOpt = results
                 .filter(b -> notProcessedNvrPredicate.test(b.getNvr()))
                 .findFirst();
@@ -108,6 +110,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                 .filter(this::filterByTags)
                 // getting rpms and filtering by arch right away:
                 .map(this::retrieveRPMs)
+                .map(this::retrieveArchives)
                 .filter(this::filterByArch)
                 // do not go too far away into the past:
                 .limit(config.getMaxPreviousBuilds())
@@ -175,6 +178,46 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         return o;
     }
 
+    /**
+     * Archives are stored under {@link Constants#rpms} key, together with RPMs.
+     * <p>
+     * Name, Version and Release are not received with info about archive. We need to get it from the build. Arch is
+     * taken from configuration and is later used to compose filepath. Unlike with RPMs, filename is received here so
+     * we can store it.
+     */
+    private Object retrieveArchives(Object o) {
+        if (!(o instanceof Map)) {
+            throw new RuntimeException("Map instance expected, got: " + o);
+        }
+        Map m = (Map) o;
+
+        Map<String, Object> paramsMap = new HashMap<>();
+        paramsMap.put(Constants.buildID, m.get(Constants.build_id));
+        String[] arches = composeArchesArray();
+        paramsMap.put("__starstar", Boolean.TRUE);
+
+        Object listedArchives = execute(Constants.listArchives, paramsMap);
+        if (listedArchives != null && (listedArchives instanceof Object[])) {
+            for (Object archive : (Object[]) listedArchives) {
+                if (archive != null && archive instanceof Map) {
+                    for (String arch : arches) {
+                        Map<String, Object> rpms = (Map) archive;
+                        rpms.put(Constants.name, m.get(Constants.name));
+                        rpms.put(Constants.version, m.get(Constants.version));
+                        rpms.put(Constants.release, m.get(Constants.release));
+                        rpms.put(Constants.arch, arch);
+                        rpms.put(Constants.nvr, ((Map) archive).get(Constants.filename));
+                        rpms.put(Constants.filename, ((Map) archive).get(Constants.filename));
+                    }
+                }
+            }
+
+            m.put(Constants.rpms, listedArchives);
+        }
+
+        return o;
+    }
+
     private boolean filterByArch(Object o) {
         if (!(o instanceof Map)) {
             throw new RuntimeException("Map instance expected, got: " + o);
@@ -201,13 +244,13 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                 m.get(Constants.nvr),
                 dateKojiToIso(m.get(Constants.completion_time)),
                 Arrays
-                .stream((Object[]) ((Map) o).get(Constants.rpms))
-                .map(this::toRPM)
-                .collect(Collectors.toList()),
+                        .stream((Object[]) ((Map) o).get(Constants.rpms))
+                        .map(this::toRPM)
+                        .collect(Collectors.toList()),
                 Arrays
-                .stream((Object[]) ((Map) o).get("tags"))
-                .map(t -> ((Map<String, String>) t).get(Constants.name))
-                .collect(Collectors.toSet()), null
+                        .stream((Object[]) ((Map) o).get("tags"))
+                        .map(t -> ((Map<String, String>) t).get(Constants.name))
+                        .collect(Collectors.toSet()), null
         );
     }
 
@@ -221,7 +264,8 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                 m.get(Constants.version),
                 m.get(Constants.release),
                 m.get(Constants.nvr),
-                m.get(Constants.arch));
+                m.get(Constants.arch),
+                m.get(Constants.filename));
     }
 
     private String dateKojiToIso(String kojiDate) {
