@@ -227,6 +227,21 @@ public class KojiListBuildsTest {
                 10
         );
     }
+    
+      KojiScmConfig createConfigCustomWindows() {
+        return new KojiScmConfig(
+                "http://localhost:XPORT/RPC2",
+                "https://localhost:DPORT",
+                "openjdk8-win",
+                "win",
+                "openjdk-win*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
 
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -326,6 +341,15 @@ public class KojiListBuildsTest {
     }
     
 //      @Test
+    //this testis currently  very broken. The project is openjdk8-win instead of expected java-1.8.0-openjdk. Needs serious investigations
+    public void testListMatchingBuildsCustomWindows() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigCustomWindows(), new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+         //dwldr.downloadRPMs(new File("/tmp"), build);
+        assertNotNull(build);
+    }
+    
+          @Test
     public void testListMatchingBuildsCustomRhel() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomRhel7(), new NotProcessedNvrPredicate(new HashSet<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
