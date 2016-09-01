@@ -196,23 +196,23 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         String[] arches = composeArchesArray();
         paramsMap.put("__starstar", Boolean.TRUE);
 
-        Object res = execute(Constants.listArchives, paramsMap);
-        if (res != null && (res instanceof Object[]) && ((Object[]) res).length > 0) {
-            for (Object r : (Object[]) res) {
-                if (r != null && r instanceof Map) {
+        Object listedArchives = execute(Constants.listArchives, paramsMap);
+        if (listedArchives != null && (listedArchives instanceof Object[])) {
+            for (Object archive : (Object[]) listedArchives) {
+                if (archive != null && archive instanceof Map) {
                     for (String arch : arches) {
-                        Map<String, Object> rpms = (Map) r;
+                        Map<String, Object> rpms = (Map) archive;
                         rpms.put(Constants.name, m.get(Constants.name));
                         rpms.put(Constants.version, m.get(Constants.version));
                         rpms.put(Constants.release, m.get(Constants.release));
                         rpms.put(Constants.arch, arch);
-                        rpms.put(Constants.nvr, ((Map) r).get(Constants.filename));
-                        rpms.put(Constants.filename, ((Map) r).get(Constants.filename));
+                        rpms.put(Constants.nvr, ((Map) archive).get(Constants.filename));
+                        rpms.put(Constants.filename, ((Map) archive).get(Constants.filename));
                     }
                 }
             }
 
-            m.put(Constants.rpms, res);
+            m.put(Constants.rpms, listedArchives);
         }
 
         return o;
@@ -407,8 +407,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         }
 
         @Override
-        public TypeParser getParser(XmlRpcStreamConfig pConfig, NamespaceContextImpl pContext, String pURI, String
-                pLocalName) {
+        public TypeParser getParser(XmlRpcStreamConfig pConfig, NamespaceContextImpl pContext, String pURI, String pLocalName) {
             switch (pLocalName) {
                 case "nil":
                     return new NilParser();
