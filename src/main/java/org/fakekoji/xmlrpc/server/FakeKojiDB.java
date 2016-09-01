@@ -70,14 +70,16 @@ public class FakeKojiDB {
     }
 
     Integer getPkgId(String requestedProject) {
+        String trayed = "";
         for (String project : projects) {
+            trayed+=" "+project;
             if (project.equals(requestedProject)) {
                 //is there better str->int function?
                 //indeed, the file. But number of projects is small.
                 return project.hashCode();
             }
         }
-        return null;
+        throw new RuntimeException("Unknown project "+ requestedProject + ". Tryed: "+trayed+".");
 
     }
 
@@ -271,4 +273,14 @@ public class FakeKojiDB {
         return build.getRpmsAsArrayOfMaps(archs);
     }
 
+    Object[] getArchives(Object get, Object get0) {
+        return getArchivesI((Integer) get, (Object[]) get0);
+    }
+
+    /**
+     * same as rpms but on windows (solaris?) archives
+     */
+    Object[] getArchivesI(Integer buildDd, Object[] archs) {
+        return new Object[0];
+    }
 }

@@ -108,6 +108,7 @@ public class JavaServer {
                  */
                 public XmlRpcHandler getHandler(String string) throws XmlRpcNoSuchHandlerException, XmlRpcException {
                     return new XmlRpcHandler() {
+                        @Override
                         public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
                             System.out.println(new Date().toString() + " Requested: " + xrr.getMethodName());
                             //need reinitializzing, as new  build couldbe added
@@ -144,6 +145,11 @@ public class JavaServer {
                                 //input is hashmap buildID->integer, arches->String[] and uninteresed __starstar->true
                                 //output is array off hashmaps
                                 return kojiDb.getRpms(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));
+                            }
+                              if (xrr.getMethodName().equals(Constants.listArchives)) {
+                                //input is hashmap buildID->integer, arches->String[] and uninteresed __starstar->true
+                                //output is array off hashmaps
+                                return kojiDb.getArchives(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));
                             }
                             return null;
                         }

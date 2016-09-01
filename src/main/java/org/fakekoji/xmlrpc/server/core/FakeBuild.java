@@ -280,6 +280,8 @@ public class FakeBuild {
                 m.put(Constants.release, release);
                 m.put(Constants.version, version);
                 m.put(Constants.name, pkgNAme);
+                /*IMPORTANT filename is originally only for archives. misusing here*/
+                m.put(Constants.filename, fname);
                 m.put(Constants.nvr, pkgFile);
                 m.put(Constants.arch, arch);
                 m.put(Constants.build_id, getBuildID());
