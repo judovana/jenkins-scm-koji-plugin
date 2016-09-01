@@ -4,6 +4,7 @@ import hudson.plugins.scm.koji.Constants;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import java.util.Optional;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class RPM implements java.io.Serializable {
@@ -18,13 +19,16 @@ public class RPM implements java.io.Serializable {
     private final String nvr;
     @XmlElement(name = Constants.arch)
     private final String arch;
+    @XmlElement(name = Constants.filename)
+    private final String filename;
 
-    public RPM(String name, String version, String release, String nvr, String arch) {
+    public RPM(String name, String version, String release, String nvr, String arch, String filename) {
         this.name = name;
         this.version = version;
         this.release = release;
         this.nvr = nvr;
         this.arch = arch;
+        this.filename = filename;
     }
 
     public RPM() {
@@ -33,6 +37,7 @@ public class RPM implements java.io.Serializable {
         this.release = null;
         this.nvr = null;
         this.arch = null;
+        this.filename = null;
     }
 
     public String getName() {
@@ -61,7 +66,7 @@ public class RPM implements java.io.Serializable {
     }
 
     public String getFilename(String suffix) {
-        return nvr + '.' + arch + "." + suffix;
+        return Optional.ofNullable(filename).orElse(nvr + '.' + arch + "." + suffix);
     }
 
 }

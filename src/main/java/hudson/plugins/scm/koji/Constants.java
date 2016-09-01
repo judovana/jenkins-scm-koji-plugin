@@ -16,19 +16,21 @@ abstract public class Constants {
     public static final String packageID = "packageID";
     public static final String listTags = "listTags";
     public static final String listRPMs = "listRPMs";
+    public static final String listArchives = "listArchives";
     public static final String buildID = "buildID";
     public static final String arches = "arches";
     public static final String build = "build";
     public static final String name = "name";
     public static final String rpms = "rpms";
     public static final String nvr = "nvr";
-    public static final String completion_time = "completion_time";    
+    public static final String completion_time = "completion_time";
     public static final String build_id = "build_id";
     public static final String version = "version";
     public static final String release = "release";
     public static final String arch = "arch";
-    
-       public static final DateTimeFormatter DTF = new DateTimeFormatterBuilder()
+    public static final String filename = "filename";
+
+    public static final DateTimeFormatter DTF = new DateTimeFormatterBuilder()
             .appendValue(ChronoField.YEAR, 4)
             .appendLiteral('-')
             .appendValue(ChronoField.MONTH_OF_YEAR, 2)
