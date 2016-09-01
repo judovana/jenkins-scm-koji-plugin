@@ -144,7 +144,6 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
             throw new RuntimeException("Map instance expected, got: " + o);
         }
         Map m = (Map) o;
-        Object buildName = m.get(Constants.name);
         Object[] tags = (Object[]) m.get("tags");
         if (tags == null) {
             return false;
