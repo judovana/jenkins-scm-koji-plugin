@@ -27,18 +27,17 @@ package org.fakekoji.xmlrpc.server;
  *
  * This package is for emualting koji.
  *
- * You can run java -Xmx1g -cp unpacked:jenkins-scm-koji-plugin.hpi:libs org.fakekoji.xmlrpc.server.JavaServer some_dir
+ * You can run java -Xmx1g -cp unpacked:jenkins-scm-koji-plugin.hpi:libs:anotherClasspath org.fakekoji.xmlrpc.server.JavaServer some_dir
  *
  * over some_dir to emulate koji database, and so allow koji plugin work over
  * your own builds.
  * 
- * 
- * eg:
- * 
- * java -Xmx1g -cp hamcrest-core-1.3.jar:jenkins-scm-koji-plugin.jar:junit-4.12.jar:ws-commons-util-1.0.2.jar:xml-apis-1.4.01.jar:xmlrpc-client-3.1.3.jar:xmlrpc-common-3.1.3.jar:xmlrpc-server-3.1.3.jar org.fakekoji.xmlrpc.server.JavaServer ~/NetBeansProjects/CustomXmlRpc/src/test/resources/local-builds/
- * 
- * FIXME investigate:
- * mvn assembly:assembly -DskipTests
- * to simplyfy launching
+ * To simplyfy the packaging, you can use included maven assembly .
+ * This is not exactly automated, as you need to change packaging to jar.
+ * then:
+ * mvn clean && mvn assembly:assembly -DskipTests
+ * cd target && ava -Xmx1g -cp jenkins-scm-koji-plugin-jar-with-dependencies.jar:/usr/share/java/apache-commons-logging.jar org.fakekoji.xmlrpc.serv.JavaServer ~/NetBeansProjects/CustomXmlRpc-Deprecated-movedToKojiPlugin/src/test/resources/local-builds/
+ *
+ * where logging.jar is any logging implementation. Apache xmlrpc are happy with apache logging.
  * 
  */
