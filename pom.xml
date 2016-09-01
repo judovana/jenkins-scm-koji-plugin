@@ -8,6 +8,7 @@
     </parent>
     <artifactId>jenkins-scm-koji-plugin</artifactId>
     <version>0.1-SNAPSHOT</version>
+    <!-- use hpi for jenkins plugin build (most commont) or jar for assembled fake-koji. See fakekoji's server package-info-->
     <!--    <packaging>hpi</packaging>-->
     <packaging>hpi</packaging>
     <!--    <packaging>jar</packaging>-->
@@ -23,6 +24,11 @@
             <id>baiduzhyi.devel</id>
             <name>Stanislav Baiduzhyi</name>
             <email>baiduzhyi.devel@gmail.com</email>
+        </developer>
+        <developer>
+            <id>judovana</id>
+            <name>Jiri Vanek</name>
+            <email>judovana@email.cz</email>
         </developer>
     </developers>
     <licenses>
