@@ -171,6 +171,8 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
         Object res = execute(Constants.listRPMs, paramsMap);
         if (res != null && (res instanceof Object[]) && ((Object[]) res).length > 0) {
+            //the map already have tag rpms, but for ALL architectures. Replacing.
+            //also this is called BEFORE retrieveArchives so we can put instead of add
             m.put(Constants.rpms, res);
         }
 
@@ -180,9 +182,10 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     /**
      * Archives are stored under {@link Constants#rpms} key, together with RPMs.
      * <p>
-     * Name, Version and Release are not received with info about archive. We need to get it from the build. Arch is
-     * taken from configuration and is later used to compose filepath. Unlike with RPMs, filename is received here so
-     * we can store it.
+     * Name, Version and Release are not received with info about archive. We
+     * need to get it from the build. Arch is taken from configuration and is
+     * later used to compose filepath. Unlike with RPMs, filename is received
+     * here so we can store it.
      */
     private Object retrieveArchives(Object o) {
         if (!(o instanceof Map)) {
@@ -192,14 +195,17 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
         Map<String, Object> paramsMap = new HashMap<>();
         paramsMap.put(Constants.buildID, m.get(Constants.build_id));
-        String[] arches = composeArchesArray();
+        String[] desiredArches = composeArchesArray();
+        List<String> supportedArches = new ArrayList<>(1);
+        supportedArches.add("win");
         paramsMap.put("__starstar", Boolean.TRUE);
 
         Object listedArchives = execute(Constants.listArchives, paramsMap);
+        List<Object> filteredArchives = new ArrayList<>();
         if (listedArchives != null && (listedArchives instanceof Object[])) {
             for (Object archive : (Object[]) listedArchives) {
                 if (archive != null && archive instanceof Map) {
-                    for (String arch : arches) {
+                    for (String arch : desiredArches) {
                         Map<String, Object> rpms = (Map) archive;
                         rpms.put(Constants.name, m.get(Constants.name));
                         rpms.put(Constants.version, m.get(Constants.version));
@@ -207,14 +213,32 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                         rpms.put(Constants.arch, arch);
                         rpms.put(Constants.nvr, ((Map) archive).get(Constants.filename));
                         rpms.put(Constants.filename, ((Map) archive).get(Constants.filename));
+                        if (supportedArches.contains(arch)) {
+                            filteredArchives.add(rpms);
+                        }
                     }
                 }
             }
 
-            m.put(Constants.rpms, listedArchives);
+            addRpmsToMap(m, filteredArchives.toArray());
         }
 
         return o;
+    }
+
+    private void addRpmsToMap(Map m, Object[] listedArchivesArray) {
+        addToMap(Constants.rpms, m, listedArchivesArray);
+    }
+
+    private void addToMap(String key, Map m, Object[] listedArchivesArray) {
+        Object orig = m.put(key, listedArchivesArray);
+        if (orig != null && orig instanceof Object[]) {
+            Object[] listedOrigianlArray = (Object[]) orig;
+            Object[] connectedArrays = new Object[listedOrigianlArray.length + listedArchivesArray.length];
+            System.arraycopy(listedOrigianlArray, 0, connectedArrays, 0, listedOrigianlArray.length);
+            System.arraycopy(listedArchivesArray, 0, connectedArrays, listedOrigianlArray.length, listedArchivesArray.length);
+            m.put(key, connectedArrays);
+        }
     }
 
     private boolean filterByArch(Object o) {
