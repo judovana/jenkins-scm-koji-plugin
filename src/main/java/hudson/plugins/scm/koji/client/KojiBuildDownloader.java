@@ -133,7 +133,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
-            //FIXME do this better, do not iterate here, but rember origin from checkout
+            //FIXME do this better, do not iterate here, but rember origin from checkout. See also help-kojiDownloadUrl.html
             for (String url : config.getKojiDownloadUrls()) {
                 //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
                 for (String suffix : new String[]{"rpm", "tarxz"}) {
