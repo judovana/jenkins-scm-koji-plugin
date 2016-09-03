@@ -50,6 +50,9 @@ public class JavaServer {
     private static int realXPort;
     private static int realDPort;
 
+    public static final String xPortAxiom = "XPORT";
+    public static final String dPortAxiom = "DPORT";
+
     /**
      * Testing method (see JavaClient) to verify if server works at all.
      *
@@ -126,8 +129,8 @@ public class JavaServer {
                             if (xrr.getMethodName().equals(Constants.listBuilds)) {
                                 //inut is hashmap with
                                 /* paramsMap.put(packageID, packageId);
-                                   paramsMap.put("state", 1);
-                                   paramsMap.put("__starstar", Boolean.TRUE
+                                 paramsMap.put("state", 1);
+                                 paramsMap.put("__starstar", Boolean.TRUE
                                  */
                                 // from those we care only about packageID
                                 return kojiDb.getProjectBuildsByProjectIdAsMaps(((Integer) ((Map) (xrr.getParameter(0))).get(Constants.packageID)));
@@ -146,7 +149,7 @@ public class JavaServer {
                                 //output is array off hashmaps
                                 return kojiDb.getRpms(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));
                             }
-                              if (xrr.getMethodName().equals(Constants.listArchives)) {
+                            if (xrr.getMethodName().equals(Constants.listArchives)) {
                                 //input is hashmap buildID->integer, arches->String[] and uninteresed __starstar->true
                                 //output is array off hashmaps
                                 return kojiDb.getArchives(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));

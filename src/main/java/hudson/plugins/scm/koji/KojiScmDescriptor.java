@@ -1,5 +1,6 @@
 package hudson.plugins.scm.koji;
 
+import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.scm.SCMDescriptor;
 import hudson.util.FormValidation;
 import java.net.URL;
@@ -13,14 +14,14 @@ import org.slf4j.LoggerFactory;
 public class KojiScmDescriptor extends SCMDescriptor<KojiSCM> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SCMDescriptor.class);
-    private boolean KojiSCMConfig = true;
+    private boolean KojiSCMConfigExists = true;
 
     public KojiScmDescriptor() {
         super(KojiSCM.class, KojiRepositoryBrowser.class);
-        try{
+        try {
             //this may be killing tests
             load();
-        }catch(Exception ex){
+        } catch (Exception ex) {
             LOG.error(ex.toString());
             ex.printStackTrace();
         }
@@ -33,43 +34,57 @@ public class KojiScmDescriptor extends SCMDescriptor<KojiSCM> {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
-        this.KojiSCMConfig = json.getBoolean("KojiSCMConfig");
-        LOG.info("KojiSCMConfig configured to " + KojiSCMConfig);
+        this.KojiSCMConfigExists = json.getBoolean("KojiSCMConfig");
+        LOG.info("KojiSCMConfig configured to " + KojiSCMConfigExists);
         save();
         return true;
     }
 
     public boolean getKojiSCMConfig() {
-        LOG.info("KojiSCMConfig returning " + KojiSCMConfig);
-        return KojiSCMConfig;
+        LOG.info("KojiSCMConfig returning " + KojiSCMConfigExists);
+        return KojiSCMConfigExists;
     }
 
     @DataBoundSetter
     public void setKojiSCMConfig(boolean kojiSCMConfig) {
         // TODO implement complex refreshing logic
-        LOG.info("KojiSCMConfig set from" + KojiSCMConfig + " to " + kojiSCMConfig);
-        this.KojiSCMConfig = kojiSCMConfig;
+        LOG.info("KojiSCMConfig set from" + KojiSCMConfigExists + " to " + kojiSCMConfig);
+        this.KojiSCMConfigExists = kojiSCMConfig;
     }
 
-    public FormValidation doCheckKojiTopUrl(@QueryParameter String value) {
-        try {
-            new URL(value);
-            return FormValidation.ok();
-        } catch (Exception ignore) {
-        }
-        return FormValidation.error("Invalid URL");
+    private static final String InvalidUrl = "At least one of the urls is invalid URL";
+
+    public FormValidation doCheckKojiTopUrl(@QueryParameter String values) {
+        return testableKojiTopUrl(values);
     }
 
-    public FormValidation doCheckKojiDownloadUrl(@QueryParameter String value) {
+    public FormValidation doCheckKojiDownloadUrl(@QueryParameter String values) {
+        return testableKojiDownloadUrl(values);
+    }
+
+    public static FormValidation testableKojiDownloadUrl(String values) {
         try {
-            URL url = new URL(value);
-            if (!"http".equals(url.getProtocol())) {
-                return FormValidation.error("Only http protocol is supported");
+            for (String value : KojiScmConfig.testableSplitter(values)) {
+                URL url = new URL(KojiScmConfig.replaceDPORT(value));
+                if (!"http".equals(url.getProtocol())) {
+                    return FormValidation.error("Only http protocol is supported");
+                }
             }
             return FormValidation.ok();
         } catch (Exception ignore) {
         }
-        return FormValidation.error("Invalid URL");
+        return FormValidation.error(InvalidUrl);
+    }
+
+    public static FormValidation testableKojiTopUrl(String values) {
+        try {
+            for (String value : KojiScmConfig.testableSplitter(values)) {
+                new URL(KojiScmConfig.replaceXPORT(value));
+            }
+            return FormValidation.ok();
+        } catch (Exception ignore) {
+        }
+        return FormValidation.error(InvalidUrl);
     }
 
 }

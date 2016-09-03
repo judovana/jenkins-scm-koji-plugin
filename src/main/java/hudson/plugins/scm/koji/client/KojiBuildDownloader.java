@@ -133,33 +133,36 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
-            //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
-            for (String suffix : new String[]{"rpm", "tarxz"}) {
-                String urlString = composeUrl(build, rpm, suffix);
-                log(InetAddress.getLocalHost().getHostName());
-                log(new Date().toString());
-                if (build.isManual()) {
-                    log("Manual tag provided - skipping download of ", urlString);
-                } else {
-                    log("Downloading: ", urlString);
-                }
-                if (!isUrlReachable(urlString)) {
-                    log("Not accessible, trying another suffix in: ", rpm.getFilename(suffix));
-                    continue;
-                }
-                File targetFile = new File(targetDir, rpm.getFilename(suffix));
-                log("To: ", targetFile);
-                if (!build.isManual()) {
-                    try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
-                            InputStream in = httpDownloadStream(urlString)) {
-                        byte[] buffer = new byte[8192];
-                        int read;
-                        while ((read = in.read(buffer)) != -1) {
-                            out.write(buffer, 0, read);
+            //FIXME do this better, do not iterate here, but rember origin from checkout
+            for (String url : config.getKojiDownloadUrls()) {
+                //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
+                for (String suffix : new String[]{"rpm", "tarxz"}) {
+                    String urlString = composeUrl(url, build, rpm, suffix);
+                    log(InetAddress.getLocalHost().getHostName());
+                    log(new Date().toString());
+                    if (build.isManual()) {
+                        log("Manual tag provided - skipping download of ", urlString);
+                    } else {
+                        log("Downloading: ", urlString);
+                    }
+                    if (!isUrlReachable(urlString)) {
+                        log("Not accessible, trying another suffix in: ", rpm.getFilename(suffix));
+                        continue;
+                    }
+                    File targetFile = new File(targetDir, rpm.getFilename(suffix));
+                    log("To: ", targetFile);
+                    if (!build.isManual()) {
+                        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
+                                InputStream in = httpDownloadStream(urlString)) {
+                            byte[] buffer = new byte[8192];
+                            int read;
+                            while ((read = in.read(buffer)) != -1) {
+                                out.write(buffer, 0, read);
+                            }
                         }
                     }
+                    return targetFile;
                 }
-                return targetFile;
             }
         } catch (RuntimeException ex) {
             throw ex;
@@ -210,8 +213,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         throw new RuntimeException("Too many redirects for URL: " + urlString);
     }
 
-    private String composeUrl(Build build, RPM rpm, String suffix) {
-        String kojiDownloadUrl = config.getKojiDownloadUrlInterpreted();
+    private String composeUrl(String kojiDownloadUrl, Build build, RPM rpm, String suffix) {
         StringBuilder sb = new StringBuilder(255);
         sb.append(kojiDownloadUrl);
         if (kojiDownloadUrl.charAt(kojiDownloadUrl.length() - 1) != '/') {

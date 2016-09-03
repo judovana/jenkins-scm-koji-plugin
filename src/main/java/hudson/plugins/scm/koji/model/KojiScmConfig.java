@@ -32,16 +32,32 @@ public class KojiScmConfig implements java.io.Serializable {
         return kojiTopUrl;
     }
 
-    public String getKojiTopUrlInterpreted() {
-        return kojiTopUrl.replaceAll(":XPORT", ":" + JavaServer.DFAULT_RP2C_PORT);
+    private String getKojiTopUrlInterpreted() {
+        return replaceXPORT(getKojiTopUrl());
+    }
+
+    public static String replaceXPORT(String source) {
+        return testableUrlReplacer(":"+JavaServer.xPortAxiom, ":" + JavaServer.DFAULT_RP2C_PORT, source);
+    }
+
+    public String[] getKojiTopUrls() {
+        return testableSplitter(getKojiTopUrlInterpreted());
+    }
+
+    public String[] getKojiDownloadUrls() {
+        return testableSplitter(getKojiDownloadUrlInterpreted());
     }
 
     public String getKojiDownloadUrl() {
         return kojiDownloadUrl;
     }
 
-    public String getKojiDownloadUrlInterpreted() {
-        return kojiDownloadUrl.replaceAll(":DPORT", ":" + JavaServer.DFAULT_DWNLD_PORT);
+    private String getKojiDownloadUrlInterpreted() {
+        return replaceDPORT(kojiDownloadUrl);
+    }
+
+    public static String replaceDPORT(String source) {
+        return testableUrlReplacer(":"+JavaServer.dPortAxiom, ":" + JavaServer.DFAULT_DWNLD_PORT, source);
     }
 
     public String getPackageName() {
@@ -78,17 +94,25 @@ public class KojiScmConfig implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return "KojiScmConfig{" +
-                "kojiTopUrl='" + kojiTopUrl + '\'' +
-                ", kojiDownloadUrl='" + kojiDownloadUrl + '\'' +
-                ", packageName='" + packageName + '\'' +
-                ", arch='" + arch + '\'' +
-                ", tag='" + tag + '\'' +
-                ", excludeNvr='" + excludeNvr + '\'' +
-                ", downloadDir='" + downloadDir + '\'' +
-                ", cleanDownloadDir=" + cleanDownloadDir +
-                ", dirPerNvr=" + dirPerNvr +
-                ", maxPreviousBuilds=" + maxPreviousBuilds +
-                '}';
+        return "KojiScmConfig{"
+                + "kojiTopUrl='" + kojiTopUrl + '\''
+                + ", kojiDownloadUrl='" + kojiDownloadUrl + '\''
+                + ", packageName='" + packageName + '\''
+                + ", arch='" + arch + '\''
+                + ", tag='" + tag + '\''
+                + ", excludeNvr='" + excludeNvr + '\''
+                + ", downloadDir='" + downloadDir + '\''
+                + ", cleanDownloadDir=" + cleanDownloadDir
+                + ", dirPerNvr=" + dirPerNvr
+                + ", maxPreviousBuilds=" + maxPreviousBuilds
+                + '}';
+    }
+
+    public static String testableUrlReplacer(String wildchar, String replacement, String source) {
+        return source.replaceAll(wildchar, replacement);
+    }
+
+    public static String[] testableSplitter(String source) {
+        return source.split("\\s+");
     }
 }
