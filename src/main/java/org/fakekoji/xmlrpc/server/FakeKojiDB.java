@@ -25,6 +25,12 @@ package org.fakekoji.xmlrpc.server;
 
 import hudson.plugins.scm.koji.Constants;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,14 +78,14 @@ public class FakeKojiDB {
     Integer getPkgId(String requestedProject) {
         String trayed = "";
         for (String project : projects) {
-            trayed+=" "+project;
+            trayed += " " + project;
             if (project.equals(requestedProject)) {
                 //is there better str->int function?
                 //indeed, the file. But number of projects is small.
                 return project.hashCode();
             }
         }
-        throw new RuntimeException("Unknown project "+ requestedProject + ". Tryed: "+trayed+".");
+        throw new RuntimeException("Unknown project " + requestedProject + ". Tryed: " + trayed + ".");
 
     }
 
@@ -110,6 +116,15 @@ public class FakeKojiDB {
      */
     Object[] getProjectBuildsByProjectIdAsMaps(Integer projectId) {
         List<FakeBuild> matchingBuilds = getProjectBuildsByProjectId(projectId);
+        for (int i = 0; i < matchingBuilds.size(); i++) {
+            FakeBuild get = matchingBuilds.get(i);
+            boolean mayBeFailed = new  IsFailedBuild(get.getDir()).reCheck().getLastResult();
+            if (mayBeFailed){
+                System.out.println("Removing build ("+i+"): " + get.toString() +" from result. Contains FAILED records");
+                matchingBuilds.remove(i);
+                i--;
+            }
+        }
         Object[] res = new Object[matchingBuilds.size()];
         for (int i = 0; i < matchingBuilds.size(); i++) {
             FakeBuild get = matchingBuilds.get(i);
@@ -283,4 +298,5 @@ public class FakeKojiDB {
     Object[] getArchivesI(Integer buildDd, Object[] archs) {
         return new Object[0];
     }
+
 }

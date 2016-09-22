@@ -24,7 +24,6 @@
 package org.fakekoji.xmlrpc.server.core;
 
 import hudson.plugins.scm.koji.Constants;
-import hudson.plugins.scm.koji.client.KojiListBuilds;
 import java.io.File;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -34,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.fakekoji.xmlrpc.server.IsFailedBuild;
 import org.fakekoji.xmlrpc.server.utils.DirFilter;
 import org.fakekoji.xmlrpc.server.utils.FileFileFilter;
 
@@ -274,6 +274,10 @@ public class FakeBuild {
             String pkgFile = replaceLast(fname, "\\..*", ""); //.suffix
             pkgFile = replaceLast(pkgFile, "\\..*", ""); //.arch
             String arch = get.getParentFile().getName();
+            boolean mayBeFailed = new  IsFailedBuild(get.getParentFile().getParentFile()).reCheck().getLastResult();
+            if (mayBeFailed){
+                System.out.println(" Warning: " + get + " seems to be from failed build!");
+            }
             if (arrayContains(archs, arch)) {
                 Map m = new HashMap();
                 r.add(m);
@@ -389,4 +393,10 @@ public class FakeBuild {
         }
         return false;
     }
+
+    public File getDir() {
+        return dir;
+    }
+    
+    
 }
