@@ -10,7 +10,6 @@ import hudson.remoting.VirtualChannel;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,26 +24,12 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.ws.commons.util.NamespaceContextImpl;
 import org.apache.xmlrpc.client.XmlRpcClient;
-import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
-import org.apache.xmlrpc.common.TypeFactoryImpl;
-import org.apache.xmlrpc.common.XmlRpcController;
-import org.apache.xmlrpc.common.XmlRpcStreamConfig;
-import org.apache.xmlrpc.parser.AtomicParser;
-import org.apache.xmlrpc.parser.ObjectArrayParser;
-import org.apache.xmlrpc.parser.TypeParser;
-import org.apache.xmlrpc.serializer.I4Serializer;
-import org.apache.xmlrpc.serializer.TypeSerializer;
-import org.apache.xmlrpc.serializer.TypeSerializerImpl;
 import org.jenkinsci.remoting.RoleChecker;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
-import static hudson.plugins.scm.koji.Constants.arch;
 import static hudson.plugins.scm.koji.KojiSCM.DESCRIPTOR;
+import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -405,71 +390,8 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
         }
 
         protected Object execute(String methodName, Object... args) {
-            try {
-                XmlRpcClient client = createClient();
-                Object res = client.execute(methodName, Arrays.asList(args));
-                return res;
-            } catch (Exception ex) {
-                throw new RuntimeException("Exception while executing " + methodName, ex);
-            }
+           return new XmlRpcHelper.XmlRpcExecutioner(currentURL).execute(methodName, args);
         }
-
-        private XmlRpcClient createClient() throws Exception {
-            XmlRpcClientConfigImpl xmlRpcConfig = new XmlRpcClientConfigImpl();
-            xmlRpcConfig.setServerURL(new URL(currentURL));
-            XmlRpcClient client = new XmlRpcClient();
-            client.setConfig(xmlRpcConfig);
-            client.setTypeFactory(new KojiTypeFactory(client));
-            return client;
-        }
-
-    }
-
-    private static class KojiTypeFactory extends TypeFactoryImpl {
-
-        public KojiTypeFactory(XmlRpcController pController) {
-            super(pController);
-        }
-
-        @Override
-        public TypeParser getParser(XmlRpcStreamConfig pConfig, NamespaceContextImpl pContext, String pURI, String pLocalName) {
-            switch (pLocalName) {
-                case "nil":
-                    return new NilParser();
-                default:
-                    return super.getParser(pConfig, pContext, pURI, pLocalName);
-            }
-        }
-
-        @Override
-        public TypeSerializer getSerializer(XmlRpcStreamConfig pConfig, Object pObject) throws SAXException {
-            if (pObject instanceof Integer) {
-                return new IntSerializer();
-            }
-            return super.getSerializer(pConfig, pObject);
-        }
-
-    }
-
-    private static class NilParser extends AtomicParser {
-
-        @Override
-        public void setResult(String pResult) throws SAXException {
-            if (pResult != null && pResult.trim().length() > 0) {
-                throw new SAXParseException("Unexpected characters in nil element.", getDocumentLocator());
-            }
-            super.setResult((Object) null);
-        }
-
-    }
-
-    private static class IntSerializer extends TypeSerializerImpl {
-
-        @Override
-        public void write(ContentHandler pHandler, Object pObject) throws SAXException {
-            write(pHandler, I4Serializer.INT_TAG, pObject.toString());
-        }
-
     }
 
     private static String[] composeArray(String values) {

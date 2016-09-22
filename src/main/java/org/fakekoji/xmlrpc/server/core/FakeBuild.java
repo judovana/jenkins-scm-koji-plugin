@@ -361,6 +361,17 @@ public class FakeBuild {
                 }
             }
             if (allBuilt) {
+                List<File> files = getNonLogs();
+                for (File file : files) {
+                    if (file.getAbsolutePath().contains("fastdebug")) {
+                        String[] nwTags = new String[connectedTags.length];
+                        for (int i = 0; i < connectedTags.length; i++) {
+                            nwTags[i] = "fastdebug-" + connectedTags[i];
+
+                        }
+                        return nwTags;
+                    }
+                }
                 return connectedTags;
             } else {
                 return tags.toArray(new String[0]);
