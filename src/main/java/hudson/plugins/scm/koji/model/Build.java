@@ -1,6 +1,10 @@
 package hudson.plugins.scm.koji.model;
 
 import hudson.plugins.scm.koji.Constants;
+import jdk.nashorn.internal.parser.DateParser;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -115,14 +119,13 @@ public class Build implements Comparable<Build>, java.io.Serializable {
         if (this == o) {
             return 0;
         }
-        int res = compare(this.version, o.version);
-        if (res != 0) {
-            return res;
-        }
-        return compare(this.release, o.release);
+
+        LocalDateTime thisCompletionTime = LocalDateTime.parse(this.completionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        LocalDateTime thatCompletionTime = LocalDateTime.parse(o.completionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return thisCompletionTime.compareTo(thatCompletionTime);
     }
 
-    public int compare(String o1, String o2) {
+    private int compare(String o1, String o2) {
         if (o1 == null) {
             if (o2 == null) {
                 return 0;

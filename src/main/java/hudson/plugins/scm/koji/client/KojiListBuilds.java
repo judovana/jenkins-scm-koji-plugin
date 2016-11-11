@@ -24,11 +24,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.xmlrpc.client.XmlRpcClient;
 import org.jenkinsci.remoting.RoleChecker;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import static hudson.plugins.scm.koji.KojiSCM.DESCRIPTOR;
+
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 
 import org.slf4j.Logger;
@@ -109,7 +109,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                     .stream(results)
                     .sequential()
                     // sorting first, to go with relevant results first:
-                    .sorted(this::compareBuilds)
+                    .sorted(this::compareBuildsByCompletionTime)
                     // getting tags per build and filtering by tags right away:
                     .map(this::retrieveTags)
                     .filter(this::filterByTags)
@@ -302,7 +302,31 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
             return DateTimeFormatter.ISO_DATE_TIME.format(date);
         }
 
-        private int compareBuilds(Object o1, Object o2) {
+        private int compareBuildsByCompletionTime(Object o1, Object o2) {
+            if (o1 == null) {
+                if (o2 == null) {
+                    return 0;
+                }
+                // o2 is not null:
+                return 1;
+            }
+            // o1 is not null:
+            if (o2 == null) {
+                return -1;
+            }
+            // both o1 and o2 are not null:
+            if (!(o1 instanceof Map) || !(o2 instanceof Map)) {
+                throw new RuntimeException("Expected Map instances, got: " + o1 + " and " + o2);
+            }
+            Map<String, Object> m1 = (Map) o1;
+            Map<String, Object> m2 = (Map) o2;
+
+            LocalDateTime thisCompletionTime = LocalDateTime.parse((String) m1.get("completion_time"), Constants.DTF);
+            LocalDateTime thatCompletionTime = LocalDateTime.parse((String) m2.get("completion_time"), Constants.DTF);
+            return thatCompletionTime.compareTo(thisCompletionTime);
+        }
+
+        private int compareBuildVersions(Object o1, Object o2) {
             if (o1 == null) {
                 if (o2 == null) {
                     return 0;
