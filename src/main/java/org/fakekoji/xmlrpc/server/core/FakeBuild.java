@@ -186,12 +186,12 @@ public class FakeBuild {
         List<File> files = this.getNonLogs();
         for (File file : files) {
             if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
-                return TagsProvider.getWinTags();
+                return prefixIfNecessary(TagsProvider.getWinTags());
             }
             if (name.endsWith("openjdk")) {
                 //currently we have static only for linux
                 if (file.getName().toLowerCase().contains("static") || release.toLowerCase().contains("upstream")) {
-                    return prefixIfNecessary(connect(TagsProvider.getFedoraTags(), TagsProvider.getRHELtags(), TagsProvider.getRhelTags()));
+                    return prefixIfNecessary(connect(TagsProvider.getFedoraTags(), TagsProvider.getRHELtags(), TagsProvider.getRhelTags(), TagsProvider.getWinTags()));
                 }
                 if (release.contains("el")) {
                     int osVersion = determineRhOs(release);
@@ -339,7 +339,7 @@ public class FakeBuild {
      * Little bitmore generally - if the arch dir dont exists or is empty, is
      * considered as not build
      */
-    private final String[] maxSupportedArchs = new String[]{"x86_64", "i686"/*, "aarch64"*/};
+    private final String[] maxSupportedArchs = new String[]{"x86_64", "i686", "win"/*, "aarch64"*/};
     //FIXME enable aarch64 builder
 
     private String[] prefixIfNecessary(String[] connectedTags) {
@@ -408,6 +408,6 @@ public class FakeBuild {
     public File getDir() {
         return dir;
     }
-    
-    
+
+
 }
