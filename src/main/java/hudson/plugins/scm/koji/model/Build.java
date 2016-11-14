@@ -122,7 +122,7 @@ public class Build implements Comparable<Build>, java.io.Serializable {
 
         LocalDateTime thisCompletionTime = LocalDateTime.parse(this.completionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         LocalDateTime thatCompletionTime = LocalDateTime.parse(o.completionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        return thisCompletionTime.compareTo(thatCompletionTime);
+        return thatCompletionTime.compareTo(thisCompletionTime);
     }
 
     private int compare(String o1, String o2) {
