@@ -212,7 +212,8 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                 for (Object archive : (Object[]) listedArchives) {
                     if (archive != null && archive instanceof Map) {
                         for (String arch : desiredArches) {
-                            Map<String, Object> rpms = (Map) archive;
+                            Map<String, Object> rpms = new HashMap<>();
+                            rpms.putAll((Map<String, Object>) archive);
                             rpms.put(Constants.name, m.get(Constants.name));
                             rpms.put(Constants.version, m.get(Constants.version));
                             rpms.put(Constants.release, m.get(Constants.release));
