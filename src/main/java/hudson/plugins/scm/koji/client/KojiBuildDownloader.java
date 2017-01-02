@@ -124,10 +124,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         }
         return build.getRpms()
                 .stream()
-                .parallel()
                 .filter(nvrPredicate)
                 .map(r -> downloadRPM(targetDir, build, r))
-                .map(f -> f.getAbsolutePath())
+                .map(File::getAbsolutePath)
                 .collect(Collectors.toList());
     }
 
@@ -186,10 +185,11 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                         keepConnection = true;
                         return httpConn.getInputStream();
                     }
-                    case 301: {
+                    case 301:
+                    case 302: {
                         String location = httpConn.getHeaderField("Location");
                         if (location == null || location.isEmpty()) {
-                            throw new Exception("Invalid Location header for response 301");
+                            throw new Exception("Invalid Location header for response " + response);
                         }
                         if (urlString.equals(location)) {
                             throw new Exception("Infinite redirection loop detected for URL: " + urlString);
@@ -304,7 +304,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             huc.setRequestMethod("GET");  //OR  huc.setRequestMethod ("HEAD");
             huc.connect();
             int code = huc.getResponseCode();
-            if (code == 301 && redirectionsRemaining > 0) {
+            // http 301=Moved Permanently; 302=Found
+            // koji.fedoraproject.org might return both
+            if ((code == 301 || code == 302) && redirectionsRemaining > 0) {
                 return isUrlReachableImpl(huc.getHeaderField("Location"), redirectionsRemaining - 1);
             }
             return code == 200;
