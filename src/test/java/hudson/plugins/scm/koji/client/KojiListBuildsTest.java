@@ -38,10 +38,10 @@ public class KojiListBuildsTest {
     KojiScmConfig createConfigCustomFedora() {
         return new KojiScmConfig(
                 "http://localhost:" + JavaServer.xPortAxiom + "/RPC2",
-                "https://localhost:" + JavaServer.dPortAxiom,
+                "http://localhost:" + JavaServer.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "x86_64,src",
-                "f24*",
+                "fastdebug-f24*",
                 null,
                 null,
                 false,
@@ -53,7 +53,7 @@ public class KojiListBuildsTest {
     KojiScmConfig createConfigCustomFedoraSrcOnly() {
         return new KojiScmConfig(
                 "http://localhost:" + JavaServer.xPortAxiom + "/RPC2",
-                "https://localhost:" + JavaServer.dPortAxiom,
+                "http://localhost:" + JavaServer.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "src",
                 "f24*",
@@ -68,7 +68,7 @@ public class KojiListBuildsTest {
     KojiScmConfig createConfigCustomRhel7() {
         return new KojiScmConfig(
                 "http://localhost:" + JavaServer.xPortAxiom + "/RPC2",
-                "https://localhost:" + JavaServer.dPortAxiom,
+                "http://localhost:" + JavaServer.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "rhel-7.*-candidate",
@@ -346,6 +346,8 @@ public class KojiListBuildsTest {
     public void testListMatchingBuildsCustomF() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora(), new NotProcessedNvrPredicate(new HashSet<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
+//        KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigCustomFedora(), new NotProcessedNvrPredicate(new HashSet<>()));
+//        dwldr.downloadRPMs(new File("/tmp"), build);
         assertNotNull(build);
     }
 
