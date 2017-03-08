@@ -99,6 +99,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             targetDir.mkdirs();
         }
         List<String> rpmFiles = downloadRPMs(targetDir, build);
+        
         return new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles);
     }
 
@@ -122,12 +123,24 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             GlobPredicate glob = new GlobPredicate(config.getExcludeNvr());
             nvrPredicate = rpm -> !glob.test(rpm.getNvr());
         }
-        return build.getRpms()
+        
+        List<String> l = build.getRpms()
                 .stream()
                 .filter(nvrPredicate)
                 .map(r -> downloadRPM(targetDir, build, r))
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());
+        int rpmsInBuildXml = build.getRpms().size();
+        int dwnldedFiles = l.size();
+        if (dwnldedFiles == 0) {
+            if (rpmsInBuildXml == 0) {
+                log("Warning, nothing downloaded, but looks like  nothing shoudl be.");
+            } else {
+                log("WARNING, nothing downloaded, but shoudl be ("+rpmsInBuildXml+"). Maybe bad exclude packages?");
+            }
+        }
+        
+        return l;
     }
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
