@@ -78,7 +78,7 @@ public class JavaServer {
     public static void main(String[] args) {
         realXPort = DFAULT_RP2C_PORT;
         realDPort = DFAULT_DWNLD_PORT;
-        args=new String[]{"/mnt/raid1/local-builds"};
+        //args=new String[]{"/mnt/raid1/local-builds"};
         if (args.length < 1) {
             throw new RuntimeException("expected at least one argument - directory with koji-like \"database\".\n"
                     + "second is optional xml-rpcport port (then download port is deducted by +1).\n"
@@ -177,7 +177,7 @@ public class JavaServer {
         }
     }
 
-    private static int deductDwPort(int xport) {
+    public static int deductDwPort(int xport) {
         return xport + 1;
     }
 }
