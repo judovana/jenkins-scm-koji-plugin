@@ -118,6 +118,7 @@ public class PreviewFakeKoji {
             }
         }
         Collections.sort(r);
+        Collections.reverse(r);
         return r;
     }
 
@@ -134,6 +135,14 @@ public class PreviewFakeKoji {
                 r.add(new Project(f));
             }
             return r;
+        }
+
+        public String getSuffixToString() {
+            String s = getSuffix();
+            if (s.isEmpty()) {
+                return getName();
+            }
+            return s;
         }
 
         public String getSuffix() {
@@ -306,6 +315,9 @@ public class PreviewFakeKoji {
             sb.append("<html>\n");
             sb.append("  <body>\n");
             sb.append("  <h1>").append("Latest builds of upstream OpenJDK").append("</h1>\n");
+            for (Product product : products) {
+                sb.append("  <a href='#").append(product.getName()).append("'>").append(product.getName()).append("</a>\n");
+            }
             sb.append("  <p>")
                     .append("if you are searching for failed builds or logs or test results, feel free to search directly in <a href='")
                     .append(getJenkinsUrl())
@@ -324,6 +336,7 @@ public class PreviewFakeKoji {
                         new NotProcessedNvrPredicate(new HashSet<>()),
                         new GlobPredicate("*"),
                         5000, product.getName(), null).getAll();
+                sb.append("  <a name='").append(product.getName()).append("'/>\n");
                 sb.append("  <h2>").append(product.getName()).append("</h2>\n");
                 int fastdebugs = 0;
                 for (Object buildObject : buildObjects) {
@@ -340,6 +353,9 @@ public class PreviewFakeKoji {
                         //should be already sorted by string
                         validProjects.add(project);
                     }
+                }
+                for (Project validProject : validProjects) {
+                    sb.append("  <a href='#PR-").append(validProject.getName()).append("'>").append(validProject.getSuffixToString()).append("</a>\n");
                 }
                 sb.append("  <p>")
                         .append("Found ").append(buildObjects.length)
@@ -362,11 +378,9 @@ public class PreviewFakeKoji {
                 for (Project validProject : validProjects) {
                     List<Build> projectsBuilds = new ArrayList<>(buildObjects.length);
                     Map<String, Build> projectsFastdebugBuilds = new HashMap<>(buildObjects.length);
-                    if (validProject.getSuffix().isEmpty()) {
-                        sb.append("  <h3>").append(validProject.getName()).append("</h3>\n");
-                    } else {
-                        sb.append("  <h3>").append(validProject.getSuffix()).append("</h3>\n");
-                    }
+                    sb.append("  <a name='PR-").append(validProject.getName()).append("'/>");
+                    sb.append("  <h3>").append(validProject.getSuffixToString()).append("</h3>\n");
+
                     for (Object object : buildObjects) {
                         //also we need to remove all fastdebug products and ony offer them together with normal of same VRA
                         Build built = (Build) object;
