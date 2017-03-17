@@ -35,6 +35,7 @@ import org.apache.xmlrpc.XmlRpcRequest;
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcNoSuchHandlerException;
 import org.apache.xmlrpc.webserver.WebServer;
+import org.fakekoji.http.PreviewFakeKoji;
 import org.fakekoji.xmlrpc.server.core.FileReturningHandler;
 
 /**
@@ -169,6 +170,11 @@ public class JavaServer {
             hs.createContext("/", new FileReturningHandler(dbFileRoot));
             hs.start();
             System.out.println("Started successfully on " + realDPort);
+            System.out.println("Starting http server 80 frontend");
+            //Hardcoded setup dirs and made "quick launch" from JavaServer FIXME!
+            //This is nasty, this now requires whole service run as root. Should be fixed  to two separated serv
+            PreviewFakeKoji.main(null);
+            System.out.println("FrontEnd started successfully");
             System.out.println("Accepting requests. (Halt program to stop.)");
 
         } catch (Exception exception) {
