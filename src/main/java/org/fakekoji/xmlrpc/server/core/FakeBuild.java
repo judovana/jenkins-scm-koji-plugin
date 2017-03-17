@@ -397,6 +397,9 @@ public class FakeBuild {
     }
 
     private boolean arrayContains(Object[] archs, String arch) {
+        if (archs == null || archs.length == 0) {
+            return true;
+        }
         for (Object arch1 : archs) {
             if (arch1.equals(arch)) {
                 return true;
