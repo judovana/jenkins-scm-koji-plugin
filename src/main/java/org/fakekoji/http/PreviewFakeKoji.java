@@ -217,7 +217,7 @@ public class PreviewFakeKoji {
 
         private void start() throws IOException {
             HttpServer hs = HttpServer.create(new InetSocketAddress(port), 0);
-            hs.createContext("/index.html", ihh);
+            hs.createContext("/", ihh);
             hs.createContext("/details.html", dhh);
             hs.start();
         }
