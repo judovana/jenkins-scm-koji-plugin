@@ -62,8 +62,8 @@ public class PreviewFakeKoji {
             "http://hydra.brq.redhat.com/RPC2/",
             "http://hydra.brq.redhat.com/",
             "/mnt/raid1/upstream-repos",
-            "/mnt/raid1/local-builds",
-            //"1919"
+            "/mnt/raid1/local-builds", 
+            "1919"
         };
         if (args.length < 3) {
             System.out.println("Mandatory 4 params:  full koji xmlrpc url and koji download url and cloned forests homes and projects homes");
@@ -203,7 +203,7 @@ public class PreviewFakeKoji {
         }
 
         /*
-        VERY infrastrucutre specific
+         VERY infrastrucutre specific
          */
         public String getJenkinsMapping() {
             if (getName().equals("java-1.8.0-openjdk")) {
@@ -401,30 +401,12 @@ public class PreviewFakeKoji {
                             }
                         }
                     }
-                    sb.append("<blockquote>");
-                    if (projectsBuilds.isEmpty()) {
-                        sb.append("  <p>").append("Sorry, no successful build matches this project. You may check all builds of this product.").append("</p><br/>\n");
-                    } else {
-                        Build b = projectsBuilds.get(projectsBuilds.size() - 1);
-                        sb.append("  <b>").append(b.getNvr()).append("</b><br/>\n");
-                        sb.append("   <small>").append(b.getCompletionTime()).append("</small><br/>\n");
-                        sb.append(offerBuild(dwnld.toExternalForm(), b));
-                        Build bb = projectsFastdebugBuilds.get(b.getNvr());
-                        if (bb == null) {
-                            sb.append("  <i>no fast debug build found</i><br/>\n");
-                        } else {
-                            sb.append("  <i>").append(bb.getNvr()).append("</i><br/>\n");
-                            sb.append("   <i><small>").append(bb.getCompletionTime()).append("</small></i><br/>\n");
-                            sb.append("<small>\n");
-                            sb.append(offerBuild(dwnld.toExternalForm(), bb));
-                            sb.append("</small><br/>\n");
-                        }
-                        sb.append("  <p>")
-                                .append("You can see all  ").append(projectsBuilds.size())
-                                .append(" builds details (and ").append(projectsFastdebugBuilds.size()).append(" fast builds) <a href='details.html?list=TODO2'> here</a>.")
-                                .append("</p>\n");
+                    Build build = null;
+                    if (!projectsBuilds.isEmpty()) {
+                        build = projectsBuilds.get(projectsBuilds.size() - 1);
                     }
-                    sb.append("</blockquote>");
+                    offerBuild(build, projectsFastdebugBuilds, sb, projectsBuilds, dwnld);
+
                 }
                 if (usedBuilds.size() != buildObjects.length) {
                     List<Build> unUsedBuilds = new ArrayList<>(-usedBuilds.size() + buildObjects.length);
@@ -507,7 +489,35 @@ public class PreviewFakeKoji {
         }
     }
 
-    public static String offerBuild(String baseUrl, Build build) {
+    private static void offerBuild(Build build, Map<String, Build> projectsFastdebugBuilds, StringBuilder sb, List<Build> projectsBuilds, URL dwnld) {
+        sb.append("<blockquote>");
+        if (build == null) {
+            sb.append("  <p>").append("Sorry, no successful build matches this project. You may check all builds of this product.").append("</p><br/>\n");
+        } else {
+            sb.append("  <b>").append(build.getNvr()).append("</b><br/>\n");
+            sb.append("   <small>").append(build.getCompletionTime()).append("</small><br/>\n");
+            sb.append(offerDownloads(dwnld.toExternalForm(), build));
+            Build bb = projectsFastdebugBuilds.get(build.getNvr());
+            if (bb == null) {
+                sb.append("  <i>no fast debug build found</i><br/>\n");
+            } else {
+                sb.append("  <i>").append(bb.getNvr()).append("</i><br/>\n");
+                sb.append("   <i><small>").append(bb.getCompletionTime()).append("</small></i><br/>\n");
+                sb.append("<small>\n");
+                sb.append(offerDownloads(dwnld.toExternalForm(), bb));
+                sb.append("</small><br/>\n");
+            }
+            if (projectsBuilds != null) {
+                sb.append("  <p>")
+                        .append("You can see all  ").append(projectsBuilds.size())
+                        .append(" builds details (and ").append(projectsFastdebugBuilds.size()).append(" fast builds) <a href='details.html?list=TODO2'> here</a>.")
+                        .append("</p>\n");
+            }
+        }
+        sb.append("</blockquote>");
+    }
+
+    public static String offerDownloads(String baseUrl, Build build) {
         List<RPM> rpms = new ArrayList<>(build.getRpms());
         Collections.sort(rpms, new Comparator<RPM>() {
             @Override
