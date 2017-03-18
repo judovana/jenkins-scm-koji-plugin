@@ -44,6 +44,7 @@ import java.util.stream.Stream;
 public class BuildMatcher {
 
     public static enum OredBy {
+
         DATE, VERSION
     }
 
@@ -72,8 +73,8 @@ public class BuildMatcher {
                 .findFirst();
         return buildOpt;
     }
-    
-      public Object[] getAll() {
+
+    public Object[] getAll() {
         Stream<Build> results = listMatchingBuilds();
 
         Object[] buildOpt = results
@@ -302,7 +303,35 @@ public class BuildMatcher {
         throw new RuntimeException("Unknown order");
     }
 
-    private int compareBuildsByCompletionTime(Object o1, Object o2) {
+    private String[] composePkgsArray() {
+        return composeArray(pkgName);
+    }
+
+    private String[] composeArchesArray() {
+        return composeArray(arch);
+    }
+
+    protected Object execute(String methodName, Object... args) {
+        return new XmlRpcHelper.XmlRpcExecutioner(currentURL).execute(methodName, args);
+    }
+
+    private static String[] composeArray(String values) {
+        if (values == null || values.trim().isEmpty()) {
+            return null;
+        }
+        List<String> list = new ArrayList<>();
+        StringTokenizer tokenizer = new StringTokenizer(values, ",;\n\r\t ");
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            String trimmed = token.trim();
+            if (!trimmed.isEmpty()) {
+                list.add(trimmed);
+            }
+        }
+        return list.toArray(new String[list.size()]);
+    }
+
+    public static int compareBuildsByCompletionTime(Object o1, Object o2) {
         if (o1 == null) {
             if (o2 == null) {
                 return 0;
@@ -320,13 +349,20 @@ public class BuildMatcher {
         }
         Map<String, Object> m1 = (Map) o1;
         Map<String, Object> m2 = (Map) o2;
+        return comapreKojiTime((String) m1.get("completion_time"), (String) m2.get("completion_time"), Constants.DTF);
 
-        LocalDateTime thisCompletionTime = LocalDateTime.parse((String) m1.get("completion_time"), Constants.DTF);
-        LocalDateTime thatCompletionTime = LocalDateTime.parse((String) m2.get("completion_time"), Constants.DTF);
+    }
+
+    public static int compareBuildsByCompletionTime(Build o1, Build o2) {
+        return comapreKojiTime(o1.getCompletionTime(), o2.getCompletionTime(), Constants.DTF2);
+    }
+    public static int comapreKojiTime(String s1, String s2, DateTimeFormatter d) {
+        LocalDateTime thisCompletionTime = LocalDateTime.parse(s1, d);
+        LocalDateTime thatCompletionTime = LocalDateTime.parse(s2, d);
         return thatCompletionTime.compareTo(thisCompletionTime);
     }
 
-    private int compareBuildVersions(Object o1, Object o2) {
+    public static int compareBuildVersions(Object o1, Object o2) {
         if (o1 == null) {
             if (o2 == null) {
                 return 0;
@@ -354,7 +390,7 @@ public class BuildMatcher {
         return compareStrings(m1.get(Constants.release), m2.get(Constants.release));
     }
 
-    private int compareStrings(String o1, String o2) {
+    public static int compareStrings(String o1, String o2) {
         if (o1 == null) {
             if (o2 == null) {
                 return 0;
@@ -396,40 +432,12 @@ public class BuildMatcher {
         return 0;
     }
 
-    private String[] composePkgsArray() {
-        return composeArray(pkgName);
-    }
-
-    private String[] composeArchesArray() {
-        return composeArray(arch);
-    }
-
-    private boolean allDigits(String str) {
+    public static boolean allDigits(String str) {
         for (int i = 0; i < str.length(); i++) {
             if (!Character.isDigit(str.charAt(i))) {
                 return false;
             }
         }
         return true;
-    }
-
-    protected Object execute(String methodName, Object... args) {
-        return new XmlRpcHelper.XmlRpcExecutioner(currentURL).execute(methodName, args);
-    }
-
-    private static String[] composeArray(String values) {
-        if (values == null || values.trim().isEmpty()) {
-            return null;
-        }
-        List<String> list = new ArrayList<>();
-        StringTokenizer tokenizer = new StringTokenizer(values, ",;\n\r\t ");
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            String trimmed = token.trim();
-            if (!trimmed.isEmpty()) {
-                list.add(trimmed);
-            }
-        }
-        return list.toArray(new String[list.size()]);
     }
 }

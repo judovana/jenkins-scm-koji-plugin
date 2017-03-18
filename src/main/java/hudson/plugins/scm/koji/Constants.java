@@ -46,4 +46,22 @@ abstract public class Constants {
             .appendValue(ChronoField.MICRO_OF_SECOND)
             .toFormatter();
 
+
+    /**
+     * 2016-09-09T13:34:28
+     */
+ public static final DateTimeFormatter DTF2 = new DateTimeFormatterBuilder()
+            .appendValue(ChronoField.YEAR, 4)
+            .appendLiteral('-')
+            .appendValue(ChronoField.MONTH_OF_YEAR, 2)
+            .appendLiteral('-')
+            .appendValue(ChronoField.DAY_OF_MONTH, 2)
+            .appendLiteral('T')
+            .appendValue(ChronoField.HOUR_OF_DAY, 2)
+            .appendLiteral(':')
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+            .appendLiteral(':')
+            .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
+            .toFormatter();
+
 }
