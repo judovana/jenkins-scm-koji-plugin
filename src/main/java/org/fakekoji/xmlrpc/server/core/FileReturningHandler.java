@@ -84,7 +84,7 @@ public class FileReturningHandler implements HttpHandler {
         public void runImpl() throws IOException {
             String requestedFile = t.getRequestURI().getPath();
             File f = new File(root + "/" + requestedFile);
-            System.out.println(new Date().toString() + "attempting: " + requestedFile);
+            System.out.println(new Date().toString() + " attempting: " + requestedFile);
             if (f.getName().equals("ALL")) {
                 sentFullLIst(f, requestedFile, t);
                 return;
