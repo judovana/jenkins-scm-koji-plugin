@@ -34,19 +34,25 @@ import hudson.plugins.scm.koji.model.RPM;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.fakekoji.xmlrpc.server.JavaServer;
 
 public class PreviewFakeKoji {
@@ -62,8 +68,8 @@ public class PreviewFakeKoji {
             "http://hydra.brq.redhat.com/RPC2/",
             "http://hydra.brq.redhat.com/",
             "/mnt/raid1/upstream-repos",
-            "/mnt/raid1/local-builds", 
-            "1919"
+            "/mnt/raid1/local-builds",
+            //"1919"
         };
         if (args.length < 3) {
             System.out.println("Mandatory 4 params:  full koji xmlrpc url and koji download url and cloned forests homes and projects homes");
@@ -294,7 +300,7 @@ public class PreviewFakeKoji {
 
             public void runImpl() throws IOException {
                 String requestedFile = t.getRequestURI().getPath();
-                System.out.println(new Date().toString() + "attempting: " + requestedFile);
+                System.out.println(new Date().toString() + " attempting: " + requestedFile);
                 generateIndex(t);
             }
         }
@@ -330,12 +336,7 @@ public class PreviewFakeKoji {
                     .append("</p>\n");
             for (Product product : products) {
                 sb.append("<blockquote>");
-                //get all products of top-project
-                Object[] buildObjects = new BuildMatcher(
-                        xmlrpc.toExternalForm(),
-                        new NotProcessedNvrPredicate(new HashSet<>()),
-                        new GlobPredicate("*"),
-                        5000, product.getName(), null).getAll();
+                Object[] buildObjects = getBuildfForProduct(product, xmlrpc);
                 sb.append("  <a name='").append(product.getName()).append("'/>\n");
                 sb.append("  <h2>").append(product.getName()).append("</h2>\n");
                 int fastdebugs = 0;
@@ -365,9 +366,11 @@ public class PreviewFakeKoji {
                         .append("</p>\n");
                 sb.append("  <p>")
                         .append("You can see all  ").append(buildObjects.length)
-                        .append(" builds details <a href='details.html?list=TODO1'> here</a>.")
-                        .append(" You can jenkins build results in <a href='").append(getJenkinsUrl()).append("/search/?q=build-static-").append(product.getJenkinsMapping()).append("'> here</a>.")
-                        .append(" You can jenkins TEST results in <a href='").append(getJenkinsUrl()).append("/search/?max=2000&q=").append(product.getJenkinsMapping()).append("'> here</a>.")
+                        .append(" builds details <a href='details.html?list=")
+                        .append(joinBuildsObjectArray(buildObjects))
+                        .append("'> here</a>.")
+                        .append(" You can see jenkins build results in <a href='").append(getJenkinsUrl()).append("/search/?q=build-static-").append(product.getJenkinsMapping()).append("'> here</a>.")
+                        .append(" You can see jenkins TEST results in <a href='").append(getJenkinsUrl()).append("/search/?max=2000&q=").append(product.getJenkinsMapping()).append("'> here</a>.")
                         .append("</p>\n");
                 List<Build> usedBuilds = new ArrayList<>(buildObjects.length);
                 //now wee need to filetr only project's products
@@ -417,13 +420,13 @@ public class PreviewFakeKoji {
                             unUsedBuilds.add((Build) bo);
                         }
                     }
-                    sb.append("  <h3>There are unsorted ").append(unUsedBuilds.size()).append(" builds: </h3>\n");
-                    sb.append("  <p>")
-                            .append("You can see them <a href='details.html?list=TODO3'> here</a>.")
-                            .append("</p>\n");
+                    sb.append("  <h4>There are unsorted ").append(unUsedBuilds.size()).append(" builds: </h4>\n");
+                    sb.append("  <p>").append("You can see them ").append(detailsLink("here", unUsedBuilds)).append(".</p>\n");
                 }
                 sb.append("</blockquote>");
             }
+            sb.append("  </body>\n");
+            sb.append("</html>\n");
             return sb;
         }
 
@@ -472,14 +475,18 @@ public class PreviewFakeKoji {
 
             public void runImpl() throws IOException {
                 String requestedFile = t.getRequestURI().getPath();
-                System.out.println(new Date().toString() + "attempting: " + requestedFile);
+                System.out.println(new Date().toString() + " attempting: " + requestedFile);
                 generateIndex(t);
             }
         }
 
         private void generateIndex(HttpExchange t) throws IOException {
-            System.out.println("Regenerating index!");
-            StringBuilder sb = new StringBuilder("todo: show detaisl of all builds given as &list= parameter");
+            System.out.println("Regenerating details!");
+            Map<String, String> query = splitQuery(t.getRequestURI());
+            StringBuilder sb = new StringBuilder("No list specified!");
+            if (query.get("list") != null && !query.get("list").isEmpty()) {
+                sb = generateDetailsFor(query.get("list"));
+            }
             String result = sb.toString();
             long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
             t.sendResponseHeaders(200, size);
@@ -487,6 +494,111 @@ public class PreviewFakeKoji {
                 os.write(result.getBytes());
             }
         }
+
+        private StringBuilder generateDetailsFor(String get) {
+            StringBuilder sb = new StringBuilder();
+            String[] list = get.split(",");
+            sb.append("<html>\n");
+            sb.append("  <body>\n");
+            sb.append("  <h1>").append("Details for: </h1>\n");
+            sb.append("  <p1>");
+            for (String build : list) {
+                sb.append(" | <a href='#").append(build).append("'> ").append(build).append(" </a>");
+            }
+            sb.append(" | </p1>\n");
+            //get projects
+            Set<Product> usedProducets = new HashSet<>(products.size());
+            products.stream().forEach((product) -> {
+                for (String build : list) {
+                    if (build.startsWith(product.getName())) {
+                        usedProducets.add(product);
+                    }
+                }
+            });
+            usedProducets.stream().forEach((product) -> {
+                sb.append("  <h2>").append(product.getName()).append("</h2>\n");
+                Object[] buildObjects = getBuildfForProduct(product, xmlrpc);
+                List<Build> allBuilds = new ArrayList<>(buildObjects.length);
+                List<Build> usedBuilds = new ArrayList<>(buildObjects.length);
+                Map<String, Build> allProjectsFastdebugBuilds = new HashMap<>(buildObjects.length);
+                List<Build> requestedFastDebugBuilds = new ArrayList<>(buildObjects.length);
+                List<Build> unusedBuilds = new ArrayList<>(buildObjects.length);
+                for (Object buildObject : buildObjects) {
+                    Build build = (Build) buildObject;
+                    boolean wonted = false;
+                    for (String s : list) {
+                        if (s.equals(build.getNvr())) {
+                            wonted = true;
+                            break;
+                        }
+                    }
+                    allBuilds.add(build);
+                    if (build.getNvr().contains("fastdebug")) {
+                        allProjectsFastdebugBuilds.put(build.getNvr().replaceAll(".fastdebug", ""), build);
+                        if (wonted) {
+                            requestedFastDebugBuilds.add(build);
+                        } else {
+                            unusedBuilds.add(build);
+                        }
+                    } else {
+                        if (wonted) {
+                            usedBuilds.add(build);
+                        } else {
+                            unusedBuilds.add(build);
+                        }
+                    }
+
+                }
+                sb.append("<p> showing ")
+                        .append(detailsLink(usedBuilds))
+                        .append(" builds + ")
+                        .append(detailsLink(requestedFastDebugBuilds))
+                        .append(" explicit fastdebug builds from toal of ")
+                        .append(detailsLink(allBuilds))
+                        .append(" You may wont to see ")
+                        .append(detailsLink(unusedBuilds))
+                        .append(" missing builds")
+                        .append("</p>\n");
+                if (!usedBuilds.isEmpty()) {
+                    if (BuildMatcher.compareBuildsByCompletionTime(usedBuilds.get(0), usedBuilds.get(usedBuilds.size() - 1)) > 0) {
+                        Collections.reverse(usedBuilds);
+                    }
+                }
+                if (!requestedFastDebugBuilds.isEmpty()) {
+                    if (BuildMatcher.compareBuildsByCompletionTime(requestedFastDebugBuilds.get(0), requestedFastDebugBuilds.get(requestedFastDebugBuilds.size() - 1)) > 0) {
+                        Collections.reverse(requestedFastDebugBuilds);
+                    }
+                }
+                for (Build usedBuild : usedBuilds) {
+                    sb.append("<a name='").append(usedBuild.getNvr()).append("'/>");
+                    offerBuild(usedBuild, allProjectsFastdebugBuilds, sb, null, dwnld);
+                }
+                sb.append("  <h2> Explicitly requested fastdebug builds:</h2>\n");
+                for (Build usedBuild : requestedFastDebugBuilds) {
+                    sb.append("<a name='").append(usedBuild.getNvr()).append("'/>");
+                    offerBuild(usedBuild, null, sb, null, dwnld);
+                }
+            });
+            sb.append("  </body>\n");
+            sb.append("</html>\n");
+            return sb;
+        }
+    }
+
+    public static Map<String, String> splitQuery(URI url) throws UnsupportedEncodingException {
+        Map<String, String> query_pairs = new LinkedHashMap<>();
+        String query = url.getQuery();
+        if (query == null) {
+            return query_pairs;
+        }
+        String[] pairs = query.split("&");
+        for (String pair : pairs) {
+            int idx = pair.indexOf("=");
+            if (idx >= 0) {
+                query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+            }
+        }
+        return query_pairs;
     }
 
     private static void offerBuild(Build build, Map<String, Build> projectsFastdebugBuilds, StringBuilder sb, List<Build> projectsBuilds, URL dwnld) {
@@ -497,21 +609,27 @@ public class PreviewFakeKoji {
             sb.append("  <b>").append(build.getNvr()).append("</b><br/>\n");
             sb.append("   <small>").append(build.getCompletionTime()).append("</small><br/>\n");
             sb.append(offerDownloads(dwnld.toExternalForm(), build));
-            Build bb = projectsFastdebugBuilds.get(build.getNvr());
-            if (bb == null) {
-                sb.append("  <i>no fast debug build found</i><br/>\n");
-            } else {
-                sb.append("  <i>").append(bb.getNvr()).append("</i><br/>\n");
-                sb.append("   <i><small>").append(bb.getCompletionTime()).append("</small></i><br/>\n");
-                sb.append("<small>\n");
-                sb.append(offerDownloads(dwnld.toExternalForm(), bb));
-                sb.append("</small><br/>\n");
+            if (projectsFastdebugBuilds != null) {
+                Build bb = projectsFastdebugBuilds.get(build.getNvr());
+                if (bb == null) {
+                    sb.append("  <i>no fast debug build found</i><br/>\n");
+                } else {
+                    sb.append("  <i>").append(bb.getNvr()).append("</i><br/>\n");
+                    sb.append("   <i><small>").append(bb.getCompletionTime()).append("</small></i><br/>\n");
+                    sb.append("<small>\n");
+                    sb.append(offerDownloads(dwnld.toExternalForm(), bb));
+                    sb.append("</small><br/>\n");
+                }
             }
             if (projectsBuilds != null) {
+                List<Build> l = new ArrayList<>(projectsBuilds.size() + projectsFastdebugBuilds.size());
+                l.addAll(projectsBuilds);
+                l.addAll(projectsFastdebugBuilds.values());
                 sb.append("  <p>")
                         .append("You can see all  ").append(projectsBuilds.size())
-                        .append(" builds details (and ").append(projectsFastdebugBuilds.size()).append(" fast builds) <a href='details.html?list=TODO2'> here</a>.")
-                        .append("</p>\n");
+                        .append(" builds details (and ").append(projectsFastdebugBuilds.size())
+                        .append(" fastdebug builds) ").append(detailsLink("here", l))
+                        .append(".</p>\n");
             }
         }
         sb.append("</blockquote>");
@@ -554,6 +672,44 @@ public class PreviewFakeKoji {
         r.append(sourceSnapshot);
         r.append("</blockquote>");
         return r.toString();
+    }
+
+    private static String joinBuildsObjectArray(Object[] buildObjects) {
+        StringBuilder sb = new StringBuilder();
+        for (Object buildObject : buildObjects) {
+            sb.append(",").append(((Build) buildObject).getNvr());
+        }
+        return sb.substring(1);
+    }
+
+    private static String joinListOfBuilds(Collection<Build> lb) {
+        if (lb.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Build b : lb) {
+            sb.append(",").append(b.getNvr());
+        }
+        return sb.substring(1);
+    }
+
+    private static Object[] getBuildfForProduct(Product product, URL xmlrpc) {
+        //get all products of top-project
+        Object[] buildObjects = new BuildMatcher(
+                xmlrpc.toExternalForm(),
+                new NotProcessedNvrPredicate(new HashSet<>()),
+                new GlobPredicate("*"),
+                5000, product.getName(), null).getAll();
+        return buildObjects;
+    }
+
+    private static String detailsLink(Collection<Build> items) {
+        return detailsLink("" + items.size(), items);
+
+    }
+
+    private static String detailsLink(String text, Collection<Build> items) {
+        return "<a href='details.html?list=" + joinListOfBuilds(items) + "'> " + text + "</a>";
     }
 
 }
