@@ -290,9 +290,9 @@ public class FileReturningHandler implements HttpHandler {
                 return 0;
             }
             if (o1.lastModified() > o2.lastModified()) {
-                return 1;
+                return -1;
             }
-            return -1;
+            return 1;
         });
         return files.get(0);
     }
