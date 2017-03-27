@@ -24,7 +24,13 @@
 package org.fakekoji.xmlrpc.server.core;
 
 import hudson.plugins.scm.koji.Constants;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -140,7 +146,7 @@ public class FakeBuild {
         return new File(data, logs);
     }
 
-    File getDataDir() {
+    private File getDataDir() {
         File[] possibleArchesDirs = dir.listFiles(new DirFilter());
         List<String> arches = new ArrayList<>(possibleArchesDirs.length);
         for (File archDir : possibleArchesDirs) {
@@ -151,6 +157,10 @@ public class FakeBuild {
             }
         }
         return null;
+    }
+    
+    private File getArechesConfigFile() {
+        return new File(getDataDir(),"arches-expected");
     }
 
     public List<String> getArches() {
@@ -182,8 +192,9 @@ public class FakeBuild {
      * is the build finished?
      *
      * @return
+     * @throws java.io.IOException
      */
-    public String[] guessTags() {
+    public String[] guessTags() throws IOException {
         List<File> files = this.getNonLogs();
         for (File file : files) {
             if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
@@ -334,24 +345,30 @@ public class FakeBuild {
     /**
      * Each src archive must be be attempted on all those archs.
      *
-     * If the build fails, or arch is not accesible, the column must have FAILED
+     * If the build fails, or arch is not accessible, the column must have FAILED
      * file instead of build. (+ ideally logs).
      *
-     * Little bitmore generally - if the arch dir dont exists or is empty, is
+     * Little bit more generally - if the arch dir don't exists or is empty, is
      * considered as not build
      */
-    private final String[] maxSupportedArchs = new String[]{"x86_64", "i686", "win"/*, "aarch64"*/};
+    private final String[] defaultSupportedArchs = new String[]{"x86_64", "i686", "win"/*, "aarch64"*/};
     //FIXME enable aarch64 builder
+     private String[] getSupportedArches() throws IOException{
+         if (getArechesConfigFile().exists()){
+             return readArchesFile(getArechesConfigFile());
+         }
+         return defaultSupportedArchs;
+     }
 
-    private String[] prefixIfNecessary(String[] connectedTags) {
+    private String[] prefixIfNecessary(String[] connectedTags) throws IOException {
         List<String> arches = getArches();
         Collections.sort(getArches());
         //primary case - the build have src, so we expect to build it in time onall arches
         if (arches.contains("src")) {
             boolean allBuilt = true;
-            List<String> tags = new ArrayList<>(connectedTags.length * maxSupportedArchs.length);
+            List<String> tags = new ArrayList<>(connectedTags.length * getSupportedArches().length);
             for (String connectedTag : connectedTags) {
-                for (String arch : maxSupportedArchs) {
+                for (String arch : getSupportedArches()) {
                     File archDir = new File(dir, arch);
                     if (archDir.exists() && archDir.isDirectory() && archDir.list().length > 0) {
                         //hmm no op?
@@ -413,5 +430,22 @@ public class FakeBuild {
         return dir;
     }
 
+    private static String[] readArchesFile(File f) throws IOException {
+        try (
+                InputStream fis = new FileInputStream(f);
+                InputStreamReader isr = new InputStreamReader(fis, Charset.forName("UTF-8"));
+                BufferedReader br = new BufferedReader(isr);) {
+            while (true) {
+                String line = br.readLine();
+                if (line == null) {
+                    return null;
+                }
+                if (line.trim().startsWith("#")){
+                    continue;
+                }
+                return line.trim().split("\\s+");
+            }
+        }
+    }
 
 }
