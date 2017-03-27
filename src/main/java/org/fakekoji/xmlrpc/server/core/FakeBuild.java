@@ -47,6 +47,7 @@ public class FakeBuild {
 
     private static final String logs = "logs";
     private static final String data = "data";
+    public static final String notBuiltTagPart = "_notBuild-";
 
     public FakeBuild(String name, String version, String release, File releaseDir) {
         this.dir = releaseDir;
@@ -356,7 +357,7 @@ public class FakeBuild {
                         //hmm no op?
                     } else {
                         allBuilt = false;
-                        tags.add(arch + "_notBuild-" + connectedTag);
+                        tags.add(arch + notBuiltTagPart + connectedTag);
                     }
                 }
             }

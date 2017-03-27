@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.xmlrpc.server.core.FakeBuild;
 
 public class PreviewFakeKoji {
 
@@ -336,7 +337,7 @@ public class PreviewFakeKoji {
                     .append("</p>\n");
             for (Product product : products) {
                 sb.append("<blockquote>");
-                Object[] buildObjects = getBuildfForProduct(product, xmlrpc);
+                List<Build> buildObjects = getBuildsfForProduct(product, xmlrpc);
                 sb.append("  <a name='").append(product.getName()).append("'/>\n");
                 sb.append("  <h2>").append(product.getName()).append("</h2>\n");
                 int fastdebugs = 0;
@@ -359,28 +360,28 @@ public class PreviewFakeKoji {
                     sb.append("  <a href='#PR-").append(validProject.getName()).append("'>").append(validProject.getSuffixToString()).append("</a>\n");
                 }
                 sb.append("  <p>")
-                        .append("Found ").append(buildObjects.length)
+                        .append("Found ").append(buildObjects.size())
                         .append(" successful builds and ").append(validProjects.size()).append(" relevant projects")
-                        .append(" From those ").append(Integer.valueOf(buildObjects.length - fastdebugs)).append(" are normal builds.")
+                        .append(" From those ").append(Integer.valueOf(buildObjects.size() - fastdebugs)).append(" are normal builds.")
                         .append(" and ").append(fastdebugs).append(" are fastdebug builds.")
                         .append("</p>\n");
                 sb.append("  <p>")
-                        .append("You can see all  ").append(buildObjects.length)
+                        .append("You can see all  ").append(buildObjects.size())
                         .append(" builds details <a href='details.html?list=")
-                        .append(joinBuildsObjectArray(buildObjects))
+                        .append(joinListOfBuilds(buildObjects))
                         .append("'> here</a>.")
                         .append(" You can see jenkins build results in <a href='").append(getJenkinsUrl()).append("/search/?q=build-static-").append(product.getJenkinsMapping()).append("'> here</a>.")
                         .append(" You can see jenkins TEST results in <a href='").append(getJenkinsUrl()).append("/search/?max=2000&q=").append(product.getJenkinsMapping()).append("'> here</a>.")
                         .append("</p>\n");
-                List<Build> usedBuilds = new ArrayList<>(buildObjects.length);
+                List<Build> usedBuilds = new ArrayList<>(buildObjects.size());
                 //now wee need to filetr only project's products
                 // the suffix is projected to *release*
                 //and is behind leading NUMBER. and have all "-" repalced by "."
                 //in addition we need to strip all keywords. usually usptream or usptream.fastdebug or static
                 //yes, oh crap
                 for (Project validProject : validProjects) {
-                    List<Build> projectsBuilds = new ArrayList<>(buildObjects.length);
-                    Map<String, Build> projectsFastdebugBuilds = new HashMap<>(buildObjects.length);
+                    List<Build> projectsBuilds = new ArrayList<>(buildObjects.size());
+                    Map<String, Build> projectsFastdebugBuilds = new HashMap<>(buildObjects.size());
                     sb.append("  <a name='PR-").append(validProject.getName()).append("'/>");
                     sb.append("  <h3>").append(validProject.getSuffixToString()).append("</h3>\n");
 
@@ -411,8 +412,8 @@ public class PreviewFakeKoji {
                     offerBuild(build, projectsFastdebugBuilds, sb, projectsBuilds, dwnld);
 
                 }
-                if (usedBuilds.size() != buildObjects.length) {
-                    List<Build> unUsedBuilds = new ArrayList<>(-usedBuilds.size() + buildObjects.length);
+                if (usedBuilds.size() != buildObjects.size()) {
+                    List<Build> unUsedBuilds = new ArrayList<>(-usedBuilds.size() + buildObjects.size());
                     for (Object bo : buildObjects) {
                         if (usedBuilds.contains((Build) bo)) {
 
@@ -517,12 +518,12 @@ public class PreviewFakeKoji {
             });
             usedProducets.stream().forEach((product) -> {
                 sb.append("  <h2>").append(product.getName()).append("</h2>\n");
-                Object[] buildObjects = getBuildfForProduct(product, xmlrpc);
-                List<Build> allBuilds = new ArrayList<>(buildObjects.length);
-                List<Build> usedBuilds = new ArrayList<>(buildObjects.length);
-                Map<String, Build> allProjectsFastdebugBuilds = new HashMap<>(buildObjects.length);
-                List<Build> requestedFastDebugBuilds = new ArrayList<>(buildObjects.length);
-                List<Build> unusedBuilds = new ArrayList<>(buildObjects.length);
+                List<Build> buildObjects = getBuildsfForProduct(product, xmlrpc);
+                List<Build> allBuilds = new ArrayList<>(buildObjects.size());
+                List<Build> usedBuilds = new ArrayList<>(buildObjects.size());
+                Map<String, Build> allProjectsFastdebugBuilds = new HashMap<>(buildObjects.size());
+                List<Build> requestedFastDebugBuilds = new ArrayList<>(buildObjects.size());
+                List<Build> unusedBuilds = new ArrayList<>(buildObjects.size());
                 for (Object buildObject : buildObjects) {
                     Build build = (Build) buildObject;
                     boolean wonted = false;
@@ -540,12 +541,10 @@ public class PreviewFakeKoji {
                         } else {
                             unusedBuilds.add(build);
                         }
+                    } else if (wonted) {
+                        usedBuilds.add(build);
                     } else {
-                        if (wonted) {
-                            usedBuilds.add(build);
-                        } else {
-                            unusedBuilds.add(build);
-                        }
+                        unusedBuilds.add(build);
                     }
 
                 }
@@ -674,13 +673,7 @@ public class PreviewFakeKoji {
         return r.toString();
     }
 
-    private static String joinBuildsObjectArray(Object[] buildObjects) {
-        StringBuilder sb = new StringBuilder();
-        for (Object buildObject : buildObjects) {
-            sb.append(",").append(((Build) buildObject).getNvr());
-        }
-        return sb.substring(1);
-    }
+  
 
     private static String joinListOfBuilds(Collection<Build> lb) {
         if (lb.isEmpty()) {
@@ -691,6 +684,26 @@ public class PreviewFakeKoji {
             sb.append(",").append(b.getNvr());
         }
         return sb.substring(1);
+    }
+
+    private static List<Build> getBuildsfForProduct(Product product, URL xmlrpc) {
+        Object[] all = getBuildfForProduct(product, xmlrpc);
+        List<Build> typedNotRunnign = new ArrayList<>(all.length);
+        for (Object object : all) {
+            Build o = (Build) object;
+            boolean running=false;
+            Set<String> tags = o.getTags();
+            for (String tag : tags) {
+                if (tag.contains(FakeBuild.notBuiltTagPart)){
+                    running=true;
+                    break;
+                }
+            }
+            if (!running) {
+                typedNotRunnign.add(o);
+            }
+        }
+        return typedNotRunnign;
     }
 
     private static Object[] getBuildfForProduct(Product product, URL xmlrpc) {
