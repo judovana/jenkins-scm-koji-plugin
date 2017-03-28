@@ -500,7 +500,8 @@ public class FakeBuild {
             br.write("#    TckScripts/jenkins/static/tempt-ojdk-repo.sh\n");
             br.write("# always copy (if exists) project-name/" + archesConfigFileName + " togetehr with uploading src.tarxz to its " + suggestedPath + "\n");
             br.write("# Please always keep comment here describing above, and explaining why listed arches are there.\n");
-            br.write("# Defualt arches are now: \n");
+            br.write("# generated from: "+System.getProperty("user.dir"));
+            br.write("# Defualt (hardcoded) arches are now: \n");
             br.write("\n");
             br.write(" ");
             for (String arch : defaultSupportedArchs) {
