@@ -36,7 +36,7 @@ import java.nio.file.attribute.BasicFileAttributes;
  * @author jvanek
  */
 public class IsFailedBuild {
-    
+
     private final File dir;
     boolean lastResult = false;
 
@@ -68,17 +68,21 @@ public class IsFailedBuild {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!file.toFile().isDirectory()) {
                     if (file.getFileName().endsWith("FAILED")) {
+                        System.out.println("Found file ending with FAILED - " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                     if (file.getFileName().endsWith("ERROR")) {
+                        System.out.println("Found file ending with ERROR- " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                     //most files have VERY long names. Shjortest known name is hg.log, anything shorter is probably error
                     if (file.getFileName().toString().length() < 5) {
+                        System.out.println("Found filename shorter then 5 chars - " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                     //most files have huge. Even logs.  Empty files are mostly just touches signalizing something wrong
-                     if (file.toFile().length() <= 5) {
+                    if (file.toFile().length() <= 5) {
+                        System.out.println("Found file size smaller then 5 bytes- " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                 }
@@ -96,5 +100,5 @@ public class IsFailedBuild {
             }
         });
     }
-    
+
 }

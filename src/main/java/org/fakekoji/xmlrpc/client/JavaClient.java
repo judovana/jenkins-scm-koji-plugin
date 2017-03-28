@@ -26,11 +26,8 @@ package org.fakekoji.xmlrpc.client;
 import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.client.XmlRpcClient;
-import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 import org.fakekoji.xmlrpc.server.JavaServer;
 
 /**

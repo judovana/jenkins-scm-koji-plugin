@@ -25,11 +25,15 @@ package org.fakekoji.xmlrpc.server.core;
 
 import hudson.plugins.scm.koji.Constants;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -54,6 +58,7 @@ public class FakeBuild {
     private static final String logs = "logs";
     private static final String data = "data";
     public static final String notBuiltTagPart = "_notBuild-";
+    private static final String archesConfigFileName = "arches-expected";
 
     public FakeBuild(String name, String version, String release, File releaseDir) {
         this.dir = releaseDir;
@@ -148,7 +153,7 @@ public class FakeBuild {
 
     private File getDataDir() {
         File[] possibleArchesDirs = dir.listFiles(new DirFilter());
-        List<String> arches = new ArrayList<>(possibleArchesDirs.length);
+        //List<String> arches = new ArrayList<>(possibleArchesDirs.length);
         for (File archDir : possibleArchesDirs) {
             if (archDir.getName().equalsIgnoreCase(data)) {
                 return archDir;
@@ -158,9 +163,17 @@ public class FakeBuild {
         }
         return null;
     }
-    
-    private File getArechesConfigFile() {
-        return new File(getDataDir(),"arches-expected");
+
+    private File getArchesConfigFile() {
+        return new File(getDataDir(), archesConfigFileName);
+    }
+
+    private File getProjectConfigFile1() {
+        return new File(dir + "/../../" + archesConfigFileName);
+    }
+
+    private File getProjectConfigFile2() {
+        return new File(dir + "/../../../" + name + "-" + archesConfigFileName);
     }
 
     public List<String> getArches() {
@@ -286,8 +299,8 @@ public class FakeBuild {
             String pkgFile = replaceLast(fname, "\\..*", ""); //.suffix
             pkgFile = replaceLast(pkgFile, "\\..*", ""); //.arch
             String arch = get.getParentFile().getName();
-            boolean mayBeFailed = new  IsFailedBuild(get.getParentFile().getParentFile()).reCheck().getLastResult();
-            if (mayBeFailed){
+            boolean mayBeFailed = new IsFailedBuild(get.getParentFile().getParentFile()).reCheck().getLastResult();
+            if (mayBeFailed) {
                 System.out.println(" Warning: " + get + " seems to be from failed build!");
             }
             if (arrayContains(archs, arch)) {
@@ -345,20 +358,40 @@ public class FakeBuild {
     /**
      * Each src archive must be be attempted on all those archs.
      *
-     * If the build fails, or arch is not accessible, the column must have FAILED
-     * file instead of build. (+ ideally logs).
+     * If the build fails, or arch is not accessible, the column must have
+     * FAILED file instead of build. (+ ideally logs).
      *
      * Little bit more generally - if the arch dir don't exists or is empty, is
      * considered as not build
      */
-    private final String[] defaultSupportedArchs = new String[]{"x86_64", "i686", "win"/*, "aarch64"*/};
-    //FIXME enable aarch64 builder
-     private String[] getSupportedArches() throws IOException{
-         if (getArechesConfigFile().exists()){
-             return readArchesFile(getArechesConfigFile());
-         }
-         return defaultSupportedArchs;
-     }
+    private static final String[] defaultSupportedArchs = new String[]{"x86_64", "i686", "win"/*, "aarch64"*/};
+    //aarch64 is now added in rnutime, via  per project  settings. When ojdk9 will be oldest suported jdk, it have sense to put it here.
+
+    private String[] getSupportedArches() throws IOException {
+        System.out.println("For: " + getNVR());
+        if (getArchesConfigFile().exists()) {
+            System.out.println("Using expected arches from " + getArchesConfigFile().getAbsolutePath());
+            return readArchesFile(getArchesConfigFile());
+        }
+        if (getProjectConfigFile1().exists()) {
+            System.out.println("Using expected arches from " + getProjectConfigFile1().getAbsolutePath());
+            return readArchesFile(getProjectConfigFile1());
+        }
+        if (getProjectConfigFile2().exists()) {
+            System.out.println("Using expected arches from " + getProjectConfigFile2().getAbsolutePath());
+            return readArchesFile(getProjectConfigFile2());
+        }
+        System.out.println("Using hardcoded arches.");
+        return defaultSupportedArchs;
+    }
+
+    public void printExpectedArchesForThisBuild() {
+        try {
+            System.out.println("Expected to build on: "+Arrays.toString(getSupportedArches()));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 
     private String[] prefixIfNecessary(String[] connectedTags) throws IOException {
         List<String> arches = getArches();
@@ -366,9 +399,12 @@ public class FakeBuild {
         //primary case - the build have src, so we expect to build it in time onall arches
         if (arches.contains("src")) {
             boolean allBuilt = true;
-            List<String> tags = new ArrayList<>(connectedTags.length * getSupportedArches().length);
+            //there may be IO involved
+            String[] thisOnesArches = getSupportedArches();
+            System.err.println(Arrays.toString(thisOnesArches));
+            List<String> tags = new ArrayList<>(connectedTags.length * thisOnesArches.length);
             for (String connectedTag : connectedTags) {
-                for (String arch : getSupportedArches()) {
+                for (String arch : thisOnesArches) {
                     File archDir = new File(dir, arch);
                     if (archDir.exists() && archDir.isDirectory() && archDir.list().length > 0) {
                         //hmm no op?
@@ -430,6 +466,52 @@ public class FakeBuild {
         return dir;
     }
 
+    public static void main(String... arg) throws IOException {
+        //arg = new String[]{"/mnt/raid1/local-builds/java-9-openjdk/" + archesConfigFileName};
+        if (arg.length == 0) {
+            System.out.println("Expected single argument - path to file to save the file. Suggested name is: " + archesConfigFileName);
+            System.exit(1);
+        }
+        generateDefaultArchesFile(new File(arg[0]));
+        System.out.println(new File(arg[0]).getAbsolutePath());
+        System.err.println(Arrays.toString(readArchesFile(new File(arg[0]))));
+    }
+
+    private static void generateDefaultArchesFile(File f) throws IOException {
+        try (
+                OutputStream fis = new FileOutputStream(f);
+                OutputStreamWriter isr = new OutputStreamWriter(fis, Charset.forName("UTF-8"));
+                BufferedWriter br = new BufferedWriter(isr);) {
+            String suggestedPath = "name/version/release/data/";
+            br.write("# note, " + suggestedPath + " is value which can (however unlikely) change in time\n");
+            br.write("# lines are trimmed before processing, and empty and # starting lines are skipped. First non # non empty line is considered as arches line and splitted on \\s+, returned, reading stopped \n");
+            br.write("# ############## #\n");
+            br.write("# this configfile contains architectures the build/project should be built\n");
+            br.write("# it can be palced as " + suggestedPath + "" + archesConfigFileName + "\n");
+            br.write("# where it takes priority, so you can configure *single* build to built on exacta architectures\n");
+            br.write("# if this single-build do not exists, then it is tried in name/" + archesConfigFileName + "\n");
+            br.write("# by doing so, you can configure a product to buitl on some architectures (unles its build specifies differently)\n");
+            br.write("# eg java-1.{7,9}.0-openjdk are supposed to build on x86_64, i686 and windows. However those from icedtea7-forest, aarch64/jdk8 and aarch64/shenandoah should build also on aarch64\n");
+            br.write("# in addition java-9-openjdk is supposedto build on x86_64, i686 and windows AND aarch64\n");
+            br.write("# last place where to search config is /name-" + archesConfigFileName + ". Eg java-1.8.0-openjdk-" + archesConfigFileName + ", where / is root of fake-koji.\n");
+            br.write("# This last configutration was added, as fake koji dont like files where only dirs should be (it works fine but...)\n");
+            br.write("# ############## #\n");
+            br.write("# Now, to enable per-project (== per forest) settings, the \n");
+            br.write("#    TckScripts/jenkins/static/tempt-ojdk-repo.sh\n");
+            br.write("# always copy (if exists) project-name/" + archesConfigFileName + " togetehr with uploading src.tarxz to its " + suggestedPath + "\n");
+            br.write("# Please always keep comment here describing above, and explaining why listed arches are there.\n");
+            br.write("# Defualt arches are now: \n");
+            br.write("\n");
+            br.write(" ");
+            for (String arch : defaultSupportedArchs) {
+                br.write(arch + " ");
+            }
+            br.write("\n");
+            br.flush();
+
+        }
+    }
+
     private static String[] readArchesFile(File f) throws IOException {
         try (
                 InputStream fis = new FileInputStream(f);
@@ -440,10 +522,15 @@ public class FakeBuild {
                 if (line == null) {
                     return null;
                 }
-                if (line.trim().startsWith("#")){
+                if (line.trim().startsWith("#")) {
                     continue;
                 }
-                return line.trim().split("\\s+");
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                String[] r = line.trim().split("\\s+");
+                return r;
+
             }
         }
     }

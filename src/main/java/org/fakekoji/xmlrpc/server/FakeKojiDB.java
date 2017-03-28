@@ -25,6 +25,7 @@ package org.fakekoji.xmlrpc.server;
 
 import hudson.plugins.scm.koji.Constants;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -112,9 +113,9 @@ public class FakeKojiDB {
         List<FakeBuild> matchingBuilds = getProjectBuildsByProjectId(projectId);
         for (int i = 0; i < matchingBuilds.size(); i++) {
             FakeBuild get = matchingBuilds.get(i);
-            boolean mayBeFailed = new  IsFailedBuild(get.getDir()).reCheck().getLastResult();
-            if (mayBeFailed){
-                System.out.println("Removing build ("+i+"): " + get.toString() +" from result. Contains FAILED records");
+            boolean mayBeFailed = new IsFailedBuild(get.getDir()).reCheck().getLastResult();
+            if (mayBeFailed) {
+                System.out.println("Removing build (" + i + "): " + get.toString() + " from result. Contains FAILED records");
                 matchingBuilds.remove(i);
                 i--;
             }
@@ -175,7 +176,11 @@ public class FakeKojiDB {
         for (int i = 0; i < builds.size(); i++) {
             FakeBuild get = builds.get(i);
             if (get.getBuildID() == buildId) {
-                return get.guessTags();
+                try {
+                    return get.guessTags();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         }
         return new String[0];
@@ -212,6 +217,7 @@ public class FakeKojiDB {
                     }
                     System.out.println("Artifacts for given build");
                     FakeBuild bld = getBuildById((Integer) value);
+                    bld.printExpectedArchesForThisBuild();
                     List<String> arches = bld.getArches();
                     System.out.println("  archs: " + arches.size());
                     for (String arch : arches) {
