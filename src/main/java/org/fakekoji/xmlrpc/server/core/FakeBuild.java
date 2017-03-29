@@ -210,10 +210,9 @@ public class FakeBuild {
     public String[] guessTags() throws IOException {
         List<File> files = this.getNonLogs();
         for (File file : files) {
-            if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
-                return prefixIfNecessary(TagsProvider.getWinTags());
-            }
-            if (name.endsWith("openjdk")) {
+            //appearence and using of openjdkX-win is very unlike, but...
+            //we have java-X.Y-openjdk or openjdkX-win)
+            if (name.endsWith("openjdk") || name.startsWith("openjdk")) {
                 //currently we have static only for linux
                 if (file.getName().toLowerCase().contains("static") || release.toLowerCase().contains("upstream")) {
                     return prefixIfNecessary(connect(TagsProvider.getFedoraTags(), TagsProvider.getRHELtags(), TagsProvider.getRhelTags(), TagsProvider.getWinTags()));
@@ -229,6 +228,9 @@ public class FakeBuild {
                     return prefixIfNecessary(new String[]{
                         TagsProvider.getFedoraBase(osVersion)
                     });
+                }
+                if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
+                    return prefixIfNecessary(TagsProvider.getWinTags());
                 }
             }
             //oracle and ibm are far from being done. But at least start is sumarised there
