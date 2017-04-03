@@ -428,6 +428,16 @@ public class FakeBuild {
                         return nwTags;
                     }
                 }
+                for (File file : files) {
+                    if (file.getAbsolutePath().contains("slowdebug")) {
+                        String[] nwTags = new String[connectedTags.length];
+                        for (int i = 0; i < connectedTags.length; i++) {
+                            nwTags[i] = "slowdebug-" + connectedTags[i];
+
+                        }
+                        return nwTags;
+                    }
+                }
                 return connectedTags;
             } else {
                 return tags.toArray(new String[0]);
