@@ -26,6 +26,7 @@ package org.fakekoji.xmlrpc.server;
 import com.sun.net.httpserver.HttpServer;
 import hudson.plugins.scm.koji.Constants;
 import java.io.File;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.Map;
@@ -171,9 +172,14 @@ public class JavaServer {
             hs.start();
             System.out.println("Started successfully on " + realDPort);
             System.out.println("Starting http server 80 frontend");
-            //Hardcoded setup dirs and made "quick launch" from JavaServer FIXME!
             //This is nasty, this now requires whole service run as root. Should be fixed  to two separated serv
-            PreviewFakeKoji.main(null);
+            String thisMachine = InetAddress.getLocalHost().getHostName();
+            PreviewFakeKoji.main(new String []{
+                "http://"+thisMachine+"/RPC2/",
+                "http://"+thisMachine+"/",
+                new File(dbFileRoot.getParentFile(), "upstream-repos").getAbsolutePath(),
+                dbFileRoot.getAbsolutePath()
+            });
             System.out.println("FrontEnd started successfully");
             System.out.println("Accepting requests. (Halt program to stop.)");
 

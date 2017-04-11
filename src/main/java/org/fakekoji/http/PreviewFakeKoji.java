@@ -65,13 +65,14 @@ public class PreviewFakeKoji {
 
     public static void main(String[] args) throws MalformedURLException, IOException {
         //defualting to 80 with all consequences
+/*          //debugging
         args = new String[]{
             "http://hydra.brq.redhat.com/RPC2/",
             "http://hydra.brq.redhat.com/",
             "/mnt/raid1/upstream-repos",
             "/mnt/raid1/local-builds",
             //"1919"
-        };
+        };*/
         if (args.length < 3) {
             System.out.println("Mandatory 4 params:  full koji xmlrpc url and koji download url and cloned forests homes and projects homes");
             System.out.println("if no port is specified, my favorit XPORT and DPORT are used,");
