@@ -141,7 +141,7 @@ public class FileReturningHandler implements HttpHandler {
         final StringBuilder sb = new StringBuilder();
         sb.append("  <h2>").append(requestedFile);
         if (time){
-            sb.append(" (lastModified)");
+            sb.append(" (lastModified) (size KB)");
         }
         sb.append("</h2>\n");
         sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
@@ -168,6 +168,9 @@ public class FileReturningHandler implements HttpHandler {
                     sb.append("  (");
                     FileTime fileTime = Files.getLastModifiedTime(file);
                     sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
+                    sb.append(")");
+                    sb.append("  (");
+                    sb.append("" + (file.toFile().length() / 1024l));
                     sb.append(")");
                 }
                 sb.append("<br/>\n");
@@ -235,7 +238,7 @@ public class FileReturningHandler implements HttpHandler {
         StringBuilder sb = new StringBuilder();
         sb.append("  <h2>").append(requestedFile);
         if (time){
-            sb.append(" (lastModified dirContent) (lastModified)");
+            sb.append(" (lastModified dirContent) (lastModified) (size KB)");
         }
         sb.append("</h2>\n");
         sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
@@ -259,6 +262,9 @@ public class FileReturningHandler implements HttpHandler {
                     sb.append("  (");
                     FileTime fileTime = Files.getLastModifiedTime(ff.toPath());
                     sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
+                    sb.append(")");
+                    sb.append("  (");
+                    sb.append("" + (ff.length() / 1024l));
                     sb.append(")");
                 }
             };
