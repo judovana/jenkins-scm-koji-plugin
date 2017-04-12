@@ -58,6 +58,13 @@ import org.fakekoji.xmlrpc.server.core.FakeBuild;
 
 public class PreviewFakeKoji {
 
+    private static String jenkinsUrlOverride = null;
+
+    public static void setJenkinsUrlOverride(String s) {
+        System.out.println("Set jenkinsUrlOverwritw! from " + jenkinsUrlOverride + " to " + s);
+        PreviewFakeKoji.jenkinsUrlOverride = s;
+    }
+
     public static URL setUriPort(URL uri, int port) throws MalformedURLException {
         URL newUri = new URL(uri.getProtocol(), uri.getHost(), port, uri.getFile());
         return newUri;
@@ -66,13 +73,13 @@ public class PreviewFakeKoji {
     public static void main(String[] args) throws MalformedURLException, IOException {
         //defualting to 80 with all consequences
 /*          //debugging
-        args = new String[]{
-            "http://hydra.brq.redhat.com/RPC2/",
-            "http://hydra.brq.redhat.com/",
-            "/mnt/raid1/upstream-repos",
-            "/mnt/raid1/local-builds",
-            //"1919"
-        };*/
+         args = new String[]{
+         "http://hydra.brq.redhat.com/RPC2/",
+         "http://hydra.brq.redhat.com/",
+         "/mnt/raid1/upstream-repos",
+         "/mnt/raid1/local-builds",
+         //"1919"
+         };*/
         if (args.length < 3) {
             System.out.println("Mandatory 4 params:  full koji xmlrpc url and koji download url and cloned forests homes and projects homes");
             System.out.println("if no port is specified, my favorit XPORT and DPORT are used,");
@@ -272,6 +279,9 @@ public class PreviewFakeKoji {
         }
 
         private String getJenkinsUrl() {
+            if (PreviewFakeKoji.jenkinsUrlOverride != null) {
+                return PreviewFakeKoji.jenkinsUrlOverride;
+            }
             return getUrl(8080);
         }
 
@@ -674,8 +684,6 @@ public class PreviewFakeKoji {
         return r.toString();
     }
 
-  
-
     private static String joinListOfBuilds(Collection<Build> lb) {
         if (lb.isEmpty()) {
             return "";
@@ -692,11 +700,11 @@ public class PreviewFakeKoji {
         List<Build> typedNotRunnign = new ArrayList<>(all.length);
         for (Object object : all) {
             Build o = (Build) object;
-            boolean running=false;
+            boolean running = false;
             Set<String> tags = o.getTags();
             for (String tag : tags) {
-                if (tag.contains(FakeBuild.notBuiltTagPart)){
-                    running=true;
+                if (tag.contains(FakeBuild.notBuiltTagPart)) {
+                    running = true;
                     break;
                 }
             }

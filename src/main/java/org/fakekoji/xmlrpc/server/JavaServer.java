@@ -180,6 +180,7 @@ public class JavaServer {
                 new File(dbFileRoot.getParentFile(), "upstream-repos").getAbsolutePath(),
                 dbFileRoot.getAbsolutePath()
             });
+            PreviewFakeKoji.setJenkinsUrlOverride("http://hydra.brq.redhat.com:8080/");
             System.out.println("FrontEnd started successfully");
             System.out.println("Accepting requests. (Halt program to stop.)");
 
