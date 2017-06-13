@@ -260,6 +260,21 @@ public class KojiListBuildsTest {
         );
     }
 
+    KojiScmConfig createConfigWithEmptyArch() {
+        return new KojiScmConfig(
+                "https://brewhub.engineering.redhat.com/brewhub",
+                "http://download.eng.bos.redhat.com/brewroot/packages/",
+                "java-1.8.0-openjdk",
+                null,
+                "RHEL-6.*-candidate",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -455,4 +470,11 @@ public class KojiListBuildsTest {
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
-}
+
+    @Test
+    public void testNoArchPresentBuilds() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigWithEmptyArch(),new NotProcessedNvrPredicate(new HashSet<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+ }
