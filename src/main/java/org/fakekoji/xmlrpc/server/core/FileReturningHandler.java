@@ -40,6 +40,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -125,8 +126,8 @@ public class FileReturningHandler implements HttpHandler {
         File f = ff.getParentFile();
         System.out.println(f.getAbsolutePath() + " listing all files!");
         String init ="<html>\n  <body>\n";
-        StringBuilder sb1 = generateHtmlAllFiles(requestedFile, f, false);
-        StringBuilder sb2 = generateHtmlAllFiles(requestedFile, f, true);
+        StringBuilder sb1 = generateHtmlFromFileList(requestedFile, f, false);
+        StringBuilder sb2 = generateHtmlFromFileList(requestedFile, f, true);
         String close="  </body>\n</html>\n";
         String result = init+sb1.toString()+"<hr/>"+sb2+close;
         long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
@@ -136,17 +137,9 @@ public class FileReturningHandler implements HttpHandler {
         }
 
     }
-
-    private static StringBuilder generateHtmlAllFiles(final String requestedFile, final File f, boolean time) throws IOException {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("  <h2>").append(requestedFile);
-        if (time){
-            sb.append(" (lastModified) (size KB)");
-        }
-        sb.append("</h2>\n");
-        sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
-        sb.append("..");
-        sb.append("    </a><br/>\n");
+    
+    private static List<FileInfo> getRecursiveFileList(final String requestedFile, final File f) throws IOException {
+        List<FileInfo> list = new ArrayList();
         Files.walkFileTree(f.toPath(), new FileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -159,21 +152,7 @@ public class FileReturningHandler implements HttpHandler {
                 String rf = new File(requestedFile).getParent();
                 String path = "/" + rf + "/" + fileChunk;
                 path = path.replaceAll("/+", "/");
-                sb.append("    <a href=\"").append(path).append("\">");
-                sb.append(fileChunk);
-
-                sb.append("    </a>");
-                if (time) {
-                    //only files listed in "all" mode
-                    sb.append("  (");
-                    FileTime fileTime = Files.getLastModifiedTime(file);
-                    sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
-                    sb.append(")");
-                    sb.append("  (");
-                    sb.append("" + (file.toFile().length() / 1024l));
-                    sb.append(")");
-                }
-                sb.append("<br/>\n");
+                list.add(new FileInfo(fileChunk, path, file));
                 return FileVisitResult.CONTINUE;
             }
 
@@ -187,6 +166,40 @@ public class FileReturningHandler implements HttpHandler {
                 return FileVisitResult.CONTINUE;
             }
         });
+        return list;
+    }
+
+    private static StringBuilder generateHtmlFromFileList(final String requestedFile, final File f, boolean time) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("  <h2>").append(requestedFile);
+        if (time) {
+            sb.append(" (lastModified) (size KB)");
+        }
+        sb.append("</h2>\n");
+        sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
+        sb.append("..");
+        sb.append("    </a><br/>\n");
+        List<FileInfo> list = getRecursiveFileList(requestedFile, f);
+        Collections.sort(list);
+        for (FileInfo mf : list) {
+            sb.append("    <a href=\"").append(f.getPath()).append("\">");
+            sb.append(mf.getFileChunk());
+
+            sb.append("    </a>");
+
+            if (time) {
+                //only files listed in "all" mode
+                sb.append("  (");
+                FileTime fileTime = Files.getLastModifiedTime(mf.getFile());
+                sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
+                sb.append(")");
+                sb.append("  (");
+                sb.append("").append(mf.getFile().toFile().length() / 1024l);
+                sb.append(")");
+            }
+
+            sb.append("<br/>\n");
+        }
         return sb;
     }
 
@@ -219,9 +232,10 @@ public class FileReturningHandler implements HttpHandler {
     private void sentDirListing(File f, String requestedFile, HttpExchange t) throws IOException {
         System.out.println(f.getAbsolutePath() + " listing directory!");
         String[] files = f.list();
-        String[] s = new String[files.length + 1];
-        s[0] = "ALL";
-        System.arraycopy(files, 0, s, 1, files.length);
+        FileInfo[] s = new FileInfo[files.length + 1];
+        s[0] = new FileInfo("ALL");
+        for(int i = 0; i < files.length; i++)
+            s[i + 1] = new FileInfo(files[i]);
         String init ="<html>\n  <body>\n";
         StringBuilder sb1 = generateHtmlFromArray(requestedFile, s, false);
         StringBuilder sb2 = generateHtmlFromArray(requestedFile, s, true);
@@ -233,8 +247,18 @@ public class FileReturningHandler implements HttpHandler {
             os.write(result.getBytes());
         }
     }
+    
+    private static boolean areNumeric(String s1, String s2) {
+        try {
+            Integer.parseInt(s1);
+            Integer.parseInt(s2);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
 
-    private StringBuilder generateHtmlFromArray(String requestedFile, String[] s, boolean time) throws IOException {
+    private StringBuilder generateHtmlFromArray(String requestedFile, FileInfo[] s, boolean time) throws IOException {
         StringBuilder sb = new StringBuilder();
         sb.append("  <h2>").append(requestedFile);
         if (time){
@@ -244,14 +268,17 @@ public class FileReturningHandler implements HttpHandler {
         sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
         sb.append("..");
         sb.append("    </a><br/>\n");
-        for (String string : s) {
-            String path = "/" + requestedFile + "/" + string;
+        
+        Arrays.sort(s, 1, s.length);
+      
+        for (FileInfo file : s) {
+            String path = "/" + requestedFile + "/" + file.getFileChunk();
             path = path.replaceAll("/+", "/");
             sb.append("    <a href=\"").append(path).append("\">");
-            sb.append(string);
+            sb.append(file.getFileChunk());
             sb.append("    </a>");
             if (time) {
-                File ff = new File(root + "/" + requestedFile + "/" + string);
+                File ff = new File(root + "/" + requestedFile + "/" + file.getFileChunk());
                 if (ff.exists()) {
                     if (Files.isDirectory(ff.toPath())) {
                         sb.append("  (");
@@ -264,10 +291,10 @@ public class FileReturningHandler implements HttpHandler {
                     sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
                     sb.append(")");
                     sb.append("  (");
-                    sb.append("" + (ff.length() / 1024l));
+                    sb.append("").append(ff.length() / 1024l);
                     sb.append(")");
                 }
-            };
+            }
             sb.append("<br/>\n");
         }
         return sb;
@@ -363,6 +390,53 @@ public class FileReturningHandler implements HttpHandler {
             }
         });
         return logs;
+    }
+    
+    private static class FileInfo implements Comparable<FileInfo> {
+        
+        private static final String NON_ALPHANUMERIC_REGEX = "[^a-zA-Z0-9]";
+
+        private final String path;
+        private final String fileChunk;
+        private final Path file;
+
+        public FileInfo(String fileChunk) {
+            this.fileChunk = fileChunk;
+            this.path = fileChunk;
+            this.file = new File(fileChunk).toPath();
+        }
+
+        public FileInfo(String fileChunk, String path, Path file) {
+            this.fileChunk = fileChunk;
+            this.path = path;
+            this.file = file;
+        }
+
+        @Override
+        public int compareTo(FileInfo file) {
+            String[] arr1 = fileChunk.split(NON_ALPHANUMERIC_REGEX);
+            String[] arr2 = file.getFileChunk().split(NON_ALPHANUMERIC_REGEX);
+            int min = Math.min(arr1.length, arr2.length);
+            for (int i = 0; i < min; i++) {
+                int compare = areNumeric(arr1[i], arr2[i]) ? Integer.compare(Integer.parseInt(arr1[i]), Integer.parseInt(arr2[i])) : arr1[i].compareTo(arr2[i]);
+                if (compare != 0) {
+                    return compare;
+                }
+            }
+            return arr1.length - arr2.length;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public String getFileChunk() {
+            return fileChunk;
+        }
+
+        public Path getFile() {
+            return file;
+        }
     }
 
 }
