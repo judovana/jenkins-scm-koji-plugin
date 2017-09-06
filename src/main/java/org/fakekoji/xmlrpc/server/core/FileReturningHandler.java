@@ -126,11 +126,11 @@ public class FileReturningHandler implements HttpHandler {
     private static void sentFullLIst(File ff, final String requestedFile, HttpExchange t) throws IOException {
         File f = ff.getParentFile();
         System.out.println(f.getAbsolutePath() + " listing all files!");
-        String init ="<html>\n  <body>\n";
+        String init = "<html>\n  <body>\n";
         StringBuilder sb1 = generateHtmlFromFileList(requestedFile, f, new ComparatorByVersion());
         StringBuilder sb2 = generateHtmlFromFileList(requestedFile, f, new ComparatorByLastModified());
-        String close="  </body>\n</html>\n";
-        String result = init+sb1.toString()+"<hr/>"+sb2+close;
+        String close = "  </body>\n</html>\n";
+        String result = init + sb1.toString() + "<hr/>" + sb2 + close;
         long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
         t.sendResponseHeaders(200, size);
         try (OutputStream os = t.getResponseBody()) {
@@ -138,7 +138,7 @@ public class FileReturningHandler implements HttpHandler {
         }
 
     }
-    
+
     private static List<FileInfo> getRecursiveFileList(final String requestedFile, final File f) throws IOException {
         List<FileInfo> list = new ArrayList();
         Files.walkFileTree(f.toPath(), new FileVisitor<Path>() {
@@ -169,7 +169,7 @@ public class FileReturningHandler implements HttpHandler {
         });
         return list;
     }
-    
+
     private static StringBuilder generateHtmlFromFileList(final String requestedFile, final File f, Comparator c) throws IOException {
         final StringBuilder sb = new StringBuilder();
         final InfoProvider provider = (InfoProvider) c;
@@ -246,7 +246,7 @@ public class FileReturningHandler implements HttpHandler {
             os.write(result.getBytes());
         }
     }
-    
+
     private void sortFileList(ArrayList<FileInfo> list, Comparator c) {
         if (!list.get(0).getFileChunk().equals("ALL")) {
             throw new RuntimeException("File list doesn't contain ALL file.");
@@ -256,7 +256,7 @@ public class FileReturningHandler implements HttpHandler {
         Collections.sort(list, c);
         list.add(0, all);
     }
-    
+
     private static boolean areNumeric(String s1, String s2) {
         try {
             Integer.parseInt(s1);
@@ -266,7 +266,7 @@ public class FileReturningHandler implements HttpHandler {
             return false;
         }
     }
-    
+
     private StringBuilder generateHtmlFromList(String requestedFile, ArrayList<FileInfo> s, Comparator c) throws IOException {
         StringBuilder sb = new StringBuilder();
         InfoProvider provider = (InfoProvider) c;
@@ -380,7 +380,7 @@ public class FileReturningHandler implements HttpHandler {
         });
         return logs;
     }
-    
+
     private static class FileInfo {
 
         private final String fileChunk;
