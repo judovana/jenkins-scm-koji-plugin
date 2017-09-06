@@ -459,8 +459,15 @@ public class FileReturningHandler implements HttpHandler {
     private static class ComparatorByLastModifiedDirContent implements Comparator<FileInfo>, InfoProvider {
 
         @Override
-        public int compare(FileInfo f1, FileInfo f2) {
-            return (int) (f2.getLastModifiedDirContent() - f1.getLastModifiedDirContent());
+        public int compare(FileInfo o1, FileInfo o2) {
+
+            if (o2.getLastModifiedDirContent() == o1.getLastModifiedDirContent()) {
+                return 0;
+            }
+            if (o2.getLastModifiedDirContent() > o1.getLastModifiedDirContent()) {
+                return -1;
+            }
+            return 1;
         }
 
         @Override
@@ -481,8 +488,14 @@ public class FileReturningHandler implements HttpHandler {
     private static class ComparatorByLastModified implements InfoProvider, Comparator<FileInfo> {
 
         @Override
-        public int compare(FileInfo f1, FileInfo f2) {
-            return (int) (f2.getLastModified() - f1.getLastModified());
+        public int compare(FileInfo o1, FileInfo o2) {
+            if (o2.getLastModified() == o1.getLastModified()) {
+                return 0;
+            }
+            if (o2.getLastModified() > o1.getLastModified()) {
+                return -1;
+            }
+            return 1;
         }
 
         @Override
