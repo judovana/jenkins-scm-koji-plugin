@@ -436,7 +436,7 @@ public class FileReturningHandler implements HttpHandler {
             String[] arr2 = f2.getFileChunk().split(NON_ALPHANUMERIC_REGEX);
             int min = Math.min(arr1.length, arr2.length);
             for (int i = 0; i < min; i++) {
-                int compare = areNumeric(arr1[i], arr2[i]) ? Integer.compare(Integer.parseInt(arr1[i]), Integer.parseInt(arr2[i])) : arr1[i].compareTo(arr2[i]);
+                int compare = areNumeric(arr1[i], arr2[i]) ? Integer.compare(Integer.parseInt(arr2[i]), Integer.parseInt(arr1[i])) : arr1[i].compareTo(arr2[i]);
                 if (compare != 0) {
                     return compare;
                 }
