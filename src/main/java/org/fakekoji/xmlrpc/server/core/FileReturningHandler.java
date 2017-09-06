@@ -248,8 +248,9 @@ public class FileReturningHandler implements HttpHandler {
     }
     
     private void sortFileList(ArrayList<FileInfo> list, Comparator c) {
-        if(!list.get(0).getFileChunk().equals("ALL"))
+        if (!list.get(0).getFileChunk().equals("ALL")) {
             throw new RuntimeException("File list doesn't contain ALL file.");
+        }
         FileInfo all = list.get(0);
         list.remove(0);
         Collections.sort(list, c);
