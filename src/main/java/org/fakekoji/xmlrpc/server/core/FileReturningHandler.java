@@ -40,10 +40,11 @@ import java.nio.file.attribute.FileTime;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -126,8 +127,8 @@ public class FileReturningHandler implements HttpHandler {
         File f = ff.getParentFile();
         System.out.println(f.getAbsolutePath() + " listing all files!");
         String init ="<html>\n  <body>\n";
-        StringBuilder sb1 = generateHtmlFromFileList(requestedFile, f, false);
-        StringBuilder sb2 = generateHtmlFromFileList(requestedFile, f, true);
+        StringBuilder sb1 = generateHtmlFromFileList(requestedFile, f, new ComparatorByVersion());
+        StringBuilder sb2 = generateHtmlFromFileList(requestedFile, f, new ComparatorByLastModified());
         String close="  </body>\n</html>\n";
         String result = init+sb1.toString()+"<hr/>"+sb2+close;
         long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
@@ -168,36 +169,23 @@ public class FileReturningHandler implements HttpHandler {
         });
         return list;
     }
-
-    private static StringBuilder generateHtmlFromFileList(final String requestedFile, final File f, boolean time) throws IOException {
+    
+    private static StringBuilder generateHtmlFromFileList(final String requestedFile, final File f, Comparator c) throws IOException {
         final StringBuilder sb = new StringBuilder();
+        final InfoProvider provider = (InfoProvider) c;
         sb.append("  <h2>").append(requestedFile);
-        if (time) {
-            sb.append(" (lastModified) (size KB)");
-        }
+        sb.append(provider.getTitle());
         sb.append("</h2>\n");
         sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
         sb.append("..");
         sb.append("    </a><br/>\n");
-        List<FileInfo> list = getRecursiveFileList(requestedFile, f);
-        Collections.sort(list);
-        for (FileInfo mf : list) {
+        List<FileInfo> fileList = getRecursiveFileList(requestedFile, f);
+        Collections.sort(fileList, c);
+        for (FileInfo file : fileList) {
             sb.append("    <a href=\"").append(f.getPath()).append("\">");
-            sb.append(mf.getFileChunk());
-
+            sb.append(file.getFileChunk());
             sb.append("    </a>");
-
-            if (time) {
-                //only files listed in "all" mode
-                sb.append("  (");
-                FileTime fileTime = Files.getLastModifiedTime(mf.getFile());
-                sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
-                sb.append(")");
-                sb.append("  (");
-                sb.append("").append(mf.getFile().toFile().length() / 1024l);
-                sb.append(")");
-            }
-
+            sb.append(provider.getInfo(file));
             sb.append("<br/>\n");
         }
         return sb;
@@ -232,20 +220,40 @@ public class FileReturningHandler implements HttpHandler {
     private void sentDirListing(File f, String requestedFile, HttpExchange t) throws IOException {
         System.out.println(f.getAbsolutePath() + " listing directory!");
         String[] files = f.list();
-        FileInfo[] s = new FileInfo[files.length + 1];
-        s[0] = new FileInfo("ALL");
-        for(int i = 0; i < files.length; i++)
-            s[i + 1] = new FileInfo(files[i]);
-        String init ="<html>\n  <body>\n";
-        StringBuilder sb1 = generateHtmlFromArray(requestedFile, s, false);
-        StringBuilder sb2 = generateHtmlFromArray(requestedFile, s, true);
-        String close="  </body>\n</html>\n";
-        String result = init+sb1.toString()+"<hr/>"+sb2+close;
+        ArrayList<FileInfo> s = new ArrayList();
+        s.add(0, new FileInfo("ALL", "ALL", new File(root + "/" + requestedFile + "/" + "ALL").toPath()));
+        for (int i = 0; i < files.length; i++) {
+            String fileChunk = files[i];
+            long lastModifiedDirContent = 0;
+            File file = new File(root + "/" + requestedFile + "/" + fileChunk);
+            if (file.exists()) {
+                if (Files.isDirectory(file.toPath())) {
+                    lastModifiedDirContent = getNewestDateIn(file).getTime();
+                }
+            }
+            s.add(new FileInfo(fileChunk, fileChunk, file.toPath(), lastModifiedDirContent));
+        }
+        String init = "<html>\n  <body>\n";
+
+        StringBuilder sb1 = generateHtmlFromList(requestedFile, s, new ComparatorByVersion());
+        StringBuilder sb2 = generateHtmlFromList(requestedFile, s, new ComparatorByLastModified());
+        StringBuilder sb3 = generateHtmlFromList(requestedFile, s, new ComparatorByLastModifiedDirContent());
+        String close = "  </body>\n</html>\n";
+        String result = init + sb1.toString() + "<hr/>" + sb2.toString() + "<hr/>" + sb3.toString() + close;
         long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
         t.sendResponseHeaders(200, size);
         try (OutputStream os = t.getResponseBody()) {
             os.write(result.getBytes());
         }
+    }
+    
+    private void sortFileList(ArrayList<FileInfo> list, Comparator c) {
+        if(!list.get(0).getFileChunk().equals("ALL"))
+            throw new RuntimeException("File list doesn't contain ALL file.");
+        FileInfo all = list.get(0);
+        list.remove(0);
+        Collections.sort(list, c);
+        list.add(0, all);
     }
     
     private static boolean areNumeric(String s1, String s2) {
@@ -257,44 +265,24 @@ public class FileReturningHandler implements HttpHandler {
             return false;
         }
     }
-
-    private StringBuilder generateHtmlFromArray(String requestedFile, FileInfo[] s, boolean time) throws IOException {
+    
+    private StringBuilder generateHtmlFromList(String requestedFile, ArrayList<FileInfo> s, Comparator c) throws IOException {
         StringBuilder sb = new StringBuilder();
+        InfoProvider provider = (InfoProvider) c;
         sb.append("  <h2>").append(requestedFile);
-        if (time){
-            sb.append(" (lastModified dirContent) (lastModified) (size KB)");
-        }
+        sb.append(provider.getTitle());
         sb.append("</h2>\n");
         sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
         sb.append("..");
         sb.append("    </a><br/>\n");
-        
-        Arrays.sort(s, 1, s.length);
-      
+        sortFileList(s, c);
         for (FileInfo file : s) {
             String path = "/" + requestedFile + "/" + file.getFileChunk();
             path = path.replaceAll("/+", "/");
             sb.append("    <a href=\"").append(path).append("\">");
             sb.append(file.getFileChunk());
             sb.append("    </a>");
-            if (time) {
-                File ff = new File(root + "/" + requestedFile + "/" + file.getFileChunk());
-                if (ff.exists()) {
-                    if (Files.isDirectory(ff.toPath())) {
-                        sb.append("  (");
-                        Date fileTime = getNewestDateIn(ff);
-                        sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
-                        sb.append(")");
-                    }
-                    sb.append("  (");
-                    FileTime fileTime = Files.getLastModifiedTime(ff.toPath());
-                    sb.append(Constants.DTF2.format(LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault())));
-                    sb.append(")");
-                    sb.append("  (");
-                    sb.append("").append(ff.length() / 1024l);
-                    sb.append(")");
-                }
-            }
+            sb.append(provider.getInfo(file));
             sb.append("<br/>\n");
         }
         return sb;
@@ -392,38 +380,25 @@ public class FileReturningHandler implements HttpHandler {
         return logs;
     }
     
-    private static class FileInfo implements Comparable<FileInfo> {
-        
-        private static final String NON_ALPHANUMERIC_REGEX = "[^a-zA-Z0-9]";
+    private static class FileInfo {
 
-        private final String path;
         private final String fileChunk;
+        private final String path;
         private final Path file;
-
-        public FileInfo(String fileChunk) {
-            this.fileChunk = fileChunk;
-            this.path = fileChunk;
-            this.file = new File(fileChunk).toPath();
-        }
+        private final long lastModifiedDirContent;
 
         public FileInfo(String fileChunk, String path, Path file) {
             this.fileChunk = fileChunk;
             this.path = path;
             this.file = file;
+            lastModifiedDirContent = 0;
         }
 
-        @Override
-        public int compareTo(FileInfo file) {
-            String[] arr1 = fileChunk.split(NON_ALPHANUMERIC_REGEX);
-            String[] arr2 = file.getFileChunk().split(NON_ALPHANUMERIC_REGEX);
-            int min = Math.min(arr1.length, arr2.length);
-            for (int i = 0; i < min; i++) {
-                int compare = areNumeric(arr1[i], arr2[i]) ? Integer.compare(Integer.parseInt(arr1[i]), Integer.parseInt(arr2[i])) : arr1[i].compareTo(arr2[i]);
-                if (compare != 0) {
-                    return compare;
-                }
-            }
-            return arr1.length - arr2.length;
+        public FileInfo(String fileChunk, String path, Path file, long lastModifiedDirContent) {
+            this.fileChunk = fileChunk;
+            this.path = path;
+            this.file = file;
+            this.lastModifiedDirContent = lastModifiedDirContent;
         }
 
         public String getPath() {
@@ -437,6 +412,99 @@ public class FileReturningHandler implements HttpHandler {
         public Path getFile() {
             return file;
         }
+
+        public long getLastModifiedDirContent() {
+            return lastModifiedDirContent;
+        }
+
+        public long getLastModified() {
+            return file.toFile().lastModified();
+        }
+
+        public long getFileSize() {
+            return file.toFile().length() / 1024l;
+        }
     }
 
+    private static class ComparatorByVersion implements Comparator<FileInfo>, InfoProvider {
+
+        private static final String NON_ALPHANUMERIC_REGEX = "[^a-zA-Z0-9]";
+
+        @Override
+        public int compare(FileInfo f1, FileInfo f2) {
+            String[] arr1 = f1.getFileChunk().split(NON_ALPHANUMERIC_REGEX);
+            String[] arr2 = f2.getFileChunk().split(NON_ALPHANUMERIC_REGEX);
+            int min = Math.min(arr1.length, arr2.length);
+            for (int i = 0; i < min; i++) {
+                int compare = areNumeric(arr1[i], arr2[i]) ? Integer.compare(Integer.parseInt(arr1[i]), Integer.parseInt(arr2[i])) : arr1[i].compareTo(arr2[i]);
+                if (compare != 0) {
+                    return compare;
+                }
+            }
+            return arr1.length - arr2.length;
+        }
+
+        @Override
+        public String getInfo(FileInfo f) {
+            return "";
+        }
+
+        @Override
+        public String getTitle() {
+            return "";
+        }
+    }
+
+    private static class ComparatorByLastModifiedDirContent implements Comparator<FileInfo>, InfoProvider {
+
+        @Override
+        public int compare(FileInfo f1, FileInfo f2) {
+            return (int) (f2.getLastModifiedDirContent() - f1.getLastModifiedDirContent());
+        }
+
+        @Override
+        public String getInfo(FileInfo f) throws IOException {
+            if (f.getFileChunk().equals("ALL")) {
+                return "";
+            }
+            String time = Constants.DTF2.format(LocalDateTime.ofInstant(FileTime.from(f.getLastModifiedDirContent(), TimeUnit.MILLISECONDS).toInstant(), ZoneId.systemDefault()));
+            return " (" + time + ") (" + f.getFileSize() + ")";
+        }
+
+        @Override
+        public String getTitle() {
+            return "(lastModified dirContent) (size KB)";
+        }
+    }
+
+    private static class ComparatorByLastModified implements InfoProvider, Comparator<FileInfo> {
+
+        @Override
+        public int compare(FileInfo f1, FileInfo f2) {
+            return (int) (f2.getLastModified() - f1.getLastModified());
+        }
+
+        @Override
+        public String getInfo(FileInfo f) throws IOException {
+            if (f.getFileChunk().equals("ALL")) {
+                return "";
+            }
+            String time = Constants.DTF2.format(LocalDateTime.ofInstant(FileTime.from(f.getFile().toFile().lastModified(), TimeUnit.MILLISECONDS).toInstant(), ZoneId.systemDefault()));
+            time = " (" + time + ") (" + f.getFileSize() + ")";
+            return time;
+        }
+
+        @Override
+        public String getTitle() {
+            return "(lastModified) (size KB)";
+        }
+
+    }
+
+    private static interface InfoProvider {
+
+        public String getTitle();
+
+        public String getInfo(FileInfo f) throws IOException;
+    }
 }
