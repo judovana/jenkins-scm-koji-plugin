@@ -29,7 +29,7 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
                     new KojiChangeEntry("Build NVR", build.getNvr()),
                     new KojiChangeEntry("Build Tags", build.getTags().stream().collect(Collectors.joining(", "))),
                     new KojiChangeEntry(
-                            "Build RPMs",
+                            "Build RPMs/Tarballs",
                             build.getRpms().stream().map(r -> r.getNvr() + '.' + r.getArch() + ".rpm").collect(Collectors.joining("<br/>")))
             );
             entries = Collections.unmodifiableList(list);
