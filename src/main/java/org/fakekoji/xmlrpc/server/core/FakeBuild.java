@@ -246,6 +246,11 @@ public class FakeBuild {
                     return prefixIfNecessary(connect(TagsProvider.getSuplementaryRhel5LikeTag(), TagsProvider.getSuplementaryRhel6LikeTag(), TagsProvider.getSuplementaryRhel7LikeTag()));
                 }
             }
+            if (name.startsWith("thermostat-ng")){
+                if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {
+                    return prefixIfNecessary(connect(TagsProvider.getFedoraTags(), TagsProvider.getRHELtags(), TagsProvider.getRhelTags(), TagsProvider.getWinTags()));
+                }
+            }
         }
         return new String[0];
     }
