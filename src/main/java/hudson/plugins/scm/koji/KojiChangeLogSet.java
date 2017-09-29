@@ -3,13 +3,10 @@ package hudson.plugins.scm.koji;
 import hudson.model.Run;
 import hudson.model.User;
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.RPM;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.RepositoryBrowser;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
@@ -23,14 +20,12 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
         if (build != null) {
             List<Entry> list = Arrays.asList(
-                    new KojiChangeEntry("Build Name", build.getName()),
-                    new KojiChangeEntry("Build Version", build.getVersion()),
-                    new KojiChangeEntry("Build Release", build.getRelease()),
-                    new KojiChangeEntry("Build NVR", build.getNvr()),
-                    new KojiChangeEntry("Build Tags", build.getTags().stream().collect(Collectors.joining(", "))),
-                    new KojiChangeEntry(
-                            "Build RPMs/Tarballs",
-                            build.getRpms().stream().map(r -> r.getNvr() + '.' + r.getArch() + ".rpm").collect(Collectors.joining("<br/>")))
+                    new KojiChangeEntry("Build Name", new HyperlinkStringContainer(build.getName())),
+                    new KojiChangeEntry("Build Version", new HyperlinkStringContainer(build.getVersion())),
+                    new KojiChangeEntry("Build Release", new HyperlinkStringContainer(build.getRelease())),
+                    new KojiChangeEntry("Build NVR", new HyperlinkStringContainer(build.getNvr())),
+                    new KojiChangeEntry("Build Tags", new HyperlinkStringContainer(build.getTags().stream().collect(Collectors.joining(", ")))),
+                    new KojiChangeEntry("Build RPMs/Tarballs", new HyperlinkStringContainer(build.getRpms()))
             );
             entries = Collections.unmodifiableList(list);
         } else {
@@ -51,24 +46,24 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
     public static class KojiChangeEntry extends ChangeLogSet.Entry {
 
         private final String field;
-        private final String value;
+        private final HyperlinkStringContainer container;
 
-        public KojiChangeEntry(String field, String value) {
+        public KojiChangeEntry(String field, HyperlinkStringContainer container) {
             this.field = field;
-            this.value = value;
+            this.container = container;
         }
 
         public String getField() {
             return field;
         }
 
-        public String getValue() {
-            return value;
+        public HyperlinkStringContainer getContainer() {
+            return container;
         }
 
         @Override
         public String getMsg() {
-            return field + ": " + value;
+            return field + ": " + container.toString();
         }
 
         @Override
@@ -83,4 +78,67 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
     }
 
+    public static class HyperlinkStringContainer {
+
+        private List<HyperlinkString> hyperlinks;
+
+        public HyperlinkStringContainer(String string) {
+            hyperlinks = new ArrayList();
+            hyperlinks.add(new HyperlinkString(string));
+        }
+
+        public HyperlinkStringContainer(List<RPM> rpms) {
+            this.hyperlinks = new ArrayList();
+            storeRpms(rpms);
+        }
+
+        public List<HyperlinkString> getHyperlinks() {
+            return hyperlinks;
+        }
+
+        private void storeRpms(List<RPM> rpms) {
+            for (RPM rpm : rpms) {
+                if (rpm.hasUrl()) {
+                    hyperlinks.add(new HyperlinkString(rpm.toString(), rpm.getUrl()));
+                }
+            }
+        }
+
+        @Override
+        public String toString() {
+            String string = "";
+            for (HyperlinkString s : hyperlinks) {
+                string += s.getString() + ", ";
+            }
+            return string;
+        }
+    }
+
+    public static class HyperlinkString {
+
+        private final String string;
+        private final String url;
+
+        public HyperlinkString(String string) {
+            this.string = string;
+            url = null;
+        }
+
+        public HyperlinkString(String string, String url) {
+            this.string = string;
+            this.url = url;
+        }
+
+        public String getString() {
+            return string;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public boolean isContainingUrl() {
+            return url != null;
+        }
+    }
 }

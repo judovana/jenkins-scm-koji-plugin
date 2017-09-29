@@ -21,6 +21,7 @@ public class RPM implements java.io.Serializable {
     private final String arch;
     @XmlElement(name = Constants.filename)
     private final String filename;
+    private String url;
 
     public RPM(String name, String version, String release, String nvr, String arch, String filename) {
         this.name = name;
@@ -67,6 +68,18 @@ public class RPM implements java.io.Serializable {
 
     public String getFilename(String suffix) {
         return Optional.ofNullable(filename).orElse(nvr + '.' + arch + "." + suffix);
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public boolean hasUrl() {
+        return url != null;
     }
 
 }

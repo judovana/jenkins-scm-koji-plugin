@@ -150,6 +150,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
                 for (String suffix : new String[]{"rpm", "tarxz"}) {
                     String urlString = composeUrl(url, build, rpm, suffix);
+                    rpm.setUrl(urlString);
                     log(InetAddress.getLocalHost().getHostName());
                     log(new Date().toString());
                     if (build.isManual()) {
