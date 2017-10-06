@@ -63,7 +63,8 @@ public class RPM implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return nvr + '.' + arch + ".suffix";
+        Suffix suffix = Suffix.INSTANCE;
+        return nvr + '.' + arch + "." + suffix.getSuffix(url);
     }
 
     public String getFilename(String suffix) {
@@ -80,6 +81,24 @@ public class RPM implements java.io.Serializable {
 
     public boolean hasUrl() {
         return url != null;
+    }
+
+    public static enum Suffix {
+        INSTANCE;
+
+        private final String[] suffixes = {"rpm", "tarxz"};
+
+        public String[] getSuffixes() {
+            return suffixes;
+        }
+
+        public String getSuffix(String url) {
+            for (String suffix : suffixes) {
+                if (url.endsWith(suffix))
+                    return suffix;
+            }
+            return "";
+        }
     }
 
 }

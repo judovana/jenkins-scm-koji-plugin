@@ -123,7 +123,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             GlobPredicate glob = new GlobPredicate(config.getExcludeNvr());
             nvrPredicate = rpm -> !glob.test(rpm.getNvr());
         }
-        
+
         List<String> l = build.getRpms()
                 .stream()
                 .filter(nvrPredicate)
@@ -148,7 +148,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             //FIXME do this better, do not iterate here, but rember origin from checkout. See also help-kojiDownloadUrl.html
             for (String url : config.getKojiDownloadUrls()) {
                 //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
-                for (String suffix : new String[]{"rpm", "tarxz"}) {
+                for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
                     String urlString = composeUrl(url, build, rpm, suffix);
                     rpm.setUrl(urlString);
                     log(InetAddress.getLocalHost().getHostName());
