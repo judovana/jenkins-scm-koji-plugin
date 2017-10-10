@@ -161,33 +161,41 @@ public class PreviewFakeKoji {
         }
 
         public String getSuffix() {
-            String[] s = getName().split("-");
-            if (s.length < 3) {
-                throw new RuntimeException("Strange repo " + getName());
-            }
-            if (s.length == 3) {
+            if (getName().startsWith("java")) {
+                String[] s = getName().split("-");
+                if (s.length < 3) {
+                    throw new RuntimeException("Strange repo " + getName());
+                }
+                if (s.length == 3) {
+                    return "";
+                }
+                StringBuilder sb = new StringBuilder();
+                for (int i = 3; i < s.length; i++) {
+                    sb.append("-").append(s[i]);
+                }
+                return sb.substring(1);
+            } else {
                 return "";
             }
-            StringBuilder sb = new StringBuilder();
-            for (int i = 3; i < s.length; i++) {
-                sb.append("-").append(s[i]);
-            }
-            return sb.substring(1);
         }
 
         public String getPrefix() {
-            String[] s = getName().split("-");
-            if (s.length < 3) {
-                throw new RuntimeException("Strange repo " + getName());
-            }
-            if (s.length == 3) {
+            if (getName().startsWith("java")) {
+                String[] s = getName().split("-");
+                if (s.length < 3) {
+                    throw new RuntimeException("Strange repo " + getName());
+                }
+                if (s.length == 3) {
+                    return getName();
+                }
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < 3; i++) {
+                    sb.append("-").append(s[i]);
+                }
+                return sb.substring(1);
+            } else {
                 return getName();
             }
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < 3; i++) {
-                sb.append("-").append(s[i]);
-            }
-            return sb.substring(1);
         }
 
     }
