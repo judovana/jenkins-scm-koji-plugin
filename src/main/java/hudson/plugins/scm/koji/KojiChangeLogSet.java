@@ -6,6 +6,8 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.RepositoryBrowser;
+import java.io.File;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,7 +27,8 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
                     new KojiChangeEntry("Build Release", new HyperlinkStringContainer(build.getRelease())),
                     new KojiChangeEntry("Build NVR", new HyperlinkStringContainer(build.getNvr())),
                     new KojiChangeEntry("Build Tags", new HyperlinkStringContainer(build.getTags().stream().collect(Collectors.joining(", ")))),
-                    new KojiChangeEntry("Build RPMs/Tarballs", new HyperlinkStringContainer(build.getRpms()))
+                    new KojiChangeEntry("Build RPMs/Tarballs", new HyperlinkStringContainer(build.getRpms())),
+                    new KojiChangeEntry("Build Sources", new HyperlinkStringContainer(build.getSrcUrl()))
             );
             entries = Collections.unmodifiableList(list);
         } else {
@@ -92,8 +95,23 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
             storeRpms(rpms);
         }
 
+        public HyperlinkStringContainer(URL url) {
+            this.hyperlinks = new ArrayList();
+            if (url != null) {
+                if (RPM.Suffix.INSTANCE.endsWithSuffix(url.toString())) {
+                    hyperlinks.add(new HyperlinkString(new File(url.getPath()).getName(), url.toString()));
+                } else {
+                    hyperlinks.add(new HyperlinkString("Source file not found. You can search for it here.", url.toString()));
+                }
+            }
+        }
+
         public List<HyperlinkString> getHyperlinks() {
             return hyperlinks;
+        }
+
+        public boolean isNotEmpty() {
+            return !hyperlinks.isEmpty();
         }
 
         private void storeRpms(List<RPM> rpms) {

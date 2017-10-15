@@ -15,8 +15,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -28,8 +28,6 @@ import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.LoggerHelp;
 
-import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.util.Date;
 
 import org.slf4j.Logger;
@@ -99,7 +97,28 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             targetDir.mkdirs();
         }
         List<String> rpmFiles = downloadRPMs(targetDir, build);
-        
+        String srcUrl = "";
+        for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
+            srcUrl = composeSrcUrl(build.getDownloadUrl(), build, suffix);
+            if (isUrlReachable(srcUrl)) {
+                build.setSrcUrl(new URL(srcUrl));
+            }
+        }
+        // if source file is not found, we try find the directory it might be found in
+        if (build.getSrcUrl() == null) {
+            URL url = new URL(srcUrl);
+            try {
+                do {
+                    URI uri = url.toURI();
+                    // https://stackoverflow.com/questions/10159186/how-to-get-parent-url-in-java
+                    uri = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
+                    url = uri.toURL();
+                } while (!isUrlReachable(url.toString()));
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+            build.setSrcUrl(new URL(url.toString()));
+        }
         return new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles);
     }
 
@@ -139,7 +158,6 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 log("WARNING, nothing downloaded, but shoudl be ("+rpmsInBuildXml+"). Maybe bad exclude packages?");
             }
         }
-        
         return l;
     }
 
@@ -150,7 +168,6 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
                 for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
                     String urlString = composeUrl(url, build, rpm, suffix);
-                    rpm.setUrl(urlString);
                     log(InetAddress.getLocalHost().getHostName());
                     log(new Date().toString());
                     if (build.isManual()) {
@@ -162,6 +179,8 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                         log("Not accessible, trying another suffix in: ", rpm.getFilename(suffix));
                         continue;
                     }
+                    rpm.setUrl(urlString);
+                    build.setDownloadUrl(url);
                     File targetFile = new File(targetDir, rpm.getFilename(suffix));
                     log("To: ", targetFile);
                     if (!build.isManual()) {
@@ -238,6 +257,20 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         sb.append(build.getRelease()).append('/');
         sb.append(rpm.getArch()).append('/');
         sb.append(rpm.getFilename(suffix));
+        return sb.toString();
+    }
+
+    private String composeSrcUrl(String kojiDownloadUrl, Build build, String suffix){
+        StringBuilder sb = new StringBuilder(255);
+        sb.append(kojiDownloadUrl);
+        if (kojiDownloadUrl.charAt(kojiDownloadUrl.length() - 1) != '/') {
+            sb.append('/');
+        }
+        sb.append(build.getName()).append('/');
+        sb.append(build.getVersion()).append('/');
+        sb.append(build.getRelease()).append('/');
+        sb.append("src/");
+        sb.append(build.getName() + '-').append(build.getVersion() + '-').append(build.getRelease() + ".src." + suffix);
         return sb.toString();
     }
 

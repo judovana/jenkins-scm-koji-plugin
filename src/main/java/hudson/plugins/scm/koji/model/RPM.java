@@ -63,8 +63,11 @@ public class RPM implements java.io.Serializable {
 
     @Override
     public String toString() {
+        if (Suffix.INSTANCE.endsWithSuffix(nvr)) {
+            return nvr;
+        }
         Suffix suffix = Suffix.INSTANCE;
-        return nvr + '.' + arch + "." + suffix.getSuffix(url);
+        return nvr + '.' + arch + '.' + suffix.getSuffix(url);
     }
 
     public String getFilename(String suffix) {
@@ -86,7 +89,7 @@ public class RPM implements java.io.Serializable {
     public static enum Suffix {
         INSTANCE;
 
-        private final String[] suffixes = {"rpm", "tarxz"};
+        private final String[] suffixes = {"rpm", "tarxz", "msi"};
 
         public String[] getSuffixes() {
             return suffixes;
@@ -99,6 +102,14 @@ public class RPM implements java.io.Serializable {
             }
             return "";
         }
-    }
 
+        public boolean endsWithSuffix(String url) {
+            for (String suffix : suffixes) {
+                if (url.endsWith(suffix)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 }
