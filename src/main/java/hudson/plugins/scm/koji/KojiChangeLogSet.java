@@ -22,13 +22,13 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
         if (build != null) {
             List<Entry> list = Arrays.asList(
-                    new KojiChangeEntry("Build Name", new HyperlinkStringContainer(build.getName())),
-                    new KojiChangeEntry("Build Version", new HyperlinkStringContainer(build.getVersion())),
-                    new KojiChangeEntry("Build Release", new HyperlinkStringContainer(build.getRelease())),
-                    new KojiChangeEntry("Build NVR", new HyperlinkStringContainer(build.getNvr())),
-                    new KojiChangeEntry("Build Tags", new HyperlinkStringContainer(build.getTags().stream().collect(Collectors.joining(", ")))),
-                    new KojiChangeEntry("Build RPMs/Tarballs", new HyperlinkStringContainer(build.getRpms())),
-                    new KojiChangeEntry("Build Sources", new HyperlinkStringContainer(build.getSrcUrl()))
+                    new KojiChangeEntry("Build Name", getListFromString(build.getName())),
+                    new KojiChangeEntry("Build Version", getListFromString(build.getVersion())),
+                    new KojiChangeEntry("Build Release", getListFromString(build.getRelease())),
+                    new KojiChangeEntry("Build NVR", getListFromString(build.getNvr())),
+                    new KojiChangeEntry("Build Tags", getListFromString(build.getTags().stream().collect(Collectors.joining(", ")))),
+                    new KojiChangeEntry("Build RPMs/Tarballs", getListFromRPMs(build.getRpms())),
+                    new KojiChangeEntry("Build Sources", getListFromUrl(build.getSrcUrl()))
             );
             entries = Collections.unmodifiableList(list);
         } else {
@@ -49,24 +49,24 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
     public static class KojiChangeEntry extends ChangeLogSet.Entry {
 
         private final String field;
-        private final HyperlinkStringContainer container;
+        private final List<Hyperlink> hyperlinks;
 
-        public KojiChangeEntry(String field, HyperlinkStringContainer container) {
+        public KojiChangeEntry(String field, List<Hyperlink> hyperlinks) {
             this.field = field;
-            this.container = container;
+            this.hyperlinks = hyperlinks;
         }
 
         public String getField() {
             return field;
         }
 
-        public HyperlinkStringContainer getContainer() {
-            return container;
+        public List<Hyperlink> getHyperlinks() {
+            return hyperlinks;
         }
 
         @Override
         public String getMsg() {
-            return field + ": " + container.toString();
+            return field + ": " + hyperlinks.toString();
         }
 
         @Override
@@ -81,74 +81,46 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
     }
 
-    public static class HyperlinkStringContainer {
-
-        private List<HyperlinkString> hyperlinks;
-
-        public HyperlinkStringContainer(String string) {
-            hyperlinks = new ArrayList();
-            hyperlinks.add(new HyperlinkString(string));
-        }
-
-        public HyperlinkStringContainer(List<RPM> rpms) {
-            this.hyperlinks = new ArrayList();
-            storeRpms(rpms);
-        }
-
-        public HyperlinkStringContainer(URL url) {
-            this.hyperlinks = new ArrayList();
-            if (url != null) {
-                if (RPM.Suffix.INSTANCE.endsWithSuffix(url.toString())) {
-                    hyperlinks.add(new HyperlinkString(new File(url.getPath()).getName(), url.toString()));
-                } else {
-                    hyperlinks.add(new HyperlinkString("Source file not found. You can search for it here.", url.toString()));
-                }
-            }
-        }
-
-        public List<HyperlinkString> getHyperlinks() {
-            return hyperlinks;
-        }
-
-        public boolean isNotEmpty() {
-            return !hyperlinks.isEmpty();
-        }
-
-        private void storeRpms(List<RPM> rpms) {
-            for (RPM rpm : rpms) {
-                if (rpm.hasUrl()) {
-                    hyperlinks.add(new HyperlinkString(rpm.toString(), rpm.getUrl()));
-                }
-            }
-        }
-
-        @Override
-        public String toString() {
-            String string = "";
-            for (HyperlinkString s : hyperlinks) {
-                string += s.getString() + ", ";
-            }
-            return string;
-        }
+    private static List<Hyperlink> getListFromString(String string) {
+        List<Hyperlink> hyperlinks = new ArrayList<>();
+        hyperlinks.add(new Hyperlink(string));
+        return hyperlinks;
     }
 
-    public static class HyperlinkString {
+    private static List<Hyperlink> getListFromRPMs(List<RPM> rpms) {
+        List<Hyperlink> hyperlinks = rpms.stream().filter(rpm -> rpm.hasUrl()).map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl())).collect(Collectors.toList());
+        return hyperlinks;
+    }
 
-        private final String string;
+    private static List<Hyperlink> getListFromUrl(URL url) {
+        List<Hyperlink> hyperlinks = new ArrayList<>();
+        if (url != null) {
+            if (RPM.Suffix.INSTANCE.endsWithSuffix(url.toString())) {
+                hyperlinks.add(new Hyperlink(new File(url.getPath()).getName(), url.toString()));
+            } else {
+                hyperlinks.add(new Hyperlink("Source file not found. You can search for it here.", url.toString()));
+            }
+        }
+        return hyperlinks;
+    }
+
+    public static class Hyperlink {
+
+        private final String displayedString;
         private final String url;
 
-        public HyperlinkString(String string) {
-            this.string = string;
+        public Hyperlink(String displayedString) {
+            this.displayedString = displayedString;
             url = null;
         }
 
-        public HyperlinkString(String string, String url) {
-            this.string = string;
+        public Hyperlink(String displayedString, String url) {
+            this.displayedString = displayedString;
             this.url = url;
         }
 
-        public String getString() {
-            return string;
+        public String getDisplayedString() {
+            return displayedString;
         }
 
         public String getUrl() {
@@ -157,6 +129,12 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
         public boolean isContainingUrl() {
             return url != null;
+        }
+
+        @Override
+        public String toString()
+        {
+            return String.format(displayedString);
         }
     }
 }
