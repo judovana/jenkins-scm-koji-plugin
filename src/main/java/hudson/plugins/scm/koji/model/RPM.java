@@ -97,8 +97,9 @@ public class RPM implements java.io.Serializable {
 
         public String getSuffix(String url) {
             for (String suffix : suffixes) {
-                if (url.endsWith(suffix))
+                if (url.endsWith(suffix)) {
                     return suffix;
+                }
             }
             return "";
         }
