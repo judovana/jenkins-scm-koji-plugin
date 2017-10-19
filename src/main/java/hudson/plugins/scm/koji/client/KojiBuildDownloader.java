@@ -101,22 +101,25 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             srcUrl = composeSrcUrl(build.getDownloadUrl(), build, suffix);
             if (isUrlReachable(srcUrl)) {
                 build.setSrcUrl(new URL(srcUrl));
+                break;
             }
         }
         // if source file is not found, we try find the directory it might be found in
         if (build.getSrcUrl() == null) {
             URL url = new URL(srcUrl);
             try {
+                // this loop iterates until valid url is found or there is no parent directory anymore
+                // ".." at the end of url indicates there is no parent directory
                 do {
                     URI uri = url.toURI();
                     // https://stackoverflow.com/questions/10159186/how-to-get-parent-url-in-java
                     uri = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
                     url = uri.toURL();
-                } while (!isUrlReachable(url.toString()));
+                } while (!isUrlReachable(url.toString()) && !url.toString().endsWith(".."));
+                build.setSrcUrl(url);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
-            build.setSrcUrl(new URL(url.toString()));
         }
         return new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles);
     }
@@ -251,11 +254,11 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         if (kojiDownloadUrl.charAt(kojiDownloadUrl.length() - 1) != '/') {
             sb.append('/');
         }
-        sb.append(build.getName()).append('/');
-        sb.append(build.getVersion()).append('/');
-        sb.append(build.getRelease()).append('/');
-        sb.append(rpm.getArch()).append('/');
-        sb.append(rpm.getFilename(suffix));
+        sb.append(build.getName()).append('/')
+        .append(build.getVersion()).append('/')
+        .append(build.getRelease()).append('/')
+        .append(rpm.getArch()).append('/')
+        .append(rpm.getFilename(suffix));
         return sb.toString();
     }
 
@@ -269,7 +272,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         sb.append(build.getVersion()).append('/');
         sb.append(build.getRelease()).append('/');
         sb.append("src/");
-        sb.append(build.getName() + '-').append(build.getVersion() + '-').append(build.getRelease() + ".src." + suffix);
+        sb.append(build.getName()).append('-').append(build.getVersion()).append('-').append(build.getRelease()).append(".src.").append(suffix);
         return sb.toString();
     }
 

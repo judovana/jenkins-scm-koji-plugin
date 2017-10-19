@@ -22,11 +22,11 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
         if (build != null) {
             List<Entry> list = Arrays.asList(
-                    new KojiChangeEntry("Build Name", getListFromString(build.getName())),
-                    new KojiChangeEntry("Build Version", getListFromString(build.getVersion())),
-                    new KojiChangeEntry("Build Release", getListFromString(build.getRelease())),
-                    new KojiChangeEntry("Build NVR", getListFromString(build.getNvr())),
-                    new KojiChangeEntry("Build Tags", getListFromString(build.getTags().stream().collect(Collectors.joining(", ")))),
+                    new KojiChangeEntry("Build Name", Collections.singletonList(new Hyperlink(build.getName()))),
+                    new KojiChangeEntry("Build Version", Collections.singletonList(new Hyperlink(build.getVersion()))),
+                    new KojiChangeEntry("Build Release", Collections.singletonList(new Hyperlink(build.getRelease()))),
+                    new KojiChangeEntry("Build NVR", Collections.singletonList(new Hyperlink(build.getNvr()))),
+                    new KojiChangeEntry("Build Tags", Collections.singletonList(new Hyperlink(String.join(", ", build.getTags())))),
                     new KojiChangeEntry("Build RPMs/Tarballs", getListFromRPMs(build.getRpms())),
                     new KojiChangeEntry("Build Sources", getListFromUrl(build.getSrcUrl()))
             );
@@ -81,15 +81,11 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
     }
 
-    private static List<Hyperlink> getListFromString(String string) {
-        List<Hyperlink> hyperlinks = new ArrayList<>();
-        hyperlinks.add(new Hyperlink(string));
-        return hyperlinks;
-    }
-
     private static List<Hyperlink> getListFromRPMs(List<RPM> rpms) {
-        List<Hyperlink> hyperlinks = rpms.stream().filter(rpm -> rpm.hasUrl()).map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl())).collect(Collectors.toList());
-        return hyperlinks;
+        return rpms.stream()
+                   .filter(RPM::hasUrl)
+                   .map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl()))
+                   .collect(Collectors.toList());
     }
 
     private static List<Hyperlink> getListFromUrl(URL url) {
@@ -132,9 +128,12 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
         }
 
         @Override
-        public String toString()
-        {
-            return String.format(displayedString);
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("Hyperlink{");
+            sb.append("displayedString='").append(displayedString).append('\'');
+            sb.append(", url='").append(url).append('\'');
+            sb.append('}');
+            return sb.toString();
         }
     }
 }
