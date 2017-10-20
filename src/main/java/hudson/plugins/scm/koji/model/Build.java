@@ -3,6 +3,7 @@ package hudson.plugins.scm.koji.model;
 import hudson.plugins.scm.koji.Constants;
 import jdk.nashorn.internal.parser.DateParser;
 
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -41,6 +42,8 @@ public class Build implements Comparable<Build>, java.io.Serializable {
     @XmlElementWrapper(name = "tags")
     @XmlElement(name = "tag")
     private final Set<String> tags;
+    private String downloadUrl;
+    private URL srcUrl;
 
     public Build(Integer id, String name, String version, String release, String nvr, String completionTime,
             List<RPM> rpms, Set<String> tags, Boolean manual) {
@@ -174,5 +177,21 @@ public class Build implements Comparable<Build>, java.io.Serializable {
             }
         }
         return true;
+    }
+
+    public String getDownloadUrl() {
+        return downloadUrl;
+    }
+
+    public void setDownloadUrl(String downloadUrl) {
+        this.downloadUrl = downloadUrl;
+    }
+
+    public URL getSrcUrl() {
+        return srcUrl;
+    }
+
+    public void setSrcUrl(URL srcUrl) {
+        this.srcUrl = srcUrl;
     }
 }

@@ -6,10 +6,21 @@
         </j:when>
         <j:otherwise>
             <table>
-                <j:forEach var="cs" items="${it.items}" varStatus="loop">
+                <j:forEach var="changeset" items="${it.items}" varStatus="loop">
                     <tr>
-                        <td><b>${cs.field}:</b></td>
-                        <td>${cs.value}</td>
+                        <td><b>${changeset.field}:</b></td>
+                        <td>
+                            <j:forEach var="hyperlink" items="${changeset.hyperlinks}" varStatus="loop">
+                                <j:choose>
+                                    <j:when test="${hyperlink.containingUrl}">
+                                        <a href="${hyperlink.url}">${hyperlink.displayedString}</a> <br/>
+                                    </j:when>
+                                    <j:otherwise>
+                                        ${hyperlink.displayedString} <br/>
+                                    </j:otherwise>
+                                </j:choose>
+                            </j:forEach>
+                        </td>
                     </tr>
                 </j:forEach>
             </table>
