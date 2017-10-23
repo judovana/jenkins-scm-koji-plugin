@@ -84,7 +84,7 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
     private static List<Hyperlink> getListFromRPMs(List<RPM> rpms) {
         return rpms.stream()
                    .filter(RPM::hasUrl)
-                   .map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl()))
+                   .map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl(), rpm.getHashSum()))
                    .collect(Collectors.toList());
     }
 
@@ -104,15 +104,24 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
         private final String displayedString;
         private final String url;
+        private final String hashSum;
 
         public Hyperlink(String displayedString) {
             this.displayedString = displayedString;
             url = null;
+            hashSum = null;
         }
 
         public Hyperlink(String displayedString, String url) {
             this.displayedString = displayedString;
             this.url = url;
+            hashSum = null;
+        }
+
+        public Hyperlink(String displayedString, String url, String hashSum) {
+            this.displayedString = displayedString;
+            this.url = url;
+            this.hashSum = hashSum;
         }
 
         public String getDisplayedString() {
@@ -127,11 +136,20 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
             return url != null;
         }
 
+        public boolean isContainingHashSum() {
+            return hashSum != null;
+        }
+
+        public String getHashSum() {
+            return hashSum;
+        }
+
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder("Hyperlink{");
             sb.append("displayedString='").append(displayedString).append('\'');
             sb.append(", url='").append(url).append('\'');
+            sb.append(", hashSum='").append(hashSum).append('\'');
             sb.append('}');
             return sb.toString();
         }

@@ -195,6 +195,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                             }
                         }
                     }
+                    rpm.setHashSum(targetFile);
                     return targetFile;
                 }
             }

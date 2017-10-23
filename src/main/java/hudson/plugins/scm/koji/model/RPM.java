@@ -4,6 +4,11 @@ import hudson.plugins.scm.koji.Constants;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -22,6 +27,7 @@ public class RPM implements java.io.Serializable {
     @XmlElement(name = Constants.filename)
     private final String filename;
     private String url;
+    private String hashSum;
 
     public RPM(String name, String version, String release, String nvr, String arch, String filename) {
         this.name = name;
@@ -84,6 +90,29 @@ public class RPM implements java.io.Serializable {
 
     public boolean hasUrl() {
         return url != null;
+    }
+
+    public void setHashSum(File file) throws IOException, NoSuchAlgorithmException {
+        if (file == null) {
+            hashSum = null;
+            return;
+        }
+        byte[] buffer = new byte[(int) file.length()];
+        FileInputStream stream = new FileInputStream(file);
+        stream.read(buffer);
+        stream.close();
+        MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+        messageDigest.update(buffer);
+        byte[] digest = messageDigest.digest(buffer);
+        StringBuilder builder = new StringBuilder();
+        for (byte bytes : digest) {
+            builder.append(String.format("%02x", bytes));
+        }
+        hashSum = builder.toString();
+    }
+
+    public String getHashSum() {
+        return hashSum;
     }
 
     public static enum Suffix {
