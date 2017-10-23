@@ -182,7 +182,7 @@ public class FileReturningHandler implements HttpHandler {
         List<FileInfo> fileList = getRecursiveFileList(requestedFile, f);
         Collections.sort(fileList, c);
         for (FileInfo file : fileList) {
-            sb.append("    <a href=\"").append(f.getPath()).append("\">");
+            sb.append("    <a href=\"").append(file.getPath()).append("\">");
             sb.append(file.getFileChunk());
             sb.append("    </a>");
             sb.append(provider.getInfo(file));
