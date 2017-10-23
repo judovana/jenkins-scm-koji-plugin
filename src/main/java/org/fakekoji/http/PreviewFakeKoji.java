@@ -161,7 +161,7 @@ public class PreviewFakeKoji {
         }
 
         public String getSuffix() {
-            if (getName().startsWith("java")) {
+            if (getName().matches("^java-[0-9.]*-openjdk.*")) {
                 String[] s = getName().split("-");
                 if (s.length < 3) {
                     throw new RuntimeException("Strange repo " + getName());
@@ -180,7 +180,7 @@ public class PreviewFakeKoji {
         }
 
         public String getPrefix() {
-            if (getName().startsWith("java")) {
+            if (getName().matches("^java-[0-9.]*-openjdk.*")) {
                 String[] s = getName().split("-");
                 if (s.length < 3) {
                     throw new RuntimeException("Strange repo " + getName());
