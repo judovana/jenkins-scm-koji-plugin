@@ -9,13 +9,11 @@ import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.remoting.VirtualChannel;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.*;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -32,10 +30,13 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.bind.DatatypeConverter;
+
 public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private static final int MAX_REDIRECTIONS = 10;
+    private static final int BUFFER_SIZE = 8192;
 
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
@@ -188,14 +189,14 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                     if (!build.isManual()) {
                         try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
                                 InputStream in = httpDownloadStream(urlString)) {
-                            byte[] buffer = new byte[8192];
+                            byte[] buffer = new byte[BUFFER_SIZE];
                             int read;
                             while ((read = in.read(buffer)) != -1) {
                                 out.write(buffer, 0, read);
                             }
                         }
                     }
-                    rpm.setHashSum(targetFile);
+                    rpm.setHashSum(hashSum(targetFile));
                     return targetFile;
                 }
             }
@@ -205,6 +206,23 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             throw new RuntimeException("Exception while downloading RPM", ex);
         }
         return null;
+    }
+
+    private String hashSum(File file) {
+        byte[] buffer = new byte[BUFFER_SIZE];
+        MessageDigest hashAlgorithm;
+        try {
+            hashAlgorithm = MessageDigest.getInstance("Md5");
+            try (InputStream inputStream = new DigestInputStream(new FileInputStream(file), hashAlgorithm)) {
+                while (inputStream.read(buffer) > 0) {
+                    ;
+                }
+            }
+        } catch (NoSuchAlgorithmException | IOException e) {
+            log("Could not create hash sum of file: " + file.getName(), e);
+            return null;
+        }
+        return DatatypeConverter.printHexBinary(hashAlgorithm.digest());
     }
 
     private InputStream httpDownloadStream(String urlString) {

@@ -106,19 +106,19 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
         private final String url;
         private final String hashSum;
 
-        public Hyperlink(String displayedString) {
+        Hyperlink(String displayedString) {
             this.displayedString = displayedString;
-            url = null;
-            hashSum = null;
+            this.url = null;
+            this.hashSum = null;
         }
 
-        public Hyperlink(String displayedString, String url) {
+        Hyperlink(String displayedString, String url) {
             this.displayedString = displayedString;
             this.url = url;
-            hashSum = null;
+            this.hashSum = null;
         }
 
-        public Hyperlink(String displayedString, String url, String hashSum) {
+        Hyperlink(String displayedString, String url, String hashSum) {
             this.displayedString = displayedString;
             this.url = url;
             this.hashSum = hashSum;
