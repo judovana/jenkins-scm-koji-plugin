@@ -18,7 +18,6 @@ import hudson.scm.PollingResult;
 import hudson.scm.SCM;
 import hudson.scm.SCMDescriptor;
 import hudson.scm.SCMRevisionState;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,14 +26,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
-
 import java.io.Serializable;
 import java.net.InetAddress;
 
@@ -115,8 +112,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     @DataBoundConstructor
-    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String
-            excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr, int maxPreviousBuilds) {
+    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr, int maxPreviousBuilds) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
@@ -140,8 +136,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     @Override
-    public void checkout(Run<?, ?> run, Launcher launcher, FilePath workspace, TaskListener listener,
-                         File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException {
+    public void checkout(Run<?, ?> run, Launcher launcher, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException {
         currentListener = listener;
         log("Checking out remote revision");
         if (baseline != null && !(baseline instanceof KojiRevisionState)) {
@@ -171,12 +166,14 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             run.setDisplayName(displayName);
         }
         if (build.isManual()) {
-            log("manual mode -  not saving the nvr of checked out build to history: {} >> {}", build.getNvr(),
-                    PROCESSED_BUILDS_HISTORY);
+            log("manual mode -  not saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
         } else {
             log("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
-            Files.write(new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(), Arrays.asList
-                    (build.getNvr()), StandardCharsets.UTF_8, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            Files.write(
+                    new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
+                    Arrays.asList(build.getNvr()),
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.APPEND, StandardOpenOption.CREATE);
         }
         // if there is a changelog file - write it:
         if (changelogFile != null) {
@@ -184,15 +181,13 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             new BuildsSerializer().write(build, changelogFile);
         }
 
-        run.addAction(new KojiEnvVarsAction(build.getNvr(), downloadResult.getRpmsDirectory(), downloadResult
-                .getRpmFiles().stream().sequential().collect(Collectors.joining(File.pathSeparator))));
+        run.addAction(new KojiEnvVarsAction(build.getNvr(), downloadResult.getRpmsDirectory(),
+                downloadResult.getRpmFiles().stream().sequential().collect(Collectors.joining(File.pathSeparator))));
 
     }
 
     @Override
-    public PollingResult compareRemoteRevisionWith(Job<?, ?> project, Launcher launcher, FilePath workspace,
-                                                   TaskListener listener, SCMRevisionState baseline) throws
-            IOException, InterruptedException {
+    public PollingResult compareRemoteRevisionWith(Job<?, ?> project, Launcher launcher, FilePath workspace, TaskListener listener, SCMRevisionState baseline) throws IOException, InterruptedException {
         currentListener = listener;
         log("Comparing remote revision with: {}", baseline);
         if (!(baseline instanceof KojiRevisionState)) {
@@ -225,8 +220,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
     @Override
     @SuppressWarnings("UseSpecificCatch")
-    public SCMRevisionState calcRevisionsFromBuild(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener
-            listener) throws IOException, InterruptedException {
+    public SCMRevisionState calcRevisionsFromBuild(Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
         currentListener = listener;
         log("Calculating revision for project '{}' from build: {}", run.getParent().getName(), run.getNumber());
         KojiRevisionFromBuild worker = new KojiRevisionFromBuild();
@@ -247,8 +241,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
     @Override
     public boolean requiresWorkspaceForPolling() {
-        // this is merchandize - if it is true, then the jobs can not run in parallel (se "Execute concurrent builds
-        // if necessary" in project settings)
+        // this is merchandize - if it is true, then the jobs can not run in parallel (se "Execute concurrent builds if necessary" in project settings)
         // when it is false, projects can run inparalel, but pooling operation do not have workspace
         return DESCRIPTOR.getKojiSCMConfig();
     }
