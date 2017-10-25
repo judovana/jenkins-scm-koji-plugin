@@ -13,8 +13,13 @@
                             <j:forEach var="hyperlink" items="${changeset.hyperlinks}" varStatus="loop">
                                 <j:choose>
                                     <j:when test="${hyperlink.containingUrl}">
-                                        <a href="${hyperlink.url}">${hyperlink.displayedString}</a> <br/>
+                                        <a href="${hyperlink.url}">${hyperlink.displayedString}</a>
                                     </j:when>
+                                    <j:choose>
+                                        <j:when test="${hyperlink.containingHashSum}">
+                                            <small><j:whitespace>  </j:whitespace>(${hyperlink.hashSum})</small> <br/>
+                                        </j:when>
+                                    </j:choose>
                                     <j:otherwise>
                                         ${hyperlink.displayedString} <br/>
                                     </j:otherwise>

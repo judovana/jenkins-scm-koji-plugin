@@ -22,6 +22,7 @@ public class RPM implements java.io.Serializable {
     @XmlElement(name = Constants.filename)
     private final String filename;
     private String url;
+    private String hashSum;
 
     public RPM(String name, String version, String release, String nvr, String arch, String filename) {
         this.name = name;
@@ -84,6 +85,14 @@ public class RPM implements java.io.Serializable {
 
     public boolean hasUrl() {
         return url != null;
+    }
+
+    public void setHashSum(String hashSum) {
+        this.hashSum = hashSum;
+    }
+
+    public String getHashSum() {
+        return hashSum;
     }
 
     public static enum Suffix {
