@@ -4,6 +4,7 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Cause;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -143,8 +144,8 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         // TODO add some flag to allow checkout on local or remote machine
-        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
-                createNotProcessedNvrPredicate(run.getParent()));
+        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(), createNotProcessedNvrPredicate
+                (run.getParent()), run.getCause(Cause.UserIdCause.class) != null);
         downloadWorker.setListener(listener);
         KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
@@ -193,8 +194,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        KojiListBuilds worker = new KojiListBuilds(createConfig(),
-                createNotProcessedNvrPredicate(project));
+        KojiListBuilds worker = new KojiListBuilds(createConfig(), createNotProcessedNvrPredicate(project));
         Build build;
         if (!DESCRIPTOR.getKojiSCMConfig()) {
             // when requiresWorkspaceForPolling is set to false (based on descriptor), worksapce may be null.

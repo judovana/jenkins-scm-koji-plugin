@@ -41,19 +41,19 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
     private final boolean verbose = true;
+    private final boolean manualRun;
 
-    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
+    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate, boolean manualRun) {
         this.config = config;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
+        this.manualRun = manualRun;
     }
 
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         File checkoutBuildFile = new File(workspace, BUILD_XML);
         Build build = new BuildsSerializer().read(checkoutBuildFile);
-        if (build == null) {
-            // if we are here - it is the first build ever,
-            // have to pull the koji and download whatever we'll find:
+        if (!manualRun || build == null) {
             build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
             if (build == null) {
                 // if we are here - no remote changes on first build, exiting:
