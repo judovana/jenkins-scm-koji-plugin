@@ -9,6 +9,7 @@ import hudson.scm.RepositoryBrowser;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
@@ -82,8 +83,14 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
     }
 
     private static List<Hyperlink> getListFromRPMs(List<RPM> rpms) {
+        Predicate<RPM> predicate;
+        if (atLeastOneRPMHasUrl(rpms)) {
+            predicate = (rpm) -> rpm.getUrl() != null;
+        } else {
+            predicate = (rpm) -> true;
+        }
         return rpms.stream()
-                   .filter(RPM::hasUrl)
+                   .filter(predicate)
                    .map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl(), rpm.getHashSum()))
                    .collect(Collectors.toList());
     }
@@ -98,6 +105,15 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
             }
         }
         return hyperlinks;
+    }
+
+    private static boolean atLeastOneRPMHasUrl(List<RPM> rpms) {
+        for (RPM rpm : rpms) {
+            if (rpm.getUrl() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static class Hyperlink {

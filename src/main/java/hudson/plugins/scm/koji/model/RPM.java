@@ -105,6 +105,9 @@ public class RPM implements java.io.Serializable {
         }
 
         public String getSuffix(String url) {
+            if (url == null) {
+                return "";
+            }
             for (String suffix : suffixes) {
                 if (url.endsWith(suffix)) {
                     return suffix;
@@ -114,6 +117,9 @@ public class RPM implements java.io.Serializable {
         }
 
         public boolean endsWithSuffix(String url) {
+            if (url == null) {
+                return false;
+            }
             for (String suffix : suffixes) {
                 if (url.endsWith(suffix)) {
                     return true;
