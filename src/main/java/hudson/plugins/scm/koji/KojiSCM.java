@@ -4,7 +4,6 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.Cause;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -23,14 +22,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -144,10 +143,11 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         // TODO add some flag to allow checkout on local or remote machine
-        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(), createNotProcessedNvrPredicate
-                (run.getParent()), run.getCause(Cause.UserIdCause.class) != null);
+        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
+                                                                     createNotProcessedNvrPredicate(run.getParent()),
+                                                                     run.getParent());
         downloadWorker.setListener(listener);
-        KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
+        KojiBuildDownloadResult downloadResult = downloadWorker.invoke(new File(workspace.toURI()), null);
 
         if (downloadResult == null) {
             log("Checkout finished without any results");
@@ -155,7 +155,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             throw new AbortException("Checkout was invoked but no remote changes found");
         }
 
-        Build build = downloadResult.getBuild();
+        final Build build = downloadResult.getBuild();
         log("Checkout downloaded build: {}", build);
 
         String displayName = build.getVersion() + "-" + build.getRelease();
@@ -171,7 +171,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             log("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
             Files.write(
                     new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
-                    Arrays.asList(build.getNvr()),
+                    Collections.singletonList(build.getNvr()),
                     StandardCharsets.UTF_8,
                     StandardOpenOption.APPEND, StandardOpenOption.CREATE);
         }
@@ -182,8 +182,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         run.addAction(new KojiEnvVarsAction(build.getNvr(), downloadResult.getRpmsDirectory(),
-                downloadResult.getRpmFiles().stream().sequential().collect(Collectors.joining(File.pathSeparator))));
-
+                                            String.join(File.pathSeparator, downloadResult.getRpmFiles())));
     }
 
     @Override
@@ -211,6 +210,8 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
         if (build != null) {
             log("Got new remote build: {}", build);
+            log("Saving {} to {}", build, BUILD_XML);
+            new BuildsSerializer().write(build, new File(project.getRootDir(), BUILD_XML));
             return new PollingResult(baseline, new KojiRevisionState(build), PollingResult.Change.INCOMPARABLE);
         }
         // if we are still here - no remote changes:
