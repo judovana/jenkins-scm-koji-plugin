@@ -17,7 +17,8 @@
                                     </j:when>
                                     <j:choose>
                                         <j:when test="${hyperlink.containingHashSum}">
-                                            <small><j:whitespace>  </j:whitespace>(${hyperlink.hashSum})</small> <br/>
+                                            <small><j:whitespace>  </j:whitespace>(MD5: ${hyperlink.hashSum})</small>
+                                            <br/>
                                         </j:when>
                                     </j:choose>
                                     <j:otherwise>

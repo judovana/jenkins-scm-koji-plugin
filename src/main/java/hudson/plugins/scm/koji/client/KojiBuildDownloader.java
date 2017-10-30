@@ -222,7 +222,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             log("Could not create hash sum of file: " + file.getName(), e);
             return null;
         }
-        return DatatypeConverter.printHexBinary(hashAlgorithm.digest());
+        return DatatypeConverter.printHexBinary(hashAlgorithm.digest()).toLowerCase();
     }
 
     private InputStream httpDownloadStream(String urlString) {
