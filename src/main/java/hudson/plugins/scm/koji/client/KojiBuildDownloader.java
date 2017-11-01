@@ -1,6 +1,7 @@
 package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
+import hudson.model.Job;
 import hudson.model.TaskListener;
 import hudson.plugins.scm.koji.BuildsSerializer;
 import hudson.plugins.scm.koji.model.Build;
@@ -8,6 +9,8 @@ import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.remoting.VirtualChannel;
+import hudson.plugins.scm.koji.KojiSCM;
+import hudson.plugins.scm.koji.LoggerHelp;
 
 import java.io.*;
 import java.net.*;
@@ -17,15 +20,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.Date;
 
 import org.jenkinsci.remoting.RoleChecker;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 
-import hudson.plugins.scm.koji.KojiSCM;
-import hudson.plugins.scm.koji.LoggerHelp;
-
-import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,19 +42,17 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
     private final boolean verbose = true;
-    private final boolean manualRun;
+    private Build build;
 
-    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate, boolean manualRun) {
+    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate, Build build) {
         this.config = config;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
-        this.manualRun = manualRun;
+        this.build = build;
     }
 
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
-        File checkoutBuildFile = new File(workspace, BUILD_XML);
-        Build build = new BuildsSerializer().read(checkoutBuildFile);
-        if (!manualRun || build == null) {
+        if (build == null) {
             build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
             if (build == null) {
                 // if we are here - no remote changes on first build, exiting:
@@ -158,7 +156,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             if (rpmsInBuildXml == 0) {
                 log("Warning, nothing downloaded, but looks like  nothing shoudl be.");
             } else {
-                log("WARNING, nothing downloaded, but shoudl be ("+rpmsInBuildXml+"). Maybe bad exclude packages?");
+                log("WARNING, nothing downloaded, but shoudl be (" + rpmsInBuildXml + "). Maybe bad exclude packages?");
             }
         }
         return l;
@@ -281,7 +279,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         return sb.toString();
     }
 
-    private String composeSrcUrl(String kojiDownloadUrl, Build build, String suffix){
+    private String composeSrcUrl(String kojiDownloadUrl, Build build, String suffix) {
         StringBuilder sb = new StringBuilder(255);
         sb.append(kojiDownloadUrl);
         if (kojiDownloadUrl.charAt(kojiDownloadUrl.length() - 1) != '/') {
@@ -291,7 +289,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         sb.append(build.getVersion()).append('/');
         sb.append(build.getRelease()).append('/');
         sb.append("src/");
-        sb.append(build.getName()).append('-').append(build.getVersion()).append('-').append(build.getRelease()).append(".src.").append(suffix);
+        sb.append(build.getName()).append('-')
+                .append(build.getVersion()).append('-')
+                .append(build.getRelease()).append(".src.").append(suffix);
         return sb.toString();
     }
 
