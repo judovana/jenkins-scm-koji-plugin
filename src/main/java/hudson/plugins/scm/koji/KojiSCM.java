@@ -142,12 +142,12 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        // TODO add some flag to allow checkout on local or remote machine
+        File checkoutBuildFile = new File(run.getParent().getRootDir(), BUILD_XML);
         KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
                                                                      createNotProcessedNvrPredicate(run.getParent()),
-                                                                     run.getParent());
+                                                                     new BuildsSerializer().read(checkoutBuildFile));
         downloadWorker.setListener(listener);
-        KojiBuildDownloadResult downloadResult = downloadWorker.invoke(new File(workspace.toURI()), null);
+        KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
         if (downloadResult == null) {
             log("Checkout finished without any results");

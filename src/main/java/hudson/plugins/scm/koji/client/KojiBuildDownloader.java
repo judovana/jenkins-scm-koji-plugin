@@ -42,18 +42,16 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
     private final boolean verbose = true;
-    private final Job job;
+    private Build build;
 
-    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate, Job job) {
+    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate, Build build) {
         this.config = config;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
-        this.job = job;
+        this.build = build;
     }
 
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
-        File checkoutBuildFile = new File(job.getRootDir(), BUILD_XML);
-        Build build = new BuildsSerializer().read(checkoutBuildFile);
         if (build == null) {
             build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
             if (build == null) {
