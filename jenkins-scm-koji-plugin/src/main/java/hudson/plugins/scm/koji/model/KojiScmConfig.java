@@ -1,6 +1,6 @@
 package hudson.plugins.scm.koji.model;
 
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class KojiScmConfig implements java.io.Serializable {
 
@@ -37,7 +37,7 @@ public class KojiScmConfig implements java.io.Serializable {
     }
 
     public static String replaceXPORT(String source) {
-        return testableUrlReplacer(":"+JavaServer.xPortAxiom, ":" + JavaServer.DFAULT_RP2C_PORT, source);
+        return testableUrlReplacer(":"+JavaServerConstants.xPortAxiom, ":" + JavaServerConstants.DFAULT_RP2C_PORT, source);
     }
 
     public String[] getKojiTopUrls() {
@@ -57,7 +57,7 @@ public class KojiScmConfig implements java.io.Serializable {
     }
 
     public static String replaceDPORT(String source) {
-        return testableUrlReplacer(":"+JavaServer.dPortAxiom, ":" + JavaServer.DFAULT_DWNLD_PORT, source);
+        return testableUrlReplacer(":"+JavaServerConstants.dPortAxiom, ":" + JavaServerConstants.DFAULT_DWNLD_PORT, source);
     }
 
     public String getPackageName() {
