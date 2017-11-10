@@ -2,21 +2,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 org.fakekoji.http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>koji-scm</artifactId>
+
     <groupId>fake-koji</groupId>
+    <artifactId>koji-scm</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+
     <name>Koji SCM</name>
-    <modules>
-        <module>jenkins-scm-koji-plugin</module>
-        <module>fake-koji</module>
-        <module>koji-scm-lib</module>
-    </modules>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.8</java.version>
-        <xmlrpc.version>3.1.3</xmlrpc.version>
-    </properties>
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
     <developers>
         <developer>
             <id>baiduzhyi.devel</id>
@@ -29,12 +28,19 @@
             <email>judovana@email.cz</email>
         </developer>
     </developers>
-    <licenses>
-        <license>
-            <name>MIT</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
-        </license>
-    </licenses>
+
+    <modules>
+        <module>jenkins-scm-koji-plugin</module>
+        <module>fake-koji</module>
+        <module>koji-scm-lib</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
+        <xmlrpc.version>3.1.3</xmlrpc.version>
+    </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -55,6 +61,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
     <build>
         <plugins>
             <plugin>
