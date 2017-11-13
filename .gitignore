@@ -2,3 +2,5 @@
 /nbproject/
 .idea/
 *.iml
+/koji-scm-lib/target/
+/jenkins-scm-koji-plugin/target/

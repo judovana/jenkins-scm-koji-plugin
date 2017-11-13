@@ -27,7 +27,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -43,8 +45,7 @@ public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Seri
         if (processedNvrFile.exists()) {
             if (processedNvrFile.isFile() && processedNvrFile.canRead()) {
                 try (Stream<String> stream = Files.lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)) {
-                    Set<String> nvrsSet = stream.collect(Collectors.toSet());
-                    return new NotProcessedNvrPredicate(nvrsSet);
+                    return createNotProcessedNvrPredicateFromStream(stream);
                 }
             } else {
                 throw new IOException("Processed NVRs is not readable: " + processedNvrFile.getAbsolutePath());
@@ -54,17 +55,36 @@ public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Seri
         }
     }
 
+    public static Predicate<String> createNotProcessedNvrPredicateFromStream(Stream<String> stream) throws IOException {
+        List<String> l1 = stream.collect(Collectors.toList());
+        return new NotProcessedNvrPredicate(l1);
+    }
+
     private final Set<String> processedNvrs;
 
-    public NotProcessedNvrPredicate(Set<String> processedNvrs) {
+    private NotProcessedNvrPredicate(Set<String> processedNvrs) {
         this.processedNvrs = processedNvrs;
+    }
+
+    public NotProcessedNvrPredicate(List<String> processedNvrs) {
+        Set<String> nvrsSet = new HashSet<>(processedNvrs.size());
+        for (String string : processedNvrs) {
+            string = string.trim();
+            if (string.contains(" ")) {
+                string = string.split(" +")[0];
+                nvrsSet.add(string);
+            } else {
+                nvrsSet.add(string);
+            }
+        }
+        this.processedNvrs = nvrsSet;
     }
 
     @Override
     public boolean test(String nvr) {
         LOG.info("Searching for " + nvr + " in " + processedNvrs.toString());
         boolean result = !processedNvrs.contains(nvr);
-        LOG.info("found["+nvr+"]: " + !result);
+        LOG.info("found[" + nvr + "]: " + !result);
         return result;
     }
 
