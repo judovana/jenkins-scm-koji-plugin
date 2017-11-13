@@ -727,7 +727,7 @@ public class PreviewFakeKoji {
         //get all products of top-project
         Object[] buildObjects = new BuildMatcher(
                 xmlrpc.toExternalForm(),
-                new NotProcessedNvrPredicate(new HashSet<>()),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
                 new GlobPredicate("*"),
                 5000, product.getName(), null).getAll();
         return buildObjects;
