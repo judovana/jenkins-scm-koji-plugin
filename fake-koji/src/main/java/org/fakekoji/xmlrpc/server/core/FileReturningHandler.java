@@ -381,7 +381,7 @@ public class FileReturningHandler implements HttpHandler {
         return logs;
     }
 
-    private static class FileInfo {
+    static class FileInfo {
 
         private final String fileChunk;
         private final String path;
@@ -427,7 +427,7 @@ public class FileReturningHandler implements HttpHandler {
         }
     }
 
-    private static class ComparatorByVersion implements Comparator<FileInfo>, InfoProvider {
+    static class ComparatorByVersion implements Comparator<FileInfo>, InfoProvider {
 
         private static final String NON_ALPHANUMERIC_REGEX = "[^a-zA-Z0-9]";
 
@@ -439,7 +439,7 @@ public class FileReturningHandler implements HttpHandler {
             for (int i = 0; i < min; i++) {
                 int compare = areNumeric(arr1[i], arr2[i]) ? Integer.compare(Integer.parseInt(arr2[i]), Integer.parseInt(arr1[i])) : arr1[i].compareTo(arr2[i]);
                 if (compare != 0) {
-                    return compare;
+                    return -compare;
                 }
             }
             return arr1.length - arr2.length;
@@ -456,7 +456,7 @@ public class FileReturningHandler implements HttpHandler {
         }
     }
 
-    private static class ComparatorByLastModifiedDirContent implements Comparator<FileInfo>, InfoProvider {
+    static class ComparatorByLastModifiedDirContent implements Comparator<FileInfo>, InfoProvider {
 
         @Override
         public int compare(FileInfo o1, FileInfo o2) {
@@ -465,9 +465,9 @@ public class FileReturningHandler implements HttpHandler {
                 return 0;
             }
             if (o2.getLastModifiedDirContent() > o1.getLastModifiedDirContent()) {
-                return -1;
+                return 1;
             }
-            return 1;
+            return -1;
         }
 
         @Override
@@ -485,7 +485,7 @@ public class FileReturningHandler implements HttpHandler {
         }
     }
 
-    private static class ComparatorByLastModified implements InfoProvider, Comparator<FileInfo> {
+    static class ComparatorByLastModified implements InfoProvider, Comparator<FileInfo> {
 
         @Override
         public int compare(FileInfo o1, FileInfo o2) {
@@ -493,9 +493,9 @@ public class FileReturningHandler implements HttpHandler {
                 return 0;
             }
             if (o2.getLastModified() > o1.getLastModified()) {
-                return -1;
+                return 1;
             }
-            return 1;
+            return -1;
         }
 
         @Override
@@ -515,7 +515,7 @@ public class FileReturningHandler implements HttpHandler {
 
     }
 
-    private static interface InfoProvider {
+    static interface InfoProvider {
 
         public String getTitle();
 
