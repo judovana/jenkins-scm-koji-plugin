@@ -33,6 +33,9 @@ import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
@@ -144,8 +147,8 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
         File checkoutBuildFile = new File(run.getParent().getRootDir(), BUILD_XML);
         KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
-                                                                     createNotProcessedNvrPredicate(run.getParent()),
-                                                                     new BuildsSerializer().read(checkoutBuildFile));
+                createNotProcessedNvrPredicate(run.getParent()),
+                new BuildsSerializer().read(checkoutBuildFile));
         downloadWorker.setListener(listener);
         KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
@@ -169,11 +172,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             log("manual mode -  not saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
         } else {
             log("Saving the nvr of checked out build to history: {} >> {}", build.getNvr(), PROCESSED_BUILDS_HISTORY);
-            Files.write(
-                    new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY).toPath(),
-                    Collections.singletonList(build.getNvr()),
-                    StandardCharsets.UTF_8,
-                    StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            appendBuildNvrToProcessed(new File(run.getParent().getRootDir(), PROCESSED_BUILDS_HISTORY), build);
         }
         // if there is a changelog file - write it:
         if (changelogFile != null) {
@@ -182,7 +181,21 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         run.addAction(new KojiEnvVarsAction(build.getNvr(), downloadResult.getRpmsDirectory(),
-                                            String.join(File.pathSeparator, downloadResult.getRpmFiles())));
+                String.join(File.pathSeparator, downloadResult.getRpmFiles())));
+    }
+
+    private static final DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss_XXX");
+
+    static void appendBuildNvrToProcessed(File processed, final Build build) throws IOException {
+        appendStringProcessed(processed, build.getNvr() + "  # " + formatter.format(new Date()));
+    }
+
+    static void appendStringProcessed(File processed, final String nvr) throws IOException {
+        Files.write(
+                processed.toPath(),
+                Collections.singletonList(nvr),
+                StandardCharsets.UTF_8,
+                StandardOpenOption.APPEND, StandardOpenOption.CREATE);
     }
 
     @Override

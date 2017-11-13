@@ -1,6 +1,5 @@
 package hudson.plugins.scm.koji;
 
-import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.scm.SCMDescriptor;
 import hudson.util.FormValidation;
 import java.net.URL;

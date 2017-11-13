@@ -58,7 +58,7 @@ public class NotProcessedNvrPredicateTest {
         "java-1.8.0-openjdk-1.8.0.141-1.b16.el7_3",
         "java-1.8.0-openjdk-1.8.0.141-3.b16.el7",
         "java-1.8.0-openjdk-1.8.0.144-0.b01.el7_4",
-        "java-1.8.0-openjdk-jdk8u144.b01-31.upstream",
+        "java-1.8.0-openjdk-jdk8u144.b01-31.upstream     more garbage",
         "java-1.8.0-openjdk-1.8.0.144-1.b01.el7",
         "java-1.8.0-openjdk-jdk8u162.b00-0.upstream",
         "java-1.8.0-openjdk-jdk8u162.b00-0.upstream",
@@ -97,6 +97,11 @@ public class NotProcessedNvrPredicateTest {
         List<String> l = Arrays.asList(ojdk8);
         assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-1.8.0.131-10.b12.el7"));
     }
+    @Test
+    public void checTruePredicateWithMoreGarbage() throws IOException {
+        List<String> l = Arrays.asList(ojdk8);
+        assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-jdk8u144.b01-31.upstream"));
+    }
     
      @Test
     public void checFalsePredicate() throws IOException {
@@ -111,6 +116,15 @@ public class NotProcessedNvrPredicateTest {
         assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("some garbage"));
         assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("some"));
         assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("garbage"));
+    }
+    @Test
+    public void checFalsePredicateWithMoreGarbage() throws IOException {
+        List<String> l = Arrays.asList(ojdk8);
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-jdk8u144.b01-31.upstream     more garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("more garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("more"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("garbage"));
+        
     }
 
 }
