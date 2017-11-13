@@ -10,7 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.HashSet;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -37,8 +37,8 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigCustomFedora() {
         return new KojiScmConfig(
-                "http://localhost:" + JavaServer.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServer.dPortAxiom,
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
@@ -52,8 +52,8 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigCustomFedoraSrcOnly() {
         return new KojiScmConfig(
-                "http://localhost:" + JavaServer.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServer.dPortAxiom,
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "src",
                 "f24*",
@@ -67,8 +67,8 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigCustomRhel7() {
         return new KojiScmConfig(
-                "http://localhost:" + JavaServer.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServer.dPortAxiom,
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "rhel-7.*-candidate",
@@ -247,8 +247,8 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigCustomWindows() {
         return new KojiScmConfig(
-                "http://localhost:" + JavaServer.xPortAxiom + "/RPC2",
-                "https://localhost:" + JavaServer.dPortAxiom,
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "https://localhost:" + JavaServerConstants.dPortAxiom,
                 "openjdk8-win",
                 "win",
                 "openjdk-win*",
