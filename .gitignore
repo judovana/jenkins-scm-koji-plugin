@@ -4,3 +4,4 @@
 *.iml
 /koji-scm-lib/target/
 /jenkins-scm-koji-plugin/target/
+/fake-koji/target/
