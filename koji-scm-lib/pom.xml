@@ -8,7 +8,7 @@
         <version>0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>koji-scm</groupId>
+    <groupId>fake-koji</groupId>
     <artifactId>koji-scm-lib</artifactId>
     <packaging>jar</packaging>
 
