@@ -267,6 +267,25 @@ public class FileReturningHandler implements HttpHandler {
         }
     }
 
+    private static String addDots(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        char c = str.charAt(0);
+        for (int i = 1; i < str.length(); i++) {
+            char next = str.charAt(i);
+            stringBuilder.append(c);
+            if (isAlphaNumericChange(c, next)) {
+                stringBuilder.append('.');
+            }
+            c = next;
+        }
+        stringBuilder.append(c);
+        return stringBuilder.toString();
+    }
+
+    private static boolean isAlphaNumericChange(char first, char second) {
+        return ((Character.isDigit(first) && Character.isAlphabetic(second)) || (Character.isAlphabetic(first) && Character.isDigit(second)));
+    }
+
     private StringBuilder generateHtmlFromList(String requestedFile, ArrayList<FileInfo> s, Comparator c) throws IOException {
         StringBuilder sb = new StringBuilder();
         InfoProvider provider = (InfoProvider) c;
@@ -433,13 +452,14 @@ public class FileReturningHandler implements HttpHandler {
 
         @Override
         public int compare(FileInfo f1, FileInfo f2) {
-            String[] arr1 = f1.getFileChunk().split(NON_ALPHANUMERIC_REGEX);
-            String[] arr2 = f2.getFileChunk().split(NON_ALPHANUMERIC_REGEX);
+            // we need to add dots between every adjacent number and letter so fileChunk can be split into numeric and alphabetical strings for better sorting ojdk7 and ojdk8 files
+            String[] arr1 = addDots(f1.getFileChunk()).split(NON_ALPHANUMERIC_REGEX);
+            String[] arr2 = addDots(f2.getFileChunk()).split(NON_ALPHANUMERIC_REGEX);
             int min = Math.min(arr1.length, arr2.length);
             for (int i = 0; i < min; i++) {
                 int compare = areNumeric(arr1[i], arr2[i]) ? Integer.compare(Integer.parseInt(arr2[i]), Integer.parseInt(arr1[i])) : arr1[i].compareTo(arr2[i]);
                 if (compare != 0) {
-                    return -compare;
+                    return compare;
                 }
             }
             return arr1.length - arr2.length;
