@@ -452,7 +452,13 @@ public class FileReturningHandler implements HttpHandler {
 
         @Override
         public int compare(FileInfo f1, FileInfo f2) {
-            // we need to add dots between every adjacent number and letter so fileChunk can be split into numeric and alphabetical strings for better sorting ojdk7 and ojdk8 files
+            /*
+              we need to add a dot between every adjacent number and letter so fileChunk can be split into numeric and alphabetical strings for better sorting ojdk7 and ojdk8 files
+              alphabetical strings must be sorted in ascending order(a first, z last) and numeric string in descending order(9 first, 0 last) - we want the last version on the top
+              example:
+              old: jdk8u152.b01 -> (split) -> [ojdk8u152, b01]
+              new: jdk8u152.b01 -> (addDots)-> jdk.8.u.152.b.01 -> (split) -> [jdk, 8, u, 152, b, 01] (numbers and letters separated)
+             */
             String[] arr1 = addDots(f1.getFileChunk()).split(NON_ALPHANUMERIC_REGEX);
             String[] arr2 = addDots(f2.getFileChunk()).split(NON_ALPHANUMERIC_REGEX);
             int min = Math.min(arr1.length, arr2.length);
