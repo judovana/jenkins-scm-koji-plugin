@@ -49,8 +49,10 @@ public class JavaServer {
     private static File dbFileRoot;
     public static final int DFAULT_RP2C_PORT = 9848;
     public static final int DFAULT_DWNLD_PORT = deductDwPort(DFAULT_RP2C_PORT);
+    public static final int DFAULT_SSHUPLOAD_PORT = deductUpPort(DFAULT_RP2C_PORT);
     private static int realXPort;
     private static int realDPort;
+    private static int realUPort;
 
     public static final String xPortAxiom = "XPORT";
     public static final String dPortAxiom = "DPORT";
@@ -80,11 +82,13 @@ public class JavaServer {
     public static void main(String[] args) {
         realXPort = DFAULT_RP2C_PORT;
         realDPort = DFAULT_DWNLD_PORT;
+        realUPort = DFAULT_SSHUPLOAD_PORT;
         //args=new String[]{"/mnt/raid1/local-builds"};
         if (args.length < 1) {
             throw new RuntimeException("expected at least one argument - directory with koji-like \"database\".\n"
                     + "second is optional xml-rpcport port (then download port is deducted by +1).\n"
-                    + "third is optional download port.\n");
+                    + "third is optional download port.\n"
+                    + "fourth is optional sshd port (otherwise defualt (or set xmlrpc) port -26 (default 9822).\n");
         } else {
             dbFileRoot = new File(args[0]);
             System.out.println("testing koji-like databse " + dbFileRoot.getAbsolutePath());
@@ -95,10 +99,17 @@ public class JavaServer {
         if (args.length == 2) {
             realXPort = Integer.valueOf(args[1]);
             realDPort = deductDwPort(realXPort);
+            realUPort = deductUpPort(realXPort);
         }
         if (args.length == 3) {
             realXPort = Integer.valueOf(args[1]);
             realDPort = Integer.valueOf(args[2]);
+            realUPort = deductUpPort(realXPort);
+        }
+        if (args.length == 4) {
+            realXPort = Integer.valueOf(args[1]);
+            realDPort = Integer.valueOf(args[2]);
+            realUPort = Integer.valueOf(args[3]);
         }
         try {
 
@@ -174,14 +185,17 @@ public class JavaServer {
             System.out.println("Starting http server 80 frontend");
             //This is nasty, this now requires whole service run as root. Should be fixed  to two separated serv
             String thisMachine = InetAddress.getLocalHost().getHostName();
-            PreviewFakeKoji.main(new String []{
-                "http://"+thisMachine+"/RPC2/",
-                "http://"+thisMachine+"/",
+            PreviewFakeKoji.main(new String[]{
+                "http://" + thisMachine + "/RPC2/",
+                "http://" + thisMachine + "/",
                 new File(dbFileRoot.getParentFile(), "upstream-repos").getAbsolutePath(),
                 dbFileRoot.getAbsolutePath()
             });
             PreviewFakeKoji.setJenkinsUrlOverride("http://hydra.brq.redhat.com:8080/");
             System.out.println("FrontEnd started successfully");
+            System.out.println("Starting sshd server to accept files.");
+            new SshUploadService().setup(realUPort, dbFileRoot);
+            System.out.println("Started successfully on " + realUPort);
             System.out.println("Accepting requests. (Halt program to stop.)");
 
         } catch (Exception exception) {
@@ -192,5 +206,9 @@ public class JavaServer {
 
     public static int deductDwPort(int xport) {
         return xport + 1;
+    }
+
+    public static int deductUpPort(int xport) {
+        return xport - 26;
     }
 }

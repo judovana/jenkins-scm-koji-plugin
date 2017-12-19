@@ -10,9 +10,12 @@
 
     <artifactId>fake-koji</artifactId>
     <packaging>jar</packaging>
-
     <name>Fake-Koji</name>
-
+    
+    <properties>
+        <fake.koji.main.class>org.fakekoji.xmlrpc.server.JavaServer</fake.koji.main.class>
+    </properties>
+  
     <dependencies>
         <dependency>
             <groupId>fake-koji</groupId>
@@ -23,11 +26,40 @@
             <groupId>org.apache.xmlrpc</groupId>
             <artifactId>xmlrpc-server</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.sshd</groupId>
+            <artifactId>sshd-core</artifactId>
+            <!-- 1.7 is not yet out. The build is done by custom sshd self build from cusotm branch on tyr-->
+            <!-- in addition of https://issues.apache.org/jira/browse/SSHD-787 and the https://github.com/lgoldstein/mina-sshd/commit/1792bf132083466ac3a8237f3c03618e8f50ca43
+            the whole block of if (shouldBeDir) {..}
+            of https://github.com/lgoldstein/mina-sshd/blob/SSHD-787/sshd-core/src/main/java/org/apache/sshd/common/scp/ScpHelper.java#L169 
+            is now commented out
+            you can use built prepared on tyr machine for us
+            -->
+            <version>1.7.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>${fake.koji.main.class}</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- 
+                If you insists on legacy separate-target  mvn install of fake-koji only
+                mvn assembly:assembly -DskipTests
+                then you have to comment out executions parst anr leave jsut configuration  in.
+                but why woould oe do that?
+                -->
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.6</version>
                 <executions>
@@ -40,6 +72,11 @@
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>
+                            <archive>
+                                <manifest>
+                                    <mainClass>${fake.koji.main.class}</mainClass>
+                                </manifest>
+                            </archive>
                         </configuration>
                     </execution>
                 </executions>
