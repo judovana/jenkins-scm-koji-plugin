@@ -177,7 +177,7 @@ public class SshUploadService {
             Similarly, as for upload, to make this work,
             https://github.com/lgoldstein/mina-sshd/blob/a6bf1c4eac3d8e418e8bfd6c8cc81a8c71a95113/sshd-core/src/main/java/org/apache/sshd/common/scp/ScpHelper.java#L486
             is commented out all except sendFile(file, preserve, bufferSize);
-            */
+             */
             public InputStream openRead(Session session, Path file, OpenOption... options) throws IOException {
                 System.out.println("Accepting downlaod of " + file);
                 RealPaths paths = createRealPaths(file);
@@ -354,11 +354,40 @@ public class SshUploadService {
             }
 
         } else {
-            String nvraName = parts[parts.length - 1];
+            int i = findTopMostParsableNvra(parts);
+            if (i < 0) {
+                i = parts.length - 1;
+            }
+            String nvraName = parts[i];
             NVRA nvra = new NVRA(nvraName);
-            return nvra.getArchedPath() + "/" + nvraName;
+            if (i == parts.length - 1) {
+                return nvra.getArchedPath() + tail(i, parts);
+            } else {
+                return nvra.getArchedPath() + tail(i + 1, parts);
+            }
         }
 
+    }
+
+    private static int findTopMostParsableNvra(String[] parts) {
+        for (int i = parts.length - 1; i >= 0; i--) {
+            String part = parts[i];
+            try {
+                NVRA nvra = new NVRA(part);
+                return i;
+            } catch (Exception ex) {
+            }
+        }
+        return -1;
+    }
+
+    private static String tail(int index, String[] parts) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = index; i < parts.length; i++) {
+            String part = parts[i];
+            sb.append("/").append(part);
+        }
+        return sb.toString();
     }
 
     private static class NvraParsingException extends RuntimeException {
