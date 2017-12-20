@@ -24,12 +24,14 @@
 package org.fakekoji.xmlrpc.server;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -65,8 +67,16 @@ public class SshUploadService {
     private static final String AUTHORIZED_KEYS = "authorized_keys";
     private static final String ID_RSA_PUB = "id_rsa.pub";
     private static final String terrible_env_var = "FAKE_KOJI_ALTERNATE_ID_RSA_PUB_OR_AUTHORISED_KEYS";
+    private File dbRoot;
 
     public SshServer setup(int port, final File dbRoot) throws IOException, GeneralSecurityException {
+        this.dbRoot = dbRoot;
+        if (!dbRoot.exists()) {
+            throw new RuntimeException(dbRoot + " dont exists");
+        }
+        if (!dbRoot.isDirectory()) {
+            throw new RuntimeException(dbRoot + " must be dir!");
+        }
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
 
@@ -87,13 +97,13 @@ public class SshUploadService {
         };
 
         /**
-         * Based on work-in-progress. See pom. Can change
-         * Currently the uploads of multiple files in row are broken (imhoby the 787 patches)
+         * Based on work-in-progress. See pom. Can change Currently the uploads
+         * of multiple files in row are broken (imhoby the 787 patches)
          */
         sf.setScpStreamResolverFactory(new ScpStreamResolverFactory() {
             @Override
             public ScpSourceStreamResolver createScpSourceStreamResolver(Path path, ScpFileOpener sfo) throws IOException {
-                throw new SshException("Currently read only service");
+                return new ScpSourceStreamResolverImpl(path);
             }
 
             @Override
@@ -115,40 +125,90 @@ public class SshUploadService {
                     }
                 };
             }
+
+            class ScpSourceStreamResolverImpl implements ScpSourceStreamResolver {
+
+                private final RealPaths realPath;
+                private final Path origPath;
+
+                private ScpSourceStreamResolverImpl(Path path) throws SshException {
+                    origPath = path;
+                    realPath = createRealPaths(path);
+                    if (!realPath.fullPath.exists()) {
+                        throw new SshException(realPath.fullPath + " dont exisits!");
+                    }
+                }
+
+                @Override
+                public String getFileName() throws IOException {
+                    return realPath.fullPath.getName();
+                }
+
+                @Override
+                public Path getEventListenerFilePath() {
+                    return null;
+                }
+
+                @Override
+                public Collection<PosixFilePermission> getPermissions() throws IOException {
+                    return Files.getPosixFilePermissions(realPath.fullPath.toPath(), LinkOption.NOFOLLOW_LINKS);
+                }
+
+                @Override
+                public ScpTimestamp getTimestamp() throws IOException {
+                    return new ScpTimestamp(realPath.fullPath.lastModified(), realPath.fullPath.lastModified());
+                }
+
+                @Override
+                public long getSize() throws IOException {
+                    return realPath.fullPath.length();
+                }
+
+                @Override
+                public InputStream resolveSourceStream(Session sn, OpenOption... oos) throws IOException {
+                    //there is need to send original path, as the ScpFileOpenr may be called on its own and so reparse the name
+                    return sf.getScpFileOpener().openRead(sn, origPath, oos);
+                }
+            }
         });
         sf.setScpFileOpener(new ScpFileOpener() {
             @Override
+            /*
+            Similarly, as for upload, to make this work,
+            https://github.com/lgoldstein/mina-sshd/blob/a6bf1c4eac3d8e418e8bfd6c8cc81a8c71a95113/sshd-core/src/main/java/org/apache/sshd/common/scp/ScpHelper.java#L486
+            is commented out all except sendFile(file, preserve, bufferSize);
+            */
             public InputStream openRead(Session session, Path file, OpenOption... options) throws IOException {
-                throw new SshException("Currently read only service");
+                System.out.println("Accepting downlaod of " + file);
+                RealPaths paths = createRealPaths(file);
+                if (!paths.fullPath.exists()) {
+                    String ss = paths.fullPath.toString() + " dont exists. ";
+                    System.out.println(ss);
+                    throw new SshException(ss);
+                }
+                return new FileInputStream(paths.fullPath);
             }
 
             @Override
             public OutputStream openWrite(Session session, Path file, OpenOption... options) throws IOException {
                 System.out.println("Accepting upload to " + file);
-                String newPath = null;
-                try {
-                    newPath = deductPathName(file.toString());
-                } catch (Exception e) {
-                    throw new SshException(e);
-                }
-                File fullPath = new File(dbRoot.getAbsolutePath() + "/" + newPath);
-                if (fullPath.exists()) {
-                    String ss = fullPath.toString() + " already exists. Overwrite is disabled right now";
+                RealPaths paths = createRealPaths(file);
+                if (paths.fullPath.exists()) {
+                    String ss = paths.fullPath.toString() + " already exists. Overwrite is disabled right now";
                     System.out.println(ss);
                     throw new SshException(ss);
                 }
-                File parent = fullPath.getParentFile();
-                System.out.println("Filename is " + newPath);
+                File parent = paths.fullPath.getParentFile();
                 System.out.println("ensuring " + parent.getAbsolutePath());
                 createCorrectlyOwnedDirectoryTree(parent, session.getUsername());
-                boolean blnCreated = fullPath.createNewFile();
+                boolean blnCreated = paths.fullPath.createNewFile();
                 if (!blnCreated) {
-                    String ss = fullPath.toString() + " failed to create, exiting sooner ratehr then later";
+                    String ss = paths.fullPath.toString() + " failed to create, exiting sooner ratehr then later";
                     System.out.println(ss);
                     throw new SshException(ss);
                 }
-                setOwner(fullPath.toPath(), session.getUsername());
-                return new FileOutputStream(fullPath);
+                setOwner(paths.fullPath.toPath(), session.getUsername());
+                return new FileOutputStream(paths.fullPath);
             }
 
             private void createCorrectlyOwnedDirectoryTree(File dirr, String username) throws IOException {
@@ -274,7 +334,7 @@ public class SshUploadService {
             String fileName;
             String type;
             String nvraName;
-            ///data/logs are considered as /logs
+            ///data/logs are considered same as  /logs and vice versa
             if (name.contains("/data/logs")) {
                 fileName = parts[parts.length - 1];
                 type = parts[parts.length - 2];
@@ -350,6 +410,34 @@ public class SshUploadService {
 
         public String getBasePath() {
             return product + "/" + version + "/" + release;
+        }
+    }
+
+    private RealPaths createRealPaths(Path file) throws SshException {
+        String newPath = null;
+        try {
+            newPath = deductPathName(file.toString());
+            System.out.println("Filename is " + newPath);
+        } catch (Exception e) {
+            throw new SshException(e);
+        }
+        File fullPath = new File(dbRoot.getAbsolutePath() + "/" + newPath);
+        return new RealPaths(newPath, fullPath);
+    }
+
+    private static class RealPaths {
+
+        private final String newPath;
+        private final File fullPath;
+
+        @Override
+        public String toString() {
+            return newPath + " (" + fullPath + ")";
+        }
+
+        private RealPaths(String newPath, File fullPath) {
+            this.newPath = newPath;
+            this.fullPath = fullPath;
         }
     }
 

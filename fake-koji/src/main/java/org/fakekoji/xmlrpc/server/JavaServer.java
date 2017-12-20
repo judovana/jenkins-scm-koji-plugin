@@ -185,12 +185,12 @@ public class JavaServer {
             System.out.println("Starting http server 80 frontend");
             //This is nasty, this now requires whole service run as root. Should be fixed  to two separated serv
             String thisMachine = InetAddress.getLocalHost().getHostName();
-            PreviewFakeKoji.main(new String[]{
-                "http://" + thisMachine + "/RPC2/",
-                "http://" + thisMachine + "/",
-                new File(dbFileRoot.getParentFile(), "upstream-repos").getAbsolutePath(),
-                dbFileRoot.getAbsolutePath()
-            });
+//            PreviewFakeKoji.main(new String[]{
+//                "http://" + thisMachine + "/RPC2/",
+//                "http://" + thisMachine + "/",
+//                new File(dbFileRoot.getParentFile(), "upstream-repos").getAbsolutePath(),
+//                dbFileRoot.getAbsolutePath()
+//            });
             PreviewFakeKoji.setJenkinsUrlOverride("http://hydra.brq.redhat.com:8080/");
             System.out.println("FrontEnd started successfully");
             System.out.println("Starting sshd server to accept files.");
