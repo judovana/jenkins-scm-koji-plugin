@@ -109,7 +109,11 @@ public class SshUploadService {
 
             @Override
             public Path resolveOutgoingFilePath(Path localPath, LinkOption... options) throws IOException {
-                return localPath;
+                try {
+                    return new File(dbRoot, deductPathName(localPath.toString())).toPath();
+                } catch (Exception ex) {
+                    return localPath;
+                }
 
             }
 
@@ -172,12 +176,22 @@ public class SshUploadService {
 
             class ScpSourceStreamResolverImpl implements ScpSourceStreamResolver {
 
-                private final RealPaths realPath;
-                private final Path origPath;
+                private RealPaths realPath;
+                private Path origPath;
 
                 private ScpSourceStreamResolverImpl(Path path) throws SshException {
                     origPath = path;
-                    realPath = createRealPaths(path);
+                    try {
+                        realPath = createRealPaths(path);
+                    } catch (Exception ex) {
+                        if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+                            //already resolved?
+                            realPath = new RealPaths(path.toString(), path.toFile());
+                            origPath = null;
+                        } else {
+                            throw ex;
+                        }
+                    }
                     if (!realPath.fullPath.exists()) {
                         throw new SshException(realPath.fullPath + " dont exisits!");
                     }
@@ -210,8 +224,12 @@ public class SshUploadService {
 
                 @Override
                 public InputStream resolveSourceStream(Session sn, OpenOption... oos) throws IOException {
-                    //there is need to send original path, as the ScpFileOpenr may be called on its own and so reparse the name
-                    return sf.getScpFileOpener().openRead(sn, origPath, oos);
+                    if (origPath == null) {
+                        return new FileInputStream(realPath.fullPath);
+                    } else {
+                        //there is need to send original path, as the ScpFileOpenr may be called on its own and so reparse the name
+                        return sf.getScpFileOpener().openRead(sn, origPath, oos);
+                    }
                 }
             }
 
@@ -382,6 +400,11 @@ public class SshUploadService {
                 type = parts[parts.length - 2];
                 nvraName = parts[parts.length - 3];
             }
+            if (fileName.equals("logs") || fileName.equals("data")) {
+                //recursive download?
+                nvraName = type;
+                fileName = "";
+            }
             NVRA nvra = new NVRA(nvraName);
             if (name.contains("/logs")) {
                 return nvra.getBasePath() + "/data/logs/" + nvra.arch + "/" + fileName;
@@ -435,7 +458,7 @@ public class SshUploadService {
         }
 
         public static String getMessage(String s) {
-            return "cant parse " + s + " to path. Expected NVRA.suffix or NVRA.suffix/some/sub/path (eg /data/filename or /data/logs/filename or /logs/filename)";
+            return "cant parse `" + s + "` to path. Expected NVRA.suffix or NVRA.suffix/some/sub/path (eg /data/filename or /data/logs/filename or /logs/filename)";
         }
 
         private NvraParsingException(String original) {
