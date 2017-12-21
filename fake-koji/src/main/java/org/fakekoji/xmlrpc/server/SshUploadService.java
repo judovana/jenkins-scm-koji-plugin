@@ -52,7 +52,6 @@ import org.apache.sshd.common.config.keys.KeyUtils;
 import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
 import org.apache.sshd.common.scp.ScpFileOpener;
 import org.apache.sshd.common.scp.ScpSourceStreamResolver;
-import org.apache.sshd.common.scp.ScpStreamResolverFactory;
 import org.apache.sshd.common.scp.ScpTargetStreamResolver;
 import org.apache.sshd.common.scp.ScpTimestamp;
 import org.apache.sshd.common.session.Session;
@@ -96,22 +95,36 @@ public class SshUploadService {
         ScpCommandFactory sf = new ScpCommandFactory() {
         };
 
-        /**
-         * Based on work-in-progress. See pom. Can change Currently the uploads
-         * of multiple files in row are broken (imhoby the 787 patches)
-         */
-        sf.setScpStreamResolverFactory(new ScpStreamResolverFactory() {
+        sf.setScpFileOpener(new ScpFileOpener() {
+
             @Override
-            public ScpSourceStreamResolver createScpSourceStreamResolver(Path path, ScpFileOpener sfo) throws IOException {
+            public Path resolveIncomingFilePath(Path localPath, String name, boolean preserve, Set<PosixFilePermission> permissions, ScpTimestamp time) throws IOException {
+                return localPath;
+            }
+
+            @Override
+            public Path resolveIncomingReceiveLocation(Path path, boolean recursive, boolean shouldBeDir, boolean preserve) throws IOException {
+                return path;
+            }
+
+            @Override
+            public Path resolveOutgoingFilePath(Path localPath, LinkOption... options) throws IOException {
+                return localPath;
+
+            }
+
+            @Override
+            public ScpSourceStreamResolver createScpSourceStreamResolver(Path path) throws IOException {
                 return new ScpSourceStreamResolverImpl(path);
             }
 
             @Override
-            public ScpTargetStreamResolver createScpTargetStreamResolver(Path path, ScpFileOpener sfo) throws IOException {
+            public ScpTargetStreamResolver createScpTargetStreamResolver(Path path) throws IOException {
                 return new ScpTargetStreamResolver() {
                     @Override
-                    public OutputStream resolveTargetStream(Session sn, String string, long l, Set<PosixFilePermission> set, OpenOption... oos) throws IOException {
-                        return sf.getScpFileOpener().openWrite(sn, path, oos);
+                    public OutputStream resolveTargetStream(Session sn, String name, long l, Set<PosixFilePermission> set, OpenOption... oos) throws IOException {
+                        Path lPath = mergeNameIntoPathOrNot(path, name);
+                        return sf.getScpFileOpener().openWrite(sn, lPath, oos);
                     }
 
                     @Override
@@ -122,6 +135,37 @@ public class SshUploadService {
                     @Override
                     public void postProcessReceivedData(String string, boolean bln, Set<PosixFilePermission> set, ScpTimestamp st) throws IOException {
                         //todo something here?
+                    }
+
+                    private Path mergeNameIntoPathOrNot(Path path, String name) {
+                        if (name == null || name.isEmpty() || path.endsWith(name)) {
+                            return path;
+                        }
+                        if (path.endsWith("logs") || path.endsWith("data")) {
+                            return path.resolve(name);
+                        }
+                        String isParsableName = null;
+                        try {
+                            isParsableName = deductPathName(name);
+                        } catch (Exception ex) {
+                            //is not
+                        }
+                        File f;
+                        try {
+                            //this is hook for sending no path with NVRA
+                            f = new File(dbRoot, deductPathName(path.toString()));
+                        } catch (Exception ex) {
+                            try {
+                                f = new File(dbRoot, deductPathName(path.resolve(name).toString()));
+                                return f.toPath();
+                            } catch (Exception exx) {
+                                return path;
+                            }
+                        }
+                        if (f.exists() && f.isDirectory()) {
+                            return path.resolve(name);
+                        }
+                        return path;
                     }
                 };
             }
@@ -170,14 +214,8 @@ public class SshUploadService {
                     return sf.getScpFileOpener().openRead(sn, origPath, oos);
                 }
             }
-        });
-        sf.setScpFileOpener(new ScpFileOpener() {
+
             @Override
-            /*
-            Similarly, as for upload, to make this work,
-            https://github.com/lgoldstein/mina-sshd/blob/a6bf1c4eac3d8e418e8bfd6c8cc81a8c71a95113/sshd-core/src/main/java/org/apache/sshd/common/scp/ScpHelper.java#L486
-            is commented out all except sendFile(file, preserve, bufferSize);
-             */
             public InputStream openRead(Session session, Path file, OpenOption... options) throws IOException {
                 System.out.println("Accepting downlaod of " + file);
                 RealPaths paths = createRealPaths(file);

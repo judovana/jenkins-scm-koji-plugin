@@ -29,13 +29,8 @@
         <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-core</artifactId>
-            <!-- 1.7 is not yet out. The build is done by custom sshd self build from cusotm branch on tyr-->
-            <!-- in addition of https://issues.apache.org/jira/browse/SSHD-787 and the https://github.com/lgoldstein/mina-sshd/commit/1792bf132083466ac3a8237f3c03618e8f50ca43
-            the whole block of if (shouldBeDir) {..}
-            of https://github.com/lgoldstein/mina-sshd/blob/SSHD-787/sshd-core/src/main/java/org/apache/sshd/common/scp/ScpHelper.java#L169 
-            is now commented out
-            you can use built prepared on tyr machine for us
-            -->
+            <!-- 1.7 is not yet out. The build is done by custom sshd self build from sources on tyr-->
+            <!-- becasue of https://issues.apache.org/jira/browse/SSHD-787 you can use built prepared on tyr machine for us-->
             <version>1.7.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
