@@ -45,6 +45,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.fakekoji.xmlrpc.server.ServerLogger;
 
 /**
  *
@@ -93,7 +94,7 @@ public class FileReturningHandler implements HttpHandler {
         public void runImpl() throws IOException {
             String requestedFile = t.getRequestURI().getPath();
             File f = new File(root + "/" + requestedFile);
-            System.out.println(new Date().toString() + " attempting: " + requestedFile);
+            ServerLogger.log(new Date().toString() + " attempting: " + requestedFile);
             if (f.getName().equals("ALL")) {
                 sentFullLIst(f, requestedFile, t);
                 return;
@@ -106,13 +107,13 @@ public class FileReturningHandler implements HttpHandler {
                 sentFile(f, t);
             } else {
                 if (ALLOW_FAKE_FILE) {
-                    System.out.println(f.getAbsolutePath() + " not found");
+                    ServerLogger.log(f.getAbsolutePath() + " not found");
                     f = new File(root + "/" + requestedFile.replaceAll("\\.rpm$", ".tarxz"));
                 }
                 if (f.exists()) {
                     sentFile(f, t);
                 } else {
-                    System.out.println(f.getAbsolutePath() + " not found");
+                    ServerLogger.log(f.getAbsolutePath() + " not found");
                     t.sendResponseHeaders(404, 0);
                     OutputStream os = t.getResponseBody();
                     os.close();
@@ -125,7 +126,7 @@ public class FileReturningHandler implements HttpHandler {
 
     private static void sentFullLIst(File ff, final String requestedFile, HttpExchange t) throws IOException {
         File f = ff.getParentFile();
-        System.out.println(f.getAbsolutePath() + " listing all files!");
+        ServerLogger.log(f.getAbsolutePath() + " listing all files!");
         String init = "<html>\n  <body>\n";
         StringBuilder sb1 = generateHtmlFromFileList(requestedFile, f, new ComparatorByVersion());
         StringBuilder sb2 = generateHtmlFromFileList(requestedFile, f, new ComparatorByLastModified());
@@ -193,7 +194,7 @@ public class FileReturningHandler implements HttpHandler {
 
     private static void sentFile(File f, HttpExchange t) throws IOException {
         long size = f.length();
-        System.out.println(f.getAbsolutePath() + " is " + size + " bytes long");
+        ServerLogger.log(f.getAbsolutePath() + " is " + size + " bytes long");
         t.sendResponseHeaders(200, size);
         try (OutputStream os = t.getResponseBody()) {
             copy(new FileInputStream(f), os);
@@ -218,7 +219,7 @@ public class FileReturningHandler implements HttpHandler {
     }
 
     private void sentDirListing(File f, String requestedFile, HttpExchange t) throws IOException {
-        System.out.println(f.getAbsolutePath() + " listing directory!");
+        ServerLogger.log(f.getAbsolutePath() + " listing directory!");
         String[] files = f.list();
         ArrayList<FileInfo> s = new ArrayList();
         s.add(0, new FileInfo("ALL", "ALL", new File(root + "/" + requestedFile + "/" + "ALL").toPath()));

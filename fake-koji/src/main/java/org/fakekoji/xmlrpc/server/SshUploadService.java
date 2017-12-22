@@ -69,6 +69,19 @@ public class SshUploadService {
     private File dbRoot;
 
     public SshServer setup(int port, final File dbRoot) throws IOException, GeneralSecurityException {
+        String presetKeys = System.getenv(terrible_env_var);
+        String[] keys;
+        if (presetKeys == null || presetKeys.isEmpty()) {
+            ServerLogger.log("ignoring " + terrible_env_var + " with space separated user=/path/to/pubOrauthorisedKeys and using defaults");
+            keys = getTesterKeystore().split("\\s+");
+        } else {
+            ServerLogger.log("using " + terrible_env_var);
+            keys = presetKeys.trim().split("\\s+");
+        }
+        return setup(port, dbRoot, keys);
+    }
+
+    public SshServer setup(int port, final File dbRoot, String... keys) throws IOException, GeneralSecurityException {
         this.dbRoot = dbRoot;
         if (!dbRoot.exists()) {
             throw new RuntimeException(dbRoot + " dont exists");
@@ -78,16 +91,6 @@ public class SshUploadService {
         }
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
-
-        String presetKeys = System.getenv(terrible_env_var);
-        String[] keys;
-        if (presetKeys == null || presetKeys.isEmpty()) {
-            System.out.println("ignoring " + terrible_env_var + " with space separated user=/path/to/pubOrauthorisedKeys and using defaults");
-            keys = getTesterKeystore().split("\\s+");
-        } else {
-            System.out.println("using " + terrible_env_var);
-            keys = presetKeys.trim().split("\\s+");
-        }
         sshd.setPublickeyAuthenticator(new UserKeySetPublickeyAuthenticator(readAuthorizedKeys(keys)));
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(new File(System.getProperty("user.home"), ".fake-koji.hostkey")));
 
@@ -235,11 +238,11 @@ public class SshUploadService {
 
             @Override
             public InputStream openRead(Session session, Path file, OpenOption... options) throws IOException {
-                System.out.println("Accepting downlaod of " + file);
+                ServerLogger.log("Accepting downlaod of " + file);
                 RealPaths paths = createRealPaths(file);
                 if (!paths.fullPath.exists()) {
                     String ss = paths.fullPath.toString() + " dont exists. ";
-                    System.out.println(ss);
+                    ServerLogger.log(ss);
                     throw new SshException(ss);
                 }
                 return new FileInputStream(paths.fullPath);
@@ -247,20 +250,20 @@ public class SshUploadService {
 
             @Override
             public OutputStream openWrite(Session session, Path file, OpenOption... options) throws IOException {
-                System.out.println("Accepting upload to " + file);
+                ServerLogger.log("Accepting upload to " + file);
                 RealPaths paths = createRealPaths(file);
                 if (paths.fullPath.exists()) {
                     String ss = paths.fullPath.toString() + " already exists. Overwrite is disabled right now";
-                    System.out.println(ss);
+                    ServerLogger.log(ss);
                     throw new SshException(ss);
                 }
                 File parent = paths.fullPath.getParentFile();
-                System.out.println("ensuring " + parent.getAbsolutePath());
+                ServerLogger.log("ensuring " + parent.getAbsolutePath());
                 createCorrectlyOwnedDirectoryTree(parent, session.getUsername());
                 boolean blnCreated = paths.fullPath.createNewFile();
                 if (!blnCreated) {
                     String ss = paths.fullPath.toString() + " failed to create, exiting sooner ratehr then later";
-                    System.out.println(ss);
+                    ServerLogger.log(ss);
                     throw new SshException(ss);
                 }
                 setOwner(paths.fullPath.toPath(), session.getUsername());
@@ -276,7 +279,7 @@ public class SshUploadService {
                         if (r == true) {
                             setOwner(dir, username);
                         } else {
-                            System.out.println("Faield to create directory " + dir.toString());
+                            ServerLogger.log("Faield to create directory " + dir.toString());
                         }
                     }
                 }
@@ -289,7 +292,7 @@ public class SshUploadService {
                     UserPrincipal userPrincipal = lookupService.lookupPrincipalByName(user);
                     Files.setOwner(path, userPrincipal);
                 } else {
-                    System.out.println("Not changing ownership from " + System.getProperty("user.name") + " to " + user + " for " + path + ". Upload service is not running as root.");
+                    //ServerLogger.log("Not changing ownership from " + System.getProperty("user.name") + " to " + user + " for " + path + ". Upload service is not running as root.");
                 }
             }
 
@@ -321,7 +324,7 @@ public class SshUploadService {
             List<PublicKey> usersKeys = new ArrayList<>();
             File f = new File(file);
             if (f.exists() && f.canRead()) {
-                System.out.println("For " + user + " adding from " + file);
+                ServerLogger.log("For " + user + " adding from " + file);
                 for (AuthorizedKeyEntry ake : AuthorizedKeyEntry.readAuthorizedKeys(f)) {
                     PublicKey publicKey = ake.resolvePublicKey(PublicKeyEntryResolver.IGNORING);
                     if (publicKey != null) {
@@ -330,7 +333,7 @@ public class SshUploadService {
                 }
                 userKeysMap.put(user, usersKeys);
             } else {
-                System.out.println("inaccessible  from " + file);
+                ServerLogger.log("inaccessible  from " + file);
             }
         }
         return userKeysMap;
@@ -507,7 +510,7 @@ public class SshUploadService {
         String newPath = null;
         try {
             newPath = deductPathName(file.toString());
-            System.out.println("Filename is " + newPath);
+            ServerLogger.log("Filename is " + newPath);
         } catch (Exception e) {
             throw new SshException(e);
         }

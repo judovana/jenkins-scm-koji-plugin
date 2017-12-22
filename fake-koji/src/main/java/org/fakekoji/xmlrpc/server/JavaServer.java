@@ -91,7 +91,7 @@ public class JavaServer {
                     + "fourth is optional sshd port (otherwise defualt (or set xmlrpc) port -26 (default 9822).\n");
         } else {
             dbFileRoot = new File(args[0]);
-            System.out.println("testing koji-like databse " + dbFileRoot.getAbsolutePath());
+            ServerLogger.log("testing koji-like databse " + dbFileRoot.getAbsolutePath());
             //cache FS
             FakeKojiDB test = new FakeKojiDB(dbFileRoot);
             test.checkAll();
@@ -113,7 +113,7 @@ public class JavaServer {
         }
         try {
 
-            System.out.println("Attempting to start XML-RPC Server...");
+            ServerLogger.log("Attempting to start XML-RPC Server...");
 
             WebServer server = new WebServer(realXPort);
             server.setParanoid(false);
@@ -127,7 +127,7 @@ public class JavaServer {
                     return new XmlRpcHandler() {
                         @Override
                         public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
-                            System.out.println(new Date().toString() + " Requested: " + xrr.getMethodName());
+                            ServerLogger.log(new Date().toString() + " Requested: " + xrr.getMethodName());
                             //need reinitializzing, as new  build couldbe added
                             FakeKojiDB kojiDb = new FakeKojiDB(dbFileRoot);
                             if (xrr.getMethodName().equals("sample.sum")) {
@@ -176,13 +176,13 @@ public class JavaServer {
             server.getXmlRpcServer().setHandlerMapping(xxx);
             //server.addHandler("sample", new JavaServer());
             server.start();
-            System.out.println("Started successfully on " + realXPort);
-            System.out.println("Starting http server to return files.");
+            ServerLogger.log("Started successfully on " + realXPort);
+            ServerLogger.log("Starting http server to return files.");
             HttpServer hs = HttpServer.create(new InetSocketAddress(realDPort), 0);
             hs.createContext("/", new FileReturningHandler(dbFileRoot));
             hs.start();
-            System.out.println("Started successfully on " + realDPort);
-            System.out.println("Starting http server 80 frontend");
+            ServerLogger.log("Started successfully on " + realDPort);
+            ServerLogger.log("Starting http server 80 frontend");
             //This is nasty, this now requires whole service run as root. Should be fixed  to two separated serv
             String thisMachine = InetAddress.getLocalHost().getHostName();
             PreviewFakeKoji.main(new String[]{
@@ -192,11 +192,11 @@ public class JavaServer {
                 dbFileRoot.getAbsolutePath()
             });
             PreviewFakeKoji.setJenkinsUrlOverride("http://hydra.brq.redhat.com:8080/");
-            System.out.println("FrontEnd started successfully");
-            System.out.println("Starting sshd server to accept files.");
+            ServerLogger.log("FrontEnd started successfully");
+            ServerLogger.log("Starting sshd server to accept files.");
             new SshUploadService().setup(realUPort, dbFileRoot);
-            System.out.println("Started successfully on " + realUPort);
-            System.out.println("Accepting requests. (Halt program to stop.)");
+            ServerLogger.log("Started successfully on " + realUPort);
+            ServerLogger.log("Accepting requests. (Halt program to stop.)");
 
         } catch (Exception exception) {
             System.err.println("JavaServer: " + exception);

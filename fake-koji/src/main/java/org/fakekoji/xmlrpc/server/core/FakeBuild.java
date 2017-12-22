@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.fakekoji.xmlrpc.server.IsFailedBuild;
+import org.fakekoji.xmlrpc.server.ServerLogger;
 import org.fakekoji.xmlrpc.server.utils.DirFilter;
 import org.fakekoji.xmlrpc.server.utils.FileFileFilter;
 
@@ -308,7 +309,7 @@ public class FakeBuild {
             String arch = get.getParentFile().getName();
             boolean mayBeFailed = new IsFailedBuild(get.getParentFile().getParentFile()).reCheck().getLastResult();
             if (mayBeFailed) {
-                System.out.println(" Warning: " + get + " seems to be from failed build!");
+                ServerLogger.log(" Warning: " + get + " seems to be from failed build!");
             }
             if (arrayContains(archs, arch)) {
                 Map m = new HashMap();
@@ -375,26 +376,26 @@ public class FakeBuild {
     //aarch64 is now added in rnutime, via  per project  settings. When ojdk9 will be oldest suported jdk, it have sense to put it here.
 
     private String[] getSupportedArches() throws IOException {
-        System.out.println("For: " + getNVR());
+        ServerLogger.log("For: " + getNVR());
         if (getArchesConfigFile().exists()) {
-            System.out.println("Using expected arches from " + getArchesConfigFile().getAbsolutePath());
+            ServerLogger.log("Using expected arches from " + getArchesConfigFile().getAbsolutePath());
             return readArchesFile(getArchesConfigFile());
         }
         if (getProjectConfigFile1().exists()) {
-            System.out.println("Using expected arches from " + getProjectConfigFile1().getAbsolutePath());
+            ServerLogger.log("Using expected arches from " + getProjectConfigFile1().getAbsolutePath());
             return readArchesFile(getProjectConfigFile1());
         }
         if (getProjectConfigFile2().exists()) {
-            System.out.println("Using expected arches from " + getProjectConfigFile2().getAbsolutePath());
+            ServerLogger.log("Using expected arches from " + getProjectConfigFile2().getAbsolutePath());
             return readArchesFile(getProjectConfigFile2());
         }
-        System.out.println("Using hardcoded arches.");
+        ServerLogger.log("Using hardcoded arches.");
         return defaultSupportedArchs;
     }
 
     public void printExpectedArchesForThisBuild() {
         try {
-            System.out.println("Expected to build on: "+Arrays.toString(getSupportedArches()));
+            ServerLogger.log("Expected to build on: "+Arrays.toString(getSupportedArches()));
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -486,11 +487,11 @@ public class FakeBuild {
     public static void main(String... arg) throws IOException {
         //arg = new String[]{"/mnt/raid1/local-builds/java-9-openjdk/" + archesConfigFileName};
         if (arg.length == 0) {
-            System.out.println("Expected single argument - path to file to save the file. Suggested name is: " + archesConfigFileName);
+            ServerLogger.log("Expected single argument - path to file to save the file. Suggested name is: " + archesConfigFileName);
             System.exit(1);
         }
         generateDefaultArchesFile(new File(arg[0]));
-        System.out.println(new File(arg[0]).getAbsolutePath());
+        ServerLogger.log(new File(arg[0]).getAbsolutePath());
         System.err.println(Arrays.toString(readArchesFile(new File(arg[0]))));
     }
 
