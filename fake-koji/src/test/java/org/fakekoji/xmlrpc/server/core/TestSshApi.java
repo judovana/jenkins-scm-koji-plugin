@@ -55,6 +55,7 @@ public class TestSshApi {
 
     private static File kojiDb;
     private static File sources;
+    private static File secondDir;
     private static File priv;
     private static File pub;
     private static int port;
@@ -98,6 +99,10 @@ public class TestSshApi {
         sources.delete();
         sources.mkdir();
         sources.deleteOnExit();
+        secondDir = File.createTempFile("ssh-fake-koji.", ".secondDir");
+        secondDir.delete();
+        secondDir.mkdir();
+        secondDir.deleteOnExit();
     }
 
     @AfterClass
@@ -192,6 +197,11 @@ public class TestSshApi {
     }
 
     @After
+    public void cleanSecondDir() {
+        clean(secondDir);
+    }
+
+    @After
     public void cleanSources() {
         clean(sources);
     }
@@ -251,6 +261,10 @@ public class TestSshApi {
     }
 
     @Test
+    /*
+     * scp /abs/path/nvra tester@localhost:
+     * scp tester@localhost:nvra /abs/path/
+     */
     public void scpNvraAbsPaths() throws IOException, InterruptedException {
         title(2);
         File f = new File(sources, "name-version1-release1.arch1.suffix");
@@ -269,6 +283,11 @@ public class TestSshApi {
     }
 
     @Test
+    /*
+     * scp /abs/path/nvra tester@localhost:nvra
+     * scp tester@localhost:nvra /abs/path/nvra
+     * scp tester@localhost:nvra /abs/path/nvra2
+     */
     public void scpNvraAbsPathsRenameLike() throws IOException, InterruptedException {
         title(2);
         File f = new File(sources, "name-version2-release2.arch2.suffix");

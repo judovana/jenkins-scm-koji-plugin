@@ -33,7 +33,7 @@ public class ServerLogger {
 
     public static void log(String string) {
         if (!mute) {
-            System.out.println("");
+            System.out.println(string);
         }
     }
 
