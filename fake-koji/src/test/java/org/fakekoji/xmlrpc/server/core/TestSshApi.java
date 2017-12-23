@@ -401,15 +401,55 @@ public class TestSshApi {
         checkFileExists(new File(nvra.getLocalFile().getParent(), "nvra2"));
     }
 
+    @Test
+    /*
+     * scp nvra tester@localhost:
+     */
+    public void scpNvraAllRelativeToNoTarget() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3t1");
+        nvra.createLocal();
+        int r = scpTo("", sources.getAbsoluteFile(), nvra.getLocalFile().getName());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
     /*
      * scp nvra tester@localhost:nvra
+     */
+    public void scpNvraAllRelativeTo() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3t1");
+        nvra.createLocal();
+        int r = scpTo("", sources.getAbsoluteFile(), nvra.getLocalFile().getName());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
+    /*
+     * scp nvra tester@localhost:/nvra
+     */
+    public void scpNvraAllRelativeToPseudoAbs() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3t2");
+        nvra.createLocal();
+        int r = scpTo("/", sources.getAbsoluteFile(), nvra.getLocalFile().getName());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    /*
      * scp tester@localhost:nvra .
      * scp tester@localhost:nvra ./nvra2
      */
 
  /*
      * scp /abs/path/nvra tester@localhost:/some/garbage
-     * scp tester@localhost:some/garbage/nvra /abs/path/
+     * scp nvra tester@localhost:some/garbage
+     * scp tester@localhost:/some/garbage/nvra /abs/path/
+     * scp tester@localhost:some/garbage/nvra some/path/
      */
     private static final String IDS_RSA = "-----BEGIN RSA PRIVATE KEY-----\n"
             + "MIISKQIBAAKCBAEA6DOkXJ7K89Ai3E+XTvFjefNmXRrYVIxx8TFonXGfUvSdNISD\n"
