@@ -252,7 +252,7 @@ public class TestSshApi {
 
     private static void title(int i) {
         if (debug) {
-            String s = "NwxtTestMethod";
+            String s = "method-unknow";
             if (Thread.currentThread().getStackTrace().length > i) {
                 s = Thread.currentThread().getStackTrace()[i].getMethodName();
             }
@@ -260,54 +260,157 @@ public class TestSshApi {
         }
     }
 
+    private class NvraTarballPathsHelper {
+
+        private final String vid;
+        private final String rid;
+        private final String aid;
+
+        public NvraTarballPathsHelper(String id) {
+            this(id, id, id);
+        }
+
+        public NvraTarballPathsHelper(String vid, String rid, String aid) {
+            this.vid = vid;
+            this.rid = rid;
+            this.aid = aid;
+        }
+
+        public String getName() {
+            return "terrible-x-name-version" + vid + "-release" + rid + ".arch" + aid + ".suffix";
+        }
+
+        public String getStub() {
+            return "terrible-x-name/version" + vid + "/release" + rid + "/arch" + aid;
+        }
+
+        public String getContent() {
+            return "nvra - " + vid + ":" + rid + ":" + ":" + aid;
+        }
+
+        public String getStubWithName() {
+            return getStub() + "/" + getName();
+        }
+
+        public File getLocalFile() {
+            return new File(sources, getName());
+        }
+
+        public File getSecondaryLocalFile() {
+            return new File(secondDir, getName());
+        }
+
+        public void createLocal() throws IOException {
+            createFile(getLocalFile(), getContent());
+            checkFileExists(getLocalFile());
+        }
+
+        public void createSecondaryLocal() throws IOException {
+            createFile(getSecondaryLocalFile(), getContent());
+            checkFileExists(getSecondaryLocalFile());
+        }
+
+        public void createRemote() throws IOException {
+            getRemoteFile().getParentFile().mkdirs();
+            createFile(getRemoteFile(), getContent());
+            checkFileExists(getRemoteFile());
+        }
+
+        public File getRemoteFile() {
+            return new File(kojiDb, getStubWithName());
+        }
+
+    }
+
     @Test
     /*
      * scp /abs/path/nvra tester@localhost:
-     * scp tester@localhost:nvra /abs/path/
      */
-    public void scpNvraAbsPaths() throws IOException, InterruptedException {
+    public void scpNvraAbsPathsTo() throws IOException, InterruptedException {
         title(2);
-        File f = new File(sources, "name-version1-release1.arch1.suffix");
-        try {
-            createFile(f, "nvra1");
-            int r = scpTo("", f.getAbsolutePath());
-            Assert.assertTrue(r == 0);
-            checkFileExists(new File(kojiDb, "name/version1/release1/arch1/" + f.getName()));
-        } finally {
-            f.delete();
-        }
-        checkFileNotExists(f);
-        int r = scpFrom(f.getParent(), f.getName());
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("1t1");
+        nvra.createLocal();
+        int r = scpTo("", nvra.getLocalFile().getAbsolutePath());
         Assert.assertTrue(r == 0);
-        checkFileExists(f);
+        checkFileExists(nvra.getRemoteFile());
     }
 
     @Test
     /*
-     * scp /abs/path/nvra tester@localhost:nvra
-     * scp tester@localhost:nvra /abs/path/nvra
-     * scp tester@localhost:nvra /abs/path/nvra2
+     *scp tester@localhost:nvra /abs/path/
      */
-    public void scpNvraAbsPathsRenameLike() throws IOException, InterruptedException {
+    public void scpNvraAbsPathsFrom1() throws IOException, InterruptedException {
         title(2);
-        File f = new File(sources, "name-version2-release2.arch2.suffix");
-        try {
-            createFile(f, "nvra2");
-            int r = scpTo(f.getName(), f.getAbsolutePath());
-            Assert.assertTrue(r == 0);
-            checkFileExists(new File(kojiDb, "name/version2/release2/arch2/" + f.getName()));
-        } finally {
-            f.delete();
-        }
-        checkFileNotExists(f);
-        int r1 = scpFrom(f.getAbsolutePath(), f.getName());
-        Assert.assertTrue(r1 == 0);
-        checkFileExists(f);
-        int r2 = scpFrom(new File(f.getParent(), "nvra2").getAbsolutePath(), f.getName());
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("1f1");
+        nvra.createRemote();
+        int r2 = scpFrom(nvra.getLocalFile().getParent(), nvra.getName());
         Assert.assertTrue(r2 == 0);
-        checkFileExists(new File(f.getParent(), "nvra2"));
+        checkFileExists(nvra.getLocalFile());
+
     }
 
+    @Test
+    /*
+     *scp tester@localhost:/nvra /abs/path
+     */
+    public void scpNvraAbsPathsFrom2() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("1f2");
+        nvra.createRemote();
+        int r3 = scpFrom(nvra.getLocalFile().getParent(), "/" + nvra.getName());
+        Assert.assertTrue(r3 == 0);
+        checkFileExists(nvra.getLocalFile());
+    }
+
+    @Test
+    /*
+     * scp /abs/path/nvra tester@localhost:/nvra
+     */
+    public void scpNvraAbsPathsRenameLikeTo() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("2t1");
+        nvra.createLocal();
+        int r = scpTo("/" + nvra.getName(), nvra.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
+    /*
+     * scp tester@localhost:nvra /abs/path/nvra
+     */
+    public void scpNvraAbsPathsRenameLikeFrom1() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("2t1");
+        nvra.createRemote();
+        int r1 = scpFrom(nvra.getLocalFile().getAbsolutePath(), nvra.getName());
+        Assert.assertTrue(r1 == 0);
+        checkFileExists(nvra.getLocalFile());
+    }
+
+    @Test
+    /*
+     * scp tester@localhost:nvra /abs/path/nvra2
+     */
+    public void scpNvraAbsPathsRenameLikeFrom2() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("2t2");
+        nvra.createRemote();
+        int r2 = scpFrom(new File(nvra.getLocalFile().getParent(), "nvra2").getAbsolutePath(), nvra.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(new File(nvra.getLocalFile().getParent(), "nvra2"));
+    }
+
+    /*
+     * scp nvra tester@localhost:nvra
+     * scp tester@localhost:nvra .
+     * scp tester@localhost:nvra ./nvra2
+     */
+
+ /*
+     * scp /abs/path/nvra tester@localhost:/some/garbage
+     * scp tester@localhost:some/garbage/nvra /abs/path/
+     */
     private static final String IDS_RSA = "-----BEGIN RSA PRIVATE KEY-----\n"
             + "MIISKQIBAAKCBAEA6DOkXJ7K89Ai3E+XTvFjefNmXRrYVIxx8TFonXGfUvSdNISD\n"
             + "uZW+tC9FbFNBJWZUFludQdHAczLCKLOoUq7mTBe/wPOreSyIDI1iNnawV/KsX7Ok\n"
