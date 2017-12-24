@@ -47,10 +47,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- *
- * @author jvanek
- */
 public class TestSshApi {
 
     private static final String IDS_RSA = "-----BEGIN RSA PRIVATE KEY-----\n"
@@ -620,15 +616,144 @@ public class TestSshApi {
         Assert.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
+
+    @Test
     /*
      * scp tester@localhost:/some/garbage/nvra /abs/path/
+     */
+    public void scpAbsGarbagedNvraToAbs() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4f1");
+        nvra.createRemote();
+        int r2 = scpFrom(nvra.getLocalFile().getAbsolutePath(), "/some/garbage/" + nvra.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getLocalFile());
+
+    }
+
+    @Test
+    /*
      * scp tester@localhost:some/garbage/nvra some/path/
-     * scp  some/path/nvra2 tester@localhost:some/garbage/nvra1
-     * scp tester@localhost:some/garbage/nvra1 some/path/nvra2
+     */
+    public void scpRelGarbagedNvraToRel() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4f2");
+        nvra.createRemote();
+        int r2 = scpFromCwd(nvra.getName(), sources, "some/garbage/" + nvra.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getLocalFile());
+
+    }
+
+    @Test
+    /* scp  /some/path/nvra2 tester@localhost:some/garbage/nvra1
+     */
+    public void scpNvraAbsToAbsGarbageRenameLikeAnotherNvraRel() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvraSource = new NvraTarballPathsHelper("5t1x1");
+        NvraTarballPathsHelper nvraTarget = new NvraTarballPathsHelper("5t1x2");
+        nvraSource.createLocal();
+        checkFileNotExists(nvraTarget.getLocalFile());
+        int r = scpTo("some/garbage/" + nvraTarget.getName(), nvraSource.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvraTarget.getRemoteFile());
+        checkFileNotExists(nvraSource.getRemoteFile());
+    }
+
+    @Test
+    /* scp  /some/path/nvra2 tester@localhost:/some/garbage/nvra1
+     */
+    public void scpNvraAbsToAbsGarbageRenameLikeAnotherNvraAbs() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvraSource = new NvraTarballPathsHelper("5t2x1");
+        NvraTarballPathsHelper nvraTarget = new NvraTarballPathsHelper("5t2x2");
+        nvraSource.createLocal();
+        checkFileNotExists(nvraTarget.getLocalFile());
+        int r = scpTo("/some/garbage/" + nvraTarget.getName(), nvraSource.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvraTarget.getRemoteFile());
+        checkFileNotExists(nvraSource.getRemoteFile());
+    }
+
+    @Test
+
+    /*
+     * scp tester@localhost:some/garbage/nvra1 /some/path/nvra2
+     */
+    public void scpNvrFromAbsGarbageRenameLikeAnotherNvraAbs() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvraSource = new NvraTarballPathsHelper("5t2x1");
+        NvraTarballPathsHelper nvraTarget = new NvraTarballPathsHelper("5t2x2");
+        nvraSource.createRemote();
+        checkFileNotExists(nvraTarget.getRemoteFile());
+        int r = scpFrom(nvraTarget.getLocalFile().getAbsolutePath(), "/some/garbage/" + nvraSource.getName());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvraTarget.getLocalFile());
+        checkFileNotExists(nvraSource.getLocalFile());
+    }
+
+    @Test
+    /*
      * scp  some/path/nonNvra tester@localhost:some/garbage/nvra
-     * scp tester@localhost:some/garbage/nvra some/path/nonNvra
+     */
+    public void scpSomeFileToGarbagedNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("5t3");
+        nvra.createLocal();
+        File renamed = new File(nvra.getLocalFile().getParentFile(), "renamed");
+        nvra.getLocalFile().renameTo(renamed);
+        checkFileNotExists(nvra.getLocalFile());
+        checkFileExists(renamed);
+        nvra.getLocalFile().renameTo(renamed);
+        int r = scpTo("some/garbage/" + nvra.getName(), renamed.getAbsolutePath());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
+    /*
+     * scp tester@localhost:some/garbage/nvra /some/path/nonNvra
+     */
+    public void scpSomeFileFromGarbagedNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("5f3");
+        nvra.createRemote();
+        File nwFile = new File(nvra.getLocalFile().getParent(), "renamed");
+        int r = scpFrom(nwFile.getAbsolutePath(), "some/garbage/" + nvra.getName());
+        Assert.assertTrue(r == 0);
+        checkFileNotExists(nvra.getLocalFile());
+        checkFileExists(nwFile);
+    }
+
+    @Test
+    /*
      * scp  some/path/nvra tester@localhost:some/garbage/NonNvra
+     */
+    public void scpNvraToMoreGarbaged() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("6t2");
+        nvra.createLocal();
+        int r2 = scpTo("/some/garbage/someFile", nvra.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getRemoteFile());
+
+    }
+
+    @Test
+    /*
      * scp tester@localhost:some/garbage/nonNvra some/path/nvra
      */
-
+    public void scpNonsenseToNvra() throws IOException, InterruptedException {
+        //inccorect case
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("6f1");
+        nvra.createRemote();
+        int r = scpFrom(nvra.getLocalFile().getAbsolutePath(), "some/garbage/notExisting");
+        Assert.assertTrue(r != 0);
+        checkFileNotExists(nvra.getLocalFile());
+    }
+    //data
+    //logs
+    //data/logs
+    //genereic/path
 }

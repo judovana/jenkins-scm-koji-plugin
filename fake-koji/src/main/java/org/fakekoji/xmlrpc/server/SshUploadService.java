@@ -61,6 +61,23 @@ import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.session.ServerSession;
 
+/**
+ * In all cases, garbage prefixing NVRA on server is ignored.
+ *
+ * Supported cases for NVRA:
+ *
+ * where the paths may be absolute or relative
+ * <li>scp any/file user@host:any/path/nvra</li>
+ * <li>scp any/path/NVRA user@host:any/path/</li>
+ * <li>scp any/path/NVRA user@host:any/path/DifferentNVRA (renaming on
+ * server)</li>
+ * similar, download
+ * <li>scp any/dir/ user@host:any/path/nvra  </li>
+ * <li>scp user@host:any/path/DifferentNVRA any/path/NVRA (renaming on
+ * client)</li>
+ *
+ * @author jvanek
+ */
 public class SshUploadService {
 
     private static final String AUTHORIZED_KEYS = "authorized_keys";
