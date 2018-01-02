@@ -66,18 +66,34 @@ import org.apache.sshd.server.session.ServerSession;
  *
  * Supported cases for NVRA:
  *
- * where the paths may be absolute or relative
+ * where the paths may be absolute or relative or nothing
  * <li>scp any/file user@host:any/path/nvra</li>
  * <li>scp any/path/NVRA user@host:any/path/</li>
  * <li>scp any/path/NVRA user@host:any/path/DifferentNVRA (renaming on
  * server)</li>
  * similar, download
- * <li>scp any/dir/ user@host:any/path/nvra  </li>
+ * <li>scp user@host:any/path/nvra  any/dir/ </li>
  * <li>scp user@host:any/path/DifferentNVRA any/path/NVRA (renaming on
  * client)</li>
  * Similarly, multiple uploads/downloads works
- * <li>scp any/path/NVRA1 any/path/NVRA2 user@host
- * <li>scp user@host:NVRA1 user@host:NVRA2 dir
+ * <li>scp any/path/NVRA1 any/path/NVRA2 user@host</li>
+ * <li>scp user@host:NVRA1 user@host:NVRA2 dir</li>
+ *
+ *
+ * Supported cases for data (files shared by all builds and architectures):
+ *
+ * where the paths may be absolute or relative or nothing
+ * <li>scp any/file user@host:any/path/nvra/data</li>
+ * <li>scp any/file user@host:any/path/NVRA/newName (renaming on
+ * server)</li>
+ * similar, download
+ * <li>scp user@host:nvra/data/fileName  any/dir/ </li>
+ * <li>scp user@host:nvra/data/fileName  any/dir/newName </li>(renaming on
+ * client)</li>
+ * Similarly, multiple uploads/downloads works
+ * <li>scp dataFile1 dataFile2 user@host:NVRA/data</li>
+ * <li>scp user@host:NVRA1/data/fileX user@host:NVRA2/data/fileY dir</li>
+ *
  * @author jvanek
  */
 public class SshApiService {

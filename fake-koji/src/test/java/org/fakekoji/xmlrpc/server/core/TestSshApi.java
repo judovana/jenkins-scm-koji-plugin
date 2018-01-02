@@ -979,23 +979,56 @@ public class TestSshApi {
         Assert.assertFalse(r2 == 0);
         checkFileNotExists(nvraDataFile.getRemoteFile());
     }
+
+    // scp  tester@localhost:nvra/data/name /some/path/
+    @Test
+    public void scpDataFromRelToDir() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data1f1", "dataFile");
+        nvraDataFile.createRemote();
+        int r2 = scpFrom(sources.getAbsolutePath(), nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvraDataFile.getLocalFile());
+    }
+
+    // scp  tester@localhost:/nvra/data/name /some/path/
+    @Test
+    public void scpDataFromAbsToDir() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data2f1", "dataFile");
+        nvraDataFile.createRemote();
+        int r2 = scpFrom(sources.getAbsolutePath(), "/" + nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvraDataFile.getLocalFile());
+    }
+
+    // scp  tester@localhost:garbage/nvra/data/name /some/path/rename
+    @Test
+    public void scpDataFromRelGarbageToDirFile() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data3f1", "dataFile");
+        nvraDataFile.createRemote();
+        File rename = new File(sources.getAbsolutePath(), "renamed");
+        checkFileNotExists(rename);
+        int r2 = scpFrom(rename.getAbsolutePath(), "some/garbage/" + nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(rename);
+    }
+
+    // scp  tester@localhost:/another/garbagenvra/data/name /some/path/rename
+    @Test
+    public void scpDataFromAbsGarbageToDirFile() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data4f1", "dataFile");
+        nvraDataFile.createRemote();
+        File rename = new File(sources.getAbsolutePath(), "renamed");
+        checkFileNotExists(rename);
+        int r2 = scpFrom(rename.getAbsolutePath(), "/some/garbage/" + nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(rename);
+    }
+    //
     // -r uploads
-    //
-    // scp  tester@localhost:nvra/data .
-    // scp  tester@localhost:nvra/data/ /some/path/
-    // scp  tester@localhost:nvra/data .
-    // scp  tester@localhost:nvra/data/ /some/path/
-    //
-    // scp  tester@localhost:nvra/data/name .
-    // scp  tester@localhost:nvra/data/name /some/path/
-    // scp  tester@localhost:nvra/data/name .
-    // scp  tester@localhost:nvra/data/name /some/path/
-    //
-    // scp  tester@localhost:nvra/data/name rename
-    // scp  tester@localhost:nvra/data/name /some/path/rename
-    // scp  tester@localhost:nvra/data/name rename
-    // scp  tester@localhost:nvra/data/name /some/path/rename
-    //
     // -r may need logs implementation
     // scp  -r tester@localhost:nvra/data .
     // scp  -r tester@localhost:nvra/data/ /some/path/
