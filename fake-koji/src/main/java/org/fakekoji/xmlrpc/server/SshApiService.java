@@ -111,6 +111,20 @@ import org.apache.sshd.server.session.ServerSession;
  * <li>scp dataFile1 dataFile2 user@host:NVRA/log</li>
  * <li>scp user@host:NVRA1/log/fileX user@host:NVRA2/log/fileY dir</li>
  *
+ * koji-like FS loks like this:
+ * <li>Name/Version/Release/arch/binaryForThatArch</li>
+ * <li>Name/Version/Release/src/sources</li>
+ * <li>Name/Version/Release/data/ for generic data files about whole n/v/r</li>
+ * <li>Name/Version/Release/data/logs/arch for variosu metadata about given
+ * build (or srrc)</li>
+ * You can uplaod any subpath into Name/Version/Release/arch/, but it is not
+ * recommended (TODO, remeove this feature?). Also be aware, that
+ * <li>scp any/fileName user@host:any/path/nvra/any/path</li>
+ * will lead to:
+ * <li>Name/Version/Release/arch/any/path</li>
+ * where path is new name for fileName unlies directrory
+ * Name/Version/Release/arch/any/path already existed, which is unlikely
+ *
  * @author jvanek
  */
 public class SshApiService {
@@ -248,7 +262,11 @@ public class SshApiService {
                         }
                     }
                     if (!realPath.fullPath.exists()) {
-                        throw new SshException(realPath.fullPath + " dont exisits!");
+                        if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+                            realPath = new RealPaths(path.toString(), path.toFile());
+                        } else {
+                            throw new SshException(realPath.fullPath + " dont exisits!");
+                        }
                     }
                 }
 
@@ -293,6 +311,9 @@ public class SshApiService {
                 ServerLogger.log("Accepting downlaod of " + file);
                 RealPaths paths = createRealPaths(file);
                 if (!paths.fullPath.exists()) {
+                    if (Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
+                        return new FileInputStream(file.toFile());
+                    }
                     String ss = paths.fullPath.toString() + " dont exists. ";
                     ServerLogger.log(ss);
                     throw new SshException(ss);

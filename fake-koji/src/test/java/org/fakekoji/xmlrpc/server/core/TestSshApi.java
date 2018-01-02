@@ -398,8 +398,12 @@ public class TestSshApi {
             return getNVRstub() + "/" + getArch();
         }
 
+        protected String contentKey() {
+            return "nvra";
+        }
+
         public String getContent() {
-            return "nvra - " + vid + ":" + rid + ":" + ":" + aid;
+            return contentKey() + " - " + vid + ":" + rid + ":" + ":" + aid;
         }
 
         public String getStubWithName() {
@@ -845,6 +849,11 @@ public class TestSshApi {
         private final String localName;
         private final String remoteName;
 
+        @Override
+        protected String contentKey() {
+            return "data";
+        }
+
         public NvraDataPathsHelper(String id, String name) {
             this(id, name, name);
         }
@@ -1079,6 +1088,11 @@ public class TestSshApi {
     }
 
     private class NvraLogsPathsHelper extends NvraDataPathsHelper {
+
+        @Override
+        protected String contentKey() {
+            return "log";
+        }
 
         public NvraLogsPathsHelper(String id, String name) {
             super(id, name);
@@ -1321,6 +1335,92 @@ public class TestSshApi {
         }
     }
 
+    /*
+    generic/path
+    ****************
+    support of those is discutable
+     */
+    private class NvraGeneralPathsHelper extends NvraDataPathsHelper {
+
+        private final String remotePath;
+
+        @Override
+        protected String contentKey() {
+            return "generic";
+        }
+
+        public NvraGeneralPathsHelper(String id, String remotePath, String name) {
+            super(id, name);
+            this.remotePath = remotePath;
+        }
+
+        public NvraGeneralPathsHelper(String id, String remotePath, String localName, String remoteName) {
+            super(id, localName, remoteName);
+            this.remotePath = remotePath;
+        }
+
+        @Override
+        public String getStub() {
+            //arch!
+            return super.getNVRstub() + "/" + getArch() + "/" + remotePath;
+        }
+
+        public String getRemotePath() {
+            return remotePath;
+        }
+
+        public String getRemoteTail() {
+            return getName() + "/" + remotePath;
+        }
+
+    }
+
+    // scp  /another/path/name1 tester@localhost:nvra/some/path/name2
+    @Test
+    public void scpGenericPathToRename() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1t1", "some/path", "fileName1", "fileName2");
+        genericFile.createLocal();
+        int r2 = scpTo(genericFile.getRemoteTail() + "/" + genericFile.getRemoteName(), genericFile.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(genericFile.getRemoteFile());
+    }
+
+    // scp  /another/path/name1 tester@localhost:nvra/some/path/
+    @Test
+    public void scpGenericPathTo() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1t2", "some/path", "fileName1");
+        genericFile.createLocal();
+        int r2 = scpTo(genericFile.getRemoteTail(), genericFile.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        //note, here koji evaluated it as rename!
+        checkFileNotExists(genericFile.getRemoteFile());
+        checkFileExists(genericFile.getRemoteFile().getParentFile());
+    }
+
+    // scp  tester@localhost:nvra/some/path/name2  /another/path/name1
+    @Test
+    public void scpGenericPathFromWithRename() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1f1", "some/path", "fileName1", "fileName2");
+        genericFile.createRemote();
+        int r2 = scpFrom(genericFile.getLocalFile().getAbsolutePath(), genericFile.getRemoteTail() + "/" + genericFile.getRemoteName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(genericFile.getLocalFile());
+    }
+
+    // scp  tester@localhost:nvra/some/path/name1 /another/path/
+    @Test
+    public void scpGenericPathFrom() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1f2", "some/path", "fileName1");
+        genericFile.createRemote();
+        int r2 = scpFrom(genericFile.getLocalFile().getParentFile().getAbsolutePath(), genericFile.getRemoteTail() + "/" + genericFile.getRemoteName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(genericFile.getLocalFile());
+    }
+
     //
     // -r uploads
     // scp  -r tester@localhost:nvra/data .
@@ -1335,7 +1435,6 @@ public class TestSshApi {
     // scp  -r tester@localhost:nvra/data/name /some/path/rename
     // scp  -r tester@localhost:nvra/data/name rename
     // scp  -r tester@localhost:nvra/data/name /some/path/rename
-    //genereic/path
     // -r version
     //multiple files into single NVRA
 }
