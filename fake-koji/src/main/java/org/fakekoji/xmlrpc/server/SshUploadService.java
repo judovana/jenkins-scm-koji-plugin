@@ -75,7 +75,9 @@ import org.apache.sshd.server.session.ServerSession;
  * <li>scp any/dir/ user@host:any/path/nvra  </li>
  * <li>scp user@host:any/path/DifferentNVRA any/path/NVRA (renaming on
  * client)</li>
- *
+ * Similarly, multiple uploads/downloads works
+ * <li>scp any/path/NVRA1 any/path/NVRA2 user@host
+ * <li>scp user@host:NVRA1 user@host:NVRA2 dir
  * @author jvanek
  */
 public class SshUploadService {

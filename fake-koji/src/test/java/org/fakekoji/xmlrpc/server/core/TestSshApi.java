@@ -233,22 +233,26 @@ public class TestSshApi {
         return scpTo(new String[0], target, cwd, source);
     }
 
+    private static final String TESTERatLOCALHOSTscp = "tester@localhost:";
+
     private static int scpTo(String[] params, String target, File cwd, String... source) throws InterruptedException, IOException {
-        String fullTarget = "tester@localhost:" + target;
+        String fullTarget = TESTERatLOCALHOSTscp + target;
         return scpRaw(params, fullTarget, cwd, source);
     }
 
-    private static int scpFrom(String target, String source) throws InterruptedException, IOException {
+    private static int scpFrom(String target, String... source) throws InterruptedException, IOException {
         return scpFrom(new String[0], target, null, source);
     }
 
-    private static int scpFromCwd(String target, File cwd, String source) throws InterruptedException, IOException {
+    private static int scpFromCwd(String target, File cwd, String... source) throws InterruptedException, IOException {
         return scpFrom(new String[0], target, cwd, source);
     }
 
-    private static int scpFrom(String[] params, String target, File cwd, String source) throws InterruptedException, IOException {
-        String fullSource = "tester@localhost:" + source;
-        return scpRaw(params, target, cwd, fullSource);
+    private static int scpFrom(String[] params, String target, File cwd, String... source) throws InterruptedException, IOException {
+        for (int i = 0; i < source.length; i++) {
+            source[i] = TESTERatLOCALHOSTscp + source[i];
+        }
+        return scpRaw(params, target, cwd, source);
     }
 
     private static int scpRaw(String[] params, String target, File cwd, String... source) throws InterruptedException, IOException {
@@ -795,6 +799,38 @@ public class TestSshApi {
         Assert.assertTrue(r == 0);
         checkFileExists(nvra1.getRemoteFile());
         checkFileExists(nvra2.getRemoteFile());
+    }
+
+    @Test
+    /*
+     * scp  tester@localhost:/seome/garbage/nvra1 tester@localhost:/another/garbage/nvra2 .
+     */
+    public void scpMultipleFilesFromAbsGarbage() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("7f3");
+        NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("8f3");
+        nvra1.createRemote();
+        nvra2.createRemote();
+        int r = scpFrom(sources.getAbsolutePath(), "some/garbage/" + nvra1.getName(), "/another/garbage/" + nvra2.getName());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra1.getLocalFile());
+        checkFileExists(nvra2.getLocalFile());
+    }
+
+    @Test
+    /*
+     * scp  tester@localhost:nvra1 tester@localhost:nvra2 dir
+     */
+    public void scpMultipleFilesFrom() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("7f4");
+        NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("8f4");
+        nvra1.createRemote();
+        nvra2.createRemote();
+        int r = scpFrom(sources.getAbsolutePath(), nvra1.getName(), nvra2.getName());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra1.getLocalFile());
+        checkFileExists(nvra2.getLocalFile());
     }
 
     /*
