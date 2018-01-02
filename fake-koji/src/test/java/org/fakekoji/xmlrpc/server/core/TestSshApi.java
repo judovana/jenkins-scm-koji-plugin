@@ -1027,6 +1027,39 @@ public class TestSshApi {
         Assert.assertTrue(r2 == 0);
         checkFileExists(rename);
     }
+
+    @Test
+    /*
+     * scp  some/path/file1 some/path/file2 tester@localhost:nvra/data
+     */
+    public void scpMultipleDataFilesTo() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvra1 = new NvraDataPathsHelper("d1tt1", "f1");
+        NvraDataPathsHelper nvra2 = new NvraDataPathsHelper("d1tt1", "f2");
+        nvra1.createLocal();
+        nvra2.createLocal();
+        int r = scpTo(nvra1.getName() + "/data", nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra1.getRemoteFile());
+        checkFileExists(nvra2.getRemoteFile());
+    }
+
+    @Test
+    /*
+     * scp  tester@localhost:nvra1/data/f1 tester@localhost:nvra2/data/f2 dir
+     */
+    public void scpMultipleDataFilesFrom() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvra1 = new NvraDataPathsHelper("d1ff1", "f1");
+        NvraDataPathsHelper nvra2 = new NvraDataPathsHelper("d1ff1", "f2");
+        nvra1.createRemote();
+        nvra2.createRemote();
+        int r = scpFrom(sources.getAbsolutePath(), "some/garbage/" + nvra1.getName() + "/data/" + nvra1.getRemoteName(), "/another/garbage/" + nvra2.getName() + "/data/" + nvra2.getRemoteName());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra1.getLocalFile());
+        checkFileExists(nvra2.getLocalFile());
+    }
+
     //
     // -r uploads
     // -r may need logs implementation
