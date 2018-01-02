@@ -765,6 +765,38 @@ public class TestSshApi {
         checkFileNotExists(nvra.getLocalFile());
     }
 
+    @Test
+    /*
+     * scp  some/path/nvra1 some/path/nvra1 tester@localhost:
+     */
+    public void scpMultipleFilesToRelNothing() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("7t3");
+        NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("8t3");
+        nvra1.createLocal();
+        nvra2.createLocal();
+        int r = scpTo("", nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra1.getRemoteFile());
+        checkFileExists(nvra2.getRemoteFile());
+    }
+
+    @Test
+    /*
+     * scp  some/path/nvra1 some/path/nvra1 tester@localhost:
+     */
+    public void scpMultipleFilesToAbsGarbage() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("7t4");
+        NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("8t4");
+        nvra1.createLocal();
+        nvra2.createLocal();
+        int r = scpTo("/some/path/", nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra1.getRemoteFile());
+        checkFileExists(nvra2.getRemoteFile());
+    }
+
     /*
     DATA
      */
@@ -889,6 +921,7 @@ public class TestSshApi {
         Assert.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
+
     // scp  /some/path/logname tester@localhost:data
     @Test
     public void scpDataToRelDataWrong() throws IOException, InterruptedException {
@@ -899,6 +932,7 @@ public class TestSshApi {
         Assert.assertFalse(r2 == 0);
         checkFileNotExists(nvraDataFile.getRemoteFile());
     }
+
     // scp  /some/path/logname tester@localhost:/
     @Test
     public void scpDataToNothing() throws IOException, InterruptedException {
