@@ -194,7 +194,7 @@ public class JavaServer {
             PreviewFakeKoji.setJenkinsUrlOverride("http://hydra.brq.redhat.com:8080/");
             ServerLogger.log("FrontEnd started successfully");
             ServerLogger.log("Starting sshd server to accept files.");
-            new SshUploadService().setup(realUPort, dbFileRoot);
+            new SshApiService().setup(realUPort, dbFileRoot);
             ServerLogger.log("Started successfully on " + realUPort);
             ServerLogger.log("Accepting requests. (Halt program to stop.)");
 

@@ -80,7 +80,7 @@ import org.apache.sshd.server.session.ServerSession;
  * <li>scp user@host:NVRA1 user@host:NVRA2 dir
  * @author jvanek
  */
-public class SshUploadService {
+public class SshApiService {
 
     private static final String AUTHORIZED_KEYS = "authorized_keys";
     private static final String ID_RSA_PUB = "id_rsa.pub";

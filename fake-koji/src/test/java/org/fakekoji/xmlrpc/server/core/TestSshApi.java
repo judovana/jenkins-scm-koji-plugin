@@ -40,7 +40,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.sshd.server.SshServer;
-import org.fakekoji.xmlrpc.server.SshUploadService;
+import org.fakekoji.xmlrpc.server.SshApiService;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -187,7 +187,7 @@ public class TestSshApi {
             }
         });
         s.close();
-        SshUploadService server = new SshUploadService();
+        SshApiService server = new SshApiService();
         kojiDb = File.createTempFile("ssh-fake-koji.", ".root");
         kojiDb.delete();
         kojiDb.mkdir();
