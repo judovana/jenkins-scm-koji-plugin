@@ -234,6 +234,7 @@ public class TestSshApi {
     }
 
     private static final String TESTERatLOCALHOSTscp = "tester@localhost:";
+    private static final String[] RECURSIVE = new String[]{"-r"};
 
     private static int scpTo(String[] params, String target, File cwd, String... source) throws InterruptedException, IOException {
         String fullTarget = TESTERatLOCALHOSTscp + target;
@@ -270,6 +271,11 @@ public class TestSshApi {
         cmd.addAll(Arrays.asList(source));
         cmd.add(target);
         if (debug) {
+            for (int i = 0; i < params.length; i++) {
+                String param = params[i];
+                System.out.println(i + ". param: " + param);
+
+            }
             for (int i = 0; i < source.length; i++) {
                 String string = source[i];
                 System.out.println(i + ". scp from " + string);
@@ -1421,8 +1427,55 @@ public class TestSshApi {
         checkFileExists(genericFile.getLocalFile());
     }
 
-    //
-    // -r uploads
+    /*
+     -r uploads
+        -r uploads should be provided  on its own
+     */
+    @Test
+    //scp /abs/path/nvra tester@localhost:
+    public void scpNvraFromDir() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("dr1t1");
+        nvra.createLocal();
+        int r1 = scpTo("", nvra.getLocalFile().getParent());
+        Assert.assertFalse(r1 == 0);
+        checkFileNotExists(nvra.getRemoteFile());
+
+        int r2 = scpTo(RECURSIVE, "", null, nvra.getLocalFile().getParent());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
+    //scp /abs/path/nvra1 tester@localhost:nvra1
+    public void scpNvraFromDirToSameNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr1t1");
+        nvra1.createLocal();
+        int r = scpTo(RECURSIVE, nvra1.getName(), null, nvra1.getLocalFile().getParent());
+        Assert.assertTrue(r == 0);
+        checkFileExists(nvra1.getRemoteFile());
+    }
+
+    @Test
+    //scp /abs/path/nvra1 tester@localhost:nvra2
+    public void scpNvraFromDirToAnotherNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr1t1");
+        NvraTarballPathsHelper nvra11 = new NvraTarballPathsHelper("dr11t11");
+        NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("dr2t2");
+        nvra1.createLocal();
+        nvra11.createLocal();
+        int r = scpTo(RECURSIVE, nvra2.getName(), null, nvra1.getLocalFile().getParent());
+        Assert.assertFalse(r == 0);
+        //must fail now, as it is copying several files to single one, and overwrite is disabled now
+        //however, the file must be created
+        checkFileExists(nvra2.getRemoteFile());
+        //TODO fix this?
+        //not unless more binaries per  NVRA are allowed
+        //however, to allow them is advised, to allow rpm-like "subpakcages"
+    }
+
     // scp  -r tester@localhost:nvra/data .
     // scp  -r tester@localhost:nvra/data/ /some/path/
     // scp  -r tester@localhost:nvra/data .
