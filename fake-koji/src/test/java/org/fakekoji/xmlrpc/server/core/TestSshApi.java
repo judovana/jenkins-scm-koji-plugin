@@ -395,7 +395,7 @@ public class TestSshApi {
         }
 
         public String getStub() {
-            return getNVRstub() + "/arch" + aid;
+            return getNVRstub() + "/" + getArch();
         }
 
         public String getContent() {
@@ -432,6 +432,10 @@ public class TestSshApi {
 
         public File getRemoteFile() {
             return new File(kojiDb, getStubWithName());
+        }
+
+        public String getArch() {
+            return "arch" + aid;
         }
 
     }
@@ -1060,9 +1064,265 @@ public class TestSshApi {
         checkFileExists(nvra2.getLocalFile());
     }
 
+    /*
+    LOGS
+    DATA/LOGS
+     */
+    /**
+     * logs and data/logs should be synonym for fake koj, thus the
+     * uploads/downloads are tested in loops
+     */
+    private static final String[] LOGS = new String[]{"logs", "data/logs"};
+
+    private static String trasnformToLogId(String s) {
+        return s.replace("/", "");
+    }
+
+    private class NvraLogsPathsHelper extends NvraDataPathsHelper {
+
+        public NvraLogsPathsHelper(String id, String name) {
+            super(id, name);
+        }
+
+        public NvraLogsPathsHelper(String id, String localName, String remoteName) {
+            super(id, localName, remoteName);
+        }
+
+        @Override
+        public String getStub() {
+            //arch!
+            return super.getNVRstub() + "/data/logs/" + getArch();
+        }
+
+    }
+
+    // scp  /some/path/logname tester@localhost:nvra/{logs,data/logs}
+    @Test
+    public void scpLogToRelativeNvraLogsNoSlash() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "1To", "logFile");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo(nvraLogsFile.getName() + "/" + log, nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:nvra/{logs,data/logs}/
+    @Test
+    public void scpLogToRelativeNvraLogsSlash() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "2To", "logFile");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo(nvraLogsFile.getName() + "/" + log + "/", nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+
+    }
+
+    // scp  /some/path/logname tester@localhost:some/garbage/nvra/{logs,data/logs}
+    @Test
+    public void scpLogToRelGarbageNvraLogsNoSlash() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "3To", "logFile");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo("some/garbage/" + nvraLogsFile.getName() + "/" + log, nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:some/garbage/nvra/{logs,data/logs}/
+    @Test
+    public void scpLogsToRelGarbageNvraLogsSlash() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "4To", "logFile");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo("some/garbage/" + nvraLogsFile.getName() + "/" + log + "/", nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:/some/garbage/nvra/{logs,data/logs}
+    @Test
+    public void scpLogsToAbsGarbageNvraLogsNoSlash() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "5To", "logFile");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo("/some/garbage/" + nvraLogsFile.getName() + "/" + log, nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:nvra/{logs,data/logs}/renamedLog
+    @Test
+    public void scpLogsToRelNvraLogsRenamed() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "6To", "logFile", "newName");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo(nvraLogsFile.getName() + "/" + log + "/newName", nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:some/garbage/nvra/{logs,data/logs}/renamedLog
+    @Test
+    public void scpLogsToRelGarbageNvraLogsRenamed() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "7To", "logFile", "newName");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo("some/garabge/" + nvraLogsFile.getName() + "/" + log + "/newName", nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:/some/garbage/nvra/{logs,data/logs}/renamedLog
+    @Test
+    public void scpLogsToAbsGarbageNvraLogsRenamed() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "8To", "logFile", "newName");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo("/some/garabge/" + nvraLogsFile.getName() + "/" + log + "/newName", nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:{logs,data/logs}
+    @Test
+    public void scpLogsToRelLogsWrong() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "9To", "logFile");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo(log, nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertFalse(r2 == 0);
+            checkFileNotExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  /some/path/logname tester@localhost:/
+    @Test
+    public void scpLogsToNothing() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "10To", "logFile", "newName");
+            nvraLogsFile.createLocal();
+            int r2 = scpTo("/", nvraLogsFile.getLocalFile().getAbsolutePath());
+            Assert.assertFalse(r2 == 0);
+            checkFileNotExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    // scp  tester@localhost:nvra/{logs,data/logs}/name /some/path/
+    @Test
+    public void scpLogsFromRelToDir() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "1f1", "logFile");
+            nvraLogsFile.createRemote();
+            int r2 = scpFrom(sources.getAbsolutePath(), nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getLocalFile());
+        }
+    }
+
+    // scp  tester@localhost:/nvra/{logs,data/logs}/name /some/path/
+    @Test
+    public void scpLogsFromAbsToDir() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "2f1", "logFile");
+            nvraLogsFile.createRemote();
+            int r2 = scpFrom(sources.getAbsolutePath(), "/" + nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getLocalFile());
+        }
+    }
+
+    // scp  tester@localhost:garbage/nvra/{logs,data/logs}/name /some/path/rename
+    @Test
+    public void scpLogsFromRelGarbageToDirFile() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "3f1", "logFile");
+            nvraLogsFile.createRemote();
+            File rename = new File(sources.getAbsolutePath(), "renamed");
+            rename.delete();
+            checkFileNotExists(rename);
+            int r2 = scpFrom(rename.getAbsolutePath(), "some/garbage/" + nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(rename);
+        }
+    }
+
+    // scp  tester@localhost:/another/garbagenvra/{logs,data/logs}/name /some/path/rename
+    @Test
+    public void scpLogsFromAbsGarbageToDirFile() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "4f1", "logFile");
+            nvraLogsFile.createRemote();
+            File rename = new File(sources.getAbsolutePath(), "renamed");
+            rename.delete();
+            checkFileNotExists(rename);
+            int r2 = scpFrom(rename.getAbsolutePath(), "/some/garbage/" + nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(rename);
+        }
+    }
+
+    @Test
+    /*
+     * scp  some/path/file1 some/path/file2 tester@localhost:nvra/{logs,data/logs}
+     */
+    public void scpMultipleLogsFilesTo() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvra1 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tt1", "f1");
+            NvraLogsPathsHelper nvra2 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tt1", "f2");
+            nvra1.createLocal();
+            nvra2.createLocal();
+            int r = scpTo(nvra1.getName() + "/" + log, nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
+            Assert.assertTrue(r == 0);
+            checkFileExists(nvra1.getRemoteFile());
+            checkFileExists(nvra2.getRemoteFile());
+        }
+    }
+
+    @Test
+    /*
+     * scp  tester@localhost:nvra1/{logs,data/logs}/f1 tester@localhost:nvra2/{logs,data/logs}/f2 dir
+     */
+    public void scpMultipleLogsFilesFrom() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvra1 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1ff1", "f1");
+            NvraLogsPathsHelper nvra2 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1ff1", "f2");
+            nvra1.createRemote();
+            nvra2.createRemote();
+            int r = scpFrom(sources.getAbsolutePath(), "some/garbage/" + nvra1.getName() + "/" + log + "/" + nvra1.getRemoteName(), "/another/garbage/" + nvra2.getName() + "/" + log + "/" + nvra2.getRemoteName());
+            Assert.assertTrue(r == 0);
+            checkFileExists(nvra1.getLocalFile());
+            checkFileExists(nvra2.getLocalFile());
+        }
+    }
+
     //
     // -r uploads
-    // -r may need logs implementation
     // scp  -r tester@localhost:nvra/data .
     // scp  -r tester@localhost:nvra/data/ /some/path/
     // scp  -r tester@localhost:nvra/data .
@@ -1075,8 +1335,7 @@ public class TestSshApi {
     // scp  -r tester@localhost:nvra/data/name /some/path/rename
     // scp  -r tester@localhost:nvra/data/name rename
     // scp  -r tester@localhost:nvra/data/name /some/path/rename
-    //logs
-    //data/logs
     //genereic/path
     // -r version
+    //multiple files into single NVRA
 }

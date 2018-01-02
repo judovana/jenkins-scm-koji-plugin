@@ -72,7 +72,7 @@ import org.apache.sshd.server.session.ServerSession;
  * <li>scp any/path/NVRA user@host:any/path/DifferentNVRA (renaming on
  * server)</li>
  * similar, download
- * <li>scp user@host:any/path/nvra  any/dir/ </li>
+ * <li>scp user@host:any/path/nvra any/dir/ </li>
  * <li>scp user@host:any/path/DifferentNVRA any/path/NVRA (renaming on
  * client)</li>
  * Similarly, multiple uploads/downloads works
@@ -80,19 +80,36 @@ import org.apache.sshd.server.session.ServerSession;
  * <li>scp user@host:NVRA1 user@host:NVRA2 dir</li>
  *
  *
- * Supported cases for data (files shared by all builds and architectures):
+ * Supported cases for data (files shared by all builds, sources and
+ * architectures):
  *
  * where the paths may be absolute or relative or nothing
  * <li>scp any/file user@host:any/path/nvra/data</li>
- * <li>scp any/file user@host:any/path/NVRA/newName (renaming on
+ * <li>scp any/file user@host:any/path/nvra/data/newName (renaming on
  * server)</li>
  * similar, download
- * <li>scp user@host:nvra/data/fileName  any/dir/ </li>
- * <li>scp user@host:nvra/data/fileName  any/dir/newName </li>(renaming on
+ * <li>scp user@host:nvra/data/fileName any/dir/ </li>
+ * <li>scp user@host:nvra/data/fileName any/dir/newName </li>(renaming on
  * client)</li>
  * Similarly, multiple uploads/downloads works
  * <li>scp dataFile1 dataFile2 user@host:NVRA/data</li>
  * <li>scp user@host:NVRA1/data/fileX user@host:NVRA2/data/fileY dir</li>
+ *
+ * Supported cases for logs - logs of all sources and builds are kept arch by
+ * arch For comaptibility reasons, you can use both "nvra/log/filename" and
+ * "nvra/data/log/filename"
+ *
+ * where the paths may be absolute or relative or nothing
+ * <li>scp any/file user@host:any/path/nvra/log</li>
+ * <li>scp any/file user@host:any/path/nvra/log/newName (renaming on
+ * server)</li>
+ * similar, download
+ * <li>scp user@host:nvra/log/fileName any/dir/ </li>
+ * <li>scp user@host:nvra/log/fileName any/dir/newName </li>(renaming on
+ * client)</li>
+ * Similarly, multiple uploads/downloads works
+ * <li>scp dataFile1 dataFile2 user@host:NVRA/log</li>
+ * <li>scp user@host:NVRA1/log/fileX user@host:NVRA2/log/fileY dir</li>
  *
  * @author jvanek
  */
