@@ -67,61 +67,80 @@ import org.apache.sshd.server.session.ServerSession;
  * Supported cases for NVRA:
  *
  * where the paths may be absolute or relative or nothing
+ * <ul>
  * <li>scp any/file user@host:any/path/nvra</li>
  * <li>scp any/path/NVRA user@host:any/path/</li>
  * <li>scp any/path/NVRA user@host:any/path/DifferentNVRA (renaming on
  * server)</li>
+ * </ul>
  * similar, download
+ * <ul>
  * <li>scp user@host:any/path/nvra any/dir/ </li>
  * <li>scp user@host:any/path/DifferentNVRA any/path/NVRA (renaming on
  * client)</li>
+ * </ul>
  * Similarly, multiple uploads/downloads works
+ * <ul>
  * <li>scp any/path/NVRA1 any/path/NVRA2 user@host</li>
  * <li>scp user@host:NVRA1 user@host:NVRA2 dir</li>
- *
+ * </ul>
  *
  * Supported cases for data (files shared by all builds, sources and
  * architectures):
  *
  * where the paths may be absolute or relative or nothing
+ * <ul>
  * <li>scp any/file user@host:any/path/nvra/data</li>
  * <li>scp any/file user@host:any/path/nvra/data/newName (renaming on
  * server)</li>
+ * </ul>
  * similar, download
+ * <ul>
  * <li>scp user@host:nvra/data/fileName any/dir/ </li>
- * <li>scp user@host:nvra/data/fileName any/dir/newName </li>(renaming on
- * client)</li>
+ * <li>scp user@host:nvra/data/fileName any/dir/newName(renaming on client)</li>
+ * </ul>
  * Similarly, multiple uploads/downloads works
+ * <ul>
  * <li>scp dataFile1 dataFile2 user@host:NVRA/data</li>
  * <li>scp user@host:NVRA1/data/fileX user@host:NVRA2/data/fileY dir</li>
- *
+ * </ul>
  * Supported cases for logs - logs of all sources and builds are kept arch by
  * arch For comaptibility reasons, you can use both "nvra/log/filename" and
  * "nvra/data/log/filename"
  *
  * where the paths may be absolute or relative or nothing
+ * <ul>
  * <li>scp any/file user@host:any/path/nvra/log</li>
  * <li>scp any/file user@host:any/path/nvra/log/newName (renaming on
  * server)</li>
+ * </ul>
  * similar, download
+ * <ul>
  * <li>scp user@host:nvra/log/fileName any/dir/ </li>
- * <li>scp user@host:nvra/log/fileName any/dir/newName </li>(renaming on
- * client)</li>
+ * <li>scp user@host:nvra/log/fileName any/dir/newName(renaming on client)</li>
+ * </ul>
  * Similarly, multiple uploads/downloads works
+ * <ul>
  * <li>scp dataFile1 dataFile2 user@host:NVRA/log</li>
  * <li>scp user@host:NVRA1/log/fileX user@host:NVRA2/log/fileY dir</li>
- *
+ * </ul>
  * koji-like FS loks like this:
+ * <ul>
  * <li>Name/Version/Release/arch/binaryForThatArch</li>
  * <li>Name/Version/Release/src/sources</li>
  * <li>Name/Version/Release/data/ for generic data files about whole n/v/r</li>
  * <li>Name/Version/Release/data/logs/arch for variosu metadata about given
  * build (or srrc)</li>
+ * </ul>
  * You can uplaod any subpath into Name/Version/Release/arch/, but it is not
  * recommended (TODO, remeove this feature?). Also be aware, that
- * <li>scp any/fileName user@host:any/path/nvra/any/path</li>
+ * <ul>
+ * <li>scp any/fileName user@host:any/path/nvra/any/path
+ * </ul>
  * will lead to:
+ * <ul>
  * <li>Name/Version/Release/arch/any/path</li>
+ * </ul>
  * where path is new name for fileName unlies directrory
  * Name/Version/Release/arch/any/path already existed, which is unlikely
  *

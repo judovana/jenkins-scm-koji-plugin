@@ -49,6 +49,11 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.0</version>
+            </plugin>
+            <plugin>
                 <!-- 
                 If you insists on legacy separate-target  mvn install of fake-koji only
                 mvn assembly:assembly -DskipTests
