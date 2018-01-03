@@ -150,8 +150,8 @@ import org.apache.sshd.server.session.ServerSession;
  * user@host: will uplaod two NVRAs to their correct places</li>
  * <li>heaving dir with logfile1 and logfile2 (even in subdirs)then scp -r dir
  * user@host:NVRA/logs will uplaod two the logs for given NVRA to correct
- * palce</li>
- * * <li>heaving dir with data1 and data2 (even in subdirs) then scp -r dir
+ * place</li>
+ * <li>heaving dir with data1 and data2 (even in subdirs) then scp -r dir
  * user@host:NVRA/data will uplaod two the files for given NVRA to correct
  * palce</li>
  * </ul>
@@ -171,7 +171,7 @@ import org.apache.sshd.server.session.ServerSession;
  * SHoudl gave you all data for given NVR and all logs of all A for given
  * NVR(A)</li>
  * </ul>
- * </p>
+ *
  *
  * @author jvanek
  */
