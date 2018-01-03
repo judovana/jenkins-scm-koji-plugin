@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 zzambers.
+ * Copyright 2018 .
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +30,10 @@ import java.net.InetSocketAddress;
 import org.fakekoji.xmlrpc.server.core.FileReturningHandler;
 
 /**
- * This class implements http server used as koji download server ( Packages are
- * downloaded from here by jenkins koji plugin )
+ * This class implements http server used as koji download server ( packages are
+ * downloaded from here by jenkins koji plugin ).
  *
- * @author zzambers
+ * Based on code, which was originally in JavaServer class.
  */
 public class KojiDownloadServer {
 

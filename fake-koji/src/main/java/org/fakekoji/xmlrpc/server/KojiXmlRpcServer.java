@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2018 zzambers, extracted code from JavaServer class
+ * Copyright 2018 .
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ import org.apache.xmlrpc.webserver.WebServer;
 /**
  * This Server implements Koji XmlRpc API (It is called by jenkins koji plugin )
  * 
- * @author zzambers
+ * Based on code, which was originally in JavaServer class.
  */
 public class KojiXmlRpcServer {
 
