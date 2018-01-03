@@ -1549,14 +1549,81 @@ public class TestSshApi {
         checkFileNotExists(nvra11.getRemoteFile());
     }
 
+    @Test
+    //scp -r /abs/path/nvra2/(nvra1) tester@localhost:
+    public void scpNvraFromNvraLikeDir() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr3t5");
+        NvraTarballPathsHelper nvra11 = new NvraTarballPathsHelper("dr33t55");
+        nvra1.createLocal();
+        File subdir = new File(sources, nvra11.getName());
+        File subdirFile = new File(subdir, nvra1.getName());
+        subdir.mkdir();
+        nvra1.getLocalFile().renameTo(subdirFile);
+        int r2 = scpTo(RECURSIVE, "", null, subdir.getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        //correctly, the name of file, not dir s used
+        checkFileExists(nvra1.getRemoteFile());
+        checkFileNotExists(nvra11.getRemoteFile());
+    }
+
     /*
      data
      */
- /*
+    @Test
+    //scp -r /abs/path/file tester@localhost:nvra/data
+    public void scpDirWithDataFileToNvraData() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvra = new NvraDataPathsHelper("data1tr1", "dataFile1");
+        nvra.createLocal();
+        int r1 = scpTo(RECURSIVE, "", null, nvra.getLocalFile().getParent());
+        Assert.assertFalse(r1 == 0);
+        int r2 = scpTo(RECURSIVE, nvra.getName() + "/data", null, nvra.getLocalFile().getParent());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
+    //scp -r /abs/path/data/file tester@localhost:{,nvra}
+    public void scpDataDirWithDataFileToNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvra = new NvraDataPathsHelper("data1tr2", "dataFile2");
+        nvra.createLocal();
+        File subdir = new File(sources, "data");
+        File subfile = new File(subdir, nvra.getLocalName());
+        subdir.mkdir();
+        nvra.getLocalFile().renameTo(subfile);
+        int r1 = scpTo(RECURSIVE, nvra.getName() + "/", null, subdir.getAbsolutePath());
+        //data in path are ignored, and so the datafile ends as NVRA instead of DATA:(
+        Assert.assertTrue(r1 == 0);
+        checkFileNotExists(nvra.getRemoteFile());
+        int r2 = scpTo(RECURSIVE, nvra.getName() + "/data/", null, subdir.getAbsolutePath());
+        //this oone uploads correctly
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
+    //scp -r /abs/path/data/file tester@localhost:{,nvra}
+    public void scpMultipleDataFilesInMultipleDirsToNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraDataPathsHelper nvra1 = new NvraDataPathsHelper("data1tr3", "dataFile3");
+        NvraDataPathsHelper nvra2 = new NvraDataPathsHelper("data1tr3", "dataFile4");
+        nvra1.createLocal();
+        nvra2.createLocal();
+        File subdir = new File(sources, "log"); //being confusive?-)
+        File subfile = new File(subdir, nvra1.getLocalName());
+        subdir.mkdir();
+        nvra1.getLocalFile().renameTo(subfile);
+        int r2 = scpTo(RECURSIVE, nvra1.getName() + "/data/", null, sources.getAbsolutePath());
+        //this oone uploads correctly
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra1.getRemoteFile());
+        checkFileExists(nvra2.getRemoteFile());
+    }
+
+    /*
      logs
-     */
- /*
-     custom paths
      */
     // scp  -r tester@localhost:nvra/data .
     // scp  -r tester@localhost:nvra/data/ /some/path/
@@ -1571,5 +1638,9 @@ public class TestSshApi {
     // scp  -r tester@localhost:nvra/data/name rename
     // scp  -r tester@localhost:nvra/data/name /some/path/rename
     // -r version
-    //multiple files into single NVRA
+    /*
+     custom paths
+     */
+    //multiple NVRA-like files into single NVRA
+    //curently not supported
 }
