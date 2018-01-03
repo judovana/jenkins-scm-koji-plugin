@@ -166,7 +166,40 @@ public class SshApiService {
     private static final String AUTHORIZED_KEYS = "authorized_keys";
     private static final String ID_RSA_PUB = "id_rsa.pub";
     private static final String terrible_env_var = "FAKE_KOJI_ALTERNATE_ID_RSA_PUB_OR_AUTHORISED_KEYS";
+
     private File dbRoot;
+    private int port;
+    private String[] keys;
+
+    private SshServer sshServer;
+
+    public SshApiService(File dbRoot, int port) {
+        this.dbRoot = dbRoot;
+        this.port = port;
+    }
+
+    public SshApiService(File dbRoot, int port, String... keys) {
+        this.dbRoot = dbRoot;
+        this.port = port;
+        this.keys = keys;
+    }
+
+    public void start() throws IOException, GeneralSecurityException {
+        if (sshServer == null) {
+            if (keys == null) {
+                sshServer = setup(port, dbRoot);
+            } else {
+                sshServer = setup(port, dbRoot, keys);
+            }
+        }
+        sshServer.start();
+    }
+
+    public void stop() throws IOException {
+        if (sshServer != null) {
+            sshServer.stop(true);
+        }
+    }
 
     public SshServer setup(int port, final File dbRoot) throws IOException, GeneralSecurityException {
         String presetKeys = System.getenv(terrible_env_var);
@@ -419,7 +452,6 @@ public class SshApiService {
         });
 
         sshd.setCommandFactory(sf);
-        sshd.start();
         return sshd;
     }
 

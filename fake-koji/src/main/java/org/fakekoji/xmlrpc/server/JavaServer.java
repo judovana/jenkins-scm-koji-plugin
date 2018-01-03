@@ -26,10 +26,17 @@ package org.fakekoji.xmlrpc.server;
 import com.sun.net.httpserver.HttpServer;
 import hudson.plugins.scm.koji.Constants;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.apache.sshd.server.SshServer;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
 import org.apache.xmlrpc.XmlRpcRequest;
@@ -46,43 +53,97 @@ import org.fakekoji.xmlrpc.server.core.FileReturningHandler;
  */
 public class JavaServer {
 
-    private static File dbFileRoot;
     public static final int DFAULT_RP2C_PORT = 9848;
     public static final int DFAULT_DWNLD_PORT = deductDwPort(DFAULT_RP2C_PORT);
     public static final int DFAULT_SSHUPLOAD_PORT = deductUpPort(DFAULT_RP2C_PORT);
-    private static int realXPort;
-    private static int realDPort;
-    private static int realUPort;
 
     public static final String xPortAxiom = "XPORT";
     public static final String dPortAxiom = "DPORT";
 
-    /**
-     * Testing method (see JavaClient) to verify if server works at all.
-     *
-     * @param x
-     * @param y
-     * @return x+y
-     */
-    private Integer sum(int x, int y) {
-        return x + y;
+    private File dbFileRoot;
+    private File localReposRoot;
+
+    private int realXPort;
+    private int realDPort;
+    private int realUPort;
+    private int previewPort;
+
+    KojiXmlRpcServer kojiXmlRpcServer;
+    KojiDownloadServer kojiDownloadServer;
+    PreviewFakeKoji previewFakeKojiServer;
+    SshApiService sshApiServer;
+
+    public JavaServer(File dbFileRoot, File localReposRoot,
+            int realXPort, int realDPort, int realUPort, int previewPort) {
+        this.dbFileRoot = dbFileRoot;
+        this.localReposRoot = localReposRoot;
+
+        this.realXPort = realXPort;
+        this.realDPort = realDPort;
+        this.realUPort = realUPort;
+        this.previewPort = previewPort;
+
+        kojiXmlRpcServer = new KojiXmlRpcServer(dbFileRoot, realXPort);
+        kojiDownloadServer = new KojiDownloadServer(dbFileRoot, realDPort);
+
+        String thisMachine;
+        URL xmlRpcUrl;
+        URL downloadUrl;
+
+        try {
+            thisMachine = InetAddress.getLocalHost().getHostName();
+            xmlRpcUrl = new URL("http://" + thisMachine + "/RPC2/");
+            downloadUrl = new URL("http://" + thisMachine + "/");
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+
+        previewFakeKojiServer = new PreviewFakeKoji(
+                xmlRpcUrl,
+                downloadUrl,
+                localReposRoot,
+                dbFileRoot,
+                previewPort,
+                "http://hydra.brq.redhat.com:8080/");
+
+        sshApiServer = new SshApiService(dbFileRoot, realUPort);
     }
 
-    /**
-     * xmlrpc api for sum.
-     *
-     * @param x
-     * @param y
-     * @return x+y
-     */
-    public Integer sum(Object x, Object y) {
-        return sum(((Integer) x).intValue(), ((Integer) y).intValue());
+    public void start() throws Exception {
+        /* koji xmlRpc server*/
+        ServerLogger.log("Attempting to start XML-RPC Server...");
+        kojiXmlRpcServer.start();
+        ServerLogger.log("Started successfully on " + realXPort);
+        /* koji download server*/
+        ServerLogger.log("Starting http server to return files.");
+        kojiDownloadServer.start();
+        ServerLogger.log("Started successfully on " + realDPort);
+        /* preview (builds in human readable way) */
+        ServerLogger.log("Starting http server frontend on " + previewPort);
+        previewFakeKojiServer.start();
+        ServerLogger.log("FrontEnd started successfully");
+        /* ssh server to upload files to fakekoji */
+        ServerLogger.log("Starting sshd server to accept files.");
+        sshApiServer.start();
+        ServerLogger.log("Sshd server started successfully on " + realUPort);
+    }
+
+    public void stop() {
+        try {
+            sshApiServer.stop();
+        } catch (IOException ex) {
+            Logger.getLogger(JavaServer.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        previewFakeKojiServer.stop();
+        kojiDownloadServer.stop();
+        kojiXmlRpcServer.stop();
     }
 
     public static void main(String[] args) {
-        realXPort = DFAULT_RP2C_PORT;
-        realDPort = DFAULT_DWNLD_PORT;
-        realUPort = DFAULT_SSHUPLOAD_PORT;
+        int realXPort = DFAULT_RP2C_PORT;
+        int realDPort = DFAULT_DWNLD_PORT;
+        int realUPort = DFAULT_SSHUPLOAD_PORT;
+        File dbFileRoot;
         //args=new String[]{"/mnt/raid1/local-builds"};
         if (args.length < 1) {
             throw new RuntimeException("expected at least one argument - directory with koji-like \"database\".\n"
@@ -111,93 +172,10 @@ public class JavaServer {
             realDPort = Integer.valueOf(args[2]);
             realUPort = Integer.valueOf(args[3]);
         }
+        JavaServer javaServer = new JavaServer(dbFileRoot, new File(dbFileRoot.getParentFile(), "upstream-repos"), realXPort, realDPort, realUPort, 80);
+
         try {
-
-            ServerLogger.log("Attempting to start XML-RPC Server...");
-
-            WebServer server = new WebServer(realXPort);
-            server.setParanoid(false);
-            XmlRpcHandlerMapping xxx = new XmlRpcHandlerMapping() {
-                @Override
-                /**
-                 * Very naive implementation of xml-rpc handler with hardcoded
-                 * calls
-                 */
-                public XmlRpcHandler getHandler(String string) throws XmlRpcNoSuchHandlerException, XmlRpcException {
-                    return new XmlRpcHandler() {
-                        @Override
-                        public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
-                            ServerLogger.log(new Date().toString() + " Requested: " + xrr.getMethodName());
-                            //need reinitializzing, as new  build couldbe added
-                            FakeKojiDB kojiDb = new FakeKojiDB(dbFileRoot);
-                            if (xrr.getMethodName().equals("sample.sum")) {
-                                //testing method
-                                return new JavaServer().sum(xrr.getParameter(0), xrr.getParameter(1));
-                            }
-                            if (xrr.getMethodName().equals(Constants.getPackageID)) {
-                                //input is package name, eg java-1.8.0-openjdk
-                                //result is int, package id in koji database
-                                //so this impl must have internal "database" (eg itw do not have number in name)
-                                return kojiDb.getPkgId(xrr.getParameter(0).toString());
-                            }
-                            if (xrr.getMethodName().equals(Constants.listBuilds)) {
-                                //inut is hashmap with
-                                /* paramsMap.put(packageID, packageId);
-                                 paramsMap.put("state", 1);
-                                 paramsMap.put("__starstar", Boolean.TRUE
-                                 */
-                                // from those we care only about packageID
-                                return kojiDb.getProjectBuildsByProjectIdAsMaps(((Integer) ((Map) (xrr.getParameter(0))).get(Constants.packageID)));
-                                //return is array of objects,  where each meber ishash map
-                                //koji plugin seems to  care about version, release and build_id (so each build needs some int hash:( tos erve as "database"
-                                //later maybe date, name, nvr, arch, completion_time, rpms, tags, 
-                            }
-                            if (xrr.getMethodName().equals(Constants.listTags)) {
-                                // input is buildId
-                                // output object[] wehre mamabers are hashmaps, where we care baout "name" only
-                                return kojiDb.getTags(((Map) (xrr.getParameter(0))));
-                            }
-
-                            if (xrr.getMethodName().equals(Constants.listRPMs)) {
-                                //input is hashmap buildID->integer, arches->String[] and uninteresed __starstar->true
-                                //output is array off hashmaps
-                                return kojiDb.getRpms(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));
-                            }
-                            if (xrr.getMethodName().equals(Constants.listArchives)) {
-                                //input is hashmap buildID->integer, arches->String[] and uninteresed __starstar->true
-                                //output is array off hashmaps
-                                return kojiDb.getArchives(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));
-                            }
-                            return null;
-                        }
-                    };
-                }
-            };
-            server.getXmlRpcServer().setHandlerMapping(xxx);
-            //server.addHandler("sample", new JavaServer());
-            server.start();
-            ServerLogger.log("Started successfully on " + realXPort);
-            ServerLogger.log("Starting http server to return files.");
-            HttpServer hs = HttpServer.create(new InetSocketAddress(realDPort), 0);
-            hs.createContext("/", new FileReturningHandler(dbFileRoot));
-            hs.start();
-            ServerLogger.log("Started successfully on " + realDPort);
-            ServerLogger.log("Starting http server 80 frontend");
-            //This is nasty, this now requires whole service run as root. Should be fixed  to two separated serv
-            String thisMachine = InetAddress.getLocalHost().getHostName();
-            PreviewFakeKoji.main(new String[]{
-                "http://" + thisMachine + "/RPC2/",
-                "http://" + thisMachine + "/",
-                new File(dbFileRoot.getParentFile(), "upstream-repos").getAbsolutePath(),
-                dbFileRoot.getAbsolutePath()
-            });
-            PreviewFakeKoji.setJenkinsUrlOverride("http://hydra.brq.redhat.com:8080/");
-            ServerLogger.log("FrontEnd started successfully");
-            ServerLogger.log("Starting sshd server to accept files.");
-            new SshApiService().setup(realUPort, dbFileRoot);
-            ServerLogger.log("Started successfully on " + realUPort);
-            ServerLogger.log("Accepting requests. (Halt program to stop.)");
-
+            javaServer.start();
         } catch (Exception exception) {
             System.err.println("JavaServer: " + exception);
             exception.printStackTrace();
