@@ -141,8 +141,23 @@ import org.apache.sshd.server.session.ServerSession;
  * <ul>
  * <li>Name/Version/Release/arch/any/path</li>
  * </ul>
- * where path is new name for fileName unlies directrory
+ * where path is new name for fileName unlike directory
  * Name/Version/Release/arch/any/path already existed, which is unlikely
+ *
+ * The recursive uplaods of binaries, logs and data should work as expected:
+ * <ul>
+ * <li>heaving dir with nvra1 and nvra2 (even in subdirs) then scp -r dir
+ * user@host: will uplaod two NVRAs to their correct places</li>
+ * <li>heaving dir with logfile1 and logfile2 (even in subdirs)then scp -r dir
+ * user@host:NVRA/logs will uplaod two the logs for given NVRA to correct
+ * palce</li>
+ * * <li>heaving dir with data1 and data2 (even in subdirs) then scp -r dir
+ * user@host:NVRA/data will uplaod two the files for given NVRA to correct
+ * palce</li>
+ * </ul>
+ * Mixed conntent is not allowe (eg data+logs together). Also custom paths are
+ * not supported in recursive upload
+ *
  *
  * @author jvanek
  */
