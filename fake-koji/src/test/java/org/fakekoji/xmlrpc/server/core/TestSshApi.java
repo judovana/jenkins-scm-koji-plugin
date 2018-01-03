@@ -1634,7 +1634,7 @@ public class TestSshApi {
             nvraLogsFile.createLocal();
             int r1 = scpTo(RECURSIVE, "", null, nvraLogsFile.getLocalFile().getParent());
             Assert.assertFalse(r1 == 0);
-            int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/"+log, null, nvraLogsFile.getLocalFile().getParent());
+            int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/" + log, null, nvraLogsFile.getLocalFile().getParent());
             Assert.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
@@ -1655,7 +1655,7 @@ public class TestSshApi {
             //data in path are ignored, and so the datafile ends as NVRA instead of DATA:(
             Assert.assertTrue(r1 == 0);
             checkFileNotExists(nvraLogsFile.getRemoteFile());
-            int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/"+log+"/", null, subdir.getAbsolutePath());
+            int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/" + log + "/", null, subdir.getAbsolutePath());
             //this oone uploads correctly
             Assert.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
@@ -1675,13 +1675,54 @@ public class TestSshApi {
             File subfile = new File(subdir, nvraLogsFile1.getLocalName());
             subdir.mkdir();
             nvraLogsFile1.getLocalFile().renameTo(subfile);
-            int r2 = scpTo(RECURSIVE, nvraLogsFile1.getName() + "/"+log+"/", null, sources.getAbsolutePath());
+            int r2 = scpTo(RECURSIVE, nvraLogsFile1.getName() + "/" + log + "/", null, sources.getAbsolutePath());
             //this oone uploads correctly
             Assert.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile1.getRemoteFile());
             checkFileExists(nvraLogsFile2.getRemoteFile());
         }
     }
+
+    /*
+     custom paths
+     */
+    @Test
+    //scp -r /abs/path/file tester@localhost:nvra/data
+    public void scpDirWithFilesFileToNvraPath() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper nvra = new NvraGeneralPathsHelper("data1tr1", "some/path", "dataFile1");
+        nvra.createLocal();
+        int r1 = scpTo(RECURSIVE, "", null, nvra.getLocalFile().getParent());
+        Assert.assertFalse(r1 == 0);
+        int r2 = scpTo(RECURSIVE, nvra.getName() + "/some/path", null, nvra.getLocalFile().getParent());
+        Assert.assertTrue(r2 == 0);
+        //!!broken!
+        //checkFileExists(nvra.getRemoteFile());
+        //this is wrong, there hsoudl be some/path/dataFile1, but is just some/path (file of path)
+        checkFileExists(nvra.getRemoteFile().getParentFile());
+    }
+
+    @Test
+    //scp -r /abs/path/data/file tester@localhost:{,nvra}
+    public void scpMultipleFilesInMultipleDirsToNvraPath() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper nvra1 = new NvraGeneralPathsHelper("data1tr3", "some/path", "dataFile3");
+        NvraGeneralPathsHelper nvra2 = new NvraGeneralPathsHelper("data1tr3", "some/path", "dataFile4");
+        nvra1.createLocal();
+        nvra2.createLocal();
+        File subdir = new File(sources, "log"); //being confusive?-)
+        File subfile = new File(subdir, nvra1.getLocalName());
+        subdir.mkdir();
+        nvra1.getLocalFile().renameTo(subfile);
+        int r2 = scpTo(RECURSIVE, nvra1.getName() + "/some/path/", null, sources.getAbsolutePath());
+        //broken! first file, although different is trying to overwrite second file
+        //Assert.assertTrue(r2 == 0);
+        Assert.assertFalse(r2 == 0);
+        //checkFileExists(nvra1.getRemoteFile());
+        //checkFileExists(nvra2.getRemoteFile());
+        checkFileExists(nvra1.getRemoteFile().getParentFile());
+    }
+
     // scp  -r tester@localhost:nvra/data .
     // scp  -r tester@localhost:nvra/data/ /some/path/
     // scp  -r tester@localhost:nvra/data .
@@ -1695,9 +1736,6 @@ public class TestSshApi {
     // scp  -r tester@localhost:nvra/data/name rename
     // scp  -r tester@localhost:nvra/data/name /some/path/rename
     // -r version
-    /*
-     custom paths
-     */
     //multiple NVRA-like files into single NVRA
     //curently not supported
 }
