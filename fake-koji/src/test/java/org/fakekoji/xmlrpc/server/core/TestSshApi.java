@@ -1923,4 +1923,18 @@ public class TestSshApi {
     //
     //multiple NVRA-like files into single NVRA
     //curently not supported
+
+    /*
+    Special case for upload of NVRA
+     */
+     // scp  FAILED tester@localhost:nvra/FAILED
+    @Test
+    public void scpWrongNameToNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("failedFileT1", "", "FAILED");
+        genericFile.createLocal();
+        int r2 = scpTo(genericFile.getRemoteTail() + "/" + genericFile.getRemoteName(), genericFile.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(genericFile.getRemoteFile());
+    }
 }
