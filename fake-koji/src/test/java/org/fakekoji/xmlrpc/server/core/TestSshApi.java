@@ -157,7 +157,7 @@ public class TestSshApi {
     private static File priv;
     private static File pub;
     private static int port;
-    private static SshServer sshd;
+    private static SshApiService server;
     private static final boolean debug = true;
 
     @BeforeClass
@@ -187,12 +187,12 @@ public class TestSshApi {
             }
         });
         s.close();
-        SshApiService server = new SshApiService();
         kojiDb = File.createTempFile("ssh-fake-koji.", ".root");
         kojiDb.delete();
         kojiDb.mkdir();
         kojiDb.deleteOnExit();
-        sshd = server.setup(port, kojiDb, "tester=" + pub.getAbsolutePath());
+        server = new SshApiService(kojiDb, port, "tester=" + pub.getAbsolutePath());
+        server.start();
         sources = File.createTempFile("ssh-fake-koji.", ".sources");
         sources.delete();
         sources.mkdir();
@@ -205,7 +205,7 @@ public class TestSshApi {
 
     @AfterClass
     public static void stopSshd() throws IOException {
-        sshd.stop(true);
+        server.stop();
     }
 
     private static void createFile(File path, String content) throws IOException {
