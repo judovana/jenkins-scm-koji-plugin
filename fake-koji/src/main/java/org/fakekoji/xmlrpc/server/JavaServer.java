@@ -139,7 +139,7 @@ public class JavaServer {
         kojiXmlRpcServer.stop();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         int realXPort = DFAULT_RP2C_PORT;
         int realDPort = DFAULT_DWNLD_PORT;
         int realUPort = DFAULT_SSHUPLOAD_PORT;
@@ -174,12 +174,8 @@ public class JavaServer {
         }
         JavaServer javaServer = new JavaServer(dbFileRoot, new File(dbFileRoot.getParentFile(), "upstream-repos"), realXPort, realDPort, realUPort, 80);
 
-        try {
-            javaServer.start();
-        } catch (Exception exception) {
-            System.err.println("JavaServer: " + exception);
-            exception.printStackTrace();
-        }
+        javaServer.start();
+
     }
 
     public static int deductDwPort(int xport) {

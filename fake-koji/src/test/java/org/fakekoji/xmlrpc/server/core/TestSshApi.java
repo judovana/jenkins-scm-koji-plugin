@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.sshd.server.SshServer;
 import org.fakekoji.xmlrpc.server.SshApiService;
 import org.junit.After;
 import org.junit.AfterClass;
