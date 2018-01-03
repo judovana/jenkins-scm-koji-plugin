@@ -870,6 +870,16 @@ public class TestSshApi {
             this.remoteName = remoteName;
         }
 
+        public NvraDataPathsHelper(String vid, String rid, String aid, String name) {
+            this(vid, rid, aid, name, name);
+        }
+
+        public NvraDataPathsHelper(String vid, String rid, String aid, String localName, String remoteName) {
+            super(vid, rid, aid);
+            this.localName = localName;
+            this.remoteName = remoteName;
+        }
+
         @Override
         public String getRemoteName() {
             return remoteName;
@@ -1108,6 +1118,14 @@ public class TestSshApi {
             super(id, localName, remoteName);
         }
 
+        public NvraLogsPathsHelper(String vid, String rid, String aid, String name) {
+            this(vid, rid, aid, name, name);
+        }
+
+        public NvraLogsPathsHelper(String vid, String rid, String aid, String localName, String remoteName) {
+            super(vid, rid, aid, localName, remoteName);
+        }
+
         @Override
         public String getStub() {
             //arch!
@@ -1339,6 +1357,67 @@ public class TestSshApi {
             checkFileExists(nvra1.getLocalFile());
             checkFileExists(nvra2.getLocalFile());
         }
+    }
+
+    //break
+    @Test
+    public void scpOfDataToIsArchIndependent() throws IOException, InterruptedException {
+        NvraDataPathsHelper data2 = new NvraDataPathsHelper("data1tr3", "dataFile2");
+        NvraDataPathsHelper data3 = new NvraDataPathsHelper("data1tr3", "data1tr3", "dataX1XtrX3X", "dataFile3");
+        NvraDataPathsHelper data4 = new NvraDataPathsHelper("data1tr3", "data1tr3", "dataY1YtrY3Y", "dataFile3");
+        data2.createLocal();
+        data3.createLocal();
+        data4.createSecondaryLocal();
+        int r1 = scpTo(data2.getName() + "/data", data2.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        int r2 = scpTo(data3.getName() + "/data", data3.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        int r3 = scpTo(data4.getName() + "/data", data4.getSecondaryLocalFile().getAbsolutePath());
+        Assert.assertFalse(r3 == 0);
+        checkFileExists(data2.getRemoteFile());
+        checkFileExists(data3.getRemoteFile());
+        checkFileExists(data4.getRemoteFile());
+        Assert.assertEquals(data3.getRemoteFile(), data4.getRemoteFile());
+    }
+
+    @Test
+    public void scpOfLogToIsNotArchIndependent() throws IOException, InterruptedException {
+        NvraLogsPathsHelper log2 = new NvraLogsPathsHelper("data1tr3", "logFile2");
+        NvraLogsPathsHelper log3 = new NvraLogsPathsHelper("data1tr3", "data1tr3", "dataX1XtrX3X", "logFile3");
+        NvraLogsPathsHelper log4 = new NvraLogsPathsHelper("data1tr3", "data1tr3", "dataY1YtrY3Y", "logFile3");
+        log2.createLocal();
+        log3.createLocal();
+        log4.createSecondaryLocal();
+        int r1 = scpTo(log2.getName() + "/logs", log2.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        int r2 = scpTo(log3.getName() + "/logs", log3.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        int r3 = scpTo(log4.getName() + "/logs", log4.getSecondaryLocalFile().getAbsolutePath());
+        Assert.assertTrue(r3 == 0);
+        checkFileExists(log2.getRemoteFile());
+        checkFileExists(log3.getRemoteFile());
+        checkFileExists(log4.getRemoteFile());
+        Assert.assertNotEquals(log3.getRemoteFile(), log4.getRemoteFile());
+    }
+
+    @Test
+    public void scpOfNvraToIsNotArchIndependent() throws IOException, InterruptedException {
+        NvraTarballPathsHelper log2 = new NvraTarballPathsHelper("data1tr3");
+        NvraTarballPathsHelper log3 = new NvraTarballPathsHelper("data1tr3", "data1tr3", "dataX1XtrX3X");
+        NvraTarballPathsHelper log4 = new NvraTarballPathsHelper("data1tr3", "data1tr3", "dataY1YtrY3Y");
+        log2.createLocal();
+        log3.createLocal();
+        log4.createSecondaryLocal();
+        int r1 = scpTo(log2.getName(), log2.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        int r2 = scpTo(log3.getName(), log3.getLocalFile().getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        int r3 = scpTo(log4.getName(), log4.getSecondaryLocalFile().getAbsolutePath());
+        Assert.assertTrue(r3 == 0);
+        checkFileExists(log2.getRemoteFile());
+        checkFileExists(log3.getRemoteFile());
+        checkFileExists(log4.getRemoteFile());
+        Assert.assertNotEquals(log3.getRemoteFile(), log4.getRemoteFile());
     }
 
     /*
@@ -1723,19 +1802,126 @@ public class TestSshApi {
         checkFileExists(nvra1.getRemoteFile().getParentFile());
     }
 
-    // scp  -r tester@localhost:nvra/data .
-    // scp  -r tester@localhost:nvra/data/ /some/path/
-    // scp  -r tester@localhost:nvra/data .
-    // scp  -r tester@localhost:nvra/data/ /some/path/
-    // scp  -r tester@localhost:nvra/data/name .
-    // scp  -r tester@localhost:nvra/data/name /some/path/
-    // scp  -r tester@localhost:nvra/data/name .
-    // scp  -r tester@localhost:nvra/data/name /some/path/
-    // scp  -r tester@localhost:nvra/data/name rename
-    // scp  -r tester@localhost:nvra/data/name /some/path/rename
-    // scp  -r tester@localhost:nvra/data/name rename
-    // scp  -r tester@localhost:nvra/data/name /some/path/rename
-    // -r version
+    /**
+     * ***********************************************************************
+     * ***************Recursive downloads*************************************
+     * ***********************************************************************
+     */
+    @Test
+    //scp -r tester@localhost:nvra /abs/path/
+    //where  tester@localhost:nvra  contains one, correct file
+    public void scpRecursciveNvraFrom() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("r1f1");
+        nvra.createRemote();
+        int r2 = scpFrom(RECURSIVE, nvra.getLocalFile().getParent(), null, nvra.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getLocalFile());
+    }
+
+    @Test
+    //scp -r tester@localhost:nvra /abs/path/
+    //where  tester@localhost:nvra  contains two, correct files
+    public void scpRecursciveMultipleNvraFrom() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("r1f1");
+        File strangeFileRemote = new File(nvra.getRemoteFile().getParent(), nvra.getName() + "xxx");
+        nvra.createRemote();
+        strangeFileRemote.createNewFile();
+        checkFileExists(strangeFileRemote);
+        int r2 = scpFrom(RECURSIVE, nvra.getLocalFile().getParent(), null, nvra.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getLocalFile());
+        File strangeFileLocal = new File(nvra.getLocalFile().getParent(), strangeFileRemote.getName());
+        //BROKEN! scp from NVRA simply ignores -r and returns the file it got in src
+        //todo fixit?
+        checkFileNotExists(strangeFileLocal);
+    }
+
+    //data
+    @Test
+    //scp -r tester@localhost:nvra/data /abs/path/
+    //where  tester@localhost:nvra/data  can contain really a lot!
+    public void scpRecursciveMultipleDataFrom() throws IOException, InterruptedException {
+        NvraDataPathsHelper data1 = new NvraDataPathsHelper("data1tr3", "dataFile1");
+        NvraDataPathsHelper data2 = new NvraDataPathsHelper("data1tr3", "dataFile2");
+        NvraDataPathsHelper data3 = new NvraDataPathsHelper("data1tr3", "data1tr3", "dataX1XtrX3X", "dataFile3");
+        //NvraDataPathsHelper data4 = new NvraDataPathsHelper("data1tr3", "data1tr3", "dataY1YtrY3Y", "dataFile3");
+        NvraLogsPathsHelper log1 = new NvraLogsPathsHelper("data1tr3", "logFile1");
+        NvraLogsPathsHelper log2 = new NvraLogsPathsHelper("data1tr3", "logFile2");
+        NvraLogsPathsHelper log3 = new NvraLogsPathsHelper("data1tr3", "data1tr3", "dataX1XtrX3X", "logFile3");
+        NvraLogsPathsHelper log4 = new NvraLogsPathsHelper("data1tr3", "data1tr3", "dataY1YtrY3Y", "logFile3");
+        data1.createRemote();
+        data2.createRemote();
+        data3.createRemote();
+        log1.createRemote();
+        log2.createRemote();
+        log3.createRemote();
+        log4.createRemote();
+        int r2 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, data1.getName() + "/data");
+        Assert.assertFalse(r2 == 0);
+        //BROKEN! but should work once this is updated ro final sshd-core version
+        //fixme!
+    }
+
+    //logs
+    @Test
+    //scp -r tester@localhost:nvra/logs /abs/path/
+    //where  tester@localhost:nvra/logs  contans everal logs of given arch
+    public void scpRecursciveMultipleLogsFrom1() throws IOException, InterruptedException {
+        {
+            String log = LOGS[0];
+            NvraLogsPathsHelper log1 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", "logFile1");
+            NvraLogsPathsHelper log2 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", "logFile2");
+            NvraLogsPathsHelper log3 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "X1XtrX4X", "logFile3");
+            NvraLogsPathsHelper log4 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "Y1YtrY4Y", "logFile3");
+            log1.createRemote();
+            log2.createRemote();
+            log3.createRemote();
+            log4.createRemote();
+            int r1 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log1.getName() + "/" + log);
+            Assert.assertTrue(r1 == 0);
+            int r2 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log3.getName() + "/" + log);
+            Assert.assertTrue(r2 == 0);
+            int r3 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log4.getName() + "/" + log);
+            Assert.assertTrue(r3 == 0);
+            //scp honors the directories
+            checkFileExists(new File(new File(log1.getLocalFile().getParent(), log1.getArch()), log1.getLocalName()));
+            checkFileExists(new File(new File(log2.getLocalFile().getParent(), log2.getArch()), log2.getLocalName()));
+            checkFileExists(new File(new File(log3.getLocalFile().getParent(), log3.getArch()), log3.getLocalName()));
+            checkFileExists(new File(new File(log4.getLocalFile().getParent(), log4.getArch()), log4.getLocalName()));
+        }
+    }
+
+    @Test
+    //scp -r tester@localhost:nvra/data/logs /abs/path/
+    //where  tester@localhost:nvra/datalogs  contans everal logs of given arch
+    public void scpRecursciveMultipleLogsFrom2() throws IOException, InterruptedException {
+        {
+            String log = LOGS[1];
+            NvraLogsPathsHelper log1 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", "logFile1");
+            NvraLogsPathsHelper log2 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", "logFile2");
+            NvraLogsPathsHelper log3 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "X1XtrX4X", "logFile3");
+            NvraLogsPathsHelper log4 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "1tr4", trasnformToLogId(log) + "Y1YtrY4Y", "logFile3");
+            log1.createRemote();
+            log2.createRemote();
+            log3.createRemote();
+            log4.createRemote();
+            int r1 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log1.getName() + "/" + log);
+            Assert.assertFalse(r1 == 0);
+            int r2 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log3.getName() + "/" + log);
+            Assert.assertFalse(r2 == 0);
+            int r3 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log4.getName() + "/" + log);
+            Assert.assertFalse(r3 == 0);
+            //for some reason
+            //logs works (see scpRecursciveMultipleLogsFrom1) but data/logs not
+            //fixme!
+            //once fixed, those tests should be loope din same way as oter logs tests
+        }
+    }
+    //custom/path
+    //not bothering withthem
+    //
     //multiple NVRA-like files into single NVRA
     //curently not supported
 }

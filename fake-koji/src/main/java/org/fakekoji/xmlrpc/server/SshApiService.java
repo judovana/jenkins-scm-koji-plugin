@@ -157,7 +157,21 @@ import org.apache.sshd.server.session.ServerSession;
  * </ul>
  * Mixed conntent is not allowe (eg data+logs together). Also custom paths are
  * not supported in recursive upload
- *
+ * <p>
+ * Scp recursive download si now a bit broken:
+ * <ul>
+ * <li>`scp -r user@host:nvra dir` will scp the nvra tarball, ignoring any
+ * -r</li>
+ * <li>multiple tarballs for one nvra are unlikely to be supported</li>
+ * <li>`scp -r user@host:nvra/logs dir` will correctly scp all logs for given
+ * nvra. Directories are honored in `dir`</li>
+ * <li>`scp -r user@host:nvra/data/logs dir` is currently broken. Should be
+ * fixed</li>
+ * <li>`scp -r user@host:nvra/data dir` is currently broken. Should be fixed.
+ * SHoudl gave you all data for given NVR and all logs of all A for given
+ * NVR(A)</li>
+ * </ul>
+ * </p>
  *
  * @author jvanek
  */
