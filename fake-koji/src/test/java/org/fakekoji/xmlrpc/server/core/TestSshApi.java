@@ -1625,6 +1625,63 @@ public class TestSshApi {
     /*
      logs
      */
+    @Test
+    //scp -r /abs/path/file tester@localhost:nvra/data
+    public void scpDirWithLogFileToNvraLog() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr1", "logFile1");
+            nvraLogsFile.createLocal();
+            int r1 = scpTo(RECURSIVE, "", null, nvraLogsFile.getLocalFile().getParent());
+            Assert.assertFalse(r1 == 0);
+            int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/"+log, null, nvraLogsFile.getLocalFile().getParent());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    @Test
+    //scp -r /abs/path/data/file tester@localhost:{,nvra}
+    public void scpLogDirWithLogFileToNvra() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr2", "logFile2");
+            nvraLogsFile.createLocal();
+            File subdir = new File(sources, "logs");
+            File subfile = new File(subdir, nvraLogsFile.getLocalName());
+            subdir.mkdir();
+            nvraLogsFile.getLocalFile().renameTo(subfile);
+            int r1 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/", null, subdir.getAbsolutePath());
+            //data in path are ignored, and so the datafile ends as NVRA instead of DATA:(
+            Assert.assertTrue(r1 == 0);
+            checkFileNotExists(nvraLogsFile.getRemoteFile());
+            int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/"+log+"/", null, subdir.getAbsolutePath());
+            //this oone uploads correctly
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile.getRemoteFile());
+        }
+    }
+
+    @Test
+    //scp -r /abs/path/data/file tester@localhost:{,nvra}
+    public void scpMultipleLogFilesInMultipleDirsToNvra() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            NvraLogsPathsHelper nvraLogsFile1 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr3", "logFile3");
+            NvraLogsPathsHelper nvraLogsFile2 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr3", "logFile4");
+            nvraLogsFile1.createLocal();
+            nvraLogsFile2.createLocal();
+            File subdir = new File(sources, "data"); //being confusive?-)
+            File subfile = new File(subdir, nvraLogsFile1.getLocalName());
+            subdir.mkdir();
+            nvraLogsFile1.getLocalFile().renameTo(subfile);
+            int r2 = scpTo(RECURSIVE, nvraLogsFile1.getName() + "/"+log+"/", null, sources.getAbsolutePath());
+            //this oone uploads correctly
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(nvraLogsFile1.getRemoteFile());
+            checkFileExists(nvraLogsFile2.getRemoteFile());
+        }
+    }
     // scp  -r tester@localhost:nvra/data .
     // scp  -r tester@localhost:nvra/data/ /some/path/
     // scp  -r tester@localhost:nvra/data .
