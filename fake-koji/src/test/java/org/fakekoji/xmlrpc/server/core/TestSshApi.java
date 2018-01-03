@@ -1429,10 +1429,13 @@ public class TestSshApi {
 
     /*
      -r uploads
-        -r uploads should be provided  on its own
+     -r uploads should be provided  on its own
+     */
+ /*
+     binaries
      */
     @Test
-    //scp /abs/path/nvra tester@localhost:
+    //scp -r /abs/path/(nvra1) tester@localhost:
     public void scpNvraFromDir() throws IOException, InterruptedException {
         title(2);
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("dr1t1");
@@ -1447,10 +1450,10 @@ public class TestSshApi {
     }
 
     @Test
-    //scp /abs/path/nvra1 tester@localhost:nvra1
+    //scp  -r /abs/path/ (nvra1) tester@localhost:nvra1
     public void scpNvraFromDirToSameNvra() throws IOException, InterruptedException {
         title(2);
-        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr1t1");
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr1t2");
         nvra1.createLocal();
         int r = scpTo(RECURSIVE, nvra1.getName(), null, nvra1.getLocalFile().getParent());
         Assert.assertTrue(r == 0);
@@ -1458,11 +1461,11 @@ public class TestSshApi {
     }
 
     @Test
-    //scp /abs/path/nvra1 tester@localhost:nvra2
+    //scp -r /abs/path/(nvra1)(nvra11) tester@localhost:nvra2
     public void scpNvraFromDirToAnotherNvra() throws IOException, InterruptedException {
         title(2);
-        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr1t1");
-        NvraTarballPathsHelper nvra11 = new NvraTarballPathsHelper("dr11t11");
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr1t3");
+        NvraTarballPathsHelper nvra11 = new NvraTarballPathsHelper("dr11t33");
         NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("dr2t2");
         nvra1.createLocal();
         nvra11.createLocal();
@@ -1476,6 +1479,85 @@ public class TestSshApi {
         //however, to allow them is advised, to allow rpm-like "subpakcages"
     }
 
+    @Test
+    //scp -r /abs/path/(nvra1,nvra2) tester@localhost:
+    public void scpMoreNvraFromDir() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr4t1");
+        NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("dr4t2");
+        nvra1.createLocal();
+        nvra2.createLocal();
+        int r1 = scpTo(RECURSIVE, "", null, sources.getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        checkFileExists(nvra1.getRemoteFile());
+        checkFileExists(nvra2.getRemoteFile());
+    }
+
+    /*
+     binaries with subdirs
+     */
+    @Test
+    //scp -r /abs/path/(subath/nvra1) tester@localhost:
+    public void scpNvraFromDirWithSubdir() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("dr3t1");
+        nvra.createLocal();
+        File subdir = new File(sources, "subdir");
+        File subdirFile = new File(subdir, nvra.getName());
+        subdir.mkdir();
+        nvra.getLocalFile().renameTo(subdirFile);
+        int r2 = scpTo(RECURSIVE, "", null, sources.getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(nvra.getRemoteFile());
+    }
+
+    @Test
+    //scp -r /abs/path/(nvra2likePath/nvra1) tester@localhost:nvra3
+    public void scpNvraFromDirWithNvraLIkeSubdirToNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr3t3");
+        NvraTarballPathsHelper nvra11 = new NvraTarballPathsHelper("dr33t33");
+        NvraTarballPathsHelper nvra2 = new NvraTarballPathsHelper("dr3t2");
+        nvra1.createLocal();
+        File subdir = new File(sources, nvra11.getName());
+        File subdirFile = new File(subdir, nvra1.getName());
+        subdir.mkdir();
+        nvra1.getLocalFile().renameTo(subdirFile);
+        int r2 = scpTo(RECURSIVE, nvra2.getName(), null, sources.getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        //not surprisingly, the target name is used
+        checkFileExists(nvra2.getRemoteFile());
+        checkFileNotExists(nvra11.getRemoteFile());
+        checkFileNotExists(nvra1.getRemoteFile());
+    }
+
+    @Test
+    //scp -r /abs/path/(nvra2likePath/nvra1) tester@localhost:nvra3
+    public void scpNvraFromDirWithNvraLIkeSubdir() throws IOException, InterruptedException {
+        title(2);
+        NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr3t4");
+        NvraTarballPathsHelper nvra11 = new NvraTarballPathsHelper("dr33t44");
+        nvra1.createLocal();
+        File subdir = new File(sources, nvra11.getName());
+        File subdirFile = new File(subdir, nvra1.getName());
+        subdir.mkdir();
+        nvra1.getLocalFile().renameTo(subdirFile);
+        int r2 = scpTo(RECURSIVE, "", null, sources.getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        //correctly, the name of file, not dir s used
+        checkFileExists(nvra1.getRemoteFile());
+        checkFileNotExists(nvra11.getRemoteFile());
+    }
+
+    /*
+     data
+     */
+ /*
+     logs
+     */
+ /*
+     custom paths
+     */
     // scp  -r tester@localhost:nvra/data .
     // scp  -r tester@localhost:nvra/data/ /some/path/
     // scp  -r tester@localhost:nvra/data .
