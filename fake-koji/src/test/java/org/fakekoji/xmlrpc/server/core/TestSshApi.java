@@ -1532,7 +1532,7 @@ public class TestSshApi {
     }
 
     @Test
-    //scp -r /abs/path/(nvra2likePath/nvra1) tester@localhost:nvra3
+    //scp -r /abs/path/(nvra2likePath/nvra1) tester@localhost:
     public void scpNvraFromDirWithNvraLIkeSubdir() throws IOException, InterruptedException {
         title(2);
         NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr3t4");
