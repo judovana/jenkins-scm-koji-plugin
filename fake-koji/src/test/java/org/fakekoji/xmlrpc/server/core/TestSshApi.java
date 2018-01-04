@@ -46,6 +46,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * Warning - reaming check have missing check on content!
+ *
+ * @author jvanek
+ */
 public class TestSshApi {
 
     private static final String IDS_RSA = "-----BEGIN RSA PRIVATE KEY-----\n"
@@ -1947,6 +1952,19 @@ public class TestSshApi {
         checkFileExists(genericFile.getRemoteFile());
     }
 
+    @Test
+    public void scpWrongNameFromNvra() throws IOException, InterruptedException {
+        title(2);
+        NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("failedFileF1", "", "FAILED");
+        genericFile.createRemote();
+        int r1 = scpFrom(sources.getAbsolutePath(), genericFile.getRemoteTail());
+        Assert.assertFalse(r1 == 0);
+        checkFileNotExists(genericFile.getLocalFile());
+        int r2 = scpFrom(sources.getAbsolutePath(), genericFile.getRemoteTail() + "/" + genericFile.getRemoteName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(genericFile.getLocalFile());
+    }
+
     //scp of java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz
     //and of java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz
     //must get same target parent od 
@@ -2117,6 +2135,58 @@ public class TestSshApi {
         Assert.assertTrue(r2 == 0);
         checkFileExists(srcLogFile);
         checkFileExists(x64LogFile);
+    }
+
+    @Test
+    public void testSingleStaticGotMappedToUsptramFromLog() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172." + trasnformToLogId(log) + ".b00/44.upstream/data/logs");
+            File x64Dir = new File(sharedTopDir, "x86_64");
+            File srcDir = new File(sharedTopDir, "src");
+            String x64Nvra = "java-1.8.0-openjdk-jdk8u172." + trasnformToLogId(log) + ".b00-44.static.x86_64.tarxz";
+            String srcNvra = "java-1.8.0-openjdk-jdk8u172." + trasnformToLogId(log) + ".b00-44.upstream.src.tarxz";
+            srcDir.mkdirs();
+            x64Dir.mkdirs();
+            File x64LogFile = new File(x64Dir, "log64");
+            File srcLogFile = new File(srcDir, "logSrc");
+            File x64LogFileLocal = new File(sources, x64LogFile.getName());
+            File srcLogFileLocal = new File(sources, srcLogFile.getName());
+            createFile(x64LogFile, x64Nvra);
+            checkFileExists(x64LogFile);
+            createFile(srcLogFile, srcNvra);
+            checkFileExists(srcLogFile);
+            int r1 = scpFrom(sources.getAbsolutePath(), x64Nvra + "/" + log + "/" + x64LogFile.getName());
+            Assert.assertTrue(r1 == 0);
+            int r2 = scpFrom(sources.getAbsolutePath(), srcNvra + "/" + log + "/" + srcLogFile.getName());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(srcLogFileLocal);
+            checkFileExists(x64LogFileLocal);
+        }
+
+    }
+
+    @Test
+    public void testSingleStaticGotMappedToUsptramFromData() throws IOException, InterruptedException {
+        title(2);
+        File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/data/");
+        String x64Nvra = "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz";
+        String srcNvra = "java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz";
+        File x64LogFile = new File(sharedTopDir, "log64");
+        File srcLogFile = new File(sharedTopDir, "logSrc");
+        File x64LogFileLocal = new File(sources, x64LogFile.getName());
+        File srcLogFileLocal = new File(sources, srcLogFile.getName());
+        sharedTopDir.mkdirs();
+        createFile(x64LogFile, x64Nvra);
+        checkFileExists(x64LogFile);
+        createFile(srcLogFile, srcNvra);
+        checkFileExists(srcLogFile);
+        int r1 = scpFrom(sources.getAbsolutePath(), srcNvra + "/data/" + srcLogFile.getName());
+        Assert.assertTrue(r1 == 0);
+        int r2 = scpFrom(sources.getAbsolutePath(), x64Nvra + "/data/" + x64LogFile.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(srcLogFileLocal);
+        checkFileExists(x64LogFileLocal);
     }
 
 }
