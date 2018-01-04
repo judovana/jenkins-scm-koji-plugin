@@ -1842,6 +1842,7 @@ public class TestSshApi {
     //scp -r tester@localhost:nvra/data /abs/path/
     //where  tester@localhost:nvra/data  can contain really a lot!
     public void scpRecursciveMultipleDataFrom() throws IOException, InterruptedException {
+        title(2);
         NvraDataPathsHelper data1 = new NvraDataPathsHelper("data1tr3", "dataFile1");
         NvraDataPathsHelper data2 = new NvraDataPathsHelper("data1tr3", "dataFile2");
         NvraDataPathsHelper data3 = new NvraDataPathsHelper("data1tr3", "data1tr3", "dataX1XtrX3X", "dataFile3");
@@ -1868,6 +1869,7 @@ public class TestSshApi {
     //scp -r tester@localhost:nvra/logs /abs/path/
     //where  tester@localhost:nvra/logs  contans everal logs of given arch
     public void scpRecursciveMultipleLogsFrom1() throws IOException, InterruptedException {
+        title(2);
         {
             String log = LOGS[0];
             NvraLogsPathsHelper log1 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", "logFile1");
@@ -1896,6 +1898,7 @@ public class TestSshApi {
     //scp -r tester@localhost:nvra/data/logs /abs/path/
     //where  tester@localhost:nvra/datalogs  contans everal logs of given arch
     public void scpRecursciveMultipleLogsFrom2() throws IOException, InterruptedException {
+        title(2);
         {
             String log = LOGS[1];
             NvraLogsPathsHelper log1 = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr4", "logFile1");
@@ -1924,10 +1927,16 @@ public class TestSshApi {
     //multiple NVRA-like files into single NVRA
     //curently not supported
 
-    /*
-    Special case for upload of NVRA
+    /**
+     * *************************************************************************
+     * ****************Special cases for upload of NVRA***********************
+     * *************************************************************************
      */
-     // scp  FAILED tester@localhost:nvra/FAILED
+    /*
+    uplaod of failed
+     */
+    //this works because of renaming and  custom/paths implementation
+    // scp  FAILED tester@localhost:nvra/FAILED
     @Test
     public void scpWrongNameToNvra() throws IOException, InterruptedException {
         title(2);
@@ -1937,4 +1946,177 @@ public class TestSshApi {
         Assert.assertTrue(r2 == 0);
         checkFileExists(genericFile.getRemoteFile());
     }
+
+    //scp of java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz
+    //and of java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz
+    //must get same target parent od 
+    //java-1.8.0-openjdk/jdk8u172.b00/44.upstream/
+    //with different on arch only
+    //java-1.8.0-openjdk/jdk8u172.b00/44.upstream/x86_64/
+    //java-1.8.0-openjdk/jdk8u172.b00/44.upstream/src/
+    //this behavior is hardcoded and shoudl be cursed
+    @Test
+    public void testSingleStaticGotMappedToUsptramTo() throws IOException, InterruptedException {
+        title(2);
+        File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
+        File x64Dir = new File(sharedTopDir, "x86_64");
+        File srcDir = new File(sharedTopDir, "src");
+        File x64File = new File(x64Dir, "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz");
+        File srcFile = new File(srcDir, "java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz");
+        File x64FileLocal = new File(sources, x64File.getName());
+        File srcFileLocal = new File(sources, srcFile.getName());
+        createFile(x64FileLocal, x64FileLocal.getName());
+        checkFileExists(x64FileLocal);
+        createFile(srcFileLocal, srcFileLocal.getName());
+        checkFileExists(srcFileLocal);
+        int r1 = scpTo("", srcFileLocal.getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        int r2 = scpTo("", x64FileLocal.getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(srcFile);
+        checkFileExists(x64File);
+
+    }
+
+    @Test
+    public void testSingleStaticGotMappedToUsptramFrom() throws IOException, InterruptedException {
+        title(2);
+        File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
+        File x64Dir = new File(sharedTopDir, "x86_64");
+        File srcDir = new File(sharedTopDir, "src");
+        File x64File = new File(x64Dir, "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz");
+        File srcFile = new File(srcDir, "java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz");
+        File x64FileLocal = new File(sources, x64File.getName());
+        File srcFileLocal = new File(sources, srcFile.getName());
+        x64Dir.mkdirs();
+        createFile(x64File, x64File.getName());
+        checkFileExists(x64File);
+        srcDir.mkdirs();
+        createFile(srcFile, srcFile.getName());
+        checkFileExists(srcFile);
+        int r1 = scpFrom(sources.getAbsolutePath(), srcFile.getName());
+        Assert.assertTrue(r1 == 0);
+        int r2 = scpFrom(sources.getAbsolutePath(), x64File.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(srcFileLocal);
+        checkFileExists(x64FileLocal);
+
+    }
+
+    @Test
+    public void testMultipleStaticGotMappedToUsptramTo() throws IOException, InterruptedException {
+        title(2);
+        File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
+        File x64Dir = new File(sharedTopDir, "x86_64");
+        File srcDir = new File(sharedTopDir, "src");
+        File x64File = new File(x64Dir, "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz");
+        File srcFile = new File(srcDir, "java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz");
+        File x64FileLocal = new File(sources, x64File.getName());
+        File srcFileLocal = new File(sources, srcFile.getName());
+        createFile(x64FileLocal, x64FileLocal.getName());
+        checkFileExists(x64FileLocal);
+        createFile(srcFileLocal, srcFileLocal.getName());
+        checkFileExists(srcFileLocal);
+        int r1 = scpTo("", srcFileLocal.getAbsolutePath(), x64FileLocal.getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        checkFileExists(srcFile);
+        checkFileExists(x64File);
+
+    }
+
+    @Test
+    public void testMultipleStaticGotMappedToUsptramFrom2() throws IOException, InterruptedException {
+        title(2);
+        File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
+        File x64Dir = new File(sharedTopDir, "x86_64");
+        File srcDir = new File(sharedTopDir, "src");
+        File x64File = new File(x64Dir, "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz");
+        File srcFile = new File(srcDir, "java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz");
+        File x64FileLocal = new File(sources, x64File.getName());
+        File srcFileLocal = new File(sources, srcFile.getName());
+        x64Dir.mkdirs();
+        createFile(x64File, x64File.getName());
+        checkFileExists(x64File);
+        srcDir.mkdirs();
+        createFile(srcFile, srcFile.getName());
+        checkFileExists(srcFile);
+        int r2 = scpFrom(sources.getAbsolutePath(), srcFile.getName(), x64File.getName());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(srcFileLocal);
+        checkFileExists(x64FileLocal);
+
+    }
+
+    @Test
+    public void testSingleStaticGotMappedToUsptramToRenamed() throws IOException, InterruptedException {
+        title(2);
+        File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
+        File x64Dir = new File(sharedTopDir, "x86_64");
+        File srcDir = new File(sharedTopDir, "src");
+        File x64File = new File(x64Dir, "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz");
+        File srcFile = new File(srcDir, "java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz");
+        File x64FileLocal = new File(sources, x64File.getName());
+        File srcFileLocal = new File(sources, srcFile.getName());
+        createFile(x64FileLocal, x64FileLocal.getName());
+        checkFileExists(x64FileLocal);
+        createFile(srcFileLocal, srcFileLocal.getName());
+        checkFileExists(srcFileLocal);
+        int r1 = scpTo(x64File.getName(), srcFileLocal.getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        checkFileExists(x64File);
+        int r2 = scpTo(srcFile.getName(), x64FileLocal.getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(srcFile);
+
+    }
+
+    @Test
+    public void testSingleStaticGotMappedToUsptramToLog() throws IOException, InterruptedException {
+        title(2);
+        for (String log : LOGS) {
+            File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172." + trasnformToLogId(log) + ".b00/44.upstream/data/logs");
+            File x64Dir = new File(sharedTopDir, "x86_64");
+            File srcDir = new File(sharedTopDir, "src");
+            String x64Nvra = "java-1.8.0-openjdk-jdk8u172." + trasnformToLogId(log) + ".b00-44.static.x86_64.tarxz";
+            String srcNvra = "java-1.8.0-openjdk-jdk8u172." + trasnformToLogId(log) + ".b00-44.upstream.src.tarxz";
+            File x64LogFile = new File(x64Dir, "log64");
+            File srcLogFile = new File(srcDir, "logSrc");
+            File x64LogFileLocal = new File(sources, x64LogFile.getName());
+            File srcLogFileLocal = new File(sources, srcLogFile.getName());
+            createFile(x64LogFileLocal, x64Nvra);
+            checkFileExists(x64LogFileLocal);
+            createFile(srcLogFileLocal, srcNvra);
+            checkFileExists(srcLogFileLocal);
+            int r1 = scpTo(srcNvra + "/" + log, srcLogFileLocal.getAbsolutePath());
+            Assert.assertTrue(r1 == 0);
+            int r2 = scpTo(x64Nvra + "/" + log, x64LogFileLocal.getAbsolutePath());
+            Assert.assertTrue(r2 == 0);
+            checkFileExists(srcLogFile);
+            checkFileExists(x64LogFile);
+        }
+
+    }
+
+    @Test
+    public void testSingleStaticGotMappedToUsptramToData() throws IOException, InterruptedException {
+        title(2);
+        File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/data/");
+        String x64Nvra = "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz";
+        String srcNvra = "java-1.8.0-openjdk-jdk8u172.b00-44.upstream.src.tarxz";
+        File x64LogFile = new File(sharedTopDir, "log64");
+        File srcLogFile = new File(sharedTopDir, "logSrc");
+        File x64LogFileLocal = new File(sources, x64LogFile.getName());
+        File srcLogFileLocal = new File(sources, srcLogFile.getName());
+        createFile(x64LogFileLocal, x64Nvra);
+        checkFileExists(x64LogFileLocal);
+        createFile(srcLogFileLocal, srcNvra);
+        checkFileExists(srcLogFileLocal);
+        int r1 = scpTo(srcNvra + "/data", srcLogFileLocal.getAbsolutePath());
+        Assert.assertTrue(r1 == 0);
+        int r2 = scpTo(x64Nvra + "/data", x64LogFileLocal.getAbsolutePath());
+        Assert.assertTrue(r2 == 0);
+        checkFileExists(srcLogFile);
+        checkFileExists(x64LogFile);
+    }
+
 }

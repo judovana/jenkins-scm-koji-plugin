@@ -655,7 +655,7 @@ public class SshApiService {
         }
 
         public String getBasePath() {
-            return product + "/" + version + "/" + release;
+            return product + "/" + version + "/" + release.replace("static", "upstream");
         }
     }
 
