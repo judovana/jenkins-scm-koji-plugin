@@ -23,28 +23,13 @@
  */
 package org.fakekoji.xmlrpc.server;
 
-import com.sun.net.httpserver.HttpServer;
-import hudson.plugins.scm.koji.Constants;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.sshd.server.SshServer;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcHandler;
-import org.apache.xmlrpc.XmlRpcRequest;
-import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
-import org.apache.xmlrpc.server.XmlRpcNoSuchHandlerException;
-import org.apache.xmlrpc.webserver.WebServer;
 import org.fakekoji.http.PreviewFakeKoji;
-import org.fakekoji.xmlrpc.server.core.FileReturningHandler;
 
 /**
  * This class is emulating selected xml-rpc calls to koji, so you can easily let
