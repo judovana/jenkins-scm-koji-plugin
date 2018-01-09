@@ -75,7 +75,13 @@ public class PreviewFakeKoji {
     private String jenkinsUrlOverride = null;
 
     public PreviewFakeKoji(URL xmlRpcUrl, URL downloadUrl, File repos,
-            File builds, int port, String jenkinsUrlOverride) {
+            File builds, int port, String jenkinsUrlOverride) throws MalformedURLException {
+        if (xmlRpcUrl.getPort() < 0) {
+            xmlRpcUrl = setUriPort(xmlRpcUrl, JavaServer.DFAULT_RP2C_PORT);
+        }
+        if (downloadUrl.getPort() < 0) {
+            downloadUrl = setUriPort(downloadUrl, JavaServer.deductDwPort(xmlRpcUrl.getPort()));
+        }
         this.xmlRpcUrl = xmlRpcUrl;
         this.downloadUrl = downloadUrl;
         this.repos = repos;
@@ -135,13 +141,6 @@ public class PreviewFakeKoji {
         }
         if (!repos.exists()) {
             throw new RuntimeException(repos.getAbsolutePath() + " does not exists.");
-        }
-
-        if (xmlrpcurl.getPort() < 0) {
-            xmlrpcurl = setUriPort(xmlrpcurl, JavaServer.DFAULT_RP2C_PORT);
-        }
-        if (download.getPort() < 0) {
-            download = setUriPort(download, JavaServer.deductDwPort(xmlrpcurl.getPort()));
         }
 
         int PORT = 80;

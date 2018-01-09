@@ -504,7 +504,6 @@ public class KojiListBuildsTest {
         }
     }
 
-//FIXME enable those three tests by launching solid test server with some fake data
     @Test
     public void testListMatchingBuildsCustomF() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora(), new NotProcessedNvrPredicate(new ArrayList<>()));
@@ -518,7 +517,6 @@ public class KojiListBuildsTest {
     }
 
     @Test
-    //this testis currently  very broken. The project is openjdk8-win instead of expected java-1.8.0-openjdk. Needs serious investigations
     public void testListMatchingBuildsCustomWindows() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomWindows(), new NotProcessedNvrPredicate(new ArrayList<>()));
         testListMatchingBuildsCustom(worker);
