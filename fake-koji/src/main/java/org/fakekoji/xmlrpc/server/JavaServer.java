@@ -79,18 +79,18 @@ public class JavaServer {
             thisMachine = InetAddress.getLocalHost().getHostName();
             xmlRpcUrl = new URL("http://" + thisMachine + "/RPC2/");
             downloadUrl = new URL("http://" + thisMachine + "/");
+
+            previewFakeKojiServer = new PreviewFakeKoji(
+                    xmlRpcUrl,
+                    downloadUrl,
+                    localReposRoot,
+                    dbFileRoot,
+                    previewPort,
+                    "http://hydra.brq.redhat.com:8080/");
+
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
-
-        previewFakeKojiServer = new PreviewFakeKoji(
-                xmlRpcUrl,
-                downloadUrl,
-                localReposRoot,
-                dbFileRoot,
-                previewPort,
-                "http://hydra.brq.redhat.com:8080/");
-
         sshApiServer = new SshApiService(dbFileRoot, realUPort);
     }
 
