@@ -33,77 +33,82 @@ import java.io.File;
 import java.io.FileInputStream;
 import org.fakekoji.xmlrpc.server.JavaServer;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
+import org.junit.AfterClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
 import static org.junit.Assert.assertEquals;
-
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 
 public class KojiJenkinsTest {
 
     @Rule
     public JenkinsRule j = new JenkinsRule();
-    @Rule
-    public TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @ClassRule
+    public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+    public static JavaServer javaServer = null;
 
-    public void runTest(KojiScmConfig config, String shellScript, boolean successExpected) throws Exception {
-        /* prepare directory structure for fake-koji with some dummy builds */
+    @BeforeClass
+    public static void beforeClass() throws Exception {
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
-        File localBuilds = new File(tmpDir, "local-builds");
-        File upstreamRepos = new File(tmpDir, "upstream-repos");
-        KojiListBuildsTest.generateFakeKojiData(localBuilds, upstreamRepos);
-        /* create fake koji server */
-        JavaServer javaServer = new JavaServer(localBuilds, upstreamRepos,
-                JavaServer.DFAULT_RP2C_PORT, JavaServer.DFAULT_DWNLD_PORT,
-                JavaServer.DFAULT_SSHUPLOAD_PORT, 8080);
-        try {
-            /* start fake-koji server */
-            javaServer.start();
-            /* create new jenkins free style project */
-            FreeStyleProject project = j.createFreeStyleProject();
+        /* create fake koji server (with data) */
+        javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
+        /* start fake-koji server */
+        javaServer.start();
+    }
 
-            /* parameters for KojiSCM plugin */
-            String kojiTopUrl = config.getKojiTopUrl();
-            String kojiDownloadUrl = config.getKojiDownloadUrl();
-            String packageName = config.getPackageName();
-            String arch = config.getArch();
-            String tag = config.getTag();
-            String excludeNvr = config.getExcludeNvr();
-            String downloadDir = config.getDownloadDir();
-            boolean cleanDownloadDir = config.isCleanDownloadDir();
-            boolean dirPerNvr = config.isDirPerNvr();
-            int maxPreviousBuilds = config.getMaxPreviousBuilds();
-
-            /* create KojiSCM plugin instance */
-            KojiSCM scm = new KojiSCM(kojiTopUrl, kojiDownloadUrl,
-                    packageName, arch, tag, excludeNvr,
-                    downloadDir, cleanDownloadDir, dirPerNvr,
-                    maxPreviousBuilds);
-            /* set new KojiSCM plugin instance as scm for project */
-            project.setScm(scm);
-            /* set shell string executed by the project */
-            project.getBuildersList().add(new Shell(shellScript));
-            /* schedule build and get it (wait for it to finish) */
-            FreeStyleBuild build = project.scheduleBuild2(0).get();
-            /* Print log (of the build) to stdout */
-            try (FileInputStream fis = new FileInputStream(build.getLogFile())) {
-                for (;;) {
-                    int readByte = fis.read();
-                    if (readByte < 0) {
-                        break;
-                    }
-                    System.out.write(readByte);
-                }
-            }
-            /* get result of the build and check it it meets expectations */
-            Result result = build.getResult();
-            assertEquals(successExpected, result == Result.SUCCESS);
-        } finally {
-            /* always stop fake-koji */
+    @AfterClass
+    public static void afterClass() {
+        /* stop fake-koji */
+        if (javaServer != null) {
             javaServer.stop();
         }
+    }
+
+    public void runTest(KojiScmConfig config, String shellScript, boolean successExpected) throws Exception {
+        /* create new jenkins free style project */
+        FreeStyleProject project = j.createFreeStyleProject();
+
+        /* parameters for KojiSCM plugin */
+        String kojiTopUrl = config.getKojiTopUrl();
+        String kojiDownloadUrl = config.getKojiDownloadUrl();
+        String packageName = config.getPackageName();
+        String arch = config.getArch();
+        String tag = config.getTag();
+        String excludeNvr = config.getExcludeNvr();
+        String downloadDir = config.getDownloadDir();
+        boolean cleanDownloadDir = config.isCleanDownloadDir();
+        boolean dirPerNvr = config.isDirPerNvr();
+        int maxPreviousBuilds = config.getMaxPreviousBuilds();
+
+        /* create KojiSCM plugin instance */
+        KojiSCM scm = new KojiSCM(kojiTopUrl, kojiDownloadUrl,
+                packageName, arch, tag, excludeNvr,
+                downloadDir, cleanDownloadDir, dirPerNvr,
+                maxPreviousBuilds);
+        /* set new KojiSCM plugin instance as scm for project */
+        project.setScm(scm);
+        /* set shell string executed by the project */
+        project.getBuildersList().add(new Shell(shellScript));
+        /* schedule build and get it (wait for it to finish) */
+        FreeStyleBuild build = project.scheduleBuild2(0).get();
+        /* Print log (of the build) to stdout */
+        try (FileInputStream fis = new FileInputStream(build.getLogFile())) {
+            for (;;) {
+                int readByte = fis.read();
+                if (readByte < 0) {
+                    break;
+                }
+                System.out.write(readByte);
+            }
+        }
+        /* get result of the build and check it it meets expectations */
+        Result result = build.getResult();
+        assertEquals(successExpected, result == Result.SUCCESS);
     }
 
     @Test

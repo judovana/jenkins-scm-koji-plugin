@@ -9,18 +9,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashSet;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.fakekoji.xmlrpc.server.JavaServer;
-import org.junit.AfterClass;
+import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
@@ -364,135 +360,20 @@ public class KojiListBuildsTest {
                 }, f1
         );
 
-        /* see: https://stackoverflow.com/questions/4596447/check-if-file-exists-on-remote-server-using-its-url */
         HttpURLConnection connection = null;
         try {
-            URL url = new URL("https://brewweb.engineering.redhat.com/brew/");
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD");
-            onRhNet = (connection.getResponseCode() == HttpURLConnection.HTTP_OK);
+            int response = FakeKojiTestUtil.doHttpRequest("https://brewweb.engineering.redhat.com/brew/", "HEAD");
+            onRhNet = (response == HttpURLConnection.HTTP_OK);
         } catch (Exception e) {
             onRhNet = false;
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
         }
-    }
-
-    public static void createDir(File dir) {
-        if (!dir.exists()) {
-            dir.mkdir();
-        }
-    }
-
-    public static void createFile(File file, String content) throws IOException {
-        if (!file.exists()) {
-            file.createNewFile();
-            try (PrintStream ps = new PrintStream(new FileOutputStream(file))) {
-                ps.println(content);
-            }
-        }
-    }
-
-    /* Because fake-koji tests if file is > 5 bytes */
-    public static void createNonEmptyFile(File file) throws IOException {
-        createFile(file, "Ententýky dva špalíky, čert vyletěl z elektriky!\n");
-    }
-
-    public static void generateBuilds(File root, String n, String v, String r, String a, String... builds) throws Exception {
-        createDir(root);
-        File nDir = new File(root, n);
-        createDir(nDir);
-        File vDir = new File(nDir, v);
-        createDir(vDir);
-        File rDir = new File(vDir, r);
-        createDir(rDir);
-        File aDir = new File(rDir, a);
-        createDir(aDir);
-        for (String build : builds) {
-            File buildFile = new File(aDir, build);
-            createNonEmptyFile(buildFile);
-        }
-        File dataDir = new File(rDir, "data");
-        createDir(dataDir);
-        File logsDir = new File(dataDir, "logs");
-        createDir(logsDir);
-        File logsADir = new File(logsDir, a);
-        createDir(logsADir);
-
-        File buildLogFile = new File(logsADir, "build.log");
-        if (!buildLogFile.exists()) {
-            createNonEmptyFile(buildLogFile);
-        }
-    }
-
-    public static void generateUpstreamRepo(File root, String repoName) throws Exception {
-        if (!root.exists()) {
-            root.mkdir();
-        }
-        File repoDir = new File(root, repoName);
-        if (!repoDir.exists()) {
-            repoDir.mkdir();
-        }
-    }
-
-    public static void generateFakeKojiData(File localBuilds, File upstreamRepos) throws Exception {
-        String n = "java-1.8.0-openjdk";
-        String v = "jdk8u121.b13";
-        String rbase = "52.dev";
-        String r1 = rbase + ".upstream";
-        String r2 = rbase + ".upstream.fastdebug";
-        String a1 = "src";
-        String a2 = "x86_64";
-        String a3 = "win";
-        String a4 = "i686";
-
-        String suffix = ".tarxz";
-
-        String buildCommon = n + "-" + v + "-" + rbase;
-        String build11 = buildCommon + ".upstream." + a1 + suffix;
-        String build12 = buildCommon + ".static." + a2 + suffix;
-        String build13 = buildCommon + ".static." + a3 + suffix;
-        String build14 = buildCommon + ".static." + a4 + suffix;
-
-        String build21 = buildCommon + ".upstream.fastdebug." + a1 + suffix;
-        String build22 = buildCommon + ".static.fastdebug." + a2 + suffix;
-        String build23 = buildCommon + ".static.fastdebug." + a3 + suffix;
-        String build24 = buildCommon + ".static.fastdebug." + a4 + suffix;
-
-        /* upstream builds */
-        generateBuilds(localBuilds, n, v, r1, a1, build11);
-        generateBuilds(localBuilds, n, v, r1, a2, build12);
-        generateBuilds(localBuilds, n, v, r1, a3, build13);
-        generateBuilds(localBuilds, n, v, r1, a4, build14);
-
-        /* fastdebug builds */
-        generateBuilds(localBuilds, n, v, r2, a1, build21);
-        generateBuilds(localBuilds, n, v, r2, a2, build22);
-        generateBuilds(localBuilds, n, v, r2, a3, build23);
-        generateBuilds(localBuilds, n, v, r2, a4, build24);
-
-        /* create link for windows builds */
-        File nFile = new File(localBuilds, n);
-        File winLinkFile = new File(localBuilds, "openjdk8-win");
-        Files.createSymbolicLink(winLinkFile.toPath(), localBuilds.toPath().relativize(nFile.toPath()));
-
-        File expectedArches = new File(localBuilds, "java-1.8.0-openjdk-arches-expected");
-        createFile(expectedArches, a2 + " " + a3 + " " + a4 + "\n");
-
-        generateUpstreamRepo(upstreamRepos, "java-1.8.0-openjdk-dev");
     }
 
     public void testListMatchingBuildsCustom(KojiListBuilds worker) throws Exception {
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
-        File localBuilds = new File(tmpDir, "local-builds");
-        File upstreamRepos = new File(tmpDir, "upstream-repos");
-        generateFakeKojiData(localBuilds, upstreamRepos);
-        JavaServer javaServer = new JavaServer(localBuilds, upstreamRepos,
-                JavaServer.DFAULT_RP2C_PORT, JavaServer.DFAULT_DWNLD_PORT,
-                JavaServer.DFAULT_SSHUPLOAD_PORT, 8080);
+        JavaServer javaServer =
+                FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
         try {
             javaServer.start();
             Build build = worker.invoke(temporaryFolder.newFolder(), null);
