@@ -9,14 +9,17 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
-import java.util.HashSet;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 import org.junit.BeforeClass;
 
 public class KojiListBuildsTest {
@@ -83,7 +86,7 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigF() {
         return new KojiScmConfig(
-                "http://koji.fedoraproject.org/kojihub",
+                "https://koji.fedoraproject.org/kojihub",
                 "https://kojipkgs.fedoraproject.org/packages/",
                 "java-1.8.0-openjdk",
                 "x86_64,src",
@@ -98,7 +101,7 @@ public class KojiListBuildsTest {
 
     KojiScmConfig createConfigMultipleValidUrls() {
         return new KojiScmConfig(
-                "https://brewhub.engineering.redhat.com/brewhub http://koji.fedoraproject.org/kojihub",
+                "https://brewhub.engineering.redhat.com/brewhub https://koji.fedoraproject.org/kojihub",
                 "http://download.eng.bos.redhat.com/brewroot/packages/ https://kojipkgs.fedoraproject.org/packages/",
                 "java-1.8.0-openjdk",
                 "x86_64,src",
@@ -283,6 +286,8 @@ public class KojiListBuildsTest {
     private static File e71;
     private static File e61;
 
+    private static boolean onRhNet;
+
     @BeforeClass
     public static void initProcessed() throws IOException {
         f1 = File.createTempFile("scm-koji", "fedora");
@@ -355,46 +360,58 @@ public class KojiListBuildsTest {
                 }, f1
         );
 
+        HttpURLConnection connection = null;
+        try {
+            int response = FakeKojiTestUtil.doHttpRequest("https://brewweb.engineering.redhat.com/brew/", "HEAD");
+            onRhNet = (response == HttpURLConnection.HTTP_OK);
+        } catch (Exception e) {
+            onRhNet = false;
+        }
     }
-//FIXME enable those three tests by launching solid test server with some fake data
-//    @Test
 
-    public void testListMatchingBuildsCustomF() throws Exception {
-        KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora(), new NotProcessedNvrPredicate(new ArrayList<>()));
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+    public void testListMatchingBuildsCustom(KojiListBuilds worker) throws Exception {
+        File tmpDir = temporaryFolder.newFolder();
+        tmpDir.mkdir();
+        JavaServer javaServer =
+                FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
+        try {
+            javaServer.start();
+            Build build = worker.invoke(temporaryFolder.newFolder(), null);
 //        KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigCustomFedora(), new NotProcessedNvrPredicate(new HashSet<>()));
 //        dwldr.downloadRPMs(new File("/tmp"), build);
-        assertNotNull(build);
+            assertNotNull(build);
+        } finally {
+            javaServer.stop();
+        }
     }
 
-//    @Test
+    @Test
+    public void testListMatchingBuildsCustomF() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora(), new NotProcessedNvrPredicate(new ArrayList<>()));
+        testListMatchingBuildsCustom(worker);
+    }
+
+    @Test
     public void testListMatchingBuildsCustomFsrcOnly() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedoraSrcOnly(), new NotProcessedNvrPredicate(new ArrayList<>()));
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        //KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigCustomFedoraSrcOnly(), new NotProcessedNvrPredicate(new HashSet<>()));
-        //dwldr.downloadRPMs(new File("/tmp"), build);
-        assertNotNull(build);
+        testListMatchingBuildsCustom(worker);
     }
 
-//      @Test
-    //this testis currently  very broken. The project is openjdk8-win instead of expected java-1.8.0-openjdk. Needs serious investigations
+    @Test
     public void testListMatchingBuildsCustomWindows() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomWindows(), new NotProcessedNvrPredicate(new ArrayList<>()));
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        //KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigCustomWindows(), new NotProcessedNvrPredicate(new HashSet<>()));
-        //dwldr.downloadRPMs(new File("/tmp"), build);
-        assertNotNull(build);
+        testListMatchingBuildsCustom(worker);
     }
 
-//          @Test
+    @Test
     public void testListMatchingBuildsCustomRhel() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomRhel7(), new NotProcessedNvrPredicate(new ArrayList<>()));
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        testListMatchingBuildsCustom(worker);
     }
 
     @Test
     public void testListMatchingBuildsMultipleValidUrls() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigMultipleValidUrls(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         //KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigMultipleValidUrls(), new NotProcessedNvrPredicate(new HashSet<>()));
@@ -411,6 +428,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR7() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR7(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -418,6 +436,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR6() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -425,6 +444,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR6_ibm6() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR6_ibm6(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -432,6 +452,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR5_ibm6() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR5_ibm6(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -439,6 +460,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR7_ibm() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR7_ibm71(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -446,6 +468,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR5_sun6() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR5_sun6(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -453,6 +476,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR6_oracle7() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR6_oracle7(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -460,6 +484,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsR7_oracle8() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigR7_oracle8(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -467,6 +492,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsWindows() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigWindows(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -474,8 +500,9 @@ public class KojiListBuildsTest {
 
     @Test
     public void testNoArchPresentBuilds() throws Exception {
-        KojiListBuilds worker = new KojiListBuilds(createConfigWithEmptyArch(),new NotProcessedNvrPredicate(new ArrayList<>()));
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(createConfigWithEmptyArch(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
- }
+}

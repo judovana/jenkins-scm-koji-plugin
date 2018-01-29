@@ -47,7 +47,7 @@ public class FakeKojiDB {
     private final List<FakeBuild> builds;
 
     FakeKojiDB(File file) {
-        System.out.println(new Date().toString() + " (re)initizing fake koji DB");
+        ServerLogger.log(new Date().toString() + " (re)initizing fake koji DB");
         mainDir = file;
         File[] projectDirs = mainDir.listFiles(new DirFilter());
         projects = new String[projectDirs.length];
@@ -115,7 +115,7 @@ public class FakeKojiDB {
             FakeBuild get = matchingBuilds.get(i);
             boolean mayBeFailed = new IsFailedBuild(get.getDir()).reCheck().getLastResult();
             if (mayBeFailed) {
-                System.out.println("Removing build (" + i + "): " + get.toString() + " from result. Contains FAILED records");
+                ServerLogger.log("Removing build (" + i + "): " + get.toString() + " from result. Contains FAILED records");
                 matchingBuilds.remove(i);
                 i--;
             }
@@ -197,52 +197,52 @@ public class FakeKojiDB {
         if (id == null) {
             return;
         }
-        System.out.println(string + " id=" + id);
+        ServerLogger.log(string + " id=" + id);
         Object[] chBuilds = getProjectBuildsByProjectIdAsMaps(id);
-        System.out.println(string + " builds#=" + chBuilds.length);
+        ServerLogger.log(string + " builds#=" + chBuilds.length);
         int bn = 0;
         for (Object chBuild : chBuilds) {
             bn++;
-            System.out.println("####### " + bn + " #######");
+            ServerLogger.log("####### " + bn + " #######");
             Map m = (Map) chBuild;
             Set keys = m.keySet();
             for (Object key : keys) {
                 Object value = m.get(key);
-                System.out.println("  " + key + ": " + value);
+                ServerLogger.log("  " + key + ": " + value);
                 if (key.equals(Constants.build_id)) {
-                    System.out.println("    tags:");
+                    ServerLogger.log("    tags:");
                     Object[] tags = getTags((Integer) value);
                     for (Object tag : tags) {
-                        System.out.println("      " + tag);
+                        ServerLogger.log("      " + tag);
                     }
-                    System.out.println("Artifacts for given build");
+                    ServerLogger.log("Artifacts for given build");
                     FakeBuild bld = getBuildById((Integer) value);
                     bld.printExpectedArchesForThisBuild();
                     List<String> arches = bld.getArches();
-                    System.out.println("  archs: " + arches.size());
+                    ServerLogger.log("  archs: " + arches.size());
                     for (String arch : arches) {
-                        System.out.println("  logs: " + arch);
+                        ServerLogger.log("  logs: " + arch);
                         //list logs
                         List<File> logs = bld.getLogs(arch);
                         logs.stream().forEach((log) -> {
-                            System.out.println(log);
+                            ServerLogger.log(log.toString());
                         });
                         //list others
-                        System.out.println("  all: " + arch);
+                        ServerLogger.log("  all: " + arch);
                         List<File> files = bld.getNonLogs(arch);
                         files.stream().forEach((f) -> {
-                            System.out.println(f);
+                            ServerLogger.log(f.toString());
                         });
                     }
                 }
                 if (key.equals(Constants.rpms)) {
-                    System.out.println("  mapped: ");
+                    ServerLogger.log("  mapped: ");
                     Object[] rpms = (Object[]) value;
                     for (Object rpm : rpms) {
                         Map mrpms = (Map) rpm;
                         Set rks = mrpms.keySet();
                         rks.stream().forEach((rk) -> {
-                            System.out.println("    " + rk + ": " + mrpms.get(rk));
+                            ServerLogger.log("    " + rk + ": " + mrpms.get(rk));
                         });
 
                     }
@@ -250,21 +250,21 @@ public class FakeKojiDB {
 
             }
         }
-        System.out.println("Artifacts for given project " + string + " " + id);
+        ServerLogger.log("Artifacts for given project " + string + " " + id);
         List<FakeBuild> blds = getProjectBuildsByProjectId(id);
         for (FakeBuild bld : blds) {
             List<String> arches = bld.getArches();
             for (String arch : arches) {
-                System.out.println("  arch: " + arch);
+                ServerLogger.log("  arch: " + arch);
                 //list logs
                 List<File> logs = bld.getLogs(arch);
                 logs.stream().forEach((log) -> {
-                    System.out.println(log);
+                    ServerLogger.log(log.toString());
                 });
                 //list others
                 List<File> files = bld.getNonLogs(arch);
                 files.stream().forEach((f) -> {
-                    System.out.println(f);
+                    ServerLogger.log(f.toString());
                 });
             }
         }

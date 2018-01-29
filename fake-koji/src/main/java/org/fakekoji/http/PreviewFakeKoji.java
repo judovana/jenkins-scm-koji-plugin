@@ -56,13 +56,59 @@ import java.util.Set;
 import org.fakekoji.xmlrpc.server.JavaServer;
 import org.fakekoji.xmlrpc.server.core.FakeBuild;
 
+/**
+ * This class implements http server, which allows to review builds in
+ * fake-koji, in human readable form
+ */
 public class PreviewFakeKoji {
 
-    private static String jenkinsUrlOverride = null;
+    private URL xmlRpcUrl;
+    private URL downloadUrl;
+    private File repos;
+    private File builds;
+    private int port;
 
-    public static void setJenkinsUrlOverride(String s) {
+    private final IndexHtmlHandler ihh;
+    private final DetailsHtmlHandler dhh;
+    private HttpServer hs;
+
+    private String jenkinsUrlOverride = null;
+
+    public PreviewFakeKoji(URL xmlRpcUrl, URL downloadUrl, File repos,
+            File builds, int port, String jenkinsUrlOverride) throws MalformedURLException {
+        if (xmlRpcUrl.getPort() < 0) {
+            xmlRpcUrl = setUriPort(xmlRpcUrl, JavaServer.DFAULT_RP2C_PORT);
+        }
+        if (downloadUrl.getPort() < 0) {
+            downloadUrl = setUriPort(downloadUrl, JavaServer.deductDwPort(xmlRpcUrl.getPort()));
+        }
+        this.xmlRpcUrl = xmlRpcUrl;
+        this.downloadUrl = downloadUrl;
+        this.repos = repos;
+        this.builds = builds;
+        this.port = port;
+        this.ihh = new IndexHtmlHandler(xmlRpcUrl, downloadUrl, Project.FilesToProjects(repos), Product.FilesToBuilds(builds), port);
+        this.dhh = new DetailsHtmlHandler(xmlRpcUrl, downloadUrl, Project.FilesToProjects(repos), Product.FilesToBuilds(builds), port);
+    }
+
+    public void start() throws IOException {
+        if (hs == null) {
+            hs = HttpServer.create(new InetSocketAddress(port), 0);
+            hs.createContext("/", ihh);
+            hs.createContext("/details.html", dhh);
+        }
+        hs.start();
+    }
+
+    public void stop() {
+        if (hs != null) {
+            hs.stop(15);
+        }
+    }
+
+    public void setJenkinsUrlOverride(String s) {
         System.out.println("Set jenkinsUrlOverwritw! from " + jenkinsUrlOverride + " to " + s);
-        PreviewFakeKoji.jenkinsUrlOverride = s;
+        jenkinsUrlOverride = s;
     }
 
     public static URL setUriPort(URL uri, int port) throws MalformedURLException {
@@ -97,13 +143,6 @@ public class PreviewFakeKoji {
             throw new RuntimeException(repos.getAbsolutePath() + " does not exists.");
         }
 
-        if (xmlrpcurl.getPort() < 0) {
-            xmlrpcurl = setUriPort(xmlrpcurl, JavaServer.DFAULT_RP2C_PORT);
-        }
-        if (download.getPort() < 0) {
-            download = setUriPort(download, JavaServer.deductDwPort(xmlrpcurl.getPort()));
-        }
-
         int PORT = 80;
         if (args.length == 5) {
             PORT = Integer.valueOf(args[4]);
@@ -118,8 +157,9 @@ public class PreviewFakeKoji {
         System.out.println("repos    : " + repos);
         System.err.println("builds   : " + builds);
         System.out.println("builds   : " + builds);
-        new FakeKojiPreviewServer(xmlrpcurl, download, PORT, repos, builds).start();
 
+        PreviewFakeKoji previewFakeKojiServer = new PreviewFakeKoji(xmlrpcurl, download, repos, builds, PORT, null);
+        previewFakeKojiServer.start();
     }
 
     private static List<File> filter(File[] candidates) {
@@ -243,27 +283,7 @@ public class PreviewFakeKoji {
 
     }
 
-    private static class FakeKojiPreviewServer {
-
-        private final int port;
-        private final IndexHtmlHandler ihh;
-        private final DetailsHtmlHandler dhh;
-
-        public FakeKojiPreviewServer(URL xmlrpcurl, URL download, int PORT, File repos, File builds) {
-            port = PORT;
-            ihh = new IndexHtmlHandler(xmlrpcurl, download, Project.FilesToProjects(repos), Product.FilesToBuilds(builds), port);
-            dhh = new DetailsHtmlHandler(xmlrpcurl, download, Project.FilesToProjects(repos), Product.FilesToBuilds(builds), port);
-        }
-
-        private void start() throws IOException {
-            HttpServer hs = HttpServer.create(new InetSocketAddress(port), 0);
-            hs.createContext("/", ihh);
-            hs.createContext("/details.html", dhh);
-            hs.start();
-        }
-    }
-
-    public static class IndexHtmlHandler implements HttpHandler {
+    public class IndexHtmlHandler implements HttpHandler {
 
         private final URL xmlrpc;
         private final URL dwnld;
@@ -287,8 +307,8 @@ public class PreviewFakeKoji {
         }
 
         private String getJenkinsUrl() {
-            if (PreviewFakeKoji.jenkinsUrlOverride != null) {
-                return PreviewFakeKoji.jenkinsUrlOverride;
+            if (jenkinsUrlOverride != null) {
+                return jenkinsUrlOverride;
             }
             return getUrl(8080);
         }
