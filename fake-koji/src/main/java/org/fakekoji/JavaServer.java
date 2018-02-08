@@ -123,7 +123,7 @@ public class JavaServer {
         boolean wasDbRoot = false;
 
         //args = new String[]{DB_SWITCH + "=/home/jvanek/Desktop", REPOS_SWITCH + "=/home/jvanek/hg", VIEW1_SWITCH+"=8888"};
-        args = new String[]{DB_SWITCH + "=/home/jvanek/Desktop", REPOS_SWITCH + "=/home/jvanek/hg", VIEW1_SWITCH+"=8888", JENKINS_HOST_NAME_SWITCH+"=hydra.brq.redhat.com"};
+        //args = new String[]{DB_SWITCH + "=/home/jvanek/Desktop", REPOS_SWITCH + "=/home/jvanek/hg", VIEW1_SWITCH+"=8888", JENKINS_HOST_NAME_SWITCH+"=hydra.brq.redhat.com"};
         if (args.length < 2) {
             throw new RuntimeException("\n"
                     + "expected two mandatory switches: " + DB_SWITCH + "=/path/to/koji/like/db and " + REPOS_SWITCH + "=/path/to/repos/with/clones\n"
