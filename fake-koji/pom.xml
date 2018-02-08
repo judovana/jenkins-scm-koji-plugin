@@ -13,7 +13,7 @@
     <name>Fake-Koji</name>
     
     <properties>
-        <fake.koji.main.class>org.fakekoji.xmlrpc.server.JavaServer</fake.koji.main.class>
+        <fake.koji.main.class>org.fakekoji.JavaServer</fake.koji.main.class>
     </properties>
   
     <dependencies>

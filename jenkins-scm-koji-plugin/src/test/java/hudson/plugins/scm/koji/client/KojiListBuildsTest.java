@@ -15,7 +15,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.JavaServer;
 import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
 
 import static org.junit.Assert.assertNotNull;

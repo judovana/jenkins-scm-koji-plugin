@@ -25,7 +25,7 @@ package org.fakekoji.xmlrpc.server.core;
 
 import java.io.File;
 import java.net.HttpURLConnection;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.JavaServer;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
 import org.junit.BeforeClass;

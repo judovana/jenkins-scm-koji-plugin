@@ -37,7 +37,7 @@ import org.apache.xmlrpc.webserver.WebServer;
 
 /**
  * This Server implements Koji XmlRpc API (It is called by jenkins koji plugin )
- * 
+ *
  * Based on code, which was originally in JavaServer class.
  */
 public class KojiXmlRpcServer {
@@ -73,6 +73,10 @@ public class KojiXmlRpcServer {
      */
     public static Integer sum(Object x, Object y) {
         return sum(((Integer) x).intValue(), ((Integer) y).intValue());
+    }
+
+    public int getPort() {
+        return port;
     }
 
     public void start() throws IOException {

@@ -46,6 +46,10 @@ public class KojiDownloadServer {
         this.port = port;
     }
 
+    public int getPort() {
+        return port;
+    }
+
     public void start() throws IOException {
         if (hs == null) {
             hs = HttpServer.create(new InetSocketAddress(port), 0);
