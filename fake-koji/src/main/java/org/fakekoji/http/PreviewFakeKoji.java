@@ -64,6 +64,7 @@ public class PreviewFakeKoji {
 
     private final IndexHtmlHandler ihh;
     private final DetailsHtmlHandler dhh;
+    private final SettingsHtmlHandler ghh;
     private HttpServer hs;
 
     private final String jenkinsUrlOverride;
@@ -73,6 +74,7 @@ public class PreviewFakeKoji {
         this.settings = settings;
         this.ihh = new IndexHtmlHandler(settings.getXmlRpcUrl(), settings.getDownloadUrl(), Project.FilesToProjects(settings.getLocalReposRoot()), Product.FilesToBuilds(settings.getDbFileRoot()), getPort());
         this.dhh = new DetailsHtmlHandler(settings.getXmlRpcUrl(), settings.getDownloadUrl(), Project.FilesToProjects(settings.getLocalReposRoot()), Product.FilesToBuilds(settings.getDbFileRoot()), getPort());
+        this.ghh = new SettingsHtmlHandler(settings);
         jenkinsUrlOverride = settings.getJenkinsUrlString().toExternalForm();
     }
 
@@ -81,6 +83,7 @@ public class PreviewFakeKoji {
             hs = HttpServer.create(new InetSocketAddress(settings.getPreviewPort()), 0);
             hs.createContext("/", ihh);
             hs.createContext("/details.html", dhh);
+            hs.createContext("/get", ghh);
         }
         hs.start();
     }
@@ -743,4 +746,79 @@ public class PreviewFakeKoji {
         return "<a href='details.html?list=" + joinListOfBuilds(items) + "'> " + text + "</a>";
     }
 
+    public static class SettingsHtmlHandler implements HttpHandler {
+
+        private final AccessibleSettings settings;
+
+        public SettingsHtmlHandler(AccessibleSettings settings) {
+            this.settings = settings;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            RequestRunner rr = new RequestRunner(exchange);
+            new Thread(rr).start();
+
+        }
+
+        private class RequestRunner implements Runnable {
+
+            private final HttpExchange t;
+
+            public RequestRunner(HttpExchange t) {
+                this.t = t;
+            }
+
+            @Override
+            public void run() {
+                try {
+                    runImpl();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+
+            public void runImpl() throws IOException {
+                String requestedFile = t.getRequestURI().getPath();
+                String query = t.getRequestURI().getQuery();
+                System.out.println(new Date().toString() + " attempting: " + requestedFile + " with " + query);
+                returnValue(t);
+            }
+
+            private void returnValue(HttpExchange t) throws IOException {
+                String rawQuery = t.getRequestURI().getQuery();
+                StringBuilder sb = new StringBuilder("error");
+                int returnCode = 400;
+                if (rawQuery == null) {
+                    sb = new StringBuilder("use get?property  or get?property1&property2&...propertN or get?help to list keys");
+                } else {
+                    String[] query = rawQuery.split("&");
+                    if (query.length == 0 || rawQuery.trim().isEmpty()) {
+                        sb = new StringBuilder("use get?property  or get?property1&property2&...propertN  or get?help to list keys");
+                    } else {
+                        returnCode = 200;
+                        sb = getAnswersFor(query);
+                    }
+                }
+                String result = sb.toString();
+                long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
+                t.sendResponseHeaders(returnCode, size);
+                try (OutputStream os = t.getResponseBody()) {
+                    os.write(result.getBytes());
+                }
+            }
+
+            private StringBuilder getAnswersFor(String[] query) {
+                StringBuilder sb = new StringBuilder();
+                if (query.length == 1) {
+                    sb.append(settings.get(query[0]));
+                } else {
+                    for (String key : query) {
+                        sb.append(key + "=" + settings.get(key) + "\n");
+                    }
+                }
+                return sb;
+            }
+        }
+    }
 }

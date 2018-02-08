@@ -149,4 +149,15 @@ public class AccessibleSettings {
         return downloadUrl;
     }
 
+    String get(String string) {
+        if ("help".equals(string)) {
+            return "repos";
+        }
+        if ("repos".equals(string)) {
+            return localReposRoot.getAbsolutePath();
+        } else {
+            return "unknown";
+        }
+
+    }
 }
