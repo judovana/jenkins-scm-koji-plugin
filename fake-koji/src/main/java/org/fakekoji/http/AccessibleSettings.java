@@ -28,6 +28,10 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  *
@@ -41,7 +45,7 @@ public class AccessibleSettings {
     private final int realDPort;
     private final int realUPort;
     private final int realJPort;
-    private final int previewPort;
+    private final int preview1Port;
     private URL xmlRpcUrl;
     private URL downloadUrl;
     private URL jenkinsUrlString;
@@ -53,7 +57,7 @@ public class AccessibleSettings {
         this.realDPort = realDPort;
         this.realUPort = realUPort;
         this.realJPort = jenkinsPort;
-        this.previewPort = previewPort;
+        this.preview1Port = previewPort;
 
         String thisMachine = InetAddress.getLocalHost().getHostName();
         this.xmlRpcUrl = new URL("http://" + thisMachine + ":" + realXPort + "/RPC2/");
@@ -133,8 +137,8 @@ public class AccessibleSettings {
     /**
      * @return the previewPort
      */
-    public int getPreviewPort() {
-        return previewPort;
+    public int getPreview1Port() {
+        return preview1Port;
     }
 
     public URL getXmlRpcUrl() {
@@ -149,15 +153,27 @@ public class AccessibleSettings {
         return downloadUrl;
     }
 
-    String get(String string) {
-        if ("help".equals(string)) {
-            return "repos";
-        }
-        if ("repos".equals(string)) {
-            return localReposRoot.getAbsolutePath();
-        } else {
-            return "unknown";
-        }
+    private Map<String, String> getPublicValues() {
+        TreeMap<String, String> r = new TreeMap();
+        r.put("repos", localReposRoot.getAbsolutePath());
+        r.put("root", dbFileRoot.getAbsolutePath());
+        r.put("xport", String.valueOf(realXPort));
+        r.put("dport", String.valueOf(realDPort));
+        r.put("uport", String.valueOf(realUPort));
+        r.put("view1port", String.valueOf(preview1Port));
+        Set<String> keys = r.keySet();
+        StringBuilder sb = new StringBuilder();
+        keys.stream().forEach((key) -> {
+            sb.append(key).append(" ");
+        });
+        r.put("help", sb.toString());
+        return r;
+    }
 
+    String get(String string) {
+        if (null != string) {
+            return getPublicValues().get(string);
+        }
+        return null;
     }
 }

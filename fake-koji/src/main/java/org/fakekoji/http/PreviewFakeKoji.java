@@ -80,7 +80,7 @@ public class PreviewFakeKoji {
 
     public void start() throws IOException {
         if (hs == null) {
-            hs = HttpServer.create(new InetSocketAddress(settings.getPreviewPort()), 0);
+            hs = HttpServer.create(new InetSocketAddress(settings.getPreview1Port()), 0);
             hs.createContext("/", ihh);
             hs.createContext("/details.html", dhh);
             hs.createContext("/get", ghh);
@@ -89,7 +89,7 @@ public class PreviewFakeKoji {
     }
 
     public final int getPort() {
-        return settings.getPreviewPort();
+        return settings.getPreview1Port();
     }
 
     public void stop() {
@@ -785,39 +785,45 @@ public class PreviewFakeKoji {
                 returnValue(t);
             }
 
+            private static final String GET_HELP = "use get?property  or get?property1&property2&...propertN or get?help to list values";
+
             private void returnValue(HttpExchange t) throws IOException {
                 String rawQuery = t.getRequestURI().getQuery();
-                StringBuilder sb = new StringBuilder("error");
+                String s = "error";
                 int returnCode = 400;
                 if (rawQuery == null) {
-                    sb = new StringBuilder("use get?property  or get?property1&property2&...propertN or get?help to list keys");
+                    s = GET_HELP;
                 } else {
                     String[] query = rawQuery.split("&");
                     if (query.length == 0 || rawQuery.trim().isEmpty()) {
-                        sb = new StringBuilder("use get?property  or get?property1&property2&...propertN  or get?help to list keys");
+                        s = GET_HELP;
                     } else {
-                        returnCode = 200;
-                        sb = getAnswersFor(query);
+                        s = getAnswersFor(query);
+                        if (s == null) {
+                            s = "Unknow question in `" + rawQuery + "`. " + GET_HELP;
+                        } else {
+                            returnCode = 200;
+                        }
+
                     }
                 }
-                String result = sb.toString();
-                long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
+                long size = s.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
                 t.sendResponseHeaders(returnCode, size);
                 try (OutputStream os = t.getResponseBody()) {
-                    os.write(result.getBytes());
+                    os.write(s.getBytes());
                 }
             }
 
-            private StringBuilder getAnswersFor(String[] query) {
-                StringBuilder sb = new StringBuilder();
+            private String getAnswersFor(String[] query) {
                 if (query.length == 1) {
-                    sb.append(settings.get(query[0]));
+                    return settings.get(query[0]);
                 } else {
+                    StringBuilder sb = new StringBuilder();
                     for (String key : query) {
-                        sb.append(key + "=" + settings.get(key) + "\n");
+                        sb.append(key).append("=").append(settings.get(key)).append("\n");
                     }
+                    return sb.toString();
                 }
-                return sb;
             }
         }
     }
