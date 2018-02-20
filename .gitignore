@@ -5,3 +5,4 @@
 /koji-scm-lib/target/
 /jenkins-scm-koji-plugin/target/
 /fake-koji/target/
+/jenkins-scm-koji-plugin/work
