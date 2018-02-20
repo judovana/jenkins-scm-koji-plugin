@@ -31,6 +31,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -84,20 +86,17 @@ public class BuildMatcher {
     }
 
     private Stream<Build> listMatchingBuilds() {
-        Integer packageId = (Integer) execute(Constants.getPackageID, pkgName);
+        List<Object> builds = Arrays.stream(pkgName.split(" "))
+                .map(this::listPackageBuilds)
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
 
-        Map paramsMap = new HashMap();
-        paramsMap.put(Constants.packageID, packageId);
-        paramsMap.put("state", 1);
-        paramsMap.put("__starstar", Boolean.TRUE);
-
-        Object[] results = (Object[]) execute(Constants.listBuilds, paramsMap);
-        if (results == null || results.length < 1) {
+        if (builds == null || builds.isEmpty()) {
             return Stream.empty();
         }
         // ok, obvious over-engineering here:
-        return Arrays
-                .stream(results)
+        return builds
+                .stream()
                 .sequential()
                 // sorting first, to go with relevant results first:
                 .sorted(this::compare)
@@ -114,6 +113,21 @@ public class BuildMatcher {
                 .map(this::toBuild)
                 // sorting in reverse order:
                 .sorted(Comparator.reverseOrder());
+    }
+
+    private List<Object> listPackageBuilds(String packageName) {
+        Integer packageId = (Integer) execute(Constants.getPackageID, packageName);
+
+        Map paramsMap = new HashMap();
+        paramsMap.put(Constants.packageID, packageId);
+        paramsMap.put("state", 1);
+        paramsMap.put("__starstar", Boolean.TRUE);
+
+        Object[] results = (Object[]) execute(Constants.listBuilds, paramsMap);
+        if (results == null || results.length < 1) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(results);
     }
 
     private Object retrieveTags(Object o) {

@@ -279,6 +279,21 @@ public class KojiListBuildsTest {
         );
     }
 
+    KojiScmConfig createMultiProductConfig() {
+        return new KojiScmConfig(
+                "http://hydra.brq.redhat.com:XPORT/RPC2/",
+                "http://hydra.brq.redhat.com:DPORT/",
+                "java-1.7.0-openjdk java-1.8.0-openjdk java-9-openjdk",
+                null,
+                "*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -502,6 +517,14 @@ public class KojiListBuildsTest {
     public void testNoArchPresentBuilds() throws Exception {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigWithEmptyArch(), new NotProcessedNvrPredicate(new ArrayList<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testMultiproductBuilds() throws IOException, InterruptedException {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(createMultiProductConfig(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
