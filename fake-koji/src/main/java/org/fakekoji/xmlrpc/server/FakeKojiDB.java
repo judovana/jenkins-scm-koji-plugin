@@ -80,8 +80,8 @@ public class FakeKojiDB {
                 return project.hashCode();
             }
         }
-        throw new RuntimeException("Unknown project " + requestedProject + ". Tried: " + trayed + ".");
-
+        ServerLogger.log("Unknown project " + requestedProject + ". Tried: " + trayed + ".");
+        return null;
     }
 
     /*
