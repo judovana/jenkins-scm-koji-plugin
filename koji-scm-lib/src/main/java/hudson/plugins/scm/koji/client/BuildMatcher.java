@@ -117,6 +117,9 @@ public class BuildMatcher {
 
     private List<Object> listPackageBuilds(String packageName) {
         Integer packageId = (Integer) execute(Constants.getPackageID, packageName);
+        if (packageId == null) {
+            return Collections.emptyList();
+        }
 
         Map paramsMap = new HashMap();
         paramsMap.put(Constants.packageID, packageId);

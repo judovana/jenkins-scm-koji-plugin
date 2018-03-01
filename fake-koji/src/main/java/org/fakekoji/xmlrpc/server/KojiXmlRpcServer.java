@@ -33,6 +33,7 @@ import org.apache.xmlrpc.XmlRpcHandler;
 import org.apache.xmlrpc.XmlRpcRequest;
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcNoSuchHandlerException;
+import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 
 /**
@@ -82,6 +83,10 @@ public class KojiXmlRpcServer {
     public void start() throws IOException {
         webServer = new WebServer(port);
         webServer.setParanoid(false);
+        XmlRpcServerConfigImpl config = new XmlRpcServerConfigImpl();
+        config.setEnabledForExtensions(true);
+        webServer.getXmlRpcServer().setConfig(config);
+
         XmlRpcHandlerMapping xxx = new XmlRpcHandlerMapping() {
             @Override
             /**
