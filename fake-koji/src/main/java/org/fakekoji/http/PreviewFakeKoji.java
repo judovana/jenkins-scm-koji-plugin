@@ -53,7 +53,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.JavaServer;
 import org.fakekoji.xmlrpc.server.core.FakeBuild;
 
 /**
@@ -62,53 +62,40 @@ import org.fakekoji.xmlrpc.server.core.FakeBuild;
  */
 public class PreviewFakeKoji {
 
-    private URL xmlRpcUrl;
-    private URL downloadUrl;
-    private File repos;
-    private File builds;
-    private int port;
-
     private final IndexHtmlHandler ihh;
     private final DetailsHtmlHandler dhh;
+    private final SettingsHtmlHandler ghh;
     private HttpServer hs;
 
-    private String jenkinsUrlOverride = null;
+    private final String jenkinsUrlOverride;
+    private final AccessibleSettings settings;
 
-    public PreviewFakeKoji(URL xmlRpcUrl, URL downloadUrl, File repos,
-            File builds, int port, String jenkinsUrlOverride) throws MalformedURLException {
-        if (xmlRpcUrl.getPort() < 0) {
-            xmlRpcUrl = setUriPort(xmlRpcUrl, JavaServer.DFAULT_RP2C_PORT);
-        }
-        if (downloadUrl.getPort() < 0) {
-            downloadUrl = setUriPort(downloadUrl, JavaServer.deductDwPort(xmlRpcUrl.getPort()));
-        }
-        this.xmlRpcUrl = xmlRpcUrl;
-        this.downloadUrl = downloadUrl;
-        this.repos = repos;
-        this.builds = builds;
-        this.port = port;
-        this.ihh = new IndexHtmlHandler(xmlRpcUrl, downloadUrl, Project.FilesToProjects(repos), Product.FilesToBuilds(builds), port);
-        this.dhh = new DetailsHtmlHandler(xmlRpcUrl, downloadUrl, Project.FilesToProjects(repos), Product.FilesToBuilds(builds), port);
+    public PreviewFakeKoji(AccessibleSettings settings) throws MalformedURLException {
+        this.settings = settings;
+        this.ihh = new IndexHtmlHandler(settings.getXmlRpcUrl(), settings.getDownloadUrl(), Project.FilesToProjects(settings.getLocalReposRoot()), Product.FilesToBuilds(settings.getDbFileRoot()), getPort());
+        this.dhh = new DetailsHtmlHandler(settings.getXmlRpcUrl(), settings.getDownloadUrl(), Project.FilesToProjects(settings.getLocalReposRoot()), Product.FilesToBuilds(settings.getDbFileRoot()), getPort());
+        this.ghh = new SettingsHtmlHandler(settings);
+        jenkinsUrlOverride = settings.getJenkinsUrlString().toExternalForm();
     }
 
     public void start() throws IOException {
         if (hs == null) {
-            hs = HttpServer.create(new InetSocketAddress(port), 0);
+            hs = HttpServer.create(new InetSocketAddress(settings.getPreview1Port()), 0);
             hs.createContext("/", ihh);
             hs.createContext("/details.html", dhh);
+            hs.createContext("/get", ghh);
         }
         hs.start();
+    }
+
+    public final int getPort() {
+        return settings.getPreview1Port();
     }
 
     public void stop() {
         if (hs != null) {
             hs.stop(15);
         }
-    }
-
-    public void setJenkinsUrlOverride(String s) {
-        System.out.println("Set jenkinsUrlOverwritw! from " + jenkinsUrlOverride + " to " + s);
-        jenkinsUrlOverride = s;
     }
 
     public static URL setUriPort(URL uri, int port) throws MalformedURLException {
@@ -126,14 +113,11 @@ public class PreviewFakeKoji {
          "/mnt/raid1/local-builds",
          //"1919"
          };*/
-        if (args.length < 3) {
-            System.out.println("Mandatory 4 params:  full koji xmlrpc url and koji download url and cloned forests homes and projects homes");
-            System.out.println("if no port is specified, my favorit XPORT and DPORT are used,");
-            System.out.println("If only first port is specified, second is deducted from it as for fake-koji");
-            System.out.println("last param is optional and is port of this service. If missing, 80 is used!");
+        if (args.length != 5) {
+            System.out.println("Mandatory 5 params:  xmlport, downloadpoport, reposPath, bnuildsPath, httpPort");
         }
-        URL xmlrpcurl = new URL(args[0]);
-        URL download = new URL(args[1]);
+        int xmlrpcurl = Integer.valueOf(args[0]);
+        int download = Integer.valueOf(args[1]);
         File repos = new File(args[2]);
         File builds = new File(args[3]);
         if (!builds.exists()) {
@@ -143,10 +127,8 @@ public class PreviewFakeKoji {
             throw new RuntimeException(repos.getAbsolutePath() + " does not exists.");
         }
 
-        int PORT = 80;
-        if (args.length == 5) {
-            PORT = Integer.valueOf(args[4]);
-        }
+        int PORT = Integer.valueOf(args[4]);
+
         System.err.println("xmlrpc   : " + xmlrpcurl);
         System.out.println("xmlrpc   : " + xmlrpcurl);
         System.err.println("dwnld    : " + download);
@@ -158,7 +140,9 @@ public class PreviewFakeKoji {
         System.err.println("builds   : " + builds);
         System.out.println("builds   : " + builds);
 
-        PreviewFakeKoji previewFakeKojiServer = new PreviewFakeKoji(xmlrpcurl, download, repos, builds, PORT, null);
+        AccessibleSettings settings = new AccessibleSettings(builds, repos, xmlrpcurl, download, JavaServer.DFAULT_SSHUPLOAD_PORT, PORT, JavaServer.DEFAULT_JENKINS_PORT);
+
+        PreviewFakeKoji previewFakeKojiServer = new PreviewFakeKoji(settings);
         previewFakeKojiServer.start();
     }
 
@@ -762,4 +746,85 @@ public class PreviewFakeKoji {
         return "<a href='details.html?list=" + joinListOfBuilds(items) + "'> " + text + "</a>";
     }
 
+    public static class SettingsHtmlHandler implements HttpHandler {
+
+        private final AccessibleSettings settings;
+
+        public SettingsHtmlHandler(AccessibleSettings settings) {
+            this.settings = settings;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            RequestRunner rr = new RequestRunner(exchange);
+            new Thread(rr).start();
+
+        }
+
+        private class RequestRunner implements Runnable {
+
+            private final HttpExchange t;
+
+            public RequestRunner(HttpExchange t) {
+                this.t = t;
+            }
+
+            @Override
+            public void run() {
+                try {
+                    runImpl();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+
+            public void runImpl() throws IOException {
+                String requestedFile = t.getRequestURI().getPath();
+                String query = t.getRequestURI().getQuery();
+                System.out.println(new Date().toString() + " attempting: " + requestedFile + " with " + query);
+                returnValue(t);
+            }
+
+            private static final String GET_HELP = "use get?property  or get?property1&property2&...propertN or get?help to list values";
+
+            private void returnValue(HttpExchange t) throws IOException {
+                String rawQuery = t.getRequestURI().getQuery();
+                String s = "error";
+                int returnCode = 400;
+                if (rawQuery == null) {
+                    s = GET_HELP;
+                } else {
+                    String[] query = rawQuery.split("&");
+                    if (query.length == 0 || rawQuery.trim().isEmpty()) {
+                        s = GET_HELP;
+                    } else {
+                        s = getAnswersFor(query);
+                        if (s == null) {
+                            s = "Unknow question in `" + rawQuery + "`. " + GET_HELP;
+                        } else {
+                            returnCode = 200;
+                        }
+
+                    }
+                }
+                long size = s.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
+                t.sendResponseHeaders(returnCode, size);
+                try (OutputStream os = t.getResponseBody()) {
+                    os.write(s.getBytes());
+                }
+            }
+
+            private String getAnswersFor(String[] query) {
+                if (query.length == 1) {
+                    return settings.get(query[0]);
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    for (String key : query) {
+                        sb.append(key).append("=").append(settings.get(key)).append("\n");
+                    }
+                    return sb.toString();
+                }
+            }
+        }
+    }
 }

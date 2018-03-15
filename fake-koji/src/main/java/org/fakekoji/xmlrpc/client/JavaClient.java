@@ -28,7 +28,7 @@ import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import java.net.MalformedURLException;
 import java.util.*;
 import org.apache.xmlrpc.XmlRpcException;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.JavaServer;
 
 /**
  * This class is simple test which connects to running

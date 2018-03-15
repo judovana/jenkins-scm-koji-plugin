@@ -28,9 +28,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.http.AccessibleSettings;
+import org.fakekoji.JavaServer;
 
 public class FakeKojiTestUtil {
 
@@ -150,15 +153,15 @@ public class FakeKojiTestUtil {
         return JavaServer.DFAULT_DWNLD_PORT;
     }
 
-    public static JavaServer createDefaultFakeKojiServer(File localBuilds, File upstreamRepos) {
+    public static JavaServer createDefaultFakeKojiServer(File localBuilds, File upstreamRepos) throws UnknownHostException, MalformedURLException {
         int previewPort = getFakeKojiPreviewPort();
         int rpcPort = getFakeKojiRpcPort();
         int downloadPort = getFakeKojiDownloadPort();
         int sshUploadPort = JavaServer.DFAULT_SSHUPLOAD_PORT;
 
-        JavaServer javaServer = new JavaServer(localBuilds, upstreamRepos,
-                rpcPort, downloadPort,
-                sshUploadPort, previewPort);
+        AccessibleSettings settings = new AccessibleSettings(localBuilds, upstreamRepos,
+                rpcPort, downloadPort, sshUploadPort, previewPort, 8080);
+        JavaServer javaServer = new JavaServer(settings);
         return javaServer;
     }
 

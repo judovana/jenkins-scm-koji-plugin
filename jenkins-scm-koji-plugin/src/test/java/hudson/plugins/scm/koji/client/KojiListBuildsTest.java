@@ -15,10 +15,11 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.JavaServer;
 import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 import org.junit.BeforeClass;
 
@@ -279,6 +280,21 @@ public class KojiListBuildsTest {
         );
     }
 
+    KojiScmConfig createMultiProductConfig() {
+        return new KojiScmConfig(
+                "https://koji.fedoraproject.org/kojihub",
+                "https://kojipkgs.fedoraproject.org/packages/",
+                "java-1.7.0-openjdk java-1.8.0-openjdk java-9-openjdk",
+                null,
+                "*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -504,5 +520,39 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(createConfigWithEmptyArch(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
+    }
+
+    @Test
+    public void testMultiproductBuilds() throws IOException, InterruptedException {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(createMultiProductConfig(), new NotProcessedNvrPredicate(new ArrayList<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testMultiproductBuildsWithNonExistingProduct() throws IOException, InterruptedException {
+        assumeTrue(onRhNet);
+        KojiScmConfig config = new KojiScmConfig(
+                "https://koji.fedoraproject.org/kojihub",
+                "https://kojipkgs.fedoraproject.org/packages/",
+                "this_package_name_hopefully_does_not_exist java-1.8.0-openjdk",
+                null, "*", null, null, false, false, 10);
+        KojiListBuilds worker = new KojiListBuilds(config, new NotProcessedNvrPredicate(new ArrayList<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
+    public void testNonExistingBuilds() throws IOException, InterruptedException {
+        assumeTrue(onRhNet);
+        KojiScmConfig config = new KojiScmConfig(
+                "https://koji.fedoraproject.org/kojihub",
+                "https://kojipkgs.fedoraproject.org/packages/",
+                "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
+                null, "*", null, null, false, false, 10);
+        KojiListBuilds worker = new KojiListBuilds(config, new NotProcessedNvrPredicate(new ArrayList<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNull(build);
     }
 }

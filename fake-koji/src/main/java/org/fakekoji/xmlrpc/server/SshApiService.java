@@ -209,6 +209,12 @@ public class SshApiService {
         sshServer.start();
     }
 
+    public int getPort() {
+        return port;
+    }
+    
+    
+
     public void stop() throws IOException {
         if (sshServer != null) {
             sshServer.stop(true);

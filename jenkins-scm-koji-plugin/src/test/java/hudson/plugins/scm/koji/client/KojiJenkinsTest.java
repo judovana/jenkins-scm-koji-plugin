@@ -31,7 +31,7 @@ import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.tasks.Shell;
 import java.io.File;
 import java.io.FileInputStream;
-import org.fakekoji.xmlrpc.server.JavaServer;
+import org.fakekoji.JavaServer;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
 import org.junit.AfterClass;
@@ -140,6 +140,47 @@ public class KojiJenkinsTest {
                 "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
                 "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "non-existing-build",
+                "x86_64,src",
+                "fastdebug-f24*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+        String shellString = "! find . | grep \".*tarxz\"";
+        runTest(config, shellString, false);
+    }
+
+    @Test
+    public void testMultiproductWithOneNotExisting() throws Exception {
+        /* Test koji scm plugin on multi-product build with non-existing build
+           -> should end with success */
+        KojiScmConfig config = new KojiScmConfig(
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
+                "non-existing-build java-1.8.0-openjdk",
+                "x86_64,src",
+                "fastdebug-f24*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+        String shellString = "find . | grep \"java-1.8.0-openjdk.*x86_64.tarxz\"\n"
+                + "find . | grep \"java-1.8.0-openjdk.*src.tarxz\"";
+        runTest(config, shellString, true);
+    }
+
+    @Test
+    public void testMultiproductWithNoExisting() throws Exception {
+        /* Test koji scm plugin on multi-product build with no existing build
+           -> should end with failure */
+        KojiScmConfig config = new KojiScmConfig(
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
+                "non-existing-build also-not-existing-build",
                 "x86_64,src",
                 "fastdebug-f24*",
                 null,
