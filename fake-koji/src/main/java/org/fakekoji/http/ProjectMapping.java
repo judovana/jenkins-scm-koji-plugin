@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.fakekoji.http.ProjectMappingExceptions.*;
+
 class ProjectMapping {
 
     private final AccessibleSettings settings;
@@ -15,32 +17,47 @@ class ProjectMapping {
         this.settings = settings;
     }
 
-    List<String> getAllProducts() {
-        return Arrays.stream(Objects.requireNonNull(settings.getDbFileRoot().listFiles()))
+    List<String> getAllProducts() throws ProjectMappingException {
+        List<String> products = Arrays.stream(Objects.requireNonNull(settings.getDbFileRoot().listFiles()))
                 .filter(File::isDirectory)
                 .map(File::getName)
                 .collect(Collectors.toList());
-    }
-
-    List<String> getAllProjects() {
-        return Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
-                .filter(File::isDirectory)
-                .map(File::getName)
-                .collect(Collectors.toList());
-    }
-
-    List<String> getProjectsOfProduct(String productName) {
-        if (!getAllProducts().contains(productName)) {
-            return null;
+        if (products.isEmpty()) {
+            throw new ProductsNotFoundException();
         }
-        return Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
+        return products;
+    }
+
+    List<String> getAllProjects() throws ProjectMappingException {
+        List<String> projects = Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
+                .filter(File::isDirectory)
+                .map(File::getName)
+                .collect(Collectors.toList());
+        if (projects.isEmpty()) {
+            throw new ProjectsNotFoundException();
+        }
+        return projects;
+    }
+
+    List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
+        if (!getAllProducts().contains(productName)) {
+            throw new ProductDoesNotMatchException();
+        }
+        List<String> projects = Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
                 .filter(file -> file.getName().contains(productName))
                 .map(File::getName)
                 .collect(Collectors.toList());
+        if (projects.isEmpty()) {
+            throw new ProjectsNotFoundException();
+        }
+        return projects;
     }
 
-    String getProjectOfNvra(String nvra) {
-        List<String> projectList = getAllProjects();
+    String getProjectOfNvra(String nvra) throws ProjectMappingException {
+        return getProjectOfNvra(nvra, getAllProjects());
+    }
+
+    String getProjectOfNvra(String nvra, List<String> projectList) throws ProjectMappingException {
         projectList.sort((String s1, String s2) -> s2.length() - s1.length());
         for (String project : projectList) {
             String[] dashSplit = project.split("-");
@@ -54,26 +71,35 @@ class ProjectMapping {
                 return project;
             }
         }
-        return null;
+        throw new ProjectDoesNotMatchException();
     }
 
-    String getProductOfNvra(String nvra) {
-        List<String> productList = getAllProducts();
+    String getProductOfNvra(String nvra) throws ProjectMappingException {
+        return getProductOfNvra(nvra, getAllProducts());
+    }
+
+    String getProductOfNvra(String nvra, List<String> productList) throws ProjectMappingException {
         for (String product : productList) {
             if (nvra.contains(product)) {
                 return product;
             }
         }
-        return null;
+        throw new ProductDoesNotMatchException();
     }
 
-    String getProductOfProject(String project) {
-        List<String> productList = getAllProducts();
+    String getProductOfProject(String project) throws ProjectMappingException {
+        return getProductOfProject(project, getAllProducts(), getAllProjects());
+    }
+
+    String getProductOfProject(String project, List<String> productList, List<String> projectList) throws ProjectMappingException {
+        if (!projectList.contains(project)) {
+            throw new ProjectDoesNotMatchException();
+        }
         for (String product : productList) {
             if (project.contains(product)) {
                 return product;
             }
         }
-        return null;
+        throw new ProjectDoesNotMatchException();
     }
 }

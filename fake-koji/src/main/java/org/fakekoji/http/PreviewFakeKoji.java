@@ -789,40 +789,73 @@ public class PreviewFakeKoji {
 
             private void returnValue(HttpExchange t) throws IOException {
                 String rawQuery = t.getRequestURI().getQuery();
-                String s = "error";
-                int returnCode = 400;
-                if (rawQuery == null) {
-                    s = GET_HELP;
-                } else {
-                    String[] query = rawQuery.split("&");
-                    if (query.length == 0 || rawQuery.trim().isEmpty()) {
-                        s = GET_HELP;
-                    } else {
-                        s = getAnswersFor(query);
-                        if (s == null) {
-                            s = "Unknow question in `" + rawQuery + "`. " + GET_HELP;
-                        } else {
-                            returnCode = 200;
-                        }
-
-                    }
-                }
-                long size = s.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
-                t.sendResponseHeaders(returnCode, size);
+                Result result = getResultFor(rawQuery);
+                long size = result.getResponse().length(); //yahnot perfect, ets assuemno one will use this on chinese chars
+                t.sendResponseHeaders(result.getReturnCode(), size);
                 try (OutputStream os = t.getResponseBody()) {
-                    os.write(s.getBytes());
+                    os.write(result.getResponse() .getBytes());
                 }
             }
 
-            private String getAnswersFor(String[] query) {
-                if (query.length == 1) {
-                    return settings.get(query[0]);
+            private Result getResult(String parameter) {
+                try {
+                    return new Result(settings.get(parameter), 200);
+                } catch (ProjectMappingExceptions.ProjectMappingException e) {
+                    return new Result(e.getMessage(), 400);
+                }
+            }
+
+            private Result getResultFor(String rawQuery) {
+                final StringBuilder response = new StringBuilder();
+                int resultCode = 200;
+                if (rawQuery == null) {
+                    response.append(GET_HELP);
                 } else {
-                    StringBuilder sb = new StringBuilder();
-                    for (String key : query) {
-                        sb.append(key).append("=").append(settings.get(key)).append("\n");
+                    String[] query = rawQuery.split("&");
+                    if (query.length == 0 || rawQuery.trim().isEmpty()) {
+                        response.append(GET_HELP);
+                    } else {
+                        if (query.length == 1) {
+                            Result result = getResult(query[0]);
+                            response.append(result.getResponse());
+                            resultCode = result.getReturnCode();
+                        } else {
+                            for (String key : query) {
+                                Result result = getResult(key);
+                                resultCode = result.getReturnCode() != 200 ? 400 : resultCode;
+                                response.append(key).append("=");
+                                response.append(result.getResponse());
+                                response.append("\n");
+                            }
+                        }
                     }
-                    return sb.toString();
+                }
+                return new Result(response.toString(), resultCode);
+            }
+
+            private class Result {
+                private String response;
+                private int returnCode;
+
+                Result(String response, int returnCode) {
+                    this.response = response;
+                    this.returnCode = returnCode;
+                }
+
+                public void setResponse(String response) {
+                    this.response = response;
+                }
+
+                public void setReturnCode(int returnCode) {
+                    this.returnCode = returnCode;
+                }
+
+                String getResponse() {
+                    return response;
+                }
+
+                int getReturnCode() {
+                    return returnCode;
                 }
             }
         }

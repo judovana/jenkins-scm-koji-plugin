@@ -1,35 +1,30 @@
 package org.fakekoji.http;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ProjectMappingTest {
 
-    private static final String JAVA7 = "java-1.7.0-openjdk";
-    private static final String JAVA8 = "java-1.8.0-openjdk";
-    private static final String JAVA9 = "java-9-openjdk";
-    private static final String JAVA10 = "java-10-openjdk";
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
 
-    private static final String[] products = {
+    private static final List<String> products = Arrays.asList(
             "java-X-openjdk",
             "java-openjdk",
             "java-10-openjdk",
             "java-9-openjdk",
             "java-1.8.0-openjdk",
             "java-1.7.0-openjdk"
-    };
+    );
 
-    private static final String[] projects = {
+    private static final List<String> projects = Arrays.asList(
             "java-10-openjdk",
             "java-1.7.0-openjdk",
             "java-1.7.0-openjdk-forest",
@@ -44,7 +39,7 @@ public class ProjectMappingTest {
             "java-9-openjdk-shenandoah",
             "java-9-openjdk-updates",
             "java-X-openjdk"
-    };
+    );
 
     private static final List<String> nvras = Arrays.asList(
             "java-X-openjdk-jdk.11.4-50.upstream.src.tarxz",
@@ -63,107 +58,8 @@ public class ProjectMappingTest {
             "java-1.7.0-openjdk-jdk7u161.b01-0.static.fastdebug.i686.tarxz"
     );
 
-    private static AccessibleSettings settings;
-
-    @BeforeClass
-    public static void setUp() {
-        try {
-            File baseDir = new File(System.getProperty("java.io.tmpdir"));
-
-            File productFile = new File(baseDir, "builds");
-            productFile.mkdir();
-            File reposFile = new File(baseDir, "repos");
-            reposFile.mkdir();
-
-            for (String product : products) {
-                new File(productFile, product).mkdir();
-            }
-
-            for (String project : projects) {
-                new File(reposFile, project).mkdir();
-            }
-
-            settings = new AccessibleSettings(productFile, reposFile, 0, 0, 0, 0, 0);
-        } catch (IOException e) {
-            throw new RuntimeException();
-        }
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        for (String product : products) {
-            new File(settings.getDbFileRoot(), product).delete();
-        }
-
-        for (String project : projects) {
-            new File(settings.getLocalReposRoot(), project).delete();
-        }
-        settings.getDbFileRoot().delete();
-        settings.getLocalReposRoot().delete();
-    }
-
     @Test
-    public void getAllProductsTest() {
-        ProjectMapping projectMapping = new ProjectMapping(settings);
-        Arrays.sort(products);
-        final List<String> actualProducts = projectMapping.getAllProducts();
-        Collections.sort(actualProducts);
-        assertEquals("The actual list of products doesn\'t match the expected", Arrays.asList(products), actualProducts);
-    }
-
-    @Test
-    public void getAllProjectsTest() {
-        ProjectMapping projectMapping = new ProjectMapping(settings);
-        Arrays.sort(projects);
-        final List<String> actualProjects = projectMapping.getAllProjects();
-        Collections.sort(actualProjects);
-        assertEquals("The actual list of projects doesn\'t match the expected", Arrays.asList(projects), actualProjects);
-    }
-
-    @Test
-    public void getProjectsOfProductTest() {
-        final List<String> expectedJava7Projects = Arrays.asList(
-                "java-1.7.0-openjdk",
-                "java-1.7.0-openjdk-forest",
-                "java-1.7.0-openjdk-forest-26"
-        );
-        final List<String> expectedJava8Projects = Arrays.asList(
-                "java-1.8.0-openjdk",
-                "java-1.8.0-openjdk-aarch64",
-                "java-1.8.0-openjdk-aarch64-shenandoah",
-                "java-1.8.0-openjdk-dev",
-                "java-1.8.0-openjdk-shenandoah"
-        );
-        final List<String> expectedJava9Projects = Arrays.asList(
-                "java-9-openjdk",
-                "java-9-openjdk-dev",
-                "java-9-openjdk-shenandoah",
-                "java-9-openjdk-updates"
-        );
-        final List<String> expectedJava10Projects = Arrays.asList(
-                "java-10-openjdk"
-        );
-
-        ProjectMapping projectMapping = new ProjectMapping(settings);
-        final List<String> actualJava7Projects = projectMapping.getProjectsOfProduct(JAVA7);
-        Collections.sort(actualJava7Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava7Projects, actualJava7Projects);
-
-        final List<String> actualJava8Projects = projectMapping.getProjectsOfProduct(JAVA8);
-        Collections.sort(actualJava8Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava8Projects, actualJava8Projects);
-
-        final List<String> actualJava9Projects = projectMapping.getProjectsOfProduct(JAVA9);
-        Collections.sort(actualJava9Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava9Projects, actualJava9Projects);
-
-        final List<String> actualJava10Projects = projectMapping.getProjectsOfProduct(JAVA10);
-        Collections.sort(actualJava10Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava10Projects, actualJava10Projects);
-    }
-
-    @Test
-    public void getProjectOfNvraTest() {
+    public void getProjectOfNvraTest() throws ProjectMappingExceptions.ProjectMappingException {
         final List<String> expectedProjects = Arrays.asList(
                 "java-X-openjdk",
                 "java-10-openjdk",
@@ -181,16 +77,18 @@ public class ProjectMappingTest {
                 "java-1.7.0-openjdk"
         );
 
-        ProjectMapping projectMapping = new ProjectMapping(settings);
-        final List<String> actualProjects = new ArrayList<>();
+        ProjectMapping projectMapping = new ProjectMapping(null);
+        List<String> actualProjects = new ArrayList<>();
         for (String nvra : nvras) {
-            actualProjects.add(projectMapping.getProjectOfNvra(nvra));
+            actualProjects.add(projectMapping.getProjectOfNvra(nvra, projects));
         }
-        assertEquals("The actual project doesn\'t match the expected", expectedProjects, actualProjects);
+        actualProjects.sort(String::compareTo);
+        expectedProjects.sort(String::compareTo);
+        assertEquals("The actual list of projects doesn\'t match the expected", expectedProjects, actualProjects);
     }
 
     @Test
-    public void getProductOfNvraTest() {
+    public void getProductOfNvraTest() throws ProjectMappingExceptions.ProjectMappingException {
         final List<String> expectedProducts = Arrays.asList(
                 "java-X-openjdk",
                 "java-10-openjdk",
@@ -208,17 +106,22 @@ public class ProjectMappingTest {
                 "java-1.7.0-openjdk"
         );
 
-        ProjectMapping projectMapping = new ProjectMapping(settings);
-        final List<String> actualProducts = new ArrayList<>();
+        ProjectMapping projectMapping = new ProjectMapping(null);
+        List<String> actualProducts = new ArrayList<>();
         for (String nvra : nvras) {
-            actualProducts.add(projectMapping.getProductOfNvra(nvra));
+            actualProducts.add(projectMapping.getProductOfNvra(nvra, products));
         }
-        assertEquals("The actual product doesn\'t match the expected", expectedProducts, actualProducts);
+        actualProducts.sort(String::compareTo);
+        expectedProducts.sort(String::compareTo);
+        assertEquals("The actual list of products doesn\'t match the expected", expectedProducts, actualProducts);
+
+        expectedException.expect(ProjectMappingExceptions.ProductDoesNotMatchException.class);
+        projectMapping.getProductOfNvra("wrong nvra", products);
     }
 
     @Test
-    public void getProductOfProject() {
-        final String[] expectedProductsOfProjects = {
+    public void getProductOfProjectTest() throws ProjectMappingExceptions.ProjectMappingException {
+        final List<String> expectedProductsOfProjects = Arrays.asList(
                 "java-10-openjdk",
                 "java-1.7.0-openjdk",
                 "java-1.7.0-openjdk",
@@ -233,13 +136,18 @@ public class ProjectMappingTest {
                 "java-9-openjdk",
                 "java-9-openjdk",
                 "java-X-openjdk"
-        };
+        );
 
-        ProjectMapping projectMapping = new ProjectMapping(settings);
-        final List<String> actualProjects = new ArrayList<>();
+        ProjectMapping projectMapping = new ProjectMapping(null);
+        List<String> actualProducts = new ArrayList<>();
         for (String project : projects) {
-            actualProjects.add(projectMapping.getProductOfProject(project));
+            actualProducts.add(projectMapping.getProductOfProject(project, products, projects));
         }
-        assertEquals("The actual product doesn\'t match the expected", Arrays.asList(expectedProductsOfProjects), actualProjects);
+        actualProducts.sort(String::compareTo);
+        expectedProductsOfProjects.sort(String::compareTo);
+        assertEquals("The actual list of products doesn\'t match the expected", expectedProductsOfProjects, actualProducts);
+
+        expectedException.expect(ProjectMappingExceptions.ProjectDoesNotMatchException.class);
+        projectMapping.getProductOfProject("wrong project", products, projects);
     }
 }

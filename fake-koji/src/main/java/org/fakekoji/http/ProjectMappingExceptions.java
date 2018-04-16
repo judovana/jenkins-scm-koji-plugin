@@ -1,0 +1,39 @@
+package org.fakekoji.http;
+
+class ProjectMappingExceptions {
+
+    static class ProjectMappingException extends Exception {
+
+        ProjectMappingException(String message) {
+            super(message);
+        }
+    }
+
+    static class ProjectsNotFoundException extends ProjectMappingException {
+
+        ProjectsNotFoundException() {
+            super("No project found");
+        }
+    }
+
+    static class ProductsNotFoundException extends ProjectMappingException {
+
+        ProductsNotFoundException() {
+            super("No product found");
+        }
+    }
+
+    static class ProjectDoesNotMatchException extends ProjectMappingException {
+
+        ProjectDoesNotMatchException() {
+            super("Project does not match any available project");
+        }
+    }
+
+    static class ProductDoesNotMatchException extends ProjectMappingException {
+
+        ProductDoesNotMatchException() {
+            super("Product does not match any available product");
+        }
+    }
+}

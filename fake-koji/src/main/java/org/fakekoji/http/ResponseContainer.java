@@ -1,15 +1,15 @@
 package org.fakekoji.http;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 class ResponseContainer {
 
     private static final String DELIMITER = " ";
 
     interface Response {
-        String respond();
+        String respond() throws ProjectMappingExceptions.ProjectMappingException;
         String help();
     }
 
@@ -74,7 +74,7 @@ class ResponseContainer {
         }
 
         @Override
-        public String respond() {
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
             return String.join(DELIMITER, projectMapping.getAllProducts());
         }
 
@@ -93,7 +93,7 @@ class ResponseContainer {
         }
 
         @Override
-        public String respond() {
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
             return String.join(DELIMITER, projectMapping.getAllProjects());
         }
 
@@ -114,7 +114,7 @@ class ResponseContainer {
         }
 
         @Override
-        public String respond() {
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
             List<String> list = projectMapping.getProjectsOfProduct(productName);
             return list == null ? null : String.join(DELIMITER, list);
         }
@@ -136,7 +136,7 @@ class ResponseContainer {
         }
 
         @Override
-        public String respond() {
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
             return projectMapping.getProductOfProject(projectName);
         }
 
@@ -157,7 +157,7 @@ class ResponseContainer {
         }
 
         @Override
-        public String respond() {
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
             return projectMapping.getProductOfNvra(nvra);
         }
 
@@ -178,7 +178,7 @@ class ResponseContainer {
         }
 
         @Override
-        public String respond() {
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
             return projectMapping.getProjectOfNvra(nvra);
         }
 
@@ -190,19 +190,19 @@ class ResponseContainer {
 
     static class GetHelpResponse implements Response {
 
-        private final TreeMap<String, Response> treeMap;
+        private final Map<String, Response> responseMap;
 
-        GetHelpResponse(TreeMap<String, Response> treeMap) {
-            this.treeMap = treeMap;
+        GetHelpResponse(Map<String, Response> responseMap) {
+            this.responseMap = responseMap;
         }
 
         @Override
         public String respond() {
             StringBuilder sb = new StringBuilder();
-            Set<String> keys = treeMap.keySet();
+            Set<String> keys = responseMap.keySet();
             keys.forEach((key) -> {
                 sb.append(key);
-                String help = treeMap.get(key).help();
+                String help = responseMap.get(key).help();
                 if (help != null) {
                     sb.append(": ").append(help);
                 }

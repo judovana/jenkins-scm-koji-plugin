@@ -156,7 +156,7 @@ public class AccessibleSettings {
         return projectMapping;
     }
 
-    private String getPublicValues(String property, String value) {
+    private String getPublicValues(String property, String value) throws ProjectMappingExceptions.ProjectMappingException {
         TreeMap<String, ResponseContainer.Response> responseTreeMap = new TreeMap<>();
 
         responseTreeMap.put("repos", new ResponseContainer.GetPathResponse(localReposRoot.getAbsolutePath(), "Path to folder containing repositories"));
@@ -176,7 +176,7 @@ public class AccessibleSettings {
         return responseTreeMap.get(property).respond();
     }
 
-    String get(String key) {
+    String get(String key) throws ProjectMappingExceptions.ProjectMappingException {
         if (null == key) {
             return null;
         }
