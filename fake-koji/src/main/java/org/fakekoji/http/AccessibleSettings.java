@@ -173,16 +173,14 @@ public class AccessibleSettings {
         responseTreeMap.put("productOfProject", new ResponseContainer.GetProductOfProjectResponse(projectMapping, value));
         responseTreeMap.put("help", new ResponseContainer.GetHelpResponse(responseTreeMap));
 
+        if (responseTreeMap.get(property) == null) {
+            throw new ProjectMappingExceptions.BadRequestException();
+        }
+
         return responseTreeMap.get(property).respond();
     }
 
-    String get(String key) throws ProjectMappingExceptions.ProjectMappingException {
-        if (null == key) {
-            return null;
-        }
-        String[] args = key.split(":");
-        String property = args[0];
-        String value = args.length == 2 ? args[1] : null;
+    String get(String property, String value) throws ProjectMappingExceptions.ProjectMappingException {
         return getPublicValues(property, value);
     }
 }

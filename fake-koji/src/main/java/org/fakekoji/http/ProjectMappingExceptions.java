@@ -36,4 +36,11 @@ class ProjectMappingExceptions {
             super("Product does not match any available product");
         }
     }
+
+    static class BadRequestException extends ProjectMappingException {
+
+        BadRequestException() {
+            super("Bad request, use get?help to list values");
+        }
+    }
 }
