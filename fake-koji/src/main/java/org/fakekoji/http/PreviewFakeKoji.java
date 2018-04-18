@@ -789,41 +789,95 @@ public class PreviewFakeKoji {
 
             private void returnValue(HttpExchange t) throws IOException {
                 String rawQuery = t.getRequestURI().getQuery();
-                String s = "error";
-                int returnCode = 400;
-                if (rawQuery == null) {
-                    s = GET_HELP;
-                } else {
-                    String[] query = rawQuery.split("&");
-                    if (query.length == 0 || rawQuery.trim().isEmpty()) {
-                        s = GET_HELP;
-                    } else {
-                        s = getAnswersFor(query);
-                        if (s == null) {
-                            s = "Unknow question in `" + rawQuery + "`. " + GET_HELP;
-                        } else {
-                            returnCode = 200;
-                        }
-
-                    }
-                }
-                long size = s.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
-                t.sendResponseHeaders(returnCode, size);
+                ResultWithHttpCode result = getResultFor(rawQuery);
+                long size = result.getResponse().length(); //yahnot perfect, ets assuemno one will use this on chinese chars
+                t.sendResponseHeaders(result.getReturnCode().getvalue(), size);
                 try (OutputStream os = t.getResponseBody()) {
-                    os.write(s.getBytes());
+                    os.write(result.getResponse() .getBytes());
                 }
             }
 
-            private String getAnswersFor(String[] query) {
-                if (query.length == 1) {
-                    return settings.get(query[0]);
+            private ResultWithHttpCode getResultFor(String rawQuery) {
+                final StringBuilder response = new StringBuilder();
+                ReturnCode returnCode = ReturnCode.OK;
+                if (rawQuery == null) {
+                    response.append(GET_HELP);
                 } else {
-                    StringBuilder sb = new StringBuilder();
-                    for (String key : query) {
-                        sb.append(key).append("=").append(settings.get(key)).append("\n");
+                    String[] query = rawQuery.split("&");
+                    if (query.length == 0 || rawQuery.trim().isEmpty()) {
+                        response.append(GET_HELP);
+                        returnCode = ReturnCode.BAD_REQUEST;
+                    } else {
+                        if (query.length == 1) {
+                            ResultWithHttpCode result = getResult(query[0]);
+                            response.append(result.getResponse());
+                            returnCode = result.getReturnCode();
+                        } else {
+                            for (String key : query) {
+                                ResultWithHttpCode result = getResult(key);
+                                if (returnCode != ReturnCode.BAD_REQUEST) {
+                                    returnCode = result.getReturnCode();
+                                }
+                                response.append(key).append("=");
+                                response.append(result.getResponse());
+                                response.append("\n");
+                            }
+                        }
                     }
-                    return sb.toString();
                 }
+                return new ResultWithHttpCode(response.toString(), returnCode);
+            }
+
+            private ResultWithHttpCode getResult(String parameter) {
+                if (null == parameter) {
+                    return null;
+                }
+                String[] paramSplit = parameter.split(":");
+                String property = paramSplit[0];
+                String value = paramSplit.length == 2 ? paramSplit[1] : null;
+                try {
+                    return new ResultWithHttpCode(settings.get(property, value), ReturnCode.OK);
+                } catch (ProjectMappingExceptions.ProjectMappingException e) {
+                    return new ResultWithHttpCode(e.getMessage(), ReturnCode.BAD_REQUEST);
+                }
+            }
+
+            private class ResultWithHttpCode {
+                private String response;
+                private ReturnCode returnCode;
+
+                ResultWithHttpCode(String response, ReturnCode returnCode) {
+                    this.response = response;
+                    this.returnCode = returnCode;
+                }
+
+                public void setResponse(String response) {
+                    this.response = response;
+                }
+
+                public void setReturnCode(ReturnCode returnCode) {
+                    this.returnCode = returnCode;
+                }
+
+                String getResponse() {
+                    return response;
+                }
+
+                ReturnCode getReturnCode() {
+                    return returnCode;
+                }
+            }
+        }
+        private enum ReturnCode {
+            OK(200),
+            BAD_REQUEST(400);
+
+            private final int code;
+            ReturnCode(int code) {
+                this.code = code;
+            }
+            public int getvalue() {
+                return code;
             }
         }
     }

@@ -28,9 +28,6 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -49,6 +46,7 @@ public class AccessibleSettings {
     private URL xmlRpcUrl;
     private URL downloadUrl;
     private URL jenkinsUrlString;
+    private ProjectMapping projectMapping;
 
     public AccessibleSettings(File dbFileRoot, File localReposRoot, int realXPort, int realDPort, int realUPort, int previewPort, int jenkinsPort) throws UnknownHostException, MalformedURLException {
         this.dbFileRoot = dbFileRoot;
@@ -58,6 +56,7 @@ public class AccessibleSettings {
         this.realUPort = realUPort;
         this.realJPort = jenkinsPort;
         this.preview1Port = previewPort;
+        this.projectMapping = new ProjectMapping(this);
 
         String thisMachine = InetAddress.getLocalHost().getHostName();
         this.xmlRpcUrl = new URL("http://" + thisMachine + ":" + realXPort + "/RPC2/");
@@ -153,27 +152,35 @@ public class AccessibleSettings {
         return downloadUrl;
     }
 
-    private Map<String, String> getPublicValues() {
-        TreeMap<String, String> r = new TreeMap();
-        r.put("repos", localReposRoot.getAbsolutePath());
-        r.put("root", dbFileRoot.getAbsolutePath());
-        r.put("xport", String.valueOf(realXPort));
-        r.put("dport", String.valueOf(realDPort));
-        r.put("uport", String.valueOf(realUPort));
-        r.put("view1port", String.valueOf(preview1Port));
-        Set<String> keys = r.keySet();
-        StringBuilder sb = new StringBuilder();
-        keys.stream().forEach((key) -> {
-            sb.append(key).append(" ");
-        });
-        r.put("help", sb.toString());
-        return r;
+    public ProjectMapping getProjectMapping() {
+        return projectMapping;
     }
 
-    String get(String string) {
-        if (null != string) {
-            return getPublicValues().get(string);
+    private String getPublicValues(String property, String value) throws ProjectMappingExceptions.ProjectMappingException {
+        TreeMap<String, ResponseContainer.Response> responseTreeMap = new TreeMap<>();
+
+        responseTreeMap.put("repos", new ResponseContainer.GetPathResponse(localReposRoot.getAbsolutePath(), "Path to folder containing repositories"));
+        responseTreeMap.put("root", new ResponseContainer.GetPathResponse(dbFileRoot.getAbsolutePath(), "Path to folder containing builds"));
+        responseTreeMap.put("xport", new ResponseContainer.GetPortResponse(realXPort, "XML-RPC port"));
+        responseTreeMap.put("dport", new ResponseContainer.GetPortResponse(realDPort, "Download port"));
+        responseTreeMap.put("uport", new ResponseContainer.GetPortResponse(realUPort, "SSH upload port"));
+        responseTreeMap.put("view1port", new ResponseContainer.GetPortResponse(preview1Port, "View port"));
+        responseTreeMap.put("allProducts", new ResponseContainer.GetAllProductsResponse(projectMapping));
+        responseTreeMap.put("allProjects", new ResponseContainer.GetAllProjectsResponse(projectMapping));
+        responseTreeMap.put("projectsOfProduct", new ResponseContainer.GetProjectsOfProductResponse(projectMapping, value));
+        responseTreeMap.put("projectOfNvra", new ResponseContainer.GetProjectOfNvraResponse(projectMapping, value));
+        responseTreeMap.put("productOfNvra", new ResponseContainer.GetProductOfNvraResponse(projectMapping, value));
+        responseTreeMap.put("productOfProject", new ResponseContainer.GetProductOfProjectResponse(projectMapping, value));
+        responseTreeMap.put("help", new ResponseContainer.GetHelpResponse(responseTreeMap));
+
+        if (responseTreeMap.get(property) == null) {
+            throw new ProjectMappingExceptions.BadRequestException();
         }
-        return null;
+
+        return responseTreeMap.get(property).respond();
+    }
+
+    String get(String property, String value) throws ProjectMappingExceptions.ProjectMappingException {
+        return getPublicValues(property, value);
     }
 }
