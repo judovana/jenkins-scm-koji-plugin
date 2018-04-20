@@ -39,8 +39,8 @@ public class XmlRpcHelperTest {
 
     public static class TimeoutingXmlRpcServer {
 
-        private int port;
-        private WebServer webServer;
+        private final int port;
+        private final WebServer webServer;
         private final int delay;
 
         public TimeoutingXmlRpcServer(int port, int holdOn) {
@@ -72,28 +72,23 @@ public class XmlRpcHelperTest {
             XmlRpcServerConfigImpl config = new XmlRpcServerConfigImpl();
             config.setEnabledForExtensions(true);
             webServer.getXmlRpcServer().setConfig(config);
-            XmlRpcHandlerMapping xxx = new XmlRpcHandlerMapping() {
+            XmlRpcHandlerMapping xxx = (String string) -> new XmlRpcHandler() {
                 @Override
-                public XmlRpcHandler getHandler(String string) throws XmlRpcNoSuchHandlerException, XmlRpcException {
-                    return new XmlRpcHandler() {
-                        @Override
-                        public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
-                            pretendLoad();
-                            if (xrr.getMethodName().equals("sample.sum")) {
-                                //testing method
-                                return sum(xrr.getParameter(0), xrr.getParameter(1));
-                            }
-                            return null;
-                        }
-
-                        private void pretendLoad() {
-                            try {
-                                Thread.sleep(delay);
-                            } catch (InterruptedException ex) {
-                                throw new RuntimeException(ex);
-                            }
-                        }
-                    };
+                public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
+                    pretendLoad();
+                    if (xrr.getMethodName().equals("sample.sum")) {
+                        //testing method
+                        return sum(xrr.getParameter(0), xrr.getParameter(1));
+                    }
+                    return null;
+                }
+                
+                private void pretendLoad() {
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
             };
             webServer.getXmlRpcServer().setHandlerMapping(xxx);
