@@ -49,9 +49,14 @@ public class XmlRpcHelper {
     public static class XmlRpcExecutioner {
 
         private final String currentURL ;
+        private Integer timeout = 60*1000;
 
         public XmlRpcExecutioner(String currentURL) {
             this.currentURL = currentURL;
+        }
+
+        public void setTimeout(Integer timeout) {
+            this.timeout = timeout;
         }
 
         public  Object execute(String methodName, Object... args) {
@@ -67,6 +72,10 @@ public class XmlRpcHelper {
         private XmlRpcClient createClient() throws Exception {
             XmlRpcClientConfigImpl xmlRpcConfig = new XmlRpcClientConfigImpl();
             xmlRpcConfig.setServerURL(new URL(currentURL));
+            if (timeout != null) {
+                xmlRpcConfig.setConnectionTimeout(timeout);
+                xmlRpcConfig.setReplyTimeout(timeout);
+            }
             XmlRpcClient client = new XmlRpcClient();
             client.setConfig(xmlRpcConfig);
             client.setTypeFactory(new KojiTypeFactory(client));

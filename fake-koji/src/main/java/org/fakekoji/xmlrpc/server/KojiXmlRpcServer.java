@@ -43,15 +43,14 @@ import org.apache.xmlrpc.webserver.WebServer;
  */
 public class KojiXmlRpcServer {
 
-    private File dbFileRoot;
-    private int port;
+    private final File dbFileRoot;
+    private final int port;
     private WebServer webServer;
 
     public KojiXmlRpcServer(File dbFileRoot, int port) {
         this.dbFileRoot = dbFileRoot;
         this.port = port;
-
-        webServer = new WebServer(port);
+        this.webServer = new WebServer(port);
     }
 
     /**
