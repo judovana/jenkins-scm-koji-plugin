@@ -188,6 +188,28 @@ class ResponseContainer {
         }
     }
 
+    static class GetBuildArchesResponse implements Response {
+
+        private final ProjectMapping projectMapping;
+        private final String projectName;
+
+        GetBuildArchesResponse(ProjectMapping projectMapping, String projectName) {
+            this.projectMapping = projectMapping;
+            this.projectName = projectName;
+        }
+
+        @Override
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
+            List<String> list = projectMapping.getBuildArchesOfProject(projectName);
+            return list == null ? null : String.join(DELIMITER, list);
+        }
+
+        @Override
+        public String help() {
+            return "Returns list of arches the project is supposed to be built on, 1 argument required - project ( use command allProjects to see the options)";
+        }
+    }
+
     static class GetHelpResponse implements Response {
 
         private final Map<String, Response> responseMap;

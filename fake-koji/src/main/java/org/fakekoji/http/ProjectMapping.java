@@ -1,6 +1,7 @@
 package org.fakekoji.http;
 
-import java.io.File;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -11,6 +12,7 @@ import static org.fakekoji.http.ProjectMappingExceptions.*;
 class ProjectMapping {
 
     private final AccessibleSettings settings;
+    private final static String BUILD_ARCHES = "build-arches";
 
 
     ProjectMapping(AccessibleSettings settings) {
@@ -101,5 +103,52 @@ class ProjectMapping {
             }
         }
         throw new ProjectDoesNotMatchException();
+    }
+
+    List<String> getBuildArchesOfProject(String project) throws ProjectMappingException {
+        File projectFile = null;
+        File buildArchesFile = null;
+
+        // looking for project file in local-repos
+        for (File file : Objects.requireNonNull(settings.getLocalReposRoot().listFiles())) {
+            if (file.getName().equals(project)) {
+                projectFile = file;
+            }
+        }
+        if (projectFile == null) {
+            throw new ProjectMappingExceptions.ProjectDoesNotMatchException();
+        }
+
+        // looking for build-arches file in project file
+        for (File file : Objects.requireNonNull(projectFile.listFiles())) {
+            if (file.getName().equals(BUILD_ARCHES)) {
+                buildArchesFile = file;
+                break;
+            }
+        }
+        if (buildArchesFile == null) {
+            throw new ConfigFileNotFoundException();
+        }
+        try {
+            InputStream inputStream = new FileInputStream(buildArchesFile);
+            InputStreamReader streamReader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
+            BufferedReader bufferedReader = new BufferedReader(streamReader);
+            String line;
+            while (true) {
+                line = bufferedReader.readLine();
+                if (line == null) {
+                    throw new InvalidConfigFileException();
+                }
+                if (line.startsWith("#")) {
+                    continue;
+                }
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                return Arrays.asList(line.trim().split("\\s+"));
+            }
+        } catch (IOException e) {
+            throw new InvalidConfigFileException();
+        }
     }
 }
