@@ -188,6 +188,50 @@ class ResponseContainer {
         }
     }
 
+    static class GetExpectedArchesOfProjectResponse implements Response {
+
+        private final ProjectMapping projectMapping;
+        private final String projectName;
+
+        GetExpectedArchesOfProjectResponse(ProjectMapping projectMapping, String projectName) {
+            this.projectMapping = projectMapping;
+            this.projectName = projectName;
+        }
+
+        @Override
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
+            List<String> list = projectMapping.getExpectedArchesOfProject(projectName);
+            return list == null ? null : String.join(DELIMITER, list);
+        }
+
+        @Override
+        public String help() {
+            return "Returns list of arches the project is supposed to be built on, 1 argument required - project ( use command allProjects to see the options)";
+        }
+    }
+
+    static class GetExpectedArchesOfNVR implements Response {
+
+        private final ProjectMapping projectMapping;
+        private final String nvr;
+
+        GetExpectedArchesOfNVR(ProjectMapping projectMapping, String nvr) {
+            this.projectMapping = projectMapping;
+            this.nvr = nvr;
+        }
+
+        @Override
+        public String respond() throws ProjectMappingExceptions.ProjectMappingException {
+            List<String> list = projectMapping.getExpectedArchesOfNVR(nvr);
+            return list == null ? null : String.join(DELIMITER, list);
+        }
+
+        @Override
+        public String help() {
+            return "Returns list of arches the project of NVR is supposed to be built on, 1 argument required - NVR (name-version-release";
+        }
+    }
+
     static class GetHelpResponse implements Response {
 
         private final Map<String, Response> responseMap;

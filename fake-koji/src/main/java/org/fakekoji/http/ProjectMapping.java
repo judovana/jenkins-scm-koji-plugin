@@ -1,6 +1,8 @@
 package org.fakekoji.http;
 
-import java.io.File;
+import org.fakekoji.xmlrpc.server.core.FakeBuild;
+
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -11,7 +13,6 @@ import static org.fakekoji.http.ProjectMappingExceptions.*;
 class ProjectMapping {
 
     private final AccessibleSettings settings;
-
 
     ProjectMapping(AccessibleSettings settings) {
         this.settings = settings;
@@ -101,5 +102,45 @@ class ProjectMapping {
             }
         }
         throw new ProjectDoesNotMatchException();
+    }
+
+    List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
+        File expectedArchesFile = null;
+        for (File file : Objects.requireNonNull(getProjectFile(project).listFiles())) {
+            if (file.getName().equals(FakeBuild.archesConfigFileName)) {
+                expectedArchesFile = file;
+                break;
+            }
+        }
+        if (expectedArchesFile == null) {
+            throw new ConfigFileNotFoundException();
+        }
+        String[] arches;
+        try {
+            arches = FakeBuild.readArchesFile(expectedArchesFile);
+        } catch (IOException e) {
+            throw new InvalidConfigFileException();
+        }
+        if (arches == null) {
+            throw new InvalidConfigFileException();
+        }
+        return Arrays.asList(arches);
+    }
+
+    List<String> getExpectedArchesOfNVR(String nvr) throws ProjectMappingException{
+        return getExpectedArchesOfProject(getProjectOfNvra(nvr));
+    }
+
+    private File getProjectFile(String projectName) throws ProjectMappingException {
+        File projectFile = null;
+        for (File file : Objects.requireNonNull(settings.getLocalReposRoot().listFiles())) {
+            if (file.getName().equals(projectName)) {
+                projectFile = file;
+            }
+        }
+        if (projectFile == null) {
+            throw new ProjectDoesNotMatchException();
+        }
+        return projectFile;
     }
 }

@@ -59,7 +59,7 @@ public class FakeBuild {
     private static final String logs = "logs";
     private static final String data = "data";
     public static final String notBuiltTagPart = "_notBuild-";
-    private static final String archesConfigFileName = "arches-expected";
+    public static final String archesConfigFileName = "arches-expected";
 
     public FakeBuild(String name, String version, String release, File releaseDir) {
         this.dir = releaseDir;
@@ -531,7 +531,7 @@ public class FakeBuild {
         }
     }
 
-    private static String[] readArchesFile(File f) throws IOException {
+    public static String[] readArchesFile(File f) throws IOException {
         try (
                 InputStream fis = new FileInputStream(f);
                 InputStreamReader isr = new InputStreamReader(fis, Charset.forName("UTF-8"));

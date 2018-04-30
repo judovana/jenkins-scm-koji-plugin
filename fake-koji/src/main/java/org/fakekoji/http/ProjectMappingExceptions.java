@@ -43,4 +43,18 @@ class ProjectMappingExceptions {
             super("Bad request, use get?help to list values");
         }
     }
+
+    static class ConfigFileNotFoundException extends ProjectMappingException {
+
+        ConfigFileNotFoundException() {
+            super("Config file not found");
+        }
+    }
+
+    static class InvalidConfigFileException extends ProjectMappingException {
+
+        InvalidConfigFileException() {
+            super("Invalid config file");
+        }
+    }
 }

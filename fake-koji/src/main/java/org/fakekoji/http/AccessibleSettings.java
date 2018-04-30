@@ -171,6 +171,8 @@ public class AccessibleSettings {
         responseTreeMap.put("projectOfNvra", new ResponseContainer.GetProjectOfNvraResponse(projectMapping, value));
         responseTreeMap.put("productOfNvra", new ResponseContainer.GetProductOfNvraResponse(projectMapping, value));
         responseTreeMap.put("productOfProject", new ResponseContainer.GetProductOfProjectResponse(projectMapping, value));
+        responseTreeMap.put("expectedArchesOfProject", new ResponseContainer.GetExpectedArchesOfProjectResponse(projectMapping, value));
+        responseTreeMap.put("expectedArchesOfNvr", new ResponseContainer.GetExpectedArchesOfNVR(projectMapping, value));
         responseTreeMap.put("help", new ResponseContainer.GetHelpResponse(responseTreeMap));
 
         if (responseTreeMap.get(property) == null) {
