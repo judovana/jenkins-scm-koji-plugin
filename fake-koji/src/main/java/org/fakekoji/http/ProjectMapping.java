@@ -1,7 +1,8 @@
 package org.fakekoji.http;
 
+import org.fakekoji.xmlrpc.server.core.FakeBuild;
+
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -12,8 +13,6 @@ import static org.fakekoji.http.ProjectMappingExceptions.*;
 class ProjectMapping {
 
     private final AccessibleSettings settings;
-    private final static String BUILD_ARCHES = "build-arches";
-
 
     ProjectMapping(AccessibleSettings settings) {
         this.settings = settings;
@@ -105,50 +104,43 @@ class ProjectMapping {
         throw new ProjectDoesNotMatchException();
     }
 
-    List<String> getBuildArchesOfProject(String project) throws ProjectMappingException {
-        File projectFile = null;
-        File buildArchesFile = null;
+    List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
+        File expectedArchesFile = null;
+        for (File file : Objects.requireNonNull(getProjectFile(project).listFiles())) {
+            if (file.getName().equals(FakeBuild.archesConfigFileName)) {
+                expectedArchesFile = file;
+                break;
+            }
+        }
+        if (expectedArchesFile == null) {
+            throw new ConfigFileNotFoundException();
+        }
+        String[] arches;
+        try {
+            arches = FakeBuild.readArchesFile(expectedArchesFile);
+        } catch (IOException e) {
+            throw new InvalidConfigFileException();
+        }
+        if (arches == null) {
+            throw new InvalidConfigFileException();
+        }
+        return Arrays.asList(arches);
+    }
 
-        // looking for project file in local-repos
+    List<String> getExpectedArchesOfNVR(String nvr) throws ProjectMappingException{
+        return getExpectedArchesOfProject(getProjectOfNvra(nvr));
+    }
+
+    private File getProjectFile(String projectName) throws ProjectMappingException {
+        File projectFile = null;
         for (File file : Objects.requireNonNull(settings.getLocalReposRoot().listFiles())) {
-            if (file.getName().equals(project)) {
+            if (file.getName().equals(projectName)) {
                 projectFile = file;
             }
         }
         if (projectFile == null) {
-            throw new ProjectMappingExceptions.ProjectDoesNotMatchException();
+            throw new ProjectDoesNotMatchException();
         }
-
-        // looking for build-arches file in project file
-        for (File file : Objects.requireNonNull(projectFile.listFiles())) {
-            if (file.getName().equals(BUILD_ARCHES)) {
-                buildArchesFile = file;
-                break;
-            }
-        }
-        if (buildArchesFile == null) {
-            throw new ConfigFileNotFoundException();
-        }
-        try {
-            InputStream inputStream = new FileInputStream(buildArchesFile);
-            InputStreamReader streamReader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
-            BufferedReader bufferedReader = new BufferedReader(streamReader);
-            String line;
-            while (true) {
-                line = bufferedReader.readLine();
-                if (line == null) {
-                    throw new InvalidConfigFileException();
-                }
-                if (line.startsWith("#")) {
-                    continue;
-                }
-                if (line.trim().isEmpty()) {
-                    continue;
-                }
-                return Arrays.asList(line.trim().split("\\s+"));
-            }
-        } catch (IOException e) {
-            throw new InvalidConfigFileException();
-        }
+        return projectFile;
     }
 }
