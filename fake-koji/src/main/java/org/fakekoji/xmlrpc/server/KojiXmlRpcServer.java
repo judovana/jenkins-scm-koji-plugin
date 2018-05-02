@@ -24,7 +24,6 @@
 package org.fakekoji.xmlrpc.server;
 
 import hudson.plugins.scm.koji.Constants;
-import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
@@ -35,6 +34,7 @@ import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcNoSuchHandlerException;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
+import org.fakekoji.http.AccessibleSettings;
 
 /**
  * This Server implements Koji XmlRpc API (It is called by jenkins koji plugin )
@@ -43,14 +43,12 @@ import org.apache.xmlrpc.webserver.WebServer;
  */
 public class KojiXmlRpcServer {
 
-    private final File dbFileRoot;
-    private final int port;
     private WebServer webServer;
+    AccessibleSettings settings;
 
-    public KojiXmlRpcServer(File dbFileRoot, int port) {
-        this.dbFileRoot = dbFileRoot;
-        this.port = port;
-        this.webServer = new WebServer(port);
+    public KojiXmlRpcServer(AccessibleSettings settings) {
+        this.settings = settings;
+        this.webServer = new WebServer(settings.getRealXPort());
     }
 
     /**
@@ -76,11 +74,11 @@ public class KojiXmlRpcServer {
     }
 
     public int getPort() {
-        return port;
+        return settings.getRealXPort();
     }
 
     public void start() throws IOException {
-        webServer = new WebServer(port);
+        webServer = new WebServer(settings.getRealXPort());
         webServer.setParanoid(false);
         XmlRpcServerConfigImpl config = new XmlRpcServerConfigImpl();
         config.setEnabledForExtensions(true);
@@ -97,7 +95,7 @@ public class KojiXmlRpcServer {
                     public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
                         ServerLogger.log(new Date().toString() + " Requested: " + xrr.getMethodName());
                         //need reinitializzing, as new  build couldbe added
-                        FakeKojiDB kojiDb = new FakeKojiDB(dbFileRoot);
+                        FakeKojiDB kojiDb = new FakeKojiDB(settings);
                         if (xrr.getMethodName().equals("sample.sum")) {
                             //testing method
                             return sum(xrr.getParameter(0), xrr.getParameter(1));

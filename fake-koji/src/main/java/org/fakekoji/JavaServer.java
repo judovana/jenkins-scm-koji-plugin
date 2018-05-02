@@ -60,7 +60,7 @@ public class JavaServer {
 
     public JavaServer(AccessibleSettings settings) throws UnknownHostException, MalformedURLException {
         this.settings = settings;
-        kojiXmlRpcServer = new KojiXmlRpcServer(settings.getDbFileRoot(), settings.getRealXPort());
+        kojiXmlRpcServer = new KojiXmlRpcServer(settings);
         kojiDownloadServer = new KojiDownloadServer(settings.getDbFileRoot(), settings.getRealDPort());
         previewFakeKojiServer = new PreviewFakeKoji(settings);
         sshApiServer = new SshApiService(settings.getDbFileRoot(), settings.getRealUPort());

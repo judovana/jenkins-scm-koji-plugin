@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import static org.fakekoji.http.ProjectMappingExceptions.*;
 
-class ProjectMapping {
+public class ProjectMapping {
 
     private final AccessibleSettings settings;
 
@@ -104,7 +104,7 @@ class ProjectMapping {
         throw new ProjectDoesNotMatchException();
     }
 
-    List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
+    public List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
         File expectedArchesFile = null;
         for (File file : Objects.requireNonNull(getProjectFile(project).listFiles())) {
             if (file.getName().equals(FakeBuild.archesConfigFileName)) {
@@ -127,7 +127,7 @@ class ProjectMapping {
         return Arrays.asList(arches);
     }
 
-    List<String> getExpectedArchesOfNVR(String nvr) throws ProjectMappingException{
+    public List<String> getExpectedArchesOfNVR(String nvr) throws ProjectMappingException{
         return getExpectedArchesOfProject(getProjectOfNvra(nvr));
     }
 

@@ -43,6 +43,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.fakekoji.http.ProjectMapping;
+import org.fakekoji.http.ProjectMappingExceptions;
 import org.fakekoji.xmlrpc.server.IsFailedBuild;
 import org.fakekoji.xmlrpc.server.ServerLogger;
 import org.fakekoji.xmlrpc.server.utils.DirFilter;
@@ -55,17 +58,19 @@ public class FakeBuild {
     private final String release;
     private final String nvr;
     private final File dir;
+    private final ProjectMapping projectMapping;
 
     private static final String logs = "logs";
     private static final String data = "data";
     public static final String notBuiltTagPart = "_notBuild-";
     public static final String archesConfigFileName = "arches-expected";
 
-    public FakeBuild(String name, String version, String release, File releaseDir) {
+    public FakeBuild(String name, String version, String release, File releaseDir, ProjectMapping projectMapping) {
         this.dir = releaseDir;
         this.name = name;
         this.version = version;
         this.release = release;
+        this.projectMapping = projectMapping;
         this.nvr = name + "-" + version + "-" + release;
     }
 
@@ -165,18 +170,6 @@ public class FakeBuild {
         return null;
     }
 
-    private File getArchesConfigFile() {
-        return new File(getDataDir(), archesConfigFileName);
-    }
-
-    private File getProjectConfigFile1() {
-        return new File(dir + "/../../" + archesConfigFileName);
-    }
-
-    private File getProjectConfigFile2() {
-        return new File(dir + "/../../../" + name + "-" + archesConfigFileName);
-    }
-
     public List<String> getArches() {
         File[] possibleArchesDirs = dir.listFiles(new DirFilter());
         List<String> arches = new ArrayList<>(possibleArchesDirs.length);
@@ -221,13 +214,13 @@ public class FakeBuild {
                 if (release.contains("el")) {
                     int osVersion = determineRhOs(release);
                     return prefixIfNecessary(new String[]{
-                        TagsProvider.getRhel5Rhel6Base(osVersion),
-                        TagsProvider.getRhel7Base(osVersion)});
+                            TagsProvider.getRhel5Rhel6Base(osVersion),
+                            TagsProvider.getRhel7Base(osVersion)});
                 }
                 if (release.contains("fc")) {
                     int osVersion = determineRhOs(release);
                     return prefixIfNecessary(new String[]{
-                        TagsProvider.getFedoraBase(osVersion)
+                            TagsProvider.getFedoraBase(osVersion)
                     });
                 }
                 if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
@@ -276,25 +269,25 @@ public class FakeBuild {
     }
 
     /*
-     [ 0]	"size = 16"	HashMap	ObjectVariable 	
-     [ 0]	"release => 1.b14.fc24"	HashMap$Node	ObjectVariable 	
-     [ 2]	"nvr => java-1.8.0-openjdk-debuginfo-1.8.0.102-1.b14.fc24"	HashMap$Node	ObjectVariable 	
-     [ 3]	"external_repo_id => 0"	HashMap$Node	ObjectVariable 	
-     [ 4]	"version => 1.8.0.102"	HashMap$Node	ObjectVariable 	
-     [ 5]	"external_repo_name => INTERNAL"	HashMap$Node	ObjectVariable 	
-     [ 6]	"size => 82989458"	HashMap$Node	ObjectVariable 	
-     [ 7]	"build_id => 794434"	HashMap$Node	ObjectVariable 	
-     [ 8]	"buildtime => 1472142006"	HashMap$Node	ObjectVariable 	
-     [ 9]	"metadata_only => false"	HashMap$Node	ObjectVariable 	
-     [10]	"extra => null"	HashMap$Node	ObjectVariable 	
-     [11]	"buildroot_id => 6287882"	HashMap$Node	ObjectVariable 	
-     [12]	"name => java-1.8.0-openjdk-debuginfo"	HashMap$Node	ObjectVariable 	
-     [13]	"payloadhash => a94abb6777419cfd8a3e9db537554293"	HashMap$Node	ObjectVariable 	
-     [14]	"arch => x86_64"	HashMap$Node	ObjectVariable 	
-     [15]	"id => 7988968"	HashMap$Node	ObjectVariable 	
-     [ 1]	"epoch => 1"	HashMap$Node	ObjectVariable 	
-     [ 1]	"size = 16"	HashMap	ObjectVariable 	
-    
+     [ 0]	"size = 16"	HashMap	ObjectVariable
+     [ 0]	"release => 1.b14.fc24"	HashMap$Node	ObjectVariable
+     [ 2]	"nvr => java-1.8.0-openjdk-debuginfo-1.8.0.102-1.b14.fc24"	HashMap$Node	ObjectVariable
+     [ 3]	"external_repo_id => 0"	HashMap$Node	ObjectVariable
+     [ 4]	"version => 1.8.0.102"	HashMap$Node	ObjectVariable
+     [ 5]	"external_repo_name => INTERNAL"	HashMap$Node	ObjectVariable
+     [ 6]	"size => 82989458"	HashMap$Node	ObjectVariable
+     [ 7]	"build_id => 794434"	HashMap$Node	ObjectVariable
+     [ 8]	"buildtime => 1472142006"	HashMap$Node	ObjectVariable
+     [ 9]	"metadata_only => false"	HashMap$Node	ObjectVariable
+     [10]	"extra => null"	HashMap$Node	ObjectVariable
+     [11]	"buildroot_id => 6287882"	HashMap$Node	ObjectVariable
+     [12]	"name => java-1.8.0-openjdk-debuginfo"	HashMap$Node	ObjectVariable
+     [13]	"payloadhash => a94abb6777419cfd8a3e9db537554293"	HashMap$Node	ObjectVariable
+     [14]	"arch => x86_64"	HashMap$Node	ObjectVariable
+     [15]	"id => 7988968"	HashMap$Node	ObjectVariable
+     [ 1]	"epoch => 1"	HashMap$Node	ObjectVariable
+     [ 1]	"size = 16"	HashMap	ObjectVariable
+
      */
     public Object[] getRpmsAsArrayOfMaps(Object[] archs) {
         List<File> files = getNonLogs();
@@ -375,30 +368,20 @@ public class FakeBuild {
     private static final String[] defaultSupportedArchs = new String[]{"x86_64", "i686", "win"/*, "aarch64"*/};
     //aarch64 is now added in rnutime, via  per project  settings. When ojdk9 will be oldest suported jdk, it have sense to put it here.
 
-    private String[] getSupportedArches() throws IOException {
+    private String[] getSupportedArches() {
         ServerLogger.log("For: " + getNVR());
-        if (getArchesConfigFile().exists()) {
-            ServerLogger.log("Using expected arches from " + getArchesConfigFile().getAbsolutePath());
-            return readArchesFile(getArchesConfigFile());
+        try {
+            List<String> arches = this.projectMapping.getExpectedArchesOfNVR(getNVR());
+            ServerLogger.log("Using project default expected arches");
+            return arches.toArray(new String[0]);
+        } catch (ProjectMappingExceptions.ProjectMappingException e) {
+            ServerLogger.log("Using hardcoded arches.");
+            return defaultSupportedArchs;
         }
-        if (getProjectConfigFile1().exists()) {
-            ServerLogger.log("Using expected arches from " + getProjectConfigFile1().getAbsolutePath());
-            return readArchesFile(getProjectConfigFile1());
-        }
-        if (getProjectConfigFile2().exists()) {
-            ServerLogger.log("Using expected arches from " + getProjectConfigFile2().getAbsolutePath());
-            return readArchesFile(getProjectConfigFile2());
-        }
-        ServerLogger.log("Using hardcoded arches.");
-        return defaultSupportedArchs;
     }
 
     public void printExpectedArchesForThisBuild() {
-        try {
-            ServerLogger.log("Expected to build on: "+Arrays.toString(getSupportedArches()));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+        ServerLogger.log("Expected to build on: "+Arrays.toString(getSupportedArches()));
     }
 
     private String[] prefixIfNecessary(String[] connectedTags) throws IOException {
