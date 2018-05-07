@@ -18,7 +18,7 @@ public class ProjectMapping {
         this.settings = settings;
     }
 
-    List<String> getAllProducts() throws ProjectMappingException {
+    public List<String> getAllProducts() throws ProjectMappingException {
         List<String> products = Arrays.stream(Objects.requireNonNull(settings.getDbFileRoot().listFiles()))
                 .filter(File::isDirectory)
                 .map(File::getName)
@@ -29,7 +29,7 @@ public class ProjectMapping {
         return products;
     }
 
-    List<String> getAllProjects() throws ProjectMappingException {
+    public List<String> getAllProjects() throws ProjectMappingException {
         List<String> projects = Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
                 .filter(File::isDirectory)
                 .map(File::getName)
@@ -40,7 +40,7 @@ public class ProjectMapping {
         return projects;
     }
 
-    List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
+    public List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
         if (!getAllProducts().contains(productName)) {
             throw new ProductDoesNotMatchException();
         }
@@ -54,7 +54,7 @@ public class ProjectMapping {
         return projects;
     }
 
-    String getProjectOfNvra(String nvra) throws ProjectMappingException {
+    public String getProjectOfNvra(String nvra) throws ProjectMappingException {
         return getProjectOfNvra(nvra, getAllProjects());
     }
 
@@ -75,7 +75,7 @@ public class ProjectMapping {
         throw new ProjectDoesNotMatchException();
     }
 
-    String getProductOfNvra(String nvra) throws ProjectMappingException {
+    public String getProductOfNvra(String nvra) throws ProjectMappingException {
         return getProductOfNvra(nvra, getAllProducts());
     }
 
@@ -88,7 +88,7 @@ public class ProjectMapping {
         throw new ProductDoesNotMatchException();
     }
 
-    String getProductOfProject(String project) throws ProjectMappingException {
+    public String getProductOfProject(String project) throws ProjectMappingException {
         return getProductOfProject(project, getAllProducts(), getAllProjects());
     }
 

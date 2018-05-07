@@ -7,6 +7,10 @@ public class ProjectMappingExceptions {
         ProjectMappingException(String message) {
             super(message);
         }
+        
+        public ProjectMappingException(Exception e) {
+            super(e);
+        }
     }
 
     static class ProjectsNotFoundException extends ProjectMappingException {

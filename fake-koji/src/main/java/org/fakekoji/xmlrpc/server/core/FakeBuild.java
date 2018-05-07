@@ -169,6 +169,10 @@ public class FakeBuild {
         }
         return null;
     }
+    
+    private File getBuildExpectedArches() {
+        return new File(getDataDir(), archesConfigFileName);
+    }
 
     public List<String> getArches() {
         File[] possibleArchesDirs = dir.listFiles(new DirFilter());
@@ -201,7 +205,7 @@ public class FakeBuild {
      * @return
      * @throws java.io.IOException
      */
-    public String[] guessTags() throws IOException {
+    public String[] guessTags() throws ProjectMappingExceptions.ProjectMappingException {
         List<File> files = this.getNonLogs();
         for (File file : files) {
             //appearence and using of openjdkX-win is very unlike, but...
@@ -214,13 +218,13 @@ public class FakeBuild {
                 if (release.contains("el")) {
                     int osVersion = determineRhOs(release);
                     return prefixIfNecessary(new String[]{
-                            TagsProvider.getRhel5Rhel6Base(osVersion),
-                            TagsProvider.getRhel7Base(osVersion)});
+                        TagsProvider.getRhel5Rhel6Base(osVersion),
+                        TagsProvider.getRhel7Base(osVersion)});
                 }
                 if (release.contains("fc")) {
                     int osVersion = determineRhOs(release);
                     return prefixIfNecessary(new String[]{
-                            TagsProvider.getFedoraBase(osVersion)
+                        TagsProvider.getFedoraBase(osVersion)
                     });
                 }
                 if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
@@ -269,25 +273,25 @@ public class FakeBuild {
     }
 
     /*
-     [ 0]	"size = 16"	HashMap	ObjectVariable
-     [ 0]	"release => 1.b14.fc24"	HashMap$Node	ObjectVariable
-     [ 2]	"nvr => java-1.8.0-openjdk-debuginfo-1.8.0.102-1.b14.fc24"	HashMap$Node	ObjectVariable
-     [ 3]	"external_repo_id => 0"	HashMap$Node	ObjectVariable
-     [ 4]	"version => 1.8.0.102"	HashMap$Node	ObjectVariable
-     [ 5]	"external_repo_name => INTERNAL"	HashMap$Node	ObjectVariable
-     [ 6]	"size => 82989458"	HashMap$Node	ObjectVariable
-     [ 7]	"build_id => 794434"	HashMap$Node	ObjectVariable
-     [ 8]	"buildtime => 1472142006"	HashMap$Node	ObjectVariable
-     [ 9]	"metadata_only => false"	HashMap$Node	ObjectVariable
-     [10]	"extra => null"	HashMap$Node	ObjectVariable
-     [11]	"buildroot_id => 6287882"	HashMap$Node	ObjectVariable
-     [12]	"name => java-1.8.0-openjdk-debuginfo"	HashMap$Node	ObjectVariable
-     [13]	"payloadhash => a94abb6777419cfd8a3e9db537554293"	HashMap$Node	ObjectVariable
-     [14]	"arch => x86_64"	HashMap$Node	ObjectVariable
-     [15]	"id => 7988968"	HashMap$Node	ObjectVariable
-     [ 1]	"epoch => 1"	HashMap$Node	ObjectVariable
-     [ 1]	"size = 16"	HashMap	ObjectVariable
-
+     [ 0]	"size = 16"	HashMap	ObjectVariable 	
+     [ 0]	"release => 1.b14.fc24"	HashMap$Node	ObjectVariable 	
+     [ 2]	"nvr => java-1.8.0-openjdk-debuginfo-1.8.0.102-1.b14.fc24"	HashMap$Node	ObjectVariable 	
+     [ 3]	"external_repo_id => 0"	HashMap$Node	ObjectVariable 	
+     [ 4]	"version => 1.8.0.102"	HashMap$Node	ObjectVariable 	
+     [ 5]	"external_repo_name => INTERNAL"	HashMap$Node	ObjectVariable 	
+     [ 6]	"size => 82989458"	HashMap$Node	ObjectVariable 	
+     [ 7]	"build_id => 794434"	HashMap$Node	ObjectVariable 	
+     [ 8]	"buildtime => 1472142006"	HashMap$Node	ObjectVariable 	
+     [ 9]	"metadata_only => false"	HashMap$Node	ObjectVariable 	
+     [10]	"extra => null"	HashMap$Node	ObjectVariable 	
+     [11]	"buildroot_id => 6287882"	HashMap$Node	ObjectVariable 	
+     [12]	"name => java-1.8.0-openjdk-debuginfo"	HashMap$Node	ObjectVariable 	
+     [13]	"payloadhash => a94abb6777419cfd8a3e9db537554293"	HashMap$Node	ObjectVariable 	
+     [14]	"arch => x86_64"	HashMap$Node	ObjectVariable 	
+     [15]	"id => 7988968"	HashMap$Node	ObjectVariable 	
+     [ 1]	"epoch => 1"	HashMap$Node	ObjectVariable 	
+     [ 1]	"size = 16"	HashMap	ObjectVariable 	
+    
      */
     public Object[] getRpmsAsArrayOfMaps(Object[] archs) {
         List<File> files = getNonLogs();
@@ -365,26 +369,34 @@ public class FakeBuild {
      * Little bit more generally - if the arch dir don't exists or is empty, is
      * considered as not build
      */
-    private static final String[] defaultSupportedArchs = new String[]{"x86_64", "i686", "win"/*, "aarch64"*/};
-    //aarch64 is now added in rnutime, via  per project  settings. When ojdk9 will be oldest suported jdk, it have sense to put it here.
 
-    private String[] getSupportedArches() {
+    private String[] getSupportedArches() throws ProjectMappingExceptions.ProjectMappingException {
         ServerLogger.log("For: " + getNVR());
-        try {
-            List<String> arches = this.projectMapping.getExpectedArchesOfNVR(getNVR());
-            ServerLogger.log("Using project default expected arches");
-            return arches.toArray(new String[0]);
-        } catch (ProjectMappingExceptions.ProjectMappingException e) {
-            ServerLogger.log("Using hardcoded arches.");
-            return defaultSupportedArchs;
+        String[] arches;
+        File archesFile = getBuildExpectedArches();
+        if (archesFile.exists()) {
+            try {
+                arches = readArchesFile(archesFile);
+                ServerLogger.log("Using build specific arches");
+                return arches;
+            } catch (IOException e) {
+                throw new ProjectMappingExceptions.ProjectMappingException(e);
+            }
         }
+        arches = this.projectMapping.getExpectedArchesOfNVR(getNVR()).toArray(new String[0]);
+        ServerLogger.log("Using project default expected arches");
+        return arches;
     }
 
     public void printExpectedArchesForThisBuild() {
-        ServerLogger.log("Expected to build on: "+Arrays.toString(getSupportedArches()));
+        try {
+            ServerLogger.log("Expected to build on: " + Arrays.toString(getSupportedArches()));
+        } catch (ProjectMappingExceptions.ProjectMappingException e) {
+            ServerLogger.log("No expected arches to build on");
+        }
     }
 
-    private String[] prefixIfNecessary(String[] connectedTags) throws IOException {
+    private String[] prefixIfNecessary(String[] connectedTags) throws ProjectMappingExceptions.ProjectMappingException {
         List<String> arches = getArches();
         Collections.sort(getArches());
         //primary case - the build have src, so we expect to build it in time onall arches
@@ -468,7 +480,7 @@ public class FakeBuild {
     }
 
     public static void main(String... arg) throws IOException {
-        //arg = new String[]{"/mnt/raid1/local-builds/java-9-openjdk/" + archesConfigFileName};
+        //arg = new String[]{"/mnt/raid1/upstream-repos/java-9-openjdk/" + archesConfigFileName};
         if (arg.length == 0) {
             ServerLogger.log("Expected single argument - path to file to save the file. Suggested name is: " + archesConfigFileName);
             System.exit(1);
@@ -478,38 +490,21 @@ public class FakeBuild {
         System.err.println(Arrays.toString(readArchesFile(new File(arg[0]))));
     }
 
-    private static void generateDefaultArchesFile(File f) throws IOException {
+    private static void generateDefaultArchesFile(File defaultArchesFile) throws IOException {
         try (
-                OutputStream fis = new FileOutputStream(f);
-                OutputStreamWriter isr = new OutputStreamWriter(fis, Charset.forName("UTF-8"));
-                BufferedWriter br = new BufferedWriter(isr);) {
-            String suggestedPath = "name/version/release/data/";
-            br.write("# note, " + suggestedPath + " is value which can (however unlikely) change in time\n");
-            br.write("# lines are trimmed before processing, and empty and # starting lines are skipped. First non # non empty line is considered as arches line and splitted on \\s+, returned, reading stopped \n");
-            br.write("# ############## #\n");
-            br.write("# this configfile contains architectures the build/project should be built\n");
-            br.write("# it can be palced as " + suggestedPath + "" + archesConfigFileName + "\n");
-            br.write("# where it takes priority, so you can configure *single* build to built on exacta architectures\n");
-            br.write("# if this single-build do not exists, then it is tried in name/" + archesConfigFileName + "\n");
-            br.write("# by doing so, you can configure a product to buitl on some architectures (unles its build specifies differently)\n");
-            br.write("# eg java-1.{7,9}.0-openjdk are supposed to build on x86_64, i686 and windows. However those from icedtea7-forest, aarch64/jdk8 and aarch64/shenandoah should build also on aarch64\n");
-            br.write("# in addition java-9-openjdk is supposedto build on x86_64, i686 and windows AND aarch64\n");
-            br.write("# last place where to search config is /name-" + archesConfigFileName + ". Eg java-1.8.0-openjdk-" + archesConfigFileName + ", where / is root of fake-koji.\n");
-            br.write("# This last configutration was added, as fake koji dont like files where only dirs should be (it works fine but...)\n");
-            br.write("# ############## #\n");
-            br.write("# Now, to enable per-project (== per forest) settings, the \n");
-            br.write("#    TckScripts/jenkins/static/tempt-ojdk-repo.sh\n");
-            br.write("# always copy (if exists) project-name/" + archesConfigFileName + " togetehr with uploading src.tarxz to its " + suggestedPath + "\n");
-            br.write("# Please always keep comment here describing above, and explaining why listed arches are there.\n");
-            br.write("# generated from: "+System.getProperty("user.dir")+"\n");
-            br.write("# Defualt (hardcoded) arches are now: \n");
-            br.write("\n");
-            br.write(" ");
-            for (String arch : defaultSupportedArchs) {
-                br.write(arch + " ");
-            }
-            br.write("\n");
-            br.flush();
+                OutputStream outputStream = new FileOutputStream(defaultArchesFile);
+                OutputStreamWriter streamWriter = new OutputStreamWriter(outputStream, Charset.forName("UTF-8"));
+                BufferedWriter bufferedWriter = new BufferedWriter(streamWriter)) {
+            bufferedWriter.write("# ############## #\n");
+            bufferedWriter.write("# This config file contains architectures the project should be built on.\n");
+            bufferedWriter.write("# It must be placed in project's directory as " + archesConfigFileName + "\n");
+            bufferedWriter.write("# or, if build specific config file is needed, it can be placed in build's data folder.");
+            bufferedWriter.write("# Lines are trimmed before processing, and empty and # starting lines are skipped.");
+            bufferedWriter.write("# First non # non empty line is considered as arches line and splitted on \\\\s+, returned, reading stopped");
+            bufferedWriter.write("# ############## #\n");
+            bufferedWriter.write("# Please always keep comment here describing above.\n");
+            bufferedWriter.write("# Generated from: "+System.getProperty("user.dir")+"\n");
+            bufferedWriter.flush();
 
         }
     }

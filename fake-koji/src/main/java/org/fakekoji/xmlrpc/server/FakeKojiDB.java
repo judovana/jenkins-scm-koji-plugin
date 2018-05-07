@@ -25,7 +25,6 @@ package org.fakekoji.xmlrpc.server;
 
 import hudson.plugins.scm.koji.Constants;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -34,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.fakekoji.http.AccessibleSettings;
+import org.fakekoji.http.ProjectMappingExceptions;
 import org.fakekoji.xmlrpc.server.core.FakeBuild;
 import org.fakekoji.xmlrpc.server.utils.DirFilter;
 
@@ -180,8 +180,8 @@ public class FakeKojiDB {
             if (get.getBuildID() == buildId) {
                 try {
                     return get.guessTags();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                } catch (ProjectMappingExceptions.ProjectMappingException e) {
+                    return new String[0];
                 }
             }
         }
