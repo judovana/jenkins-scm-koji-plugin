@@ -1,11 +1,15 @@
 package org.fakekoji.http;
 
-class ProjectMappingExceptions {
+public class ProjectMappingExceptions {
 
-    static class ProjectMappingException extends Exception {
+    public static class ProjectMappingException extends Exception {
 
         ProjectMappingException(String message) {
             super(message);
+        }
+        
+        public ProjectMappingException(Exception e) {
+            super(e);
         }
     }
 

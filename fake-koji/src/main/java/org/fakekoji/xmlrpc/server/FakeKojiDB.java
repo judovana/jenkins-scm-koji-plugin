@@ -25,13 +25,15 @@ package org.fakekoji.xmlrpc.server;
 
 import hudson.plugins.scm.koji.Constants;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.fakekoji.http.AccessibleSettings;
+import org.fakekoji.http.ProjectMappingExceptions;
 import org.fakekoji.xmlrpc.server.core.FakeBuild;
 import org.fakekoji.xmlrpc.server.utils.DirFilter;
 
@@ -42,14 +44,14 @@ import org.fakekoji.xmlrpc.server.utils.DirFilter;
  */
 public class FakeKojiDB {
 
-    private final File mainDir;
     private final String[] projects;
     private final List<FakeBuild> builds;
+    private final AccessibleSettings settings;
 
-    FakeKojiDB(File file) {
+    FakeKojiDB(AccessibleSettings settings) {
         ServerLogger.log(new Date().toString() + " (re)initizing fake koji DB");
-        mainDir = file;
-        File[] projectDirs = mainDir.listFiles(new DirFilter());
+        this.settings = settings;
+        File[] projectDirs = settings.getDbFileRoot().listFiles(new DirFilter());
         projects = new String[projectDirs.length];
         builds = new ArrayList<>();
         //read all projects
@@ -61,7 +63,7 @@ public class FakeKojiDB {
             for (File version : versions) {
                 File[] releases = version.listFiles(new DirFilter());
                 for (File release : releases) {
-                    FakeBuild b = new FakeBuild(projectDir.getName(), version.getName(), release.getName(), release);
+                    FakeBuild b = new FakeBuild(projectDir.getName(), version.getName(), release.getName(), release, settings.getProjectMapping());
                     builds.add(b);
                 }
             }
@@ -178,8 +180,8 @@ public class FakeKojiDB {
             if (get.getBuildID() == buildId) {
                 try {
                     return get.guessTags();
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                } catch (ProjectMappingExceptions.ProjectMappingException e) {
+                    return new String[0];
                 }
             }
         }

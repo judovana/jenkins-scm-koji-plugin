@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 import static org.fakekoji.http.ProjectMappingExceptions.*;
 
-class ProjectMapping {
+public class ProjectMapping {
 
     private final AccessibleSettings settings;
 
@@ -18,7 +18,7 @@ class ProjectMapping {
         this.settings = settings;
     }
 
-    List<String> getAllProducts() throws ProjectMappingException {
+    public List<String> getAllProducts() throws ProjectMappingException {
         List<String> products = Arrays.stream(Objects.requireNonNull(settings.getDbFileRoot().listFiles()))
                 .filter(File::isDirectory)
                 .map(File::getName)
@@ -29,7 +29,7 @@ class ProjectMapping {
         return products;
     }
 
-    List<String> getAllProjects() throws ProjectMappingException {
+    public List<String> getAllProjects() throws ProjectMappingException {
         List<String> projects = Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
                 .filter(File::isDirectory)
                 .map(File::getName)
@@ -40,7 +40,7 @@ class ProjectMapping {
         return projects;
     }
 
-    List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
+    public List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
         if (!getAllProducts().contains(productName)) {
             throw new ProductDoesNotMatchException();
         }
@@ -54,7 +54,7 @@ class ProjectMapping {
         return projects;
     }
 
-    String getProjectOfNvra(String nvra) throws ProjectMappingException {
+    public String getProjectOfNvra(String nvra) throws ProjectMappingException {
         return getProjectOfNvra(nvra, getAllProjects());
     }
 
@@ -75,7 +75,7 @@ class ProjectMapping {
         throw new ProjectDoesNotMatchException();
     }
 
-    String getProductOfNvra(String nvra) throws ProjectMappingException {
+    public String getProductOfNvra(String nvra) throws ProjectMappingException {
         return getProductOfNvra(nvra, getAllProducts());
     }
 
@@ -88,7 +88,7 @@ class ProjectMapping {
         throw new ProductDoesNotMatchException();
     }
 
-    String getProductOfProject(String project) throws ProjectMappingException {
+    public String getProductOfProject(String project) throws ProjectMappingException {
         return getProductOfProject(project, getAllProducts(), getAllProjects());
     }
 
@@ -104,7 +104,7 @@ class ProjectMapping {
         throw new ProjectDoesNotMatchException();
     }
 
-    List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
+    public List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
         File expectedArchesFile = null;
         for (File file : Objects.requireNonNull(getProjectFile(project).listFiles())) {
             if (file.getName().equals(FakeBuild.archesConfigFileName)) {
@@ -127,7 +127,7 @@ class ProjectMapping {
         return Arrays.asList(arches);
     }
 
-    List<String> getExpectedArchesOfNVR(String nvr) throws ProjectMappingException{
+    public List<String> getExpectedArchesOfNVR(String nvr) throws ProjectMappingException{
         return getExpectedArchesOfProject(getProjectOfNvra(nvr));
     }
 
