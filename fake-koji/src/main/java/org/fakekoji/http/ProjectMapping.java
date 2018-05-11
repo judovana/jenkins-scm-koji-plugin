@@ -146,6 +146,12 @@ public class ProjectMapping {
         return projectFile;
     }
 
+    /*
+    * for historic reasons, some builds don't share our naming convention and therefore we need to modify them so
+    * project mapping api can determine their project or product.
+    * for instance, we can't determine project/product of 'openjdk8-win-jdk8u121.b13-52.dev.upstream', so it needs
+    * to be changed to 'java-1.8.0-openjdk-win-jdk8u121.b13-52.dev.upstream'
+    */
     private String processUnordinaryNVR(String nvr) {
         nvr = nvr.replace("openjdk8", "java-1.8.0-openjdk");
         return nvr;
