@@ -139,6 +139,8 @@ public class FakeKojiTestUtil {
         createFile(expectedArches, a2 + " " + a3 + " " + a4 + "\n");
 
         generateUpstreamRepo(upstreamRepos, "java-1.8.0-openjdk-dev");
+        
+        createFile(new File(upstreamRepos + "/java-1.8.0-openjdk-dev", "arches-expected"), a2 + " " + a3 + " " + a4 + "\n");
     }
 
     public static int getFakeKojiPreviewPort() {
