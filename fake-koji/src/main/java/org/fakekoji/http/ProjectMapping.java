@@ -59,6 +59,7 @@ public class ProjectMapping {
     }
 
     String getProjectOfNvra(String nvra, List<String> projectList) throws ProjectMappingException {
+        nvra = processUnordinaryNVR(nvra);
         projectList.sort((String s1, String s2) -> s2.length() - s1.length());
         for (String project : projectList) {
             String[] dashSplit = project.split("-");
@@ -80,6 +81,7 @@ public class ProjectMapping {
     }
 
     String getProductOfNvra(String nvra, List<String> productList) throws ProjectMappingException {
+        nvra = processUnordinaryNVR(nvra);
         for (String product : productList) {
             if (nvra.contains(product)) {
                 return product;
@@ -142,5 +144,10 @@ public class ProjectMapping {
             throw new ProjectDoesNotMatchException();
         }
         return projectFile;
+    }
+
+    private String processUnordinaryNVR(String nvr) {
+        nvr = nvr.replace("openjdk8", "java-1.8.0-openjdk");
+        return nvr;
     }
 }
