@@ -26,9 +26,15 @@ package org.fakekoji.xmlrpc.client;
 import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import java.net.MalformedURLException;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
+
+import hudson.plugins.scm.koji.model.Build;
 import org.apache.xmlrpc.XmlRpcException;
 import org.fakekoji.JavaServer;
+import org.fakekoji.xmlrpc.server.XmlRpcRequestParams;
+import org.fakekoji.xmlrpc.server.XmlRpcRequestParamsBuilder;
+import org.fakekoji.xmlrpc.server.XmlRpcResponse;
 
 /**
  * This class is simple test which connects to running
@@ -52,28 +58,36 @@ public class JavaClient {
 //        Object result = client.execute("sample.sum", params);
 //        int sum = ((Integer) result);
 //        System.out.println("The sum is: " + sum);
-        Integer packageId = (Integer) execute(Constants.getPackageID, "java-1.8.0-openjdk");
+        final XmlRpcRequestParamsBuilder paramsBuilderFirst = new XmlRpcRequestParamsBuilder();
+        paramsBuilderFirst.setPackageName("java-1.8.0-openjdk");
+        final XmlRpcRequestParams paramsFirst = paramsBuilderFirst.build();
+        final XmlRpcResponse responseFirst = execute(Constants.getPackageID, paramsFirst);
+        final Integer packageId = responseFirst.getPackageId();
         System.out.println(packageId);
-        Map listBuildsparamsMap = new HashMap();
-        listBuildsparamsMap.put(Constants.packageID, packageId);
-        listBuildsparamsMap.put("state", 1);
-        listBuildsparamsMap.put("__starstar", Boolean.TRUE);
-        Object[] results = (Object[]) execute(Constants.listBuilds, listBuildsparamsMap);
-        System.out.println(results.length);
-        for (Object result : results) {
-            Map m = (Map) result;
 
-            Map listTagsParamsMap = new HashMap();
-            Object bId = m.get(Constants.build_id);
-            System.out.println(bId);
-            System.out.println(m.get(Constants.nvr));
-            listTagsParamsMap.put(Constants.build, bId);
-            listTagsParamsMap.put("__starstar", Boolean.TRUE);
-            Object[] res = (Object[]) execute(Constants.listTags, listTagsParamsMap);
-            System.out.println("  " + res.length);
-            for (Object re : res) {
-                Map mm = (Map) re;
-                Object tag = mm.get(Constants.name);
+        final XmlRpcRequestParamsBuilder paramsBuilderSecond = new XmlRpcRequestParamsBuilder();
+        paramsBuilderSecond.setPackageId(packageId);
+        paramsBuilderSecond.setState(1);
+        paramsBuilderSecond.setStarstar(Boolean.TRUE);
+        final XmlRpcRequestParams paramsSecond = paramsBuilderSecond.build();
+
+        final XmlRpcResponse responseSecond = execute(Constants.listBuilds, paramsSecond);
+        List<Build> builds = responseSecond.getBuilds();
+        System.out.println(builds.size());
+        for (Build build : builds) {
+
+            final Integer buildId = build.getId();
+            System.out.println(buildId);
+            System.out.println(build.getNvr());
+
+            final XmlRpcRequestParamsBuilder paramsBuilderThird = new XmlRpcRequestParamsBuilder();
+            paramsBuilderThird.setBuildId(buildId);
+            paramsBuilderThird.setStarstar(Boolean.TRUE);
+            final XmlRpcRequestParams paramsThird = paramsBuilderThird.build();
+            XmlRpcResponse responseThird = execute(Constants.listTags, paramsThird);
+            Set<String> tags = responseThird.getTags();
+            System.out.println("  " + tags.size());
+            for (String tag : tags) {
                 System.out.println("   " + tag);
             }
 
@@ -81,7 +95,7 @@ public class JavaClient {
 
     }
 
-    protected static Object execute(String methodName, Object... args) {
-        return new XmlRpcHelper.XmlRpcExecutioner("http://hydra.brq.redhat.com:" + JavaServer.DFAULT_RP2C_PORT + "/RPC2").execute(methodName, args);
+    protected static XmlRpcResponse execute(String methodName, XmlRpcRequestParams params) {
+        return new XmlRpcHelper.XmlRpcExecutioner("http://hydra.brq.redhat.com:" + JavaServer.DFAULT_RP2C_PORT + "/RPC2").execute(methodName, params);
     }
 }

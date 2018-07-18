@@ -26,12 +26,8 @@ package org.fakekoji.xmlrpc.server;
 import hudson.plugins.scm.koji.Constants;
 import java.io.IOException;
 import java.util.Date;
-import java.util.Map;
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.XmlRpcHandler;
-import org.apache.xmlrpc.XmlRpcRequest;
+
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
-import org.apache.xmlrpc.server.XmlRpcNoSuchHandlerException;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 import org.fakekoji.http.AccessibleSettings;
@@ -84,60 +80,38 @@ public class KojiXmlRpcServer {
         config.setEnabledForExtensions(true);
         webServer.getXmlRpcServer().setConfig(config);
 
-        XmlRpcHandlerMapping xxx = new XmlRpcHandlerMapping() {
-            @Override
-            /**
-             * Very naive implementation of xml-rpc handler with hardcoded calls
-             */
-            public XmlRpcHandler getHandler(String string) throws XmlRpcNoSuchHandlerException, XmlRpcException {
-                return new XmlRpcHandler() {
-                    @Override
-                    public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
-                        ServerLogger.log(new Date().toString() + " Requested: " + xrr.getMethodName());
-                        //need reinitializzing, as new  build couldbe added
-                        FakeKojiDB kojiDb = new FakeKojiDB(settings);
-                        if (xrr.getMethodName().equals("sample.sum")) {
-                            //testing method
-                            return sum(xrr.getParameter(0), xrr.getParameter(1));
-                        }
-                        if (xrr.getMethodName().equals(Constants.getPackageID)) {
-                            //input is package name, eg java-1.8.0-openjdk
-                            //result is int, package id in koji database
-                            //so this impl must have internal "database" (eg itw do not have number in name)
-                            return kojiDb.getPkgId(xrr.getParameter(0).toString());
-                        }
-                        if (xrr.getMethodName().equals(Constants.listBuilds)) {
-                            //inut is hashmap with
-                            /* paramsMap.put(packageID, packageId);
-                                 paramsMap.put("state", 1);
-                                 paramsMap.put("__starstar", Boolean.TRUE
-                             */
-                            // from those we care only about packageID
-                            return kojiDb.getProjectBuildsByProjectIdAsMaps(((Integer) ((Map) (xrr.getParameter(0))).get(Constants.packageID)));
-                            //return is array of objects,  where each meber ishash map
-                            //koji plugin seems to  care about version, release and build_id (so each build needs some int hash:( tos erve as "database"
-                            //later maybe date, name, nvr, arch, completion_time, rpms, tags, 
-                        }
-                        if (xrr.getMethodName().equals(Constants.listTags)) {
-                            // input is buildId
-                            // output object[] wehre mamabers are hashmaps, where we care baout "name" only
-                            return kojiDb.getTags(((Map) (xrr.getParameter(0))));
-                        }
-
-                        if (xrr.getMethodName().equals(Constants.listRPMs)) {
-                            //input is hashmap buildID->integer, arches->String[] and uninteresed __starstar->true
-                            //output is array off hashmaps
-                            return kojiDb.getRpms(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));
-                        }
-                        if (xrr.getMethodName().equals(Constants.listArchives)) {
-                            //input is hashmap buildID->integer, arches->String[] and uninteresed __starstar->true
-                            //output is array off hashmaps
-                            return kojiDb.getArchives(((Map) (xrr.getParameter(0))).get(Constants.buildID), ((Map) (xrr.getParameter(0))).get(Constants.arches));
-                        }
-                        return null;
-                    }
-                };
+        XmlRpcHandlerMapping xxx = string -> xmlRpcRequest -> {
+            ServerLogger.log(new Date().toString() + " Requested: " + xmlRpcRequest.getMethodName());
+            //need reinitializzing, as new  build could be added
+            FakeKojiDB kojiDb = new FakeKojiDB(settings);
+            if (xmlRpcRequest.getMethodName().equals("sample.sum")) {
+                //testing method
+                return sum(xmlRpcRequest.getParameter(0), xmlRpcRequest.getParameter(1));
             }
+            XmlRpcRequestParamsBuilder paramsBuilder = new XmlRpcRequestParamsBuilder();
+
+            final String methodName = xmlRpcRequest.getMethodName();
+            XmlRpcRequestParams params = paramsBuilder.build(xmlRpcRequest.getParameter(0), methodName);
+
+            final XmlRpcResponseBuilder responseBuilder = new XmlRpcResponseBuilder();
+            switch (methodName) {
+                case Constants.getPackageID:
+                    responseBuilder.setPackageId(kojiDb.getPkgId(params.getPackageName()));
+                    break;
+                case Constants.listBuilds:
+                    responseBuilder.setBuilds(kojiDb.getProjectBuilds(params.getPackageId()));
+                    break;
+                case Constants.listTags:
+                    responseBuilder.setTags(kojiDb.getTags(params.getBuildId()));
+                    break;
+                case Constants.listRPMs:
+                    responseBuilder.setRpms(kojiDb.getRpms(params.getBuildId(), params.getArchs()));
+                    break;
+                case Constants.listArchives:
+                    responseBuilder.setArchives(kojiDb.getArchives(params.getBuildId(), params.getArchs()));
+                    break;
+            }
+            return responseBuilder.build().toObject();
         };
         webServer.getXmlRpcServer().setHandlerMapping(xxx);
         //server.addHandler("sample", new JavaServer());
