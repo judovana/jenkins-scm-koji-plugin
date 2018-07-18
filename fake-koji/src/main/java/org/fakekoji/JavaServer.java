@@ -111,7 +111,7 @@ public class JavaServer {
         int realUPort = DFAULT_SSHUPLOAD_PORT;
         int realJport = DEFAULT_JENKINS_PORT;
         String hostname = null;
-        int view1Port = 8000;
+        int view1Port = 80;
         File dbFileRoot = null;
         File reposFileRoot = null;
 
