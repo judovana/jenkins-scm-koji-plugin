@@ -16,23 +16,23 @@ public class XmlRpcRequestParams implements Serializable {
     private final Integer state;
     private final List<String> archs;
 
-	public XmlRpcRequestParams(
-			String packageName,
-			Integer packageId,
-			Integer buildId,
-			Boolean starstar,
-			Integer state,
-			List<String> archs
-	) {
-		this.packageName = packageName;
-		this.packageId = packageId;
-		this.buildId = buildId;
-		this.starstar = starstar;
-		this.state = state;
-		this.archs = archs;
-	}
+    public XmlRpcRequestParams(
+            String packageName,
+            Integer packageId,
+            Integer buildId,
+            Boolean starstar,
+            Integer state,
+            List<String> archs
+    ) {
+        this.packageName = packageName;
+        this.packageId = packageId;
+        this.buildId = buildId;
+        this.starstar = starstar;
+        this.state = state;
+        this.archs = archs;
+    }
 
-	public String getPackageName() {
+    public String getPackageName() {
         return packageName;
     }
 
@@ -57,37 +57,37 @@ public class XmlRpcRequestParams implements Serializable {
     }
 
     public Object toObject(String methodName) {
-		if (methodName.equals(Constants.getPackageID)) {
-			return packageName;
-		}
-		return toMap(methodName);
-	}
+        if (methodName.equals(Constants.getPackageID)) {
+            return packageName;
+        }
+        return toMap(methodName);
+    }
 
     public Map<String, Object> toMap(String methodName) {
-		final Map<String, Object> map = new HashMap<>();
-		if (packageId != null) {
-			map.put(Constants.packageID, packageId);
-		}
-		if (buildId != null) {
-			switch (methodName) {
-				case Constants.listTags:
-					map.put(Constants.build, buildId);
-					break;
-				case Constants.listRPMs:
-				case Constants.listArchives:
-					map.put(Constants.buildID, buildId);
-					break;
-			}
-		}
-		if (archs != null && !archs.isEmpty()) {
-			map.put(Constants.arches, archs.toArray());
-		}
-		if (starstar != null) {
-			map.put("__starstar", starstar);
-		}
-		if (state != null) {
-			map.put("state", state);
-		}
-		return map;
-	}
+        final Map<String, Object> map = new HashMap<>();
+        if (packageId != null) {
+            map.put(Constants.packageID, packageId);
+        }
+        if (buildId != null) {
+            switch (methodName) {
+                case Constants.listTags:
+                    map.put(Constants.build, buildId);
+                    break;
+                case Constants.listRPMs:
+                case Constants.listArchives:
+                    map.put(Constants.buildID, buildId);
+                    break;
+            }
+        }
+        if (archs != null && !archs.isEmpty()) {
+            map.put(Constants.arches, archs.toArray());
+        }
+        if (starstar != null) {
+            map.put("__starstar", starstar);
+        }
+        if (state != null) {
+            map.put("state", state);
+        }
+        return map;
+    }
 }

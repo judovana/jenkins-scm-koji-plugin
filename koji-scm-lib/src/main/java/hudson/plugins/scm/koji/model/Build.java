@@ -120,8 +120,8 @@ public class Build implements Comparable<Build>, java.io.Serializable {
         if (this == build) {
             return 0;
         }
-		final String thisCompletionTime = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.parse(getCompletionTime(), Constants.DTF));
-		final String thatCompletionTime = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.parse(build.getCompletionTime(), Constants.DTF));
+        final String thisCompletionTime = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.parse(getCompletionTime(), Constants.DTF));
+        final String thatCompletionTime = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.parse(build.getCompletionTime(), Constants.DTF));
         final LocalDateTime thisCompletionDateTime = LocalDateTime.parse(thisCompletionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         final LocalDateTime thatCompletionDateTime = LocalDateTime.parse(thatCompletionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         return thatCompletionDateTime.compareTo(thisCompletionDateTime);
