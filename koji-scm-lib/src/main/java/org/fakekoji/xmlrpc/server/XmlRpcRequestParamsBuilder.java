@@ -24,28 +24,34 @@ public class XmlRpcRequestParamsBuilder {
         this.archs = null;
     }
 
-    public void setPackageName(String packageName) {
+    public XmlRpcRequestParamsBuilder setPackageName(String packageName) {
         this.packageName = packageName;
+        return this;
     }
 
-    public void setPackageId(Integer packageId) {
+    public XmlRpcRequestParamsBuilder setPackageId(Integer packageId) {
         this.packageId = packageId;
+        return this;
     }
 
-    public void setBuildId(Integer buildId) {
+    public XmlRpcRequestParamsBuilder setBuildId(Integer buildId) {
         this.buildId = buildId;
+        return this;
     }
 
-    public void setStarstar(Boolean starstar) {
+    public XmlRpcRequestParamsBuilder setStarstar(Boolean starstar) {
         this.starstar = starstar;
+        return this;
     }
 
-    public void setState(Integer state) {
+    public XmlRpcRequestParamsBuilder setState(Integer state) {
         this.state = state;
+        return this;
     }
 
-    public void setArchs(List<String> archs) {
+    public XmlRpcRequestParamsBuilder setArchs(List<String> archs) {
         this.archs = archs;
+        return this;
     }
 
     public XmlRpcRequestParams build() {
@@ -61,8 +67,7 @@ public class XmlRpcRequestParamsBuilder {
 
     public XmlRpcRequestParams build(Object object, String methodName) {
         if (object instanceof String) {
-            setPackageName((String) object);
-            return build();
+            return setPackageName((String) object).build();
         }
         return build((Map<String, Object>) object, methodName);
     }

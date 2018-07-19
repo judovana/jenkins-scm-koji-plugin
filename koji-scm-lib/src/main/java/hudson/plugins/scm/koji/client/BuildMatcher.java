@@ -126,12 +126,11 @@ public class BuildMatcher {
         if (packageId == null) {
             return Collections.emptyList();
         }
-        final XmlRpcRequestParamsBuilder paramsBuilder = new XmlRpcRequestParamsBuilder();
-        paramsBuilder.setPackageId(packageId);
-        paramsBuilder.setStarstar(Boolean.TRUE);
-        paramsBuilder.setState(1);
-        final XmlRpcRequestParams params = paramsBuilder.build();
-
+        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
+                .setPackageId(packageId)
+                .setStarstar(Boolean.TRUE)
+                .setState(1)
+                .build();
         final XmlRpcResponse response = execute(Constants.listBuilds, params);
         List<Build> builds = response.getBuilds();
         if (builds == null || builds.isEmpty()) {
@@ -141,10 +140,10 @@ public class BuildMatcher {
     }
 
     private Set<String> retrieveTags(Integer buildId) {
-        final XmlRpcRequestParamsBuilder paramsBuilder = new XmlRpcRequestParamsBuilder();
-        paramsBuilder.setBuildId(buildId);
-        paramsBuilder.setStarstar(Boolean.TRUE);
-        final XmlRpcRequestParams params = paramsBuilder.build();
+        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
+                .setBuildId(buildId)
+                .setStarstar(Boolean.TRUE)
+                .build();
 
         final XmlRpcResponse response = execute(Constants.listTags, params);
         return response.getTags();
@@ -157,14 +156,11 @@ public class BuildMatcher {
     }
 
     private List<RPM> retrieveRPMs(Integer buildId) {
-        final XmlRpcRequestParamsBuilder paramsBuilder = new XmlRpcRequestParamsBuilder();
-        paramsBuilder.setBuildId(buildId);
-        paramsBuilder.setStarstar(Boolean.TRUE);
-        final String[] arches = composeArchesArray();
-        if (arches != null) {
-            paramsBuilder.setArchs(Arrays.asList(arches));
-        }
-        final XmlRpcRequestParams params = paramsBuilder.build();
+        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
+                .setBuildId(buildId)
+                .setStarstar(Boolean.TRUE)
+                .setArchs(composeArchesList())
+                .build();
         final XmlRpcResponse response = execute(Constants.listRPMs, params);
         final List<RPM> rpms = response.getRpms();
         return rpms == null ? Collections.emptyList() : rpms;
@@ -179,14 +175,13 @@ public class BuildMatcher {
      * here so we can store it.
      */
     private List<RPM> retrieveArchives(Build build) {
-        final XmlRpcRequestParamsBuilder paramsBuilder = new XmlRpcRequestParamsBuilder();
-        paramsBuilder.setBuildId(build.getId());
-
-        final String[] desiredArches = composeArchesArray();
+        final List<String> desiredArches = composeArchesList();
         final List<String> supportedArches = new ArrayList<>(1);
         supportedArches.add("win");
-        paramsBuilder.setStarstar(Boolean.TRUE);
-        final XmlRpcRequestParams params = paramsBuilder.build();
+        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
+                .setBuildId(build.getId())
+                .setStarstar(Boolean.TRUE)
+                .build();
         final XmlRpcResponse response = execute(Constants.listArchives, params);
         final List<String> archivefilenames = response.getArchives();
         if (archivefilenames == null || archivefilenames.isEmpty()) {
@@ -220,15 +215,15 @@ public class BuildMatcher {
         throw new RuntimeException("Unknown order");
     }
 
-    private String[] composeArchesArray() {
-        return composeArray(arch);
+    private List<String> composeArchesList() {
+        return composeList(arch);
     }
 
     protected XmlRpcResponse execute(String methodName, XmlRpcRequestParams params) {
         return new XmlRpcHelper.XmlRpcExecutioner(currentURL).execute(methodName, params);
     }
 
-    private static String[] composeArray(String values) {
+    private static List<String> composeList(String values) {
         if (values == null || values.trim().isEmpty()) {
             return null;
         }
@@ -241,7 +236,7 @@ public class BuildMatcher {
                 list.add(trimmed);
             }
         }
-        return list.toArray(new String[list.size()]);
+        return list;
     }
 
     public static int compareBuildsByCompletionTime(Build b1, Build b2) {
