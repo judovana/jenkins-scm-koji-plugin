@@ -5,7 +5,7 @@
     <parent>
         <groupId>fake-koji</groupId>
         <artifactId>koji-scm</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>jenkins-scm-koji-plugin</artifactId>
@@ -17,7 +17,7 @@
         <dependency>
             <groupId>fake-koji</groupId>
             <artifactId>koji-scm-lib</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>
@@ -53,7 +53,7 @@
         <dependency>
             <groupId>fake-koji</groupId>
             <artifactId>fake-koji</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <!--
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>fake-koji</groupId>
             <artifactId>fake-koji</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.2-SNAPSHOT</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
@@ -89,6 +89,11 @@
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>1.115</version>
                 <extensions>true</extensions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.15</version>
             </plugin>
         </plugins>
     </build>

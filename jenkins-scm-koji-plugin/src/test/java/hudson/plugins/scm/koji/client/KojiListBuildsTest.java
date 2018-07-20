@@ -39,6 +39,21 @@ public class KojiListBuildsTest {
             }
         }
     }
+    
+     KojiScmConfig createConfigCustomFedora28() {
+        return new KojiScmConfig(
+                "http://hydra.brq.redhat.com:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://hydra.brq.redhat.com:" + JavaServerConstants.dPortAxiom,
+                "java-11-openjdk",
+                "x86_64,src",
+                "f28*",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
 
     KojiScmConfig createConfigCustomFedora() {
         return new KojiScmConfig(
@@ -405,6 +420,13 @@ public class KojiListBuildsTest {
     public void testListMatchingBuildsCustomF() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora(), new NotProcessedNvrPredicate(new ArrayList<>()));
         testListMatchingBuildsCustom(worker);
+    }
+    @Test
+    public void testListMatchingBuildsCustomF28() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora28(), new NotProcessedNvrPredicate(new ArrayList<>()));
+        File tmpDir = temporaryFolder.newFolder();
+        tmpDir.mkdir();
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
     }
 
     @Test
