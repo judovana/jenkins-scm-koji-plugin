@@ -423,6 +423,7 @@ public class KojiListBuildsTest {
     }
     @Test
     public void testListMatchingBuildsCustomF28() throws Exception {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigCustomFedora28(), new NotProcessedNvrPredicate(new ArrayList<>()));
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
