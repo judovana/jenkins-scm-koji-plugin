@@ -1,7 +1,6 @@
 package hudson.plugins.scm.koji.model;
 
 import hudson.plugins.scm.koji.Constants;
-import jdk.nashorn.internal.parser.DateParser;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -11,7 +10,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -69,7 +67,7 @@ public class Build implements Comparable<Build>, java.io.Serializable {
         this.tags = null;
         this.manual = null;
     }
-    
+
     public boolean isManual(){
         if (manual == null){
             return false;
@@ -115,68 +113,18 @@ public class Build implements Comparable<Build>, java.io.Serializable {
     }
 
     @Override
-    public int compareTo(Build o) {
-        if (o == null) {
+    public int compareTo(Build build) {
+        if (build == null) {
             return -1;
         }
-        if (this == o) {
+        if (this == build) {
             return 0;
         }
-
-        LocalDateTime thisCompletionTime = LocalDateTime.parse(this.completionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        LocalDateTime thatCompletionTime = LocalDateTime.parse(o.completionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        return thatCompletionTime.compareTo(thisCompletionTime);
-    }
-
-    private int compare(String o1, String o2) {
-        if (o1 == null) {
-            if (o2 == null) {
-                return 0;
-            }
-            return 1;
-        }
-        // if we are here - o1 is not null:
-        if (o2 == null) {
-            return -1;
-        }
-        // if we are here - none of the arguments is null:
-        StringTokenizer tokenizer1 = new StringTokenizer(o1, "-.");
-        StringTokenizer tokenizer2 = new StringTokenizer(o2, "-.");
-        while (tokenizer1.hasMoreTokens() && tokenizer2.hasMoreTokens()) {
-            String t1 = tokenizer1.nextToken();
-            String t2 = tokenizer2.nextToken();
-            if (allDigits(t1) && allDigits(t2)) {
-                int i1 = Integer.parseInt(t1);
-                int i2 = Integer.parseInt(t2);
-                int intCompared = i1 - i2;
-                if (intCompared != 0) {
-                    return intCompared > 0 ? -1 : 1;
-                }
-                continue;
-            }
-            int stringCompared = t1.compareTo(t2);
-            if (stringCompared != 0) {
-                return stringCompared > 0 ? -1 : 1;
-            }
-        }
-        // if we are here then one of strings has ended,
-        // longer will be considered bigger version:
-        if (tokenizer1.hasMoreTokens()) {
-            return -1;
-        }
-        if (tokenizer2.hasMoreTokens()) {
-            return 1;
-        }
-        return 0;
-    }
-
-    private boolean allDigits(String str) {
-        for (int i = 0; i < str.length(); i++) {
-            if (!Character.isDigit(str.charAt(i))) {
-                return false;
-            }
-        }
-        return true;
+        final String thisCompletionTime = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.parse(getCompletionTime(), Constants.DTF));
+        final String thatCompletionTime = DateTimeFormatter.ISO_DATE_TIME.format(LocalDateTime.parse(build.getCompletionTime(), Constants.DTF));
+        final LocalDateTime thisCompletionDateTime = LocalDateTime.parse(thisCompletionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        final LocalDateTime thatCompletionDateTime = LocalDateTime.parse(thatCompletionTime, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        return thatCompletionDateTime.compareTo(thisCompletionDateTime);
     }
 
     public String getDownloadUrl() {

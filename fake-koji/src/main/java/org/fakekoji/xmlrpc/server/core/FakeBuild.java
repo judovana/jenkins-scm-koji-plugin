@@ -23,7 +23,6 @@
  */
 package org.fakekoji.xmlrpc.server.core;
 
-import hudson.plugins.scm.koji.Constants;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -40,10 +39,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import hudson.plugins.scm.koji.Constants;
+import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.http.ProjectMapping;
 import org.fakekoji.http.ProjectMappingExceptions;
 import org.fakekoji.xmlrpc.server.IsFailedBuild;
@@ -74,17 +77,18 @@ public class FakeBuild {
         this.nvr = name + "-" + version + "-" + release;
     }
 
-    public Map toBuildMap() {
-        Map<String, Object> buildMap = new HashMap();
-        buildMap.put(Constants.name, name);
-        buildMap.put(Constants.version, version);
-        buildMap.put(Constants.release, release);
-        buildMap.put(Constants.nvr, getNVR());
-        buildMap.put(Constants.build_id, getBuildID());
-        //"2016-08-02 21:23:37.487583");
-        buildMap.put(Constants.completion_time, Constants.DTF.format(getFinishingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()));
-        buildMap.put(Constants.rpms, getRpmsAsArrayOfMaps(getArches().toArray(new Object[0])));
-        return buildMap;
+    public Build toBuild() {
+        return new Build(
+                getBuildID(),
+                name,
+                version,
+                release,
+                getNVR(),
+                Constants.DTF.format(getFinishingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()),
+                getRpms(),
+                getTags(),
+                null
+        );
     }
 
     String getNVR() {
@@ -169,7 +173,7 @@ public class FakeBuild {
         }
         return null;
     }
-    
+
     private File getBuildExpectedArches() {
         return new File(getDataDir(), archesConfigFileName);
     }
@@ -253,6 +257,14 @@ public class FakeBuild {
         return new String[0];
     }
 
+    public Set<String> getTags() {
+        try {
+            return Stream.of(guessTags()).collect(Collectors.toSet());
+        } catch (ProjectMappingExceptions.ProjectMappingException e) {
+            return Collections.emptySet();
+        }
+    }
+
     private String[] connect(String[]... tags) {
         List<String> all = new ArrayList<>();
         for (String[] tag : tags) {
@@ -272,57 +284,39 @@ public class FakeBuild {
         return dir.hashCode();
     }
 
-    /*
-     [ 0]	"size = 16"	HashMap	ObjectVariable 	
-     [ 0]	"release => 1.b14.fc24"	HashMap$Node	ObjectVariable 	
-     [ 2]	"nvr => java-1.8.0-openjdk-debuginfo-1.8.0.102-1.b14.fc24"	HashMap$Node	ObjectVariable 	
-     [ 3]	"external_repo_id => 0"	HashMap$Node	ObjectVariable 	
-     [ 4]	"version => 1.8.0.102"	HashMap$Node	ObjectVariable 	
-     [ 5]	"external_repo_name => INTERNAL"	HashMap$Node	ObjectVariable 	
-     [ 6]	"size => 82989458"	HashMap$Node	ObjectVariable 	
-     [ 7]	"build_id => 794434"	HashMap$Node	ObjectVariable 	
-     [ 8]	"buildtime => 1472142006"	HashMap$Node	ObjectVariable 	
-     [ 9]	"metadata_only => false"	HashMap$Node	ObjectVariable 	
-     [10]	"extra => null"	HashMap$Node	ObjectVariable 	
-     [11]	"buildroot_id => 6287882"	HashMap$Node	ObjectVariable 	
-     [12]	"name => java-1.8.0-openjdk-debuginfo"	HashMap$Node	ObjectVariable 	
-     [13]	"payloadhash => a94abb6777419cfd8a3e9db537554293"	HashMap$Node	ObjectVariable 	
-     [14]	"arch => x86_64"	HashMap$Node	ObjectVariable 	
-     [15]	"id => 7988968"	HashMap$Node	ObjectVariable 	
-     [ 1]	"epoch => 1"	HashMap$Node	ObjectVariable 	
-     [ 1]	"size = 16"	HashMap	ObjectVariable 	
-    
-     */
-    public Object[] getRpmsAsArrayOfMaps(Object[] archs) {
-        List<File> files = getNonLogs();
-        List<Object> r = new ArrayList(files.size());
-        for (int i = 0; i < files.size(); i++) {
-            File get = files.get(i);
-            String fname = get.getName();
-            String pkgNAme = replaceLast(fname, "-.*", "");
-            pkgNAme = replaceLast(pkgNAme, "-.*", "");
-            String pkgFile = replaceLast(fname, "\\..*", ""); //.suffix
-            pkgFile = replaceLast(pkgFile, "\\..*", ""); //.arch
-            String arch = get.getParentFile().getName();
-            boolean mayBeFailed = new IsFailedBuild(get.getParentFile().getParentFile()).reCheck().getLastResult();
-            if (mayBeFailed) {
-                ServerLogger.log(" Warning: " + get + " seems to be from failed build!");
-            }
-            if (arrayContains(archs, arch)) {
-                Map m = new HashMap();
-                r.add(m);
-                m.put(Constants.release, release);
-                m.put(Constants.version, version);
-                m.put(Constants.name, pkgNAme);
-                /*IMPORTANT filename is originally only for archives. misusing here*/
-                m.put(Constants.filename, fname);
-                m.put(Constants.nvr, pkgFile);
-                m.put(Constants.arch, arch);
-                m.put(Constants.build_id, getBuildID());
-            }
-
+    public List<RPM> getRpms(List<String> archs) {
+        if (archs == null || archs.isEmpty()) {
+            return getRpms();
         }
-        return r.toArray();
+        final List<File> files = getNonLogs();
+        final List<RPM> rpms = new ArrayList<>(files.size());
+        for (File file : files) {
+            final String fileName = file.getName();
+            String packageName = replaceLast(fileName, "-.*", "");
+            packageName = replaceLast(packageName, "-.*", "");
+            String packageFile = replaceLast(fileName, "\\..*", ""); //.suffix
+            packageFile = replaceLast(packageFile, "\\..*", ""); //.arch
+            final String arch = file.getParentFile().getName();
+            final boolean isFailed = new IsFailedBuild(file.getParentFile().getParentFile()).reCheck().getLastResult();
+            if (isFailed) {
+                ServerLogger.log(" Warning: " + file + " seems to be from failed build!");
+            }
+            if (archs.contains(arch)) {
+                rpms.add(new RPM(
+                        packageName,
+                        version,
+                        release,
+                        packageFile,
+                        arch,
+                        fileName
+                ));
+            }
+        }
+        return rpms;
+    }
+
+    public List<RPM> getRpms() {
+        return getRpms(getArches());
     }
 
     public static String replaceLast(String text, String regex, String replacement) {
