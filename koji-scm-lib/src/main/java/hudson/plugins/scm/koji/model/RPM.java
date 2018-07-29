@@ -98,7 +98,7 @@ public class RPM implements java.io.Serializable {
     public static enum Suffix {
         INSTANCE;
 
-        private final String[] suffixes = {"rpm", "tarxz", "msi"};
+        private final String[] suffixes = {"rpm", "tarxz", "zip", "msi"};
 
         public String[] getSuffixes() {
             return suffixes;
