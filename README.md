@@ -25,7 +25,7 @@ Fake Koji uses Koji's NVRA (name, version, release, architecture):
   * keywords (static, slowdebug, fastdebug, zero, openj9)
 * `architecture` can be:
   * src containing source snapshot
-  * real platform (x86_64, i686, aarch64)
+  * real platform (x86_64, i686, aarch64, win10_x64, rhel7_aarch64, fedora28_x64, centos7_i386)
 * `data` stores build log for each architecture and pull/incoming logs for src
 
 ### SCP Upload
@@ -264,9 +264,9 @@ Next to Fake Koji there is Jenkins plugin, which ensures cooperation between Jen
 
 ##### Configuration examples
 
-![koji-plugin-config-01](https://user-images.githubusercontent.com/31389543/43505731-20463f54-9568-11e8-9f33-955f00529762.png)
+![koji-plugin-config-01](https://user-images.githubusercontent.com/31389543/43509489-1cb3f268-9573-11e8-925e-634b4100b5fb.png)
 
-![koji-plugin-config-02](https://user-images.githubusercontent.com/31389543/43505737-2275bbc4-9568-11e8-8a04-f0ec4719a65c.png)
+![koji-plugin-config-02](https://user-images.githubusercontent.com/31389543/43509492-1e6c8f0c-9573-11e8-976f-86c87db1f4e4.png)
 
 ### Results package
 
