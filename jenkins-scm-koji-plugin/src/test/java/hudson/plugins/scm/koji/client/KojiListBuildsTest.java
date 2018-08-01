@@ -268,7 +268,7 @@ public class KojiListBuildsTest {
         return new KojiScmConfig(
                 "https://brewhub.engineering.redhat.com/brewhub",
                 "http://download.eng.bos.redhat.com/brewroot/packages/",
-                "java-10-openjdk java-openjdk",
+                "openjdk8-win",
                 "win",
                 "openjdk-win*",
                 "",
@@ -318,22 +318,6 @@ public class KojiListBuildsTest {
                 "https://kojipkgs.fedoraproject.org/packages/",
                 "java-1.7.0-openjdk java-1.8.0-openjdk java-9-openjdk",
                 null,
-                "*",
-                "",
-                null,
-                null,
-                false,
-                false,
-                10
-        );
-    }
-
-    KojiScmConfig ojdkXzip() {
-        return new KojiScmConfig(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "https://localhost:" + JavaServerConstants.dPortAxiom,
-                "java-X-openjdk",
-                "win",
                 "*",
                 "",
                 null,
@@ -568,14 +552,6 @@ public class KojiListBuildsTest {
     public void testListMatchingBuildsWindows() throws Exception {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigWindows(), new NotProcessedNvrPredicate(new ArrayList<>()));
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
-    }
-
-    @Test
-    public void testListMatchingBuildsWindowsZip() throws Exception {
-        assumeTrue(onRhNet);
-        KojiListBuilds worker = new KojiListBuilds(ojdkXzip(), new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
