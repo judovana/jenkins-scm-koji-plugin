@@ -47,6 +47,7 @@ public class KojiListBuildsTest {
                 "java-11-openjdk",
                 "x86_64,src",
                 "f28*",
+                "",
                 null,
                 null,
                 false,
@@ -62,6 +63,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -77,6 +79,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "src",
                 "f24*",
+                "",
                 null,
                 null,
                 false,
@@ -92,6 +95,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "rhel-7.*-candidate",
+                "",
                 null,
                 null,
                 false,
@@ -107,6 +111,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "f24*",
+                "",
                 null,
                 null,
                 false,
@@ -122,6 +127,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "f24*",
+                "",
                 null,
                 null,
                 false,
@@ -137,6 +143,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "rhel-7.*-candidate",
+                "",
                 null,
                 null,
                 false,
@@ -152,6 +159,7 @@ public class KojiListBuildsTest {
                 "java-1.6.0-ibm",
                 "x86_64",
                 "rhel-6.*-supp*",
+                "",
                 null,
                 null,
                 false,
@@ -167,6 +175,7 @@ public class KojiListBuildsTest {
                 "java-1.6.0-ibm",
                 "i386",
                 "dist-5*-extras*",
+                "",
                 null,
                 null,
                 false,
@@ -182,6 +191,7 @@ public class KojiListBuildsTest {
                 "java-1.7.1-ibm",
                 "x86_64",
                 "supp-rhel-7.*",
+                "",
                 null,
                 null,
                 false,
@@ -197,6 +207,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "RHEL-6.*-candidate",
+                "",
                 null,
                 null,
                 false,
@@ -212,6 +223,7 @@ public class KojiListBuildsTest {
                 "java-1.7.0-oracle",
                 "i686",
                 "oracle-java-rhel-6.*",
+                "",
                 null,
                 null,
                 false,
@@ -227,6 +239,7 @@ public class KojiListBuildsTest {
                 "java-1.6.0-sun",
                 "x86_64",
                 "oracle-java-rhel-5*",
+                "",
                 null,
                 null,
                 false,
@@ -242,6 +255,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-oracle",
                 "x86_64",
                 "oracle-java-rhel-7.*",
+                "",
                 null,
                 null,
                 false,
@@ -254,9 +268,10 @@ public class KojiListBuildsTest {
         return new KojiScmConfig(
                 "https://brewhub.engineering.redhat.com/brewhub",
                 "http://download.eng.bos.redhat.com/brewroot/packages/",
-                "openjdk8-win",
+                "java-10-openjdk java-openjdk",
                 "win",
                 "openjdk-win*",
+                "",
                 null,
                 null,
                 false,
@@ -272,6 +287,7 @@ public class KojiListBuildsTest {
                 "openjdk8-win",
                 "win",
                 "openjdk-win*",
+                "",
                 null,
                 null,
                 false,
@@ -287,6 +303,7 @@ public class KojiListBuildsTest {
                 "java-1.8.0-openjdk",
                 null,
                 "RHEL-6.*-candidate",
+                "",
                 null,
                 null,
                 false,
@@ -302,6 +319,23 @@ public class KojiListBuildsTest {
                 "java-1.7.0-openjdk java-1.8.0-openjdk java-9-openjdk",
                 null,
                 "*",
+                "",
+                null,
+                null,
+                false,
+                false,
+                10
+        );
+    }
+
+    KojiScmConfig ojdkXzip() {
+        return new KojiScmConfig(
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "https://localhost:" + JavaServerConstants.dPortAxiom,
+                "java-X-openjdk",
+                "win",
+                "*",
+                "",
                 null,
                 null,
                 false,
@@ -428,6 +462,7 @@ public class KojiListBuildsTest {
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
     }
 
     @Test
@@ -538,6 +573,14 @@ public class KojiListBuildsTest {
     }
 
     @Test
+    public void testListMatchingBuildsWindowsZip() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(ojdkXzip(), new NotProcessedNvrPredicate(new ArrayList<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
+
+    @Test
     public void testNoArchPresentBuilds() throws Exception {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(createConfigWithEmptyArch(), new NotProcessedNvrPredicate(new ArrayList<>()));
@@ -560,7 +603,7 @@ public class KojiListBuildsTest {
                 "https://koji.fedoraproject.org/kojihub",
                 "https://kojipkgs.fedoraproject.org/packages/",
                 "this_package_name_hopefully_does_not_exist java-1.8.0-openjdk",
-                null, "*", null, null, false, false, 10);
+                null, "*", "*", null, null, false, false, 10);
         KojiListBuilds worker = new KojiListBuilds(config, new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -573,7 +616,7 @@ public class KojiListBuildsTest {
                 "https://koji.fedoraproject.org/kojihub",
                 "https://kojipkgs.fedoraproject.org/packages/",
                 "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
-                null, "*", null, null, false, false, 10);
+                null, "*", "*", null, null, false, false, 10);
         KojiListBuilds worker = new KojiListBuilds(config, new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNull(build);

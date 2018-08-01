@@ -80,6 +80,7 @@ public class KojiJenkinsTest {
         String arch = config.getArch();
         String tag = config.getTag();
         String excludeNvr = config.getExcludeNvr();
+        String whitelistNvr = config.getWhitelistNvr();
         String downloadDir = config.getDownloadDir();
         boolean cleanDownloadDir = config.isCleanDownloadDir();
         boolean dirPerNvr = config.isDirPerNvr();
@@ -87,7 +88,7 @@ public class KojiJenkinsTest {
 
         /* create KojiSCM plugin instance */
         KojiSCM scm = new KojiSCM(kojiTopUrl, kojiDownloadUrl,
-                packageName, arch, tag, excludeNvr,
+                packageName, arch, tag, excludeNvr, whitelistNvr,
                 downloadDir, cleanDownloadDir, dirPerNvr,
                 maxPreviousBuilds);
         /* set new KojiSCM plugin instance as scm for project */
@@ -121,6 +122,7 @@ public class KojiJenkinsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -142,6 +144,7 @@ public class KojiJenkinsTest {
                 "non-existing-build",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -162,6 +165,7 @@ public class KojiJenkinsTest {
                 "non-existing-build java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -183,6 +187,7 @@ public class KojiJenkinsTest {
                 "non-existing-build also-not-existing-build",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
