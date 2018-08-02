@@ -579,7 +579,7 @@ public class KojiListBuildsTest {
                 "https://koji.fedoraproject.org/kojihub",
                 "https://kojipkgs.fedoraproject.org/packages/",
                 "this_package_name_hopefully_does_not_exist java-1.8.0-openjdk",
-                null, "*", "*", null, null, false, false, 10);
+                null, "*", null, null, null, false, false, 10);
         KojiListBuilds worker = new KojiListBuilds(config, new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -592,7 +592,7 @@ public class KojiListBuildsTest {
                 "https://koji.fedoraproject.org/kojihub",
                 "https://kojipkgs.fedoraproject.org/packages/",
                 "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
-                null, "*", "*", null, null, false, false, 10);
+                null, "*", null, null, null, false, false, 10);
         KojiListBuilds worker = new KojiListBuilds(config, new NotProcessedNvrPredicate(new ArrayList<>()));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNull(build);
