@@ -46,6 +46,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
+
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.KeyUtils;
@@ -177,6 +179,7 @@ import org.apache.sshd.server.session.ServerSession;
  */
 public class SshApiService {
 
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
     private static final String AUTHORIZED_KEYS = "authorized_keys";
     private static final String ID_RSA_PUB = "id_rsa.pub";
     private static final String terrible_env_var = "FAKE_KOJI_ALTERNATE_ID_RSA_PUB_OR_AUTHORISED_KEYS";
@@ -225,10 +228,10 @@ public class SshApiService {
         String presetKeys = System.getenv(terrible_env_var);
         String[] keys;
         if (presetKeys == null || presetKeys.isEmpty()) {
-            ServerLogger.log("ignoring " + terrible_env_var + " with space separated user=/path/to/pubOrauthorisedKeys and using defaults");
+            LOGGER.info("ignoring " + terrible_env_var + " with space separated user=/path/to/pubOrauthorisedKeys and using defaults");
             keys = getTesterKeystore().split("\\s+");
         } else {
-            ServerLogger.log("using " + terrible_env_var);
+            LOGGER.info("using " + terrible_env_var);
             keys = presetKeys.trim().split("\\s+");
         }
         return setup(port, dbRoot, keys);
@@ -395,14 +398,14 @@ public class SshApiService {
 
             @Override
             public InputStream openRead(Session session, Path file, OpenOption... options) throws IOException {
-                ServerLogger.log("Accepting downlaod of " + file);
+                LOGGER.info("Accepting download of " + file);
                 RealPaths paths = createRealPaths(file);
                 if (!paths.fullPath.exists()) {
                     if (Files.exists(file, LinkOption.NOFOLLOW_LINKS)) {
                         return new FileInputStream(file.toFile());
                     }
                     String ss = paths.fullPath.toString() + " dont exists. ";
-                    ServerLogger.log(ss);
+                    LOGGER.warning(ss);
                     throw new SshException(ss);
                 }
                 return new FileInputStream(paths.fullPath);
@@ -410,20 +413,20 @@ public class SshApiService {
 
             @Override
             public OutputStream openWrite(Session session, Path file, OpenOption... options) throws IOException {
-                ServerLogger.log("Accepting upload to " + file);
+                LOGGER.info("Accepting upload to " + file);
                 RealPaths paths = createRealPaths(file);
                 if (paths.fullPath.exists()) {
                     String ss = paths.fullPath.toString() + " already exists. Overwrite is disabled right now";
-                    ServerLogger.log(ss);
+                    LOGGER.warning(ss);
                     throw new SshException(ss);
                 }
                 File parent = paths.fullPath.getParentFile();
-                ServerLogger.log("ensuring " + parent.getAbsolutePath());
+                LOGGER.info("ensuring " + parent.getAbsolutePath());
                 createCorrectlyOwnedDirectoryTree(parent, session.getUsername());
                 boolean blnCreated = paths.fullPath.createNewFile();
                 if (!blnCreated) {
-                    String ss = paths.fullPath.toString() + " failed to create, exiting sooner ratehr then later";
-                    ServerLogger.log(ss);
+                    String ss = paths.fullPath.toString() + " failed to create, exiting sooner rather than later";
+                    LOGGER.warning(ss);
                     throw new SshException(ss);
                 }
                 setOwner(paths.fullPath.toPath(), session.getUsername());
@@ -439,7 +442,7 @@ public class SshApiService {
                         if (r == true) {
                             setOwner(dir, username);
                         } else {
-                            ServerLogger.log("Faield to create directory " + dir.toString());
+                            LOGGER.warning("Failed to create directory " + dir.toString());
                         }
                     }
                 }
@@ -452,7 +455,7 @@ public class SshApiService {
                     UserPrincipal userPrincipal = lookupService.lookupPrincipalByName(user);
                     Files.setOwner(path, userPrincipal);
                 } else {
-                    //ServerLogger.log("Not changing ownership from " + System.getProperty("user.name") + " to " + user + " for " + path + ". Upload service is not running as root.");
+                    //LOGGER.warning("Not changing ownership from " + System.getProperty("user.name") + " to " + user + " for " + path + ". Upload service is not running as root.");
                 }
             }
 
@@ -483,7 +486,7 @@ public class SshApiService {
             List<PublicKey> usersKeys = new ArrayList<>();
             File f = new File(file);
             if (f.exists() && f.canRead()) {
-                ServerLogger.log("For " + user + " adding from " + file);
+                LOGGER.info("For " + user + " adding from " + file);
                 for (AuthorizedKeyEntry ake : AuthorizedKeyEntry.readAuthorizedKeys(f)) {
                     PublicKey publicKey = ake.resolvePublicKey(PublicKeyEntryResolver.IGNORING);
                     if (publicKey != null) {
@@ -492,7 +495,7 @@ public class SshApiService {
                 }
                 userKeysMap.put(user, usersKeys);
             } else {
-                ServerLogger.log("inaccessible  from " + file);
+                LOGGER.warning("inaccessible  from " + file);
             }
         }
         return userKeysMap;
@@ -669,7 +672,7 @@ public class SshApiService {
         String newPath = null;
         try {
             newPath = deductPathName(file.toString());
-            ServerLogger.log("Filename is " + newPath);
+            LOGGER.info("Filename is " + newPath);
         } catch (Exception e) {
             throw new SshException(e);
         }

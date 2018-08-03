@@ -26,9 +26,9 @@ package org.fakekoji.xmlrpc.server;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
@@ -43,12 +43,14 @@ import org.fakekoji.xmlrpc.server.utils.DirFilter;
  */
 public class FakeKojiDB {
 
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
+
     private final String[] projects;
     private final List<FakeBuild> builds;
     private final AccessibleSettings settings;
 
     FakeKojiDB(AccessibleSettings settings) {
-        ServerLogger.log(new Date().toString() + " (re)initizing fake koji DB");
+        LOGGER.info("(re)initizing fake koji DB");
         this.settings = settings;
         File[] projectDirs = settings.getDbFileRoot().listFiles(new DirFilter());
         projects = new String[projectDirs.length];
@@ -81,7 +83,7 @@ public class FakeKojiDB {
                 return project.hashCode();
             }
         }
-        ServerLogger.log("Unknown project " + requestedProject + ". Tried: " + triedProjects + ".");
+        LOGGER.info("Unknown project " + requestedProject + ". Tried: " + triedProjects + ".");
         return null;
     }
 
@@ -90,7 +92,7 @@ public class FakeKojiDB {
         for (FakeBuild build : builds) {
             if (build.getProjectID() == projectId) {
                 if (new IsFailedBuild(build.getDir()).reCheck().getLastResult()) {
-                    ServerLogger.log("Removing build " + build.toString() + " from result. Contains FAILED records");
+                    LOGGER.info("Removing build " + build.toString() + " from result. Contains FAILED records");
                     continue;
                 }
                 projectBuilds.add(build.toBuild());

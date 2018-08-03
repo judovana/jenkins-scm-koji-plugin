@@ -1,16 +1,21 @@
 package org.fakekoji.http;
 
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.core.FakeBuild;
 
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.fakekoji.http.ProjectMappingExceptions.*;
 
 public class ProjectMapping {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final AccessibleSettings settings;
 
@@ -24,6 +29,7 @@ public class ProjectMapping {
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (products.isEmpty()) {
+            LOGGER.severe("Couldn\'t find any product");
             throw new ProductsNotFoundException();
         }
         return products;
@@ -35,6 +41,7 @@ public class ProjectMapping {
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (projects.isEmpty()) {
+            LOGGER.severe("Couldn\'t find any project");
             throw new ProjectsNotFoundException();
         }
         return projects;
@@ -42,6 +49,7 @@ public class ProjectMapping {
 
     public List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
         if (!getAllProducts().contains(productName)) {
+            LOGGER.severe("Couldn't find a product with name " + productName);
             throw new ProductDoesNotMatchException();
         }
         List<String> projects = Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
@@ -49,6 +57,7 @@ public class ProjectMapping {
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (projects.isEmpty()) {
+            LOGGER.severe("Couldn't find any project of " + productName);
             throw new ProjectsNotFoundException();
         }
         return projects;
@@ -73,6 +82,7 @@ public class ProjectMapping {
                 return project;
             }
         }
+        LOGGER.severe("Couldn\'t find project of " + nvra);
         throw new ProjectDoesNotMatchException();
     }
 
@@ -87,6 +97,7 @@ public class ProjectMapping {
                 return product;
             }
         }
+        LOGGER.severe("Couldn\'t find the product of " + nvra);
         throw new ProductDoesNotMatchException();
     }
 
@@ -96,6 +107,7 @@ public class ProjectMapping {
 
     String getProductOfProject(String project, List<String> productList, List<String> projectList) throws ProjectMappingException {
         if (!projectList.contains(project)) {
+            LOGGER.severe("Couldn\'t find project " + project);
             throw new ProjectDoesNotMatchException();
         }
         for (String product : productList) {
@@ -103,27 +115,32 @@ public class ProjectMapping {
                 return product;
             }
         }
+        LOGGER.severe("Couldn\'t find the product of " + project);
         throw new ProjectDoesNotMatchException();
     }
 
     public List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
         File expectedArchesFile = null;
-        for (File file : Objects.requireNonNull(getProjectFile(project).listFiles())) {
+        final File projectFile = getProjectFile(project);
+        for (File file : projectFile.listFiles()) {
             if (file.getName().equals(FakeBuild.archesConfigFileName)) {
                 expectedArchesFile = file;
                 break;
             }
         }
         if (expectedArchesFile == null) {
+            LOGGER.severe("Couldn\'t find " + FakeBuild.archesConfigFileName + " file in " + projectFile.getAbsolutePath());
             throw new ConfigFileNotFoundException();
         }
         String[] arches;
         try {
             arches = FakeBuild.readArchesFile(expectedArchesFile);
         } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Exception occured while reading from " + FakeBuild.archesConfigFileName + " file", e);
             throw new InvalidConfigFileException();
         }
         if (arches == null) {
+            LOGGER.severe("Couldn\'t read the expected architectures from " + FakeBuild.archesConfigFileName + " file");
             throw new InvalidConfigFileException();
         }
         return Arrays.asList(arches);
@@ -141,6 +158,7 @@ public class ProjectMapping {
             }
         }
         if (projectFile == null) {
+            LOGGER.severe("Couldn\'t find file of " + projectName + " project");
             throw new ProjectDoesNotMatchException();
         }
         return projectFile;

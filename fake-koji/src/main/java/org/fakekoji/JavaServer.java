@@ -31,9 +31,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.fakekoji.http.AccessibleSettings;
 import org.fakekoji.http.PreviewFakeKoji;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.KojiDownloadServer;
 import org.fakekoji.xmlrpc.server.KojiXmlRpcServer;
-import org.fakekoji.xmlrpc.server.ServerLogger;
 import org.fakekoji.xmlrpc.server.SshApiService;
 
 /**
@@ -42,6 +42,8 @@ import org.fakekoji.xmlrpc.server.SshApiService;
  *
  */
 public class JavaServer {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     public static final int DEFAULT_JENKINS_PORT = 8080;
     public static final int DFAULT_RP2C_PORT = 9848;
@@ -68,21 +70,21 @@ public class JavaServer {
 
     public void start() throws Exception {
         /* koji xmlRpc server*/
-        ServerLogger.log("Attempting to start XML-RPC Server...");
+        LOGGER.info("Attempting to start XML-RPC Server...");
         kojiXmlRpcServer.start();
-        ServerLogger.log("Started successfully on " + kojiXmlRpcServer.getPort());
+        LOGGER.info("Started successfully on " + kojiXmlRpcServer.getPort());
         /* koji download server*/
-        ServerLogger.log("Starting http server to return files.");
+        LOGGER.info("Starting http server to return files.");
         kojiDownloadServer.start();
-        ServerLogger.log("Started successfully on " + kojiDownloadServer.getPort());
+        LOGGER.info("Started successfully on " + kojiDownloadServer.getPort());
         /* preview (builds in human readable way) */
-        ServerLogger.log("Starting http server frontend with settings answers");
+        LOGGER.info("Starting http server frontend with settings answers");
         previewFakeKojiServer.start();
-        ServerLogger.log("FrontEnd started successfully on " + previewFakeKojiServer.getPort());
+        LOGGER.info("FrontEnd started successfully on " + previewFakeKojiServer.getPort());
         /* ssh server to upload files to fakekoji */
-        ServerLogger.log("Starting sshd server to accept files.");
+        LOGGER.info("Starting sshd server to accept files.");
         sshApiServer.start();
-        ServerLogger.log("Sshd server started successfully on " + +sshApiServer.getPort());
+        LOGGER.info("Sshd server started successfully on " + sshApiServer.getPort());
     }
 
     public void stop() {
