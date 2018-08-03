@@ -80,6 +80,7 @@ public class KojiJenkinsTest {
         String arch = config.getArch();
         String tag = config.getTag();
         String excludeNvr = config.getExcludeNvr();
+        String whitelistNvr = config.getWhitelistNvr();
         String downloadDir = config.getDownloadDir();
         boolean cleanDownloadDir = config.isCleanDownloadDir();
         boolean dirPerNvr = config.isDirPerNvr();
@@ -87,7 +88,7 @@ public class KojiJenkinsTest {
 
         /* create KojiSCM plugin instance */
         KojiSCM scm = new KojiSCM(kojiTopUrl, kojiDownloadUrl,
-                packageName, arch, tag, excludeNvr,
+                packageName, arch, tag, excludeNvr, whitelistNvr,
                 downloadDir, cleanDownloadDir, dirPerNvr,
                 maxPreviousBuilds);
         /* set new KojiSCM plugin instance as scm for project */
@@ -121,6 +122,7 @@ public class KojiJenkinsTest {
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -142,6 +144,7 @@ public class KojiJenkinsTest {
                 "non-existing-build",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -162,6 +165,7 @@ public class KojiJenkinsTest {
                 "non-existing-build java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -183,6 +187,7 @@ public class KojiJenkinsTest {
                 "non-existing-build also-not-existing-build",
                 "x86_64,src",
                 "fastdebug-f24*",
+                "",
                 null,
                 null,
                 false,
@@ -191,5 +196,51 @@ public class KojiJenkinsTest {
         );
         String shellString = "! find . | grep \".*tarxz\"";
         runTest(config, shellString, false);
+    }
+
+    @Test
+    public void testWhitelist() throws Exception {
+        KojiScmConfig config = new KojiScmConfig(
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
+                "java-1.8.0-openjdk",
+                "all",
+                "*",
+                null,
+                "*.ojfx.*",
+                null,
+                false,
+                false,
+                10
+        );
+        String shellString = "! find . | grep \"ojdk\" &&"
+                + "! find . | grep \"itw\" && "
+                + "! find . | grep \"whatever\" && "
+                + "! find . | grep \"ex\" && "
+                + "find . | grep \"ojfx\"";
+        runTest(config, shellString, true);
+    }
+
+    @Test
+    public void testBlackAndWhitelist() throws Exception {
+        KojiScmConfig config = new KojiScmConfig(
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
+                "java-1.8.0-openjdk",
+                "all",
+                "*",
+                "*ex*",
+                "*ojdk*",
+                null,
+                false,
+                false,
+                10
+        );
+        String shellString = "! find . | grep \"itw\" && "
+                + "! find . | grep \"itw\" && "
+                + "! find . | grep \"whatever\" && "
+                + "! find . | grep \"ex\" && "
+                + "find . | grep \"ojdk.static\"";
+        runTest(config, shellString, true);
     }
 }

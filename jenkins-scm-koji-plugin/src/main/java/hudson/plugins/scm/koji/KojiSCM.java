@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 import static hudson.plugins.scm.koji.Constants.PROCESSED_BUILDS_HISTORY;
+
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.text.DateFormat;
@@ -49,6 +50,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     private String arch;
     private String tag;
     private String excludeNvr;
+    private String whitelistNvr;
     private String downloadDir;
     private boolean cleanDownloadDir;
     private boolean dirPerNvr;
@@ -114,13 +116,24 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     @DataBoundConstructor
-    public KojiSCM(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr, int maxPreviousBuilds) {
+    public KojiSCM(String kojiTopUrl,
+                   String kojiDownloadUrl,
+                   String packageName,
+                   String arch,
+                   String tag,
+                   String excludeNvr,
+                   String whitelistNvr,
+                   String downloadDir,
+                   boolean cleanDownloadDir,
+                   boolean dirPerNvr,
+                   int maxPreviousBuilds) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
         this.arch = arch;
         this.tag = tag;
         this.excludeNvr = excludeNvr;
+        this.whitelistNvr = whitelistNvr;
         this.downloadDir = downloadDir;
         this.cleanDownloadDir = cleanDownloadDir;
         this.dirPerNvr = dirPerNvr;
@@ -266,8 +279,8 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     private KojiScmConfig createConfig() {
-        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, downloadDir,
-                cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
+        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, whitelistNvr,
+                                 downloadDir, cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
     }
 
     public String getKojiTopUrl() {
@@ -322,6 +335,15 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     @DataBoundSetter
     public void setExcludeNvr(String excludeNvr) {
         this.excludeNvr = excludeNvr;
+    }
+
+    public String getWhitelistNvr() {
+        return whitelistNvr;
+    }
+
+    @DataBoundSetter
+    public void setWhitelistNvr(String whitelistNvr) {
+        this.whitelistNvr = whitelistNvr;
     }
 
     public String getDownloadDir() {

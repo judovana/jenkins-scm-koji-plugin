@@ -144,9 +144,16 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             nvrPredicate = rpm -> !glob.test(rpm.getNvr());
         }
 
+        Predicate<RPM> whitelistPredicate = i -> true;
+        if (config.getWhitelistNvr() != null && !config.getWhitelistNvr().isEmpty()) {
+            GlobPredicate glob = new GlobPredicate(config.getWhitelistNvr());
+            whitelistPredicate = rpm -> glob.test(rpm.getNvr());
+        }
+
         List<String> l = build.getRpms()
                 .stream()
                 .filter(nvrPredicate)
+                .filter(whitelistPredicate)
                 .map(r -> downloadRPM(targetDir, build, r))
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());

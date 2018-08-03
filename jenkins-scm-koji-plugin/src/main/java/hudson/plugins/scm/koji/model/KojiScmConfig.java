@@ -10,18 +10,30 @@ public class KojiScmConfig implements java.io.Serializable {
     private final String arch;
     private final String tag;
     private final String excludeNvr;
+    private final String whitelistNvr;
     private final String downloadDir;
     private final boolean cleanDownloadDir;
     private final boolean dirPerNvr;
     private final int maxPreviousBuilds;
 
-    public KojiScmConfig(String kojiTopUrl, String kojiDownloadUrl, String packageName, String arch, String tag, String excludeNvr, String downloadDir, boolean cleanDownloadDir, boolean dirPerNvr, int maxPreviousBuilds) {
+    public KojiScmConfig(String kojiTopUrl,
+                         String kojiDownloadUrl,
+                         String packageName,
+                         String arch,
+                         String tag,
+                         String excludeNvr,
+                         String whitelistNvr,
+                         String downloadDir,
+                         boolean cleanDownloadDir,
+                         boolean dirPerNvr,
+                         int maxPreviousBuilds) {
         this.kojiTopUrl = kojiTopUrl;
         this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
         this.arch = arch;
         this.tag = tag;
         this.excludeNvr = excludeNvr;
+        this.whitelistNvr = whitelistNvr == null || whitelistNvr.isEmpty() ? "*" : whitelistNvr;
         this.downloadDir = downloadDir;
         this.cleanDownloadDir = cleanDownloadDir;
         this.dirPerNvr = dirPerNvr;
@@ -74,6 +86,10 @@ public class KojiScmConfig implements java.io.Serializable {
 
     public String getExcludeNvr() {
         return excludeNvr;
+    }
+
+    public String getWhitelistNvr() {
+        return whitelistNvr;
     }
 
     public String getDownloadDir() {

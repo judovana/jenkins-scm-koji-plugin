@@ -100,12 +100,15 @@ public class FakeKojiTestUtil {
         String rbase = "52.dev";
         String r1 = rbase + ".upstream";
         String r2 = rbase + ".upstream.fastdebug";
+        String r3 = "whatever.upstream";
         String a1 = "src";
         String a2 = "x86_64";
         String a3 = "win";
         String a4 = "i686";
+        String allArch = "all";
 
         String suffix = ".tarxz";
+        String suffixZip = ".zip";
 
         String buildCommon = n + "-" + v + "-" + rbase;
         String build11 = buildCommon + ".upstream." + a1 + suffix;
@@ -118,6 +121,13 @@ public class FakeKojiTestUtil {
         String build23 = buildCommon + ".static.fastdebug." + a3 + suffix;
         String build24 = buildCommon + ".static.fastdebug." + a4 + suffix;
 
+        String build31 = buildCommon + ".ojfx.static." + allArch + suffixZip;
+        String build32 = buildCommon + ".ojdk.static." + allArch + suffixZip;
+        String build33 = buildCommon + ".itw.static." + allArch + suffixZip;
+        String build34 = buildCommon + ".whatever.static." + allArch + suffixZip;
+        String build35 = buildCommon + ".exojdk.static." + allArch + suffixZip;
+        String build36 = buildCommon + ".exojfx.static." + allArch + suffixZip;
+
         /* upstream builds */
         generateBuilds(localBuilds, n, v, r1, a1, build11);
         generateBuilds(localBuilds, n, v, r1, a2, build12);
@@ -129,6 +139,9 @@ public class FakeKojiTestUtil {
         generateBuilds(localBuilds, n, v, r2, a2, build22);
         generateBuilds(localBuilds, n, v, r2, a3, build23);
         generateBuilds(localBuilds, n, v, r2, a4, build24);
+
+        /* multiple files to test exclude list and whitelist */
+        generateBuilds(localBuilds, n, v, r3, allArch, build31, build32, build33, build34, build35, build36);
 
         /* create link for windows builds */
         File nFile = new File(localBuilds, n);
