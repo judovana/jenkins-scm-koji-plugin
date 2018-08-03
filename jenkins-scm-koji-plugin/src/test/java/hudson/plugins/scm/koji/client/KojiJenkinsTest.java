@@ -197,4 +197,49 @@ public class KojiJenkinsTest {
         String shellString = "! find . | grep \".*tarxz\"";
         runTest(config, shellString, false);
     }
+
+    @Test
+    public void testWhitelist() throws Exception {
+        KojiScmConfig config = new KojiScmConfig(
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
+                "java-1.8.0-openjdk",
+                "all",
+                "*",
+                null,
+                "*.ojfx.*",
+                null,
+                false,
+                false,
+                10
+        );
+        String shellString = "! find . | grep \"itw\" &&"
+                + "! find . | grep \"itw\" && "
+                + "! find . | grep \"whatever\" && "
+                + "find . | grep \"ojfx\"";
+        runTest(config, shellString, true);
+    }
+
+    @Test
+    public void testBlackAndWhitelist() throws Exception {
+        KojiScmConfig config = new KojiScmConfig(
+                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://localhost:" + JavaServerConstants.dPortAxiom,
+                "java-1.8.0-openjdk",
+                "all",
+                "*",
+                "*ex*",
+                "*ojdk*",
+                null,
+                false,
+                false,
+                10
+        );
+        String shellString = "! find . | grep \"itw\" && "
+                + "! find . | grep \"itw\" && "
+                + "! find . | grep \"whatever\" && "
+                + "! find . | grep \"ex\" && "
+                + "find . | grep \"ojdk.static\"";
+        runTest(config, shellString, true);
+    }
 }
