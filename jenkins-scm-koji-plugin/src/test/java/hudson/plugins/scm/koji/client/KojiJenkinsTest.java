@@ -213,9 +213,10 @@ public class KojiJenkinsTest {
                 false,
                 10
         );
-        String shellString = "! find . | grep \"itw\" &&"
+        String shellString = "! find . | grep \"ojdk\" &&"
                 + "! find . | grep \"itw\" && "
                 + "! find . | grep \"whatever\" && "
+                + "! find . | grep \"ex\" && "
                 + "find . | grep \"ojfx\"";
         runTest(config, shellString, true);
     }
