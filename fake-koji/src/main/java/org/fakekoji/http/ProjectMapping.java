@@ -24,7 +24,7 @@ public class ProjectMapping {
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (products.isEmpty()) {
-            throw new ProductsNotFoundException();
+            throw new ProductsNotFoundException(settings.getDbFileRoot());
         }
         return products;
     }
@@ -35,21 +35,21 @@ public class ProjectMapping {
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (projects.isEmpty()) {
-            throw new ProjectsNotFoundException();
+            throw new ProjectsNotFoundException(settings.getLocalReposRoot());
         }
         return projects;
     }
 
     public List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
         if (!getAllProducts().contains(productName)) {
-            throw new ProductDoesNotMatchException();
+            throw new ProductNotFoundException(productName);
         }
         List<String> projects = Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
                 .filter(file -> file.getName().contains(productName))
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (projects.isEmpty()) {
-            throw new ProjectsNotFoundException();
+            throw new ProjectsNotFoundException(productName);
         }
         return projects;
     }
@@ -73,7 +73,7 @@ public class ProjectMapping {
                 return project;
             }
         }
-        throw new ProjectDoesNotMatchException();
+        throw new ProjectOfNvraNotFoundException(nvra);
     }
 
     public String getProductOfNvra(String nvra) throws ProjectMappingException {
@@ -87,7 +87,7 @@ public class ProjectMapping {
                 return product;
             }
         }
-        throw new ProductDoesNotMatchException();
+        throw new ProductOfNvraNotFoundException(nvra);
     }
 
     public String getProductOfProject(String project) throws ProjectMappingException {
@@ -96,32 +96,33 @@ public class ProjectMapping {
 
     String getProductOfProject(String project, List<String> productList, List<String> projectList) throws ProjectMappingException {
         if (!projectList.contains(project)) {
-            throw new ProjectDoesNotMatchException();
+            throw new ProjectNotFoundException(project);
         }
         for (String product : productList) {
             if (project.contains(product)) {
                 return product;
             }
         }
-        throw new ProjectDoesNotMatchException();
+        throw new ProductOfProjectNotFoundException(project);
     }
 
     public List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
         File expectedArchesFile = null;
-        for (File file : Objects.requireNonNull(getProjectFile(project).listFiles())) {
+        final File projectFile = getProjectFile(project);
+        for (File file : projectFile.listFiles()) {
             if (file.getName().equals(FakeBuild.archesConfigFileName)) {
                 expectedArchesFile = file;
                 break;
             }
         }
         if (expectedArchesFile == null) {
-            throw new ConfigFileNotFoundException();
+            throw new ConfigFileNotFoundException(projectFile);
         }
         String[] arches;
         try {
             arches = FakeBuild.readArchesFile(expectedArchesFile);
         } catch (IOException e) {
-            throw new InvalidConfigFileException();
+            throw new InvalidConfigFileException(e);
         }
         if (arches == null) {
             throw new InvalidConfigFileException();
@@ -141,7 +142,7 @@ public class ProjectMapping {
             }
         }
         if (projectFile == null) {
-            throw new ProjectDoesNotMatchException();
+            throw new ProjectNotFoundException(projectName);
         }
         return projectFile;
     }

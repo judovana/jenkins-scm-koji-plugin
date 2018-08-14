@@ -30,12 +30,15 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.logging.Logger;
 
 /**
  *
  * @author jvanek
  */
 public class IsFailedBuild {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final File dir;
     boolean lastResult = false;
@@ -68,21 +71,21 @@ public class IsFailedBuild {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!file.toFile().isDirectory()) {
                     if (file.getFileName().endsWith("FAILED")) {
-                        ServerLogger.log("Found file ending with FAILED - " + file.toFile().getAbsoluteFile());
+                        LOGGER.info("Found file ending with FAILED - " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                     if (file.getFileName().endsWith("ERROR")) {
-                        ServerLogger.log("Found file ending with ERROR- " + file.toFile().getAbsoluteFile());
+                        LOGGER.info("Found file ending with ERROR - " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                     //most files have VERY long names. Shjortest known name is hg.log, anything shorter is probably error
                     if (file.getFileName().toString().length() < 5) {
-                        ServerLogger.log("Found filename shorter then 5 chars - " + file.toFile().getAbsoluteFile());
+                        LOGGER.info("Found filename shorter then 5 chars - " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                     //most files have huge. Even logs.  Empty files are mostly just touches signalizing something wrong
                     if (file.toFile().length() <= 5) {
-                        ServerLogger.log("Found file size smaller then 5 bytes- " + file.toFile().getAbsoluteFile());
+                        LOGGER.info("Found file size smaller then 5 bytes - " + file.toFile().getAbsoluteFile());
                         lastResult = true;
                     }
                 }

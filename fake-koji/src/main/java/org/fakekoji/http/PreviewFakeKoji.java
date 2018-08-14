@@ -53,7 +53,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
+
 import org.fakekoji.JavaServer;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.core.FakeBuild;
 
 /**
@@ -61,6 +64,8 @@ import org.fakekoji.xmlrpc.server.core.FakeBuild;
  * fake-koji, in human readable form
  */
 public class PreviewFakeKoji {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final IndexHtmlHandler ihh;
     private final DetailsHtmlHandler dhh;
@@ -114,7 +119,7 @@ public class PreviewFakeKoji {
          //"1919"
          };*/
         if (args.length != 5) {
-            System.out.println("Mandatory 5 params:  xmlport, downloadpoport, reposPath, bnuildsPath, httpPort");
+            LOGGER.severe("Mandatory 5 params:  xmlport, downloadpoport, reposPath, bnuildsPath, httpPort");
         }
         int xmlrpcurl = Integer.valueOf(args[0]);
         int download = Integer.valueOf(args[1]);
@@ -129,16 +134,13 @@ public class PreviewFakeKoji {
 
         int PORT = Integer.valueOf(args[4]);
 
-        System.err.println("xmlrpc   : " + xmlrpcurl);
-        System.out.println("xmlrpc   : " + xmlrpcurl);
-        System.err.println("dwnld    : " + download);
-        System.out.println("dwnld    : " + download);
-        System.err.println("port     : " + PORT);
-        System.out.println("port     : " + PORT);
-        System.err.println("repos    : " + repos);
-        System.out.println("repos    : " + repos);
-        System.err.println("builds   : " + builds);
-        System.out.println("builds   : " + builds);
+        String info =
+                "xmlrpc   : " + xmlrpcurl + '\n' +
+                "dwnld    : " + download + '\n' +
+                "port     : " + PORT + '\n' +
+                "repos    : " + repos + '\n' +
+                "builds   : " + builds + '\n';
+        LOGGER.info(info);
 
         AccessibleSettings settings = new AccessibleSettings(builds, repos, xmlrpcurl, download, JavaServer.DFAULT_SSHUPLOAD_PORT, PORT, JavaServer.DEFAULT_JENKINS_PORT);
 
@@ -324,13 +326,13 @@ public class PreviewFakeKoji {
 
             public void runImpl() throws IOException {
                 String requestedFile = t.getRequestURI().getPath();
-                System.out.println(new Date().toString() + " attempting: " + requestedFile);
+                LOGGER.info("attempting: " + requestedFile);
                 generateIndex(t);
             }
         }
 
         private void generateIndex(HttpExchange t) throws IOException {
-            System.out.println("Regenerating index!");
+            LOGGER.info("Regenerating index!");
             StringBuilder sb = generateIndex();
             String result = sb.toString();
             long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
@@ -368,7 +370,7 @@ public class PreviewFakeKoji {
                     if (buildObject.toString().contains("fastdebug")) {
                         fastdebugs++;
                     }
-                    System.err.println(buildObject);
+                    LOGGER.info(buildObject.toString());
                 }
                 //now this is nasty, and very infrastructure specific
                 //we have to  filter projects valid to producets. Thats doen by prefix
@@ -499,13 +501,13 @@ public class PreviewFakeKoji {
 
             public void runImpl() throws IOException {
                 String requestedFile = t.getRequestURI().getPath();
-                System.out.println(new Date().toString() + " attempting: " + requestedFile);
+                LOGGER.info(new Date().toString() + " attempting: " + requestedFile);
                 generateIndex(t);
             }
         }
 
         private void generateIndex(HttpExchange t) throws IOException {
-            System.out.println("Regenerating details!");
+            LOGGER.info("Regenerating details!");
             Map<String, String> query = splitQuery(t.getRequestURI());
             StringBuilder sb = new StringBuilder("No list specified!");
             if (query.get("list") != null && !query.get("list").isEmpty()) {
@@ -781,7 +783,7 @@ public class PreviewFakeKoji {
             public void runImpl() throws IOException {
                 String requestedFile = t.getRequestURI().getPath();
                 String query = t.getRequestURI().getQuery();
-                System.out.println(new Date().toString() + " attempting: " + requestedFile + " with " + query);
+                LOGGER.info("attempting: " + requestedFile + " with " + query);
                 returnValue(t);
             }
 

@@ -25,7 +25,7 @@ package org.fakekoji.xmlrpc.server;
 
 import hudson.plugins.scm.koji.Constants;
 import java.io.IOException;
-import java.util.Date;
+import java.util.logging.Logger;
 
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
@@ -38,6 +38,8 @@ import org.fakekoji.http.AccessibleSettings;
  * Based on code, which was originally in JavaServer class.
  */
 public class KojiXmlRpcServer {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private WebServer webServer;
     AccessibleSettings settings;
@@ -81,7 +83,7 @@ public class KojiXmlRpcServer {
         webServer.getXmlRpcServer().setConfig(config);
 
         XmlRpcHandlerMapping xxx = string -> xmlRpcRequest -> {
-            ServerLogger.log(new Date().toString() + " Requested: " + xmlRpcRequest.getMethodName());
+            LOGGER.info("Requested: " + xmlRpcRequest.getMethodName());
             //need reinitializzing, as new  build could be added
             FakeKojiDB kojiDb = new FakeKojiDB(settings);
             if (xmlRpcRequest.getMethodName().equals("sample.sum")) {

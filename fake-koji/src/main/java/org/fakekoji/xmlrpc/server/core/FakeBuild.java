@@ -41,6 +41,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,11 +51,13 @@ import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.http.ProjectMapping;
 import org.fakekoji.http.ProjectMappingExceptions;
 import org.fakekoji.xmlrpc.server.IsFailedBuild;
-import org.fakekoji.xmlrpc.server.ServerLogger;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.utils.DirFilter;
 import org.fakekoji.xmlrpc.server.utils.FileFileFilter;
 
 public class FakeBuild {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final String name;
     private final String version;
@@ -261,6 +264,7 @@ public class FakeBuild {
         try {
             return Stream.of(guessTags()).collect(Collectors.toSet());
         } catch (ProjectMappingExceptions.ProjectMappingException e) {
+            LOGGER.severe(e.getMessage());
             return Collections.emptySet();
         }
     }
@@ -299,7 +303,7 @@ public class FakeBuild {
             final String arch = file.getParentFile().getName();
             final boolean isFailed = new IsFailedBuild(file.getParentFile().getParentFile()).reCheck().getLastResult();
             if (isFailed) {
-                ServerLogger.log(" Warning: " + file + " seems to be from failed build!");
+                LOGGER.warning(file + " seems to be from failed build!");
             }
             if (archs.contains(arch)) {
                 rpms.add(new RPM(
@@ -365,28 +369,28 @@ public class FakeBuild {
      */
 
     private String[] getSupportedArches() throws ProjectMappingExceptions.ProjectMappingException {
-        ServerLogger.log("For: " + getNVR());
+        LOGGER.info("For: " + getNVR());
         String[] arches;
         File archesFile = getBuildExpectedArches();
         if (archesFile.exists()) {
             try {
                 arches = readArchesFile(archesFile);
-                ServerLogger.log("Using build specific arches");
+                LOGGER.info("Using build specific arches");
                 return arches;
             } catch (IOException e) {
                 throw new ProjectMappingExceptions.ProjectMappingException(e);
             }
         }
         arches = this.projectMapping.getExpectedArchesOfNVR(getNVR()).toArray(new String[0]);
-        ServerLogger.log("Using project default expected arches");
+        LOGGER.info("Using project default expected arches");
         return arches;
     }
 
     public void printExpectedArchesForThisBuild() {
         try {
-            ServerLogger.log("Expected to build on: " + Arrays.toString(getSupportedArches()));
+            LOGGER.info("Expected to build on: " + Arrays.toString(getSupportedArches()));
         } catch (ProjectMappingExceptions.ProjectMappingException e) {
-            ServerLogger.log("No expected arches to build on");
+            LOGGER.warning("No expected arches to build on");
         }
     }
 
@@ -398,7 +402,7 @@ public class FakeBuild {
             boolean allBuilt = true;
             //there may be IO involved
             String[] thisOnesArches = getSupportedArches();
-            System.err.println(Arrays.toString(thisOnesArches));
+            LOGGER.info("Expected to build on: " + Arrays.toString(thisOnesArches));
             List<String> tags = new ArrayList<>(connectedTags.length * thisOnesArches.length);
             for (String connectedTag : connectedTags) {
                 for (String arch : thisOnesArches) {
@@ -476,11 +480,11 @@ public class FakeBuild {
     public static void main(String... arg) throws IOException {
         //arg = new String[]{"/mnt/raid1/upstream-repos/java-9-openjdk/" + archesConfigFileName};
         if (arg.length == 0) {
-            ServerLogger.log("Expected single argument - path to file to save the file. Suggested name is: " + archesConfigFileName);
+            LOGGER.severe("Expected single argument - path to file to save the file. Suggested name is: " + archesConfigFileName);
             System.exit(1);
         }
         generateDefaultArchesFile(new File(arg[0]));
-        ServerLogger.log(new File(arg[0]).getAbsolutePath());
+        LOGGER.info(new File(arg[0]).getAbsolutePath());
         System.err.println(Arrays.toString(readArchesFile(new File(arg[0]))));
     }
 
