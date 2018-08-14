@@ -1,21 +1,16 @@
 package org.fakekoji.http;
 
-import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.core.FakeBuild;
 
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.fakekoji.http.ProjectMappingExceptions.*;
 
 public class ProjectMapping {
-
-    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final AccessibleSettings settings;
 
@@ -29,8 +24,7 @@ public class ProjectMapping {
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (products.isEmpty()) {
-            LOGGER.severe("Couldn\'t find any product");
-            throw new ProductsNotFoundException();
+            throw new ProductsNotFoundException(settings.getDbFileRoot());
         }
         return products;
     }
@@ -41,24 +35,21 @@ public class ProjectMapping {
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (projects.isEmpty()) {
-            LOGGER.severe("Couldn\'t find any project");
-            throw new ProjectsNotFoundException();
+            throw new ProjectsNotFoundException(settings.getLocalReposRoot());
         }
         return projects;
     }
 
     public List<String> getProjectsOfProduct(String productName) throws ProjectMappingException {
         if (!getAllProducts().contains(productName)) {
-            LOGGER.severe("Couldn't find a product with name " + productName);
-            throw new ProductDoesNotMatchException();
+            throw new ProductNotFoundException(productName);
         }
         List<String> projects = Arrays.stream(Objects.requireNonNull(settings.getLocalReposRoot().listFiles()))
                 .filter(file -> file.getName().contains(productName))
                 .map(File::getName)
                 .collect(Collectors.toList());
         if (projects.isEmpty()) {
-            LOGGER.severe("Couldn't find any project of " + productName);
-            throw new ProjectsNotFoundException();
+            throw new ProjectsNotFoundException(productName);
         }
         return projects;
     }
@@ -82,8 +73,7 @@ public class ProjectMapping {
                 return project;
             }
         }
-        LOGGER.severe("Couldn\'t find project of " + nvra);
-        throw new ProjectDoesNotMatchException();
+        throw new ProjectOfNvraNotFoundException(nvra);
     }
 
     public String getProductOfNvra(String nvra) throws ProjectMappingException {
@@ -97,8 +87,7 @@ public class ProjectMapping {
                 return product;
             }
         }
-        LOGGER.severe("Couldn\'t find the product of " + nvra);
-        throw new ProductDoesNotMatchException();
+        throw new ProductOfNvraNotFoundException(nvra);
     }
 
     public String getProductOfProject(String project) throws ProjectMappingException {
@@ -107,16 +96,14 @@ public class ProjectMapping {
 
     String getProductOfProject(String project, List<String> productList, List<String> projectList) throws ProjectMappingException {
         if (!projectList.contains(project)) {
-            LOGGER.severe("Couldn\'t find project " + project);
-            throw new ProjectDoesNotMatchException();
+            throw new ProjectNotFoundException(project);
         }
         for (String product : productList) {
             if (project.contains(product)) {
                 return product;
             }
         }
-        LOGGER.severe("Couldn\'t find the product of " + project);
-        throw new ProjectDoesNotMatchException();
+        throw new ProductOfProjectNotFoundException(project);
     }
 
     public List<String> getExpectedArchesOfProject(String project) throws ProjectMappingException {
@@ -129,18 +116,15 @@ public class ProjectMapping {
             }
         }
         if (expectedArchesFile == null) {
-            LOGGER.severe("Couldn\'t find " + FakeBuild.archesConfigFileName + " file in " + projectFile.getAbsolutePath());
-            throw new ConfigFileNotFoundException();
+            throw new ConfigFileNotFoundException(projectFile);
         }
         String[] arches;
         try {
             arches = FakeBuild.readArchesFile(expectedArchesFile);
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Exception occured while reading from " + FakeBuild.archesConfigFileName + " file", e);
-            throw new InvalidConfigFileException();
+            throw new InvalidConfigFileException(e);
         }
         if (arches == null) {
-            LOGGER.severe("Couldn\'t read the expected architectures from " + FakeBuild.archesConfigFileName + " file");
             throw new InvalidConfigFileException();
         }
         return Arrays.asList(arches);
@@ -158,8 +142,7 @@ public class ProjectMapping {
             }
         }
         if (projectFile == null) {
-            LOGGER.severe("Couldn\'t find file of " + projectName + " project");
-            throw new ProjectDoesNotMatchException();
+            throw new ProjectNotFoundException(projectName);
         }
         return projectFile;
     }

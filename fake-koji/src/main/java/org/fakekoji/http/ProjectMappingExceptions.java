@@ -1,64 +1,102 @@
 package org.fakekoji.http;
 
+import org.fakekoji.xmlrpc.server.core.FakeBuild;
+
+import java.io.File;
+import java.io.IOException;
+
 public class ProjectMappingExceptions {
 
     public static class ProjectMappingException extends Exception {
 
-        ProjectMappingException(String message) {
+        public ProjectMappingException(String message) {
             super(message);
         }
-        
+
         public ProjectMappingException(Exception e) {
             super(e);
+        }
+        
+        public ProjectMappingException(String message, Exception e) {
+            super(message, e);
         }
     }
 
     static class ProjectsNotFoundException extends ProjectMappingException {
 
-        ProjectsNotFoundException() {
-            super("No project found");
+        public ProjectsNotFoundException(File projectFile) {
+            super("No projects found in " + projectFile.getAbsolutePath());
+        }
+
+        public ProjectsNotFoundException(String productName) {
+            super("No projects of " + productName + " found");
         }
     }
 
     static class ProductsNotFoundException extends ProjectMappingException {
 
-        ProductsNotFoundException() {
-            super("No product found");
+        public ProductsNotFoundException(File productFile) {
+            super("No products found in " + productFile.getAbsolutePath());
         }
     }
 
-    static class ProjectDoesNotMatchException extends ProjectMappingException {
+    static class ProductNotFoundException extends ProjectMappingException {
 
-        ProjectDoesNotMatchException() {
-            super("Project does not match any available project");
+        public ProductNotFoundException(String productName) {
+            super("Product " + productName + " not found");
         }
     }
 
-    static class ProductDoesNotMatchException extends ProjectMappingException {
+    static class ProductOfProjectNotFoundException extends ProjectMappingException {
 
-        ProductDoesNotMatchException() {
-            super("Product does not match any available product");
+        public ProductOfProjectNotFoundException(String projectName) {
+            super("Product of " + projectName + " not found");
+        }
+    }
+
+    static class ProjectNotFoundException extends ProjectMappingException {
+
+        public ProjectNotFoundException(String projectName) {
+            super("Project " + projectName + " not found");
         }
     }
 
     static class BadRequestException extends ProjectMappingException {
 
-        BadRequestException() {
+        public BadRequestException() {
             super("Bad request, use get?help to list values");
+        }
+    }
+
+    static class ProductOfNvraNotFoundException extends ProjectMappingException {
+
+        public ProductOfNvraNotFoundException(String nvra) {
+            super("Product of " + nvra + " not found");
+        }
+    }
+
+    static class ProjectOfNvraNotFoundException extends ProjectMappingException {
+
+        public ProjectOfNvraNotFoundException(String nvra) {
+            super("Project of" + nvra + " not found");
         }
     }
 
     static class ConfigFileNotFoundException extends ProjectMappingException {
 
-        ConfigFileNotFoundException() {
-            super("Config file not found");
+        public ConfigFileNotFoundException(File projectFile) {
+            super("File " + FakeBuild.archesConfigFileName + " not found in " + projectFile.getAbsolutePath());
         }
     }
 
     static class InvalidConfigFileException extends ProjectMappingException {
 
-        InvalidConfigFileException() {
-            super("Invalid config file");
+        public InvalidConfigFileException() {
+            super("Couldn\'t read the expected architectures from " + FakeBuild.archesConfigFileName + " file");
+        }
+
+        public InvalidConfigFileException(IOException e) {
+            super("Exception occured while reading from " + FakeBuild.archesConfigFileName + " file", e);
         }
     }
 }

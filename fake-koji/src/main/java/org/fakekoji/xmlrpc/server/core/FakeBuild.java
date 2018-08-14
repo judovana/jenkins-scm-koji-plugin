@@ -402,7 +402,7 @@ public class FakeBuild {
             boolean allBuilt = true;
             //there may be IO involved
             String[] thisOnesArches = getSupportedArches();
-            System.err.println(Arrays.toString(thisOnesArches));
+            LOGGER.info("Expected to build on: " + Arrays.toString(thisOnesArches));
             List<String> tags = new ArrayList<>(connectedTags.length * thisOnesArches.length);
             for (String connectedTag : connectedTags) {
                 for (String arch : thisOnesArches) {

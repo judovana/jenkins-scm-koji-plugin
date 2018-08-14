@@ -175,7 +175,7 @@ public class ProjectMappingFileSystemTest {
         Collections.sort(actualJava10Projects);
         assertEquals("The actual list of projects doesn\'t match the expected", expectedJava10Projects, actualJava10Projects);
 
-        expectedException.expect(ProjectMappingExceptions.ProductDoesNotMatchException.class);
+        expectedException.expect(ProjectMappingExceptions.ProductNotFoundException.class);
         projectMapping.getProjectsOfProduct("wrong product");
     }
 
@@ -206,7 +206,7 @@ public class ProjectMappingFileSystemTest {
         }
         assertEquals("The actual project doesn\'t match the expected", expectedProjects, actualProjects);
 
-        expectedException.expect(ProjectMappingExceptions.ProjectDoesNotMatchException.class);
+        expectedException.expect(ProjectMappingExceptions.ProjectOfNvraNotFoundException.class);
         projectMapping.getProjectOfNvra("wrong nvra");
     }
 
@@ -236,7 +236,7 @@ public class ProjectMappingFileSystemTest {
         }
         assertEquals("The actual product doesn\'t match the expected", expectedProducts, actualProducts);
 
-        expectedException.expect(ProjectMappingExceptions.ProductDoesNotMatchException.class);
+        expectedException.expect(ProjectMappingExceptions.ProductOfNvraNotFoundException.class);
         projectMapping.getProductOfNvra("wrong nvra");
     }
 
@@ -266,7 +266,7 @@ public class ProjectMappingFileSystemTest {
         }
         assertEquals("The actual product doesn\'t match the expected", Arrays.asList(expectedProductsOfProjects), actualProjects);
 
-        expectedException.expect(ProjectMappingExceptions.ProjectDoesNotMatchException.class);
+        expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
         projectMapping.getProductOfProject("wrong project");
     }
 }

@@ -115,7 +115,7 @@ public class ProjectMappingTest {
         expectedProducts.sort(String::compareTo);
         assertEquals("The actual list of products doesn\'t match the expected", expectedProducts, actualProducts);
 
-        expectedException.expect(ProjectMappingExceptions.ProductDoesNotMatchException.class);
+        expectedException.expect(ProjectMappingExceptions.ProductNotFoundException.class);
         projectMapping.getProductOfNvra("wrong nvra", products);
     }
 
@@ -147,7 +147,7 @@ public class ProjectMappingTest {
         expectedProductsOfProjects.sort(String::compareTo);
         assertEquals("The actual list of products doesn\'t match the expected", expectedProductsOfProjects, actualProducts);
 
-        expectedException.expect(ProjectMappingExceptions.ProjectDoesNotMatchException.class);
+        expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
         projectMapping.getProductOfProject("wrong project", products, projects);
     }
 }
