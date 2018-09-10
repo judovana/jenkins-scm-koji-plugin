@@ -16,6 +16,19 @@ public class KojiScmConfig implements java.io.Serializable {
     private final boolean dirPerNvr;
     private final int maxPreviousBuilds;
 
+    //testing only
+    public KojiScmConfig(String kojiTopUrl,
+                         String kojiDownloadUrl,
+                         String packageName,
+                         String arch,
+                         String tag,
+                         String excludeNvr,
+                         String downloadDir,
+                         boolean cleanDownloadDir,
+                         boolean dirPerNvr,
+                         int maxPreviousBuilds) {
+        this(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, null, downloadDir, cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
+    }
     public KojiScmConfig(String kojiTopUrl,
                          String kojiDownloadUrl,
                          String packageName,
