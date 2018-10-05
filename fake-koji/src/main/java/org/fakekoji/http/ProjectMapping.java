@@ -60,7 +60,16 @@ public class ProjectMapping {
 
     String getProjectOfNvra(String nvra, List<String> projectList) throws ProjectMappingException {
         nvra = processUnordinaryNVR(nvra);
+        nvra = processRpmNvr(nvra);
         projectList.sort((String s1, String s2) -> s2.length() - s1.length());
+        try {
+            final String productOfNvra = getProductOfNvra(nvra);
+            projectList = projectList.stream()
+                    .filter(project -> project.contains(productOfNvra))
+                    .collect(Collectors.toList());
+        } catch (ProjectMappingException e) {
+            throw new ProjectMappingExceptions.ProjectOfNvraNotFoundException(nvra);
+        }
         for (String project : projectList) {
             String[] dashSplit = project.split("-");
             boolean match = true;
@@ -155,6 +164,14 @@ public class ProjectMapping {
     */
     private String processUnordinaryNVR(String nvr) {
         nvr = nvr.replace("openjdk8", "java-1.8.0-openjdk");
+        return nvr;
+    }
+
+    private String processRpmNvr(String nvr) {
+        if (nvr.contains("java-openjdk")) {
+            final String[] dashSplit = nvr.split("-");
+            nvr = dashSplit[0] + '-' + dashSplit[2].split("\\.")[0] + '-' + dashSplit[1];
+        }
         return nvr;
     }
 }

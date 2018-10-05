@@ -55,7 +55,8 @@ public class ProjectMappingTest {
             "java-9-openjdk-9.0.1.11-2.el7.x86_64.rpm",
             "java-9-openjdk-jdk.9.165-31.shenandoah.static.x86_64.tarxz",
             "java-1.8.0-openjdk-jdk8u162.b01-2.static.fastdebug.i686.tarxz",
-            "java-1.7.0-openjdk-jdk7u161.b01-0.static.fastdebug.i686.tarxz"
+            "java-1.7.0-openjdk-jdk7u161.b01-0.static.fastdebug.i686.tarxz",
+            "java-X-openjdk-jdk.12.13-69.static.x86_64.tarxz"
     );
 
     @Test
@@ -74,10 +75,11 @@ public class ProjectMappingTest {
                 "java-9-openjdk",
                 "java-9-openjdk-shenandoah",
                 "java-1.8.0-openjdk",
-                "java-1.7.0-openjdk"
+                "java-1.7.0-openjdk",
+                "java-X-openjdk"
         );
 
-        ProjectMapping projectMapping = new ProjectMapping(null);
+        ProjectMapping projectMapping = createProjectMapping();
         List<String> actualProjects = new ArrayList<>();
         for (String nvra : nvras) {
             actualProjects.add(projectMapping.getProjectOfNvra(nvra, projects));
@@ -103,10 +105,11 @@ public class ProjectMappingTest {
                 "java-9-openjdk",
                 "java-9-openjdk",
                 "java-1.8.0-openjdk",
-                "java-1.7.0-openjdk"
+                "java-1.7.0-openjdk",
+                "java-X-openjdk"
         );
 
-        ProjectMapping projectMapping = new ProjectMapping(null);
+        ProjectMapping projectMapping = createProjectMapping();
         List<String> actualProducts = new ArrayList<>();
         for (String nvra : nvras) {
             actualProducts.add(projectMapping.getProductOfNvra(nvra, products));
@@ -138,7 +141,7 @@ public class ProjectMappingTest {
                 "java-X-openjdk"
         );
 
-        ProjectMapping projectMapping = new ProjectMapping(null);
+        ProjectMapping projectMapping = createProjectMapping();
         List<String> actualProducts = new ArrayList<>();
         for (String project : projects) {
             actualProducts.add(projectMapping.getProductOfProject(project, products, projects));
@@ -149,5 +152,19 @@ public class ProjectMappingTest {
 
         expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
         projectMapping.getProductOfProject("wrong project", products, projects);
+    }
+
+    private ProjectMapping createProjectMapping() {
+        return new ProjectMapping(null) {
+            @Override
+            public List<String> getAllProducts() {
+                return products;
+            }
+
+            @Override
+            public List<String> getAllProjects() {
+                return projects;
+            }
+        };
     }
 }
