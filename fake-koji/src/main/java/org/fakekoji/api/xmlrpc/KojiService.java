@@ -42,14 +42,14 @@ import org.fakekoji.xmlrpc.server.XmlRpcResponseBuilder;
  *
  * Based on code, which was originally in JavaServer class.
  */
-public class XmlRpcService {
+public class KojiService {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private WebServer webServer;
     AccessibleSettings settings;
 
-    public XmlRpcService(AccessibleSettings settings) {
+    public KojiService(AccessibleSettings settings) {
         this.settings = settings;
         this.webServer = new WebServer(settings.getRealXPort());
     }

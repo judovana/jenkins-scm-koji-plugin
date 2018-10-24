@@ -46,8 +46,8 @@ import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.api.http.filehandling.PreviewFakeKoji;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.api.http.filehandling.FileDownloadService;
-import org.fakekoji.api.xmlrpc.XmlRpcService;
-import org.fakekoji.api.ssh.SshApiService;
+import org.fakekoji.api.xmlrpc.KojiService;
+import org.fakekoji.api.ssh.FileTransferService;
 
 /**
  * This class is emulating selected xml-rpc calls to koji, so you can easily let
@@ -68,24 +68,24 @@ public class JavaServer {
 
     private final AccessibleSettings settings;
 
-    XmlRpcService kojiXmlRpcService;
+    KojiService kojiService;
     FileDownloadService fileDownloadService;
     PreviewFakeKoji previewFakeKojiServer;
-    SshApiService sshApiService;
+    FileTransferService fileTransferService;
 
     public JavaServer(AccessibleSettings settings) throws UnknownHostException, MalformedURLException {
         this.settings = settings;
-        kojiXmlRpcService = new XmlRpcService(settings);
+        kojiService = new KojiService(settings);
         fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getRealDPort());
         previewFakeKojiServer = new PreviewFakeKoji(settings);
-        sshApiService = new SshApiService(settings.getDbFileRoot(), settings.getRealUPort());
+        fileTransferService = new FileTransferService(settings.getDbFileRoot(), settings.getRealUPort());
     }
 
     public void start() throws Exception {
         /* koji xmlRpc server*/
         LOGGER.info("Attempting to start XML-RPC Server...");
-        kojiXmlRpcService.start();
-        LOGGER.info("Started successfully on " + kojiXmlRpcService.getPort());
+        kojiService.start();
+        LOGGER.info("Started successfully on " + kojiService.getPort());
         /* koji download server*/
         LOGGER.info("Starting http server to return files.");
         fileDownloadService.start();
@@ -96,19 +96,19 @@ public class JavaServer {
         LOGGER.info("FrontEnd started successfully on " + previewFakeKojiServer.getPort());
         /* ssh server to upload files to fakekoji */
         LOGGER.info("Starting sshd server to accept files.");
-        sshApiService.start();
-        LOGGER.info("Sshd server started successfully on " + sshApiService.getPort());
+        fileTransferService.start();
+        LOGGER.info("Sshd server started successfully on " + fileTransferService.getPort());
     }
 
     public void stop() {
         try {
-            sshApiService.stop();
+            fileTransferService.stop();
         } catch (IOException ex) {
             Logger.getLogger(JavaServer.class.getName()).log(Level.SEVERE, null, ex);
         }
         previewFakeKojiServer.stop();
         fileDownloadService.stop();
-        kojiXmlRpcService.stop();
+        kojiService.stop();
     }
 
     private static final String XMLRPC_SWITCH = "-xmlrpcport";
