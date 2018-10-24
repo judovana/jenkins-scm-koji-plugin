@@ -11,12 +11,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+
+import org.fakekoji.core.FakeKojiTestUtil;
+import org.fakekoji.server.JavaServer;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.fakekoji.JavaServer;
-import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
