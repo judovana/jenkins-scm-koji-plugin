@@ -31,9 +31,10 @@ import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.tasks.Shell;
 import java.io.File;
 import java.io.FileInputStream;
-import org.fakekoji.JavaServer;
+
+import org.fakekoji.core.FakeKojiTestUtil;
+import org.fakekoji.server.JavaServer;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.fakekoji.xmlrpc.server.core.FakeKojiTestUtil;
 import org.junit.AfterClass;
 import org.junit.Rule;
 import org.junit.Test;
