@@ -178,7 +178,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
  *
  * @author jvanek
  */
-public class FileTransferService {
+public class ScpService {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
     private static final String AUTHORIZED_KEYS = "authorized_keys";
@@ -191,12 +191,12 @@ public class FileTransferService {
 
     private SshServer sshServer;
 
-    public FileTransferService(File dbRoot, int port) {
+    public ScpService(File dbRoot, int port) {
         this.dbRoot = dbRoot;
         this.port = port;
     }
 
-    public FileTransferService(File dbRoot, int port, String... keys) {
+    public ScpService(File dbRoot, int port, String... keys) {
         this.dbRoot = dbRoot;
         this.port = port;
         this.keys = keys;

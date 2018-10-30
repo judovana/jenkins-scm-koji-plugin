@@ -161,7 +161,7 @@ public class TestSshApi {
     private static File priv;
     private static File pub;
     private static int port;
-    private static FileTransferService server;
+    private static ScpService server;
     private static final boolean debug = true;
 
     @BeforeClass
@@ -195,7 +195,7 @@ public class TestSshApi {
         kojiDb.delete();
         kojiDb.mkdir();
         kojiDb.deleteOnExit();
-        server = new FileTransferService(kojiDb, port, "tester=" + pub.getAbsolutePath());
+        server = new ScpService(kojiDb, port, "tester=" + pub.getAbsolutePath());
         server.start();
         sources = File.createTempFile("ssh-fake-koji.", ".sources");
         sources.delete();
