@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package org.fakekoji.api.xmlrpc.test;
+package org.fakekoji.api.xmlrpc;
 
 import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
@@ -42,7 +42,7 @@ import org.fakekoji.xmlrpc.server.XmlRpcResponse;
  * summ of two nubers. This class is for testing connection only
  *
  */
-public class JavaClient {
+public class JavaTestClient {
 
     public static void main(String[] args) throws MalformedURLException, XmlRpcException {
 
