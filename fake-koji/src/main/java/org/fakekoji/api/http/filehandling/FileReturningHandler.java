@@ -200,8 +200,9 @@ public class FileReturningHandler implements HttpHandler {
         long size = f.length();
         LOGGER.info(f.getAbsolutePath() + " is " + size + " bytes long");
         t.sendResponseHeaders(200, size);
-        try (OutputStream os = t.getResponseBody()) {
-            copy(new FileInputStream(f), os);
+        try (OutputStream os = t.getResponseBody();
+             InputStream is = new FileInputStream(f)) {
+            copy(is, os);
         }
     }
 
