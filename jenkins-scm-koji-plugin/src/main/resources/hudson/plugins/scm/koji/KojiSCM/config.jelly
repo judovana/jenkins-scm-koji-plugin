@@ -22,11 +22,11 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Excluding NVRs" field="excludeNvr">
+    <f:entry title="Blacklisted subpackages" field="excludeNvr">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Whitelist NVRs" field="whitelistNvr">
+    <f:entry title="Whitelisted subpackages" field="whitelistNvr">
         <f:textbox/>
     </f:entry>
 
