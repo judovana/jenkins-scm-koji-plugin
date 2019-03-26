@@ -23,7 +23,6 @@
  */
 package org.fakekoji.api.xmlrpc;
 
-import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
@@ -34,7 +33,11 @@ import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListTags;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
-import org.fakekoji.xmlrpc.server.XmlRpcResponse;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.XmlRpcResponse;
 
 import java.net.MalformedURLException;
 import java.util.Arrays;
@@ -69,15 +72,15 @@ public class JavaTestClient {
 
         System.out.println("Getting ID of package: " + packageName);
         final XmlRpcRequestParams getPackageIdParams = new GetPackageId(packageName);
-        final XmlRpcResponse responseFirst = execute(getPackageIdParams);
-        final Integer packageId = responseFirst.getPackageId();
+        final PackageId packageIdResponse = (PackageId) execute(getPackageIdParams);
+        final Integer packageId = packageIdResponse.getValue();
         System.out.println("ID of package: " + packageName + ": " + packageId);
 
         final XmlRpcRequestParams listBuildsParams = new ListBuilds(packageId);
 
         System.out.println("Getting builds of package: " + packageName);
-        final XmlRpcResponse responseSecond = execute(listBuildsParams);
-        List<Build> builds = responseSecond.getBuilds();
+        final BuildList buildListResponse = (BuildList) execute(listBuildsParams);
+        List<Build> builds = buildListResponse.getValue();
         System.out.println("Number of builds: " + builds.size());
         for (Build build : builds) {
 
@@ -86,8 +89,8 @@ public class JavaTestClient {
             System.out.println();
 
             final XmlRpcRequestParams listTagsParams = new ListTags(buildId);
-            XmlRpcResponse responseThird = execute(listTagsParams);
-            Set<String> tags = responseThird.getTags();
+            TagSet tagSetResponse = (TagSet) execute(listTagsParams);
+            Set<String> tags = tagSetResponse.getValue();
             System.out.println("  tags(" + tags.size() + "):");
             for (String tag : tags) {
                 System.out.println("   " + tag);
@@ -96,8 +99,8 @@ public class JavaTestClient {
                     buildId,
                     Arrays.asList("x86_64", "i686")
             );
-            final XmlRpcResponse response = execute(listRPMsParams);
-            final List<RPM> rpms = response.getRpms();
+            final RPMList rpmList = (RPMList) execute(listRPMsParams);
+            final List<RPM> rpms = rpmList.getValue();
             System.out.println("  rpms(" + rpms.size() + "):");
             for (RPM rpm : rpms) {
                 System.out.println("     Filename: " + rpm.getFilename(".tarxz"));

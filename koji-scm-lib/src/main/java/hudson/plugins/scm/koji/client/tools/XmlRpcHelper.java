@@ -26,6 +26,7 @@ package hudson.plugins.scm.koji.client.tools;
 import java.net.URL;
 import java.util.Collections;
 
+import hudson.plugins.scm.koji.Constants;
 import org.apache.ws.commons.util.NamespaceContextImpl;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -37,9 +38,13 @@ import org.apache.xmlrpc.parser.TypeParser;
 import org.apache.xmlrpc.serializer.I4Serializer;
 import org.apache.xmlrpc.serializer.TypeSerializer;
 import org.apache.xmlrpc.serializer.TypeSerializerImpl;
-import org.fakekoji.xmlrpc.server.XmlRpcResponse;
-import org.fakekoji.xmlrpc.server.XmlRpcResponseBuilder;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.ArchiveList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.XmlRpcResponse;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -66,8 +71,28 @@ public class XmlRpcHelper {
         public XmlRpcResponse execute(XmlRpcRequestParams params) {
             try {
                 final XmlRpcClient client = createClient();
-                final XmlRpcResponseBuilder responseBuilder = new XmlRpcResponseBuilder();
-                return responseBuilder.build(params.getMethodName(), client.execute(params.getMethodName(), Collections.singletonList(params.toObject())));
+                final Object response = client.execute(params.getMethodName(), Collections.singletonList(params.toObject()));
+                final XmlRpcResponse xmlRpcResponse;
+                switch (params.getMethodName()) {
+                    case Constants.getPackageID:
+                        xmlRpcResponse = new PackageId(response);
+                        break;
+                    case Constants.listBuilds:
+                        xmlRpcResponse = new BuildList(response);
+                        break;
+                    case Constants.listTags:
+                        xmlRpcResponse = new TagSet(response);
+                        break;
+                    case Constants.listRPMs:
+                        xmlRpcResponse = new RPMList(response);
+                        break;
+                    case Constants.listArchives:
+                        xmlRpcResponse = new ArchiveList(response);
+                        break;
+                    default:
+                        xmlRpcResponse = null;
+                }
+                return xmlRpcResponse;
             } catch (Exception ex) {
                 throw new RuntimeException("Exception while executing " + params.getMethodName(), ex);
             }

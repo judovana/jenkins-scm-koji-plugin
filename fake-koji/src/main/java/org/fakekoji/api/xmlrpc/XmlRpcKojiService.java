@@ -30,12 +30,17 @@ import org.apache.xmlrpc.webserver.WebServer;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.fakekoji.xmlrpc.server.XmlRpcResponseBuilder;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetPackageId;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListArchives;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListTags;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.ArchiveList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.XmlRpcResponse;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -100,27 +105,29 @@ public class XmlRpcKojiService {
             }
             final Object parameter = xmlRpcRequest.getParameter(0);
 
-            final XmlRpcResponseBuilder responseBuilder = new XmlRpcResponseBuilder();
+            final XmlRpcResponse response;
             switch (xmlRpcRequest.getMethodName()) {
                 case Constants.getPackageID:
-                    responseBuilder.setPackageId(kojiDb.getPkgId(new GetPackageId(parameter).getPackageName()));
+                    response = new PackageId(kojiDb.getPkgId(new GetPackageId(parameter).getPackageName()));
                     break;
                 case Constants.listBuilds:
-                    responseBuilder.setBuilds(kojiDb.getProjectBuilds(new ListBuilds(parameter).getPackageId()));
+                    response = new BuildList(kojiDb.getProjectBuilds(new ListBuilds(parameter).getPackageId()));
                     break;
                 case Constants.listTags:
-                    responseBuilder.setTags(kojiDb.getTags(new ListTags(parameter).getBuildId()));
+                    response = new TagSet(kojiDb.getTags(new ListTags(parameter).getBuildId()));
                     break;
                 case Constants.listRPMs:
                     final ListRPMs listRPMsParams = new ListRPMs(parameter);
-                    responseBuilder.setRpms(kojiDb.getRpms(listRPMsParams.getBuildId(), listRPMsParams.getArchs()));
+                    response = new RPMList(kojiDb.getRpms(listRPMsParams.getBuildId(), listRPMsParams.getArchs()));
                     break;
                 case Constants.listArchives:
                     final ListArchives listArchivesParams = new ListArchives(parameter);
-                    responseBuilder.setArchives(kojiDb.getArchives(listArchivesParams.getBuildId(), listArchivesParams.getArchs()));
+                    response = new ArchiveList(kojiDb.getArchives(listArchivesParams.getBuildId(), listArchivesParams.getArchs()));
                     break;
+                default:
+                    return null;
             }
-            return responseBuilder.build().toObject();
+            return response.toObject();
         };
         webServer.getXmlRpcServer().setHandlerMapping(xxx);
         //server.addHandler("sample", new JavaServer());

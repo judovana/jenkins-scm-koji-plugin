@@ -33,7 +33,12 @@ import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListTags;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
-import org.fakekoji.xmlrpc.server.XmlRpcResponse;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.ArchiveList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.XmlRpcResponse;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -118,8 +123,8 @@ public class BuildMatcher {
 
     private Integer getPackageId(String packageName) {
         final XmlRpcRequestParams params = new GetPackageId(packageName);
-        final XmlRpcResponse response = execute(params);
-        return response.getPackageId();
+        final PackageId response = (PackageId) execute(params);
+        return response.getValue();
     }
 
     private List<Build> listPackageBuilds(String packageName) {
@@ -128,8 +133,8 @@ public class BuildMatcher {
             return Collections.emptyList();
         }
         final XmlRpcRequestParams params = new ListBuilds(packageId);
-        final XmlRpcResponse response = execute(params);
-        List<Build> builds = response.getBuilds();
+        final BuildList response = (BuildList) execute(params);
+        List<Build> builds = response.getValue();
         if (builds == null || builds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -138,8 +143,8 @@ public class BuildMatcher {
 
     private Set<String> retrieveTags(Integer buildId) {
         final XmlRpcRequestParams params = new ListTags(buildId);
-        final XmlRpcResponse response = execute(params);
-        return response.getTags();
+        final TagSet response = (TagSet) execute(params);
+        return response.getValue();
     }
 
     private boolean matchesTagPredicate(Set<String> tags) {
@@ -150,8 +155,8 @@ public class BuildMatcher {
 
     private List<RPM> retrieveRPMs(Integer buildId) {
         final XmlRpcRequestParams params = new ListRPMs(buildId, composeArchesList());
-        final XmlRpcResponse response = execute(params);
-        final List<RPM> rpms = response.getRpms();
+        final RPMList response = (RPMList) execute(params);
+        final List<RPM> rpms = response.getValue();
         return rpms == null ? Collections.emptyList() : rpms;
     }
 
@@ -168,8 +173,8 @@ public class BuildMatcher {
         final List<String> supportedArches = new ArrayList<>(1);
         supportedArches.add("win");
         final XmlRpcRequestParams params = new ListArchives(build.getId(), null);
-        final XmlRpcResponse response = execute(params);
-        final List<String> archivefilenames = response.getArchives();
+        final ArchiveList response = (ArchiveList) execute(params);
+        final List<String> archivefilenames = response.getValue();
         if (archivefilenames == null || archivefilenames.isEmpty()) {
         	return Collections.emptyList();
 		}
