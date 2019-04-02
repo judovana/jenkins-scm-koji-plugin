@@ -4,6 +4,7 @@ import hudson.FilePath;
 import hudson.model.Job;
 import hudson.model.TaskListener;
 import hudson.plugins.scm.koji.BuildsSerializer;
+import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
@@ -38,13 +39,20 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private static final int MAX_REDIRECTIONS = 10;
     private static final int BUFFER_SIZE = 8192;
 
+    private final KojiBuildProvider[] kojiBuildProviders;
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
     private final boolean verbose = true;
     private Build build;
 
-    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate, Build build) {
+    public KojiBuildDownloader(
+            KojiBuildProvider[] kojiBuildProviders,
+            KojiScmConfig config,
+            Predicate<String> notProcessedNvrPredicate,
+            Build build
+    ) {
+        this.kojiBuildProviders = kojiBuildProviders;
         this.config = config;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
         this.build = build;
@@ -53,7 +61,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         if (build == null) {
-            build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
+            build = new KojiListBuilds(kojiBuildProviders, config, notProcessedNvrPredicate).invoke(workspace, channel);
             if (build == null) {
                 // if we are here - no remote changes on first build, exiting:
                 return null;
@@ -172,10 +180,10 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
             //FIXME do this better, do not iterate here, but rember origin from checkout. See also help-kojiDownloadUrl.html
-            for (String url : config.getKojiDownloadUrls()) {
+            for (final KojiBuildProvider kojiBuildProvider : kojiBuildProviders) {
                 //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
                 for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
-                    String urlString = composeUrl(url, build, rpm, suffix);
+                    String urlString = composeUrl(kojiBuildProvider.getDownloadUrl(), build, rpm, suffix);
                     log(InetAddress.getLocalHost().getHostName());
                     log(new Date().toString());
                     if (build.isManual()) {
@@ -188,7 +196,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                         continue;
                     }
                     rpm.setUrl(urlString);
-                    build.setDownloadUrl(url);
+                    build.setDownloadUrl(kojiBuildProvider.getDownloadUrl());
                     File targetFile = new File(targetDir, rpm.getFilename(suffix));
                     log("To: ", targetFile);
                     if (!build.isManual()) {
