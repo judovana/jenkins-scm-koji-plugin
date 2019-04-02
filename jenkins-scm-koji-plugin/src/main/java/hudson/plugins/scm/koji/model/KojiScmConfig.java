@@ -1,11 +1,7 @@
 package hudson.plugins.scm.koji.model;
 
-import org.fakekoji.xmlrpc.server.JavaServerConstants;
-
 public class KojiScmConfig implements java.io.Serializable {
 
-    private final String kojiTopUrl;
-    private final String kojiDownloadUrl;
     private final String packageName;
     private final String arch;
     private final String tag;
@@ -17,8 +13,7 @@ public class KojiScmConfig implements java.io.Serializable {
     private final int maxPreviousBuilds;
 
     //testing only
-    public KojiScmConfig(String kojiTopUrl,
-                         String kojiDownloadUrl,
+    public KojiScmConfig(
                          String packageName,
                          String arch,
                          String tag,
@@ -27,10 +22,9 @@ public class KojiScmConfig implements java.io.Serializable {
                          boolean cleanDownloadDir,
                          boolean dirPerNvr,
                          int maxPreviousBuilds) {
-        this(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, null, downloadDir, cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
+        this(packageName, arch, tag, excludeNvr, null, downloadDir, cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
     }
-    public KojiScmConfig(String kojiTopUrl,
-                         String kojiDownloadUrl,
+    public KojiScmConfig(
                          String packageName,
                          String arch,
                          String tag,
@@ -40,8 +34,6 @@ public class KojiScmConfig implements java.io.Serializable {
                          boolean cleanDownloadDir,
                          boolean dirPerNvr,
                          int maxPreviousBuilds) {
-        this.kojiTopUrl = kojiTopUrl;
-        this.kojiDownloadUrl = kojiDownloadUrl;
         this.packageName = packageName;
         this.arch = arch;
         this.tag = tag;
@@ -51,38 +43,6 @@ public class KojiScmConfig implements java.io.Serializable {
         this.cleanDownloadDir = cleanDownloadDir;
         this.dirPerNvr = dirPerNvr;
         this.maxPreviousBuilds = maxPreviousBuilds;
-    }
-
-    public String getKojiTopUrl() {
-        return kojiTopUrl;
-    }
-
-    private String getKojiTopUrlInterpreted() {
-        return replaceXPORT(getKojiTopUrl());
-    }
-
-    public static String replaceXPORT(String source) {
-        return testableUrlReplacer(":"+JavaServerConstants.xPortAxiom, ":" + JavaServerConstants.DFAULT_RP2C_PORT, source);
-    }
-
-    public String[] getKojiTopUrls() {
-        return testableSplitter(getKojiTopUrlInterpreted());
-    }
-
-    public String[] getKojiDownloadUrls() {
-        return testableSplitter(getKojiDownloadUrlInterpreted());
-    }
-
-    public String getKojiDownloadUrl() {
-        return kojiDownloadUrl;
-    }
-
-    private String getKojiDownloadUrlInterpreted() {
-        return replaceDPORT(kojiDownloadUrl);
-    }
-
-    public static String replaceDPORT(String source) {
-        return testableUrlReplacer(":"+JavaServerConstants.dPortAxiom, ":" + JavaServerConstants.DFAULT_DWNLD_PORT, source);
     }
 
     public String getPackageName() {
@@ -124,9 +84,7 @@ public class KojiScmConfig implements java.io.Serializable {
     @Override
     public String toString() {
         return "KojiScmConfig{"
-                + "kojiTopUrl='" + kojiTopUrl + '\''
-                + ", kojiDownloadUrl='" + kojiDownloadUrl + '\''
-                + ", packageName='" + packageName + '\''
+                + "packageName='" + packageName + '\''
                 + ", arch='" + arch + '\''
                 + ", tag='" + tag + '\''
                 + ", excludeNvr='" + excludeNvr + '\''
@@ -135,13 +93,5 @@ public class KojiScmConfig implements java.io.Serializable {
                 + ", dirPerNvr=" + dirPerNvr
                 + ", maxPreviousBuilds=" + maxPreviousBuilds
                 + '}';
-    }
-
-    public static String testableUrlReplacer(String wildchar, String replacement, String source) {
-        return source.replaceAll(wildchar, replacement);
-    }
-
-    public static String[] testableSplitter(String source) {
-        return source.split("\\s+");
     }
 }

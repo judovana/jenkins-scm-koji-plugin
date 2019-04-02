@@ -1,30 +1,34 @@
 package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
+import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.remoting.VirtualChannel;
+import org.jenkinsci.remoting.RoleChecker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import org.jenkinsci.remoting.RoleChecker;
-
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiListBuilds.class);
 
+    private final KojiBuildProvider[] kojiBuildProviders;
     private final KojiScmConfig config;
     private final GlobPredicate tagPredicate;
     private final Predicate<String> notProcessedNvrPredicate;
 
-    public KojiListBuilds(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
+    public KojiListBuilds(
+            KojiBuildProvider[] kojiBuildProviders,
+            KojiScmConfig config,
+            Predicate<String> notProcessedNvrPredicate
+    ) {
+        this.kojiBuildProviders = kojiBuildProviders;
         this.config = config;
         this.tagPredicate = new GlobPredicate(config.getTag());
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
@@ -33,8 +37,8 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     @Override
     public Build invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         Optional<Build> buildOpt = Optional.empty();
-        for (String url : config.getKojiTopUrls()) {
-            BuildMatcher bm = new BuildMatcher(url, notProcessedNvrPredicate, tagPredicate, config.getMaxPreviousBuilds(), config.getPackageName(), config.getArch());
+        for (KojiBuildProvider kojiBuildProvider : kojiBuildProviders) {
+            BuildMatcher bm = new BuildMatcher(kojiBuildProvider.getTopUrl(), notProcessedNvrPredicate, tagPredicate, config.getMaxPreviousBuilds(), config.getPackageName(), config.getArch());
             buildOpt = bm.getResult();
             if (buildOpt.isPresent()) {
                 break;

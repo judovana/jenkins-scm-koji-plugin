@@ -44,8 +44,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     public static final KojiScmDescriptor DESCRIPTOR = new KojiScmDescriptor();
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private static final boolean verbose = true;
-    private String kojiTopUrl;
-    private String kojiDownloadUrl;
+    private final KojiBuildProvider[] kojiBuildProviders;
     private String packageName;
     private String arch;
     private String tag;
@@ -116,8 +115,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     @DataBoundConstructor
-    public KojiSCM(String kojiTopUrl,
-                   String kojiDownloadUrl,
+    public KojiSCM(KojiBuildProvider[] kojiBuildProviders,
                    String packageName,
                    String arch,
                    String tag,
@@ -127,8 +125,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
                    boolean cleanDownloadDir,
                    boolean dirPerNvr,
                    int maxPreviousBuilds) {
-        this.kojiTopUrl = kojiTopUrl;
-        this.kojiDownloadUrl = kojiDownloadUrl;
+        this.kojiBuildProviders = kojiBuildProviders;
         this.packageName = packageName;
         this.arch = arch;
         this.tag = tag;
@@ -159,7 +156,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         File checkoutBuildFile = new File(run.getParent().getRootDir(), BUILD_XML);
-        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
+        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(kojiBuildProviders, createConfig(),
                 createNotProcessedNvrPredicate(run.getParent()),
                 new BuildsSerializer().read(checkoutBuildFile));
         downloadWorker.setListener(listener);
@@ -219,7 +216,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        KojiListBuilds worker = new KojiListBuilds(createConfig(), createNotProcessedNvrPredicate(project));
+        KojiListBuilds worker = new KojiListBuilds(kojiBuildProviders, createConfig(), createNotProcessedNvrPredicate(project));
         Build build;
         if (!DESCRIPTOR.getKojiSCMConfig()) {
             // when requiresWorkspaceForPolling is set to false (based on descriptor), worksapce may be null.
@@ -279,26 +276,12 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     private KojiScmConfig createConfig() {
-        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, whitelistNvr,
+        return new KojiScmConfig(packageName, arch, tag, excludeNvr, whitelistNvr,
                                  downloadDir, cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
     }
 
-    public String getKojiTopUrl() {
-        return kojiTopUrl;
-    }
-
-    @DataBoundSetter
-    public void setKojiTopUrl(String kojiTopUrl) {
-        this.kojiTopUrl = kojiTopUrl;
-    }
-
-    public String getKojiDownloadUrl() {
-        return kojiDownloadUrl;
-    }
-
-    @DataBoundSetter
-    public void setKojiDownloadUrl(String kojiDownloadUrl) {
-        this.kojiDownloadUrl = kojiDownloadUrl;
+    public KojiBuildProvider[] getKojiBuildProviders() {
+        return kojiBuildProviders;
     }
 
     public String getPackageName() {
