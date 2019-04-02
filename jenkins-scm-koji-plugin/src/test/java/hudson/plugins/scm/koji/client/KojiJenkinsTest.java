@@ -26,23 +26,25 @@ package hudson.plugins.scm.koji.client;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.tasks.Shell;
-import java.io.File;
-import java.io.FileInputStream;
-
 import org.fakekoji.core.FakeKojiTestUtil;
 import org.fakekoji.server.JavaServer;
-import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.JenkinsRule;
+
+import java.io.File;
+import java.io.FileInputStream;
+
+import static hudson.plugins.scm.koji.client.KojiListBuildsTest.createLocalhostKojiBuildProvider;
 import static org.junit.Assert.assertEquals;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
 
 public class KojiJenkinsTest {
 
@@ -70,13 +72,17 @@ public class KojiJenkinsTest {
         }
     }
 
+    private KojiBuildProvider[] createKojiBuildProviders() {
+        return new KojiBuildProvider[]{
+                createLocalhostKojiBuildProvider()
+        };
+    }
+
     public void runTest(KojiScmConfig config, String shellScript, boolean successExpected) throws Exception {
         /* create new jenkins free style project */
         FreeStyleProject project = j.createFreeStyleProject();
 
         /* parameters for KojiSCM plugin */
-        String kojiTopUrl = config.getKojiTopUrl();
-        String kojiDownloadUrl = config.getKojiDownloadUrl();
         String packageName = config.getPackageName();
         String arch = config.getArch();
         String tag = config.getTag();
@@ -88,8 +94,7 @@ public class KojiJenkinsTest {
         int maxPreviousBuilds = config.getMaxPreviousBuilds();
 
         /* create KojiSCM plugin instance */
-        KojiSCM scm = new KojiSCM(kojiTopUrl, kojiDownloadUrl,
-                packageName, arch, tag, excludeNvr, whitelistNvr,
+        KojiSCM scm = new KojiSCM(createKojiBuildProviders(), packageName, arch, tag, excludeNvr, whitelistNvr,
                 downloadDir, cleanDownloadDir, dirPerNvr,
                 maxPreviousBuilds);
         /* set new KojiSCM plugin instance as scm for project */
@@ -118,8 +123,6 @@ public class KojiJenkinsTest {
         /* Test koji scm plugin on existing fake-koji build(s) 
            -> should end with success */
         KojiScmConfig config = new KojiScmConfig(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
@@ -140,8 +143,6 @@ public class KojiJenkinsTest {
         /* Test koji scm plugin on non-existing fake-koji build(s)
            -> should not end with success */
         KojiScmConfig config = new KojiScmConfig(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "non-existing-build",
                 "x86_64,src",
                 "fastdebug-f24*",
@@ -161,8 +162,6 @@ public class KojiJenkinsTest {
         /* Test koji scm plugin on multi-product build with non-existing build
            -> should end with success */
         KojiScmConfig config = new KojiScmConfig(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "non-existing-build java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
@@ -183,8 +182,6 @@ public class KojiJenkinsTest {
         /* Test koji scm plugin on multi-product build with no existing build
            -> should end with failure */
         KojiScmConfig config = new KojiScmConfig(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "non-existing-build also-not-existing-build",
                 "x86_64,src",
                 "fastdebug-f24*",
@@ -202,8 +199,6 @@ public class KojiJenkinsTest {
     @Test
     public void testWhitelist() throws Exception {
         KojiScmConfig config = new KojiScmConfig(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "all",
                 "*",
@@ -225,8 +220,6 @@ public class KojiJenkinsTest {
     @Test
     public void testBlackAndWhitelist() throws Exception {
         KojiScmConfig config = new KojiScmConfig(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom,
                 "java-1.8.0-openjdk",
                 "all",
                 "*",
