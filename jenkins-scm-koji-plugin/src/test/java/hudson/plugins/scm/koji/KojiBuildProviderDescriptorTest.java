@@ -21,74 +21,84 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package hudson.plugins.scm.koji.client;
+package hudson.plugins.scm.koji;
 
-import hudson.plugins.scm.koji.KojiScmDescriptor;
 import hudson.util.FormValidation;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static hudson.plugins.scm.koji.KojiBuildProvider.KojiBuildProviderDescriptor;
 
-public class KojiScmConfigValidatorsTest {
+public class KojiBuildProviderDescriptorTest {
 
     @Test
     public void simpelValidValue() {
-        FormValidation r1 = KojiScmDescriptor.testableKojiDownloadUrl("http://aaa.cz");
-        FormValidation r2 = KojiScmDescriptor.testableKojiTopUrl("http:///bbb.com");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz");
+        FormValidation r2 = descriptor.doCheckTopUrl("http:///bbb.com");
         assertEquals(FormValidation.Kind.OK, r1.kind);
         assertEquals(FormValidation.Kind.OK, r2.kind);
     }
 
     @Test
     public void simpelInValidValue1() {
-        FormValidation r = KojiScmDescriptor.testableKojiDownloadUrl("blah");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r = descriptor.doCheckDownloadUrl("blah");
         assertEquals(FormValidation.Kind.ERROR, r.kind);
     }
 
     @Test
     public void simpelInValidValue2() {
-        FormValidation r = KojiScmDescriptor.testableKojiTopUrl("blah");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r = descriptor.doCheckTopUrl("blah");
         assertEquals(FormValidation.Kind.ERROR, r.kind);
     }
 
     @Test
     public void advacnedValidValue() {
-        FormValidation r1 = KojiScmDescriptor.testableKojiDownloadUrl("http://aaa.cz:DPORT/bbb");
-        FormValidation r2 = KojiScmDescriptor.testableKojiTopUrl("http:///bbb.com:XPORT");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz:DPORT/bbb");
+        FormValidation r2 = descriptor.doCheckTopUrl("http:///bbb.com:XPORT");
         assertEquals(FormValidation.Kind.OK, r1.kind);
         assertEquals(FormValidation.Kind.OK, r2.kind);
     }
 
     @Test
     public void advacnedValidValues() {
-        FormValidation r1 = KojiScmDescriptor.testableKojiDownloadUrl("http://aaa.cz http://aaa.cz:DPORT");
-        FormValidation r2 = KojiScmDescriptor.testableKojiTopUrl("http://aaa.cz http:///bbb.com:XPORT/aaa");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz http://aaa.cz:DPORT");
+        FormValidation r2 = descriptor.doCheckTopUrl("http://aaa.cz http:///bbb.com:XPORT/aaa");
         assertEquals(FormValidation.Kind.OK, r1.kind);
         assertEquals(FormValidation.Kind.OK, r2.kind);
     }
 
     public void advacnedInvalidValues1() {
-        FormValidation r1 = KojiScmDescriptor.testableKojiDownloadUrl("http://aaa.cz aaa");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz aaa");
         assertEquals(FormValidation.Kind.OK, r1.kind);
     }
 
     public void advacnedInvalidValues2() {
-        FormValidation r2 = KojiScmDescriptor.testableKojiTopUrl("http://aaa.cz aaa");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r2 = descriptor.doCheckTopUrl("http://aaa.cz aaa");
         assertEquals(FormValidation.Kind.OK, r2.kind);
     }
-    
+
     public void advacnedInvalidValues3() {
-        FormValidation r1 = KojiScmDescriptor.testableKojiDownloadUrl("bbb http://aaa.cz");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r1 = descriptor.doCheckDownloadUrl("bbb http://aaa.cz");
         assertEquals(FormValidation.Kind.OK, r1.kind);
     }
 
     public void advacnedInvalidValues4() {
-        FormValidation r2 = KojiScmDescriptor.testableKojiTopUrl("ccc http://aaa.cz");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r2 = descriptor.doCheckTopUrl("ccc http://aaa.cz");
         assertEquals(FormValidation.Kind.OK, r2.kind);
     }
-    
+
     public void advacnedHidenInvalidValues() {
-        FormValidation r2 = KojiScmDescriptor.testableKojiTopUrl("http://aaa.cz:DPORTbad");
+        final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
+        FormValidation r2 = descriptor.doCheckTopUrl("http://aaa.cz:DPORTbad");
         assertEquals(FormValidation.Kind.ERROR, r2.kind);
     }
 
