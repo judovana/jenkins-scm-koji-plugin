@@ -17,10 +17,6 @@ public class ArchiveList implements XmlRpcResponse<List<String>> {
         this.archives = archives;
     }
 
-    public ArchiveList(Object object) {
-        archives = parseArchiveMaps(toMaps(object));
-    }
-
     @Override
     public Object toObject() {
         return new Object[]{};
@@ -31,7 +27,7 @@ public class ArchiveList implements XmlRpcResponse<List<String>> {
         return archives;
     }
 
-    private List<String> parseArchiveMaps(List<Map<String, Object>> maps) {
+    private static List<String> parseArchiveMaps(List<Map<String, Object>> maps) {
         if (maps == null) {
             return Collections.emptyList();
         }
@@ -42,7 +38,11 @@ public class ArchiveList implements XmlRpcResponse<List<String>> {
         return archives;
     }
 
-    private String parseArchiveMap(Map<String, Object> map) {
+    private static String parseArchiveMap(Map<String, Object> map) {
         return (String) map.get(Constants.filename);
+    }
+
+    public static ArchiveList create(Object object) {
+        return new ArchiveList(parseArchiveMaps(toMaps(object)));
     }
 }

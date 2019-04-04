@@ -8,10 +8,6 @@ public class PackageId implements XmlRpcResponse<Integer> {
         this.packageId = packageId;
     }
 
-    public PackageId(Object object) {
-        packageId = (Integer) object;
-    }
-
     @Override
     public Object toObject() {
         return packageId;
@@ -20,5 +16,9 @@ public class PackageId implements XmlRpcResponse<Integer> {
     @Override
     public Integer getValue() {
         return packageId;
+    }
+
+    public static PackageId create(Object object) {
+        return new PackageId((Integer) object);
     }
 }

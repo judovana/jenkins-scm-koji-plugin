@@ -19,10 +19,6 @@ public class RPMList implements XmlRpcResponse<List<RPM>> {
         this.rpms = rpms;
     }
 
-    public RPMList(Object object) {
-        rpms = parseRpmMaps(toMaps(object));
-    }
-
     @Override
     public Object toObject() {
         return parseRpms();
@@ -33,7 +29,7 @@ public class RPMList implements XmlRpcResponse<List<RPM>> {
         return rpms;
     }
 
-    private List<RPM> parseRpmMaps(List<Map<String, Object>> maps) {
+    private static List<RPM> parseRpmMaps(List<Map<String, Object>> maps) {
         if (maps == null) {
             return Collections.emptyList();
         }
@@ -44,7 +40,7 @@ public class RPMList implements XmlRpcResponse<List<RPM>> {
         return rpms;
     }
 
-    private RPM parseRpmMap(Map<String, Object> map) {
+    private static RPM parseRpmMap(Map<String, Object> map) {
         return new RPM(
                 (String) map.get(Constants.name),
                 (String) map.get(Constants.version),
@@ -72,5 +68,9 @@ public class RPMList implements XmlRpcResponse<List<RPM>> {
         map.put(Constants.nvr, rpm.getNvr());
         map.put(Constants.arch, rpm.getArch());
         return map;
+    }
+
+    public static RPMList create(Object object) {
+        return new RPMList(parseRpmMaps(toMaps(object)));
     }
 }

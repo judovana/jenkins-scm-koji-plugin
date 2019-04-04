@@ -72,14 +72,14 @@ public class JavaTestClient {
 
         System.out.println("Getting ID of package: " + packageName);
         final XmlRpcRequestParams getPackageIdParams = new GetPackageId(packageName);
-        final PackageId packageIdResponse = (PackageId) execute(getPackageIdParams);
+        final PackageId packageIdResponse = PackageId.create(execute(getPackageIdParams));
         final Integer packageId = packageIdResponse.getValue();
         System.out.println("ID of package: " + packageName + ": " + packageId);
 
         final XmlRpcRequestParams listBuildsParams = new ListBuilds(packageId);
 
         System.out.println("Getting builds of package: " + packageName);
-        final BuildList buildListResponse = (BuildList) execute(listBuildsParams);
+        final BuildList buildListResponse = BuildList.create(execute(listBuildsParams));
         List<Build> builds = buildListResponse.getValue();
         System.out.println("Number of builds: " + builds.size());
         for (Build build : builds) {
@@ -89,7 +89,7 @@ public class JavaTestClient {
             System.out.println();
 
             final XmlRpcRequestParams listTagsParams = new ListTags(buildId);
-            TagSet tagSetResponse = (TagSet) execute(listTagsParams);
+            TagSet tagSetResponse = TagSet.create(execute(listTagsParams));
             Set<String> tags = tagSetResponse.getValue();
             System.out.println("  tags(" + tags.size() + "):");
             for (String tag : tags) {
@@ -99,7 +99,7 @@ public class JavaTestClient {
                     buildId,
                     Arrays.asList("x86_64", "i686")
             );
-            final RPMList rpmList = (RPMList) execute(listRPMsParams);
+            final RPMList rpmList = RPMList.create(execute(listRPMsParams));
             final List<RPM> rpms = rpmList.getValue();
             System.out.println("  rpms(" + rpms.size() + "):");
             for (RPM rpm : rpms) {
@@ -118,7 +118,7 @@ public class JavaTestClient {
         System.out.println(timeNow - timeThen);
     }
 
-    protected static XmlRpcResponse execute(XmlRpcRequestParams params) {
+    protected static Object execute(XmlRpcRequestParams params) {
         return new XmlRpcHelper.XmlRpcExecutioner("http://hydra.brq.redhat.com:" + JavaServer.DFAULT_RP2C_PORT + "/RPC2").execute(params);
     }
 }

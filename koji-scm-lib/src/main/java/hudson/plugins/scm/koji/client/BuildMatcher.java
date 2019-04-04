@@ -123,7 +123,7 @@ public class BuildMatcher {
 
     private Integer getPackageId(String packageName) {
         final XmlRpcRequestParams params = new GetPackageId(packageName);
-        final PackageId response = (PackageId) execute(params);
+        final PackageId response = PackageId.create(execute(params));
         return response.getValue();
     }
 
@@ -133,7 +133,7 @@ public class BuildMatcher {
             return Collections.emptyList();
         }
         final XmlRpcRequestParams params = new ListBuilds(packageId);
-        final BuildList response = (BuildList) execute(params);
+        final BuildList response = BuildList.create(execute(params));
         List<Build> builds = response.getValue();
         if (builds == null || builds.isEmpty()) {
             return Collections.emptyList();
@@ -143,7 +143,7 @@ public class BuildMatcher {
 
     private Set<String> retrieveTags(Integer buildId) {
         final XmlRpcRequestParams params = new ListTags(buildId);
-        final TagSet response = (TagSet) execute(params);
+        final TagSet response = TagSet.create(execute(params));
         return response.getValue();
     }
 
@@ -155,7 +155,7 @@ public class BuildMatcher {
 
     private List<RPM> retrieveRPMs(Integer buildId) {
         final XmlRpcRequestParams params = new ListRPMs(buildId, composeArchesList());
-        final RPMList response = (RPMList) execute(params);
+        final RPMList response = RPMList.create(execute(params));
         final List<RPM> rpms = response.getValue();
         return rpms == null ? Collections.emptyList() : rpms;
     }
@@ -173,7 +173,7 @@ public class BuildMatcher {
         final List<String> supportedArches = new ArrayList<>(1);
         supportedArches.add("win");
         final XmlRpcRequestParams params = new ListArchives(build.getId(), null);
-        final ArchiveList response = (ArchiveList) execute(params);
+        final ArchiveList response = ArchiveList.create(execute(params));
         final List<String> archivefilenames = response.getValue();
         if (archivefilenames == null || archivefilenames.isEmpty()) {
         	return Collections.emptyList();
@@ -210,7 +210,7 @@ public class BuildMatcher {
         return composeList(arch);
     }
 
-    protected XmlRpcResponse execute(XmlRpcRequestParams params) {
+    protected Object execute(XmlRpcRequestParams params) {
         return new XmlRpcHelper.XmlRpcExecutioner(currentURL).execute(params);
     }
 

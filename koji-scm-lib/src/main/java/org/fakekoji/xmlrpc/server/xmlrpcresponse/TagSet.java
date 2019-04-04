@@ -19,10 +19,6 @@ public class TagSet implements XmlRpcResponse<Set<String>>  {
         this.tags = tags;
     }
 
-    public TagSet(Object object) {
-        tags = parseTagMaps(toMaps(object));
-    }
-
     @Override
     public Object toObject() {
         return parseTags();
@@ -33,7 +29,7 @@ public class TagSet implements XmlRpcResponse<Set<String>>  {
         return tags;
     }
 
-    private Set<String> parseTagMaps(List<Map<String, Object>> maps) {
+    private static Set<String> parseTagMaps(List<Map<String, Object>> maps) {
         final Set<String> tags = new HashSet<>();
         for (Map<String, Object> tagMap : maps) {
             tags.add((String) tagMap.get(Constants.name));
@@ -49,5 +45,9 @@ public class TagSet implements XmlRpcResponse<Set<String>>  {
             maps.add(tagMap);
         }
         return maps;
+    }
+
+    public static TagSet create(Object object) {
+        return new TagSet(parseTagMaps(toMaps(object)));
     }
 }

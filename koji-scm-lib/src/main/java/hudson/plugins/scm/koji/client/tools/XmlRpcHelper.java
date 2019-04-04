@@ -68,31 +68,10 @@ public class XmlRpcHelper {
             this.timeout = timeout;
         }
 
-        public XmlRpcResponse execute(XmlRpcRequestParams params) {
+        public Object execute(XmlRpcRequestParams params) {
             try {
                 final XmlRpcClient client = createClient();
-                final Object response = client.execute(params.getMethodName(), Collections.singletonList(params.toObject()));
-                final XmlRpcResponse xmlRpcResponse;
-                switch (params.getMethodName()) {
-                    case Constants.getPackageID:
-                        xmlRpcResponse = new PackageId(response);
-                        break;
-                    case Constants.listBuilds:
-                        xmlRpcResponse = new BuildList(response);
-                        break;
-                    case Constants.listTags:
-                        xmlRpcResponse = new TagSet(response);
-                        break;
-                    case Constants.listRPMs:
-                        xmlRpcResponse = new RPMList(response);
-                        break;
-                    case Constants.listArchives:
-                        xmlRpcResponse = new ArchiveList(response);
-                        break;
-                    default:
-                        xmlRpcResponse = null;
-                }
-                return xmlRpcResponse;
+                return client.execute(params.getMethodName(), Collections.singletonList(params.toObject()));
             } catch (Exception ex) {
                 throw new RuntimeException("Exception while executing " + params.getMethodName(), ex);
             }

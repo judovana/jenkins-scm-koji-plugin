@@ -19,10 +19,6 @@ public class BuildList implements XmlRpcResponse<List<Build>> {
         this.builds = builds;
     }
 
-    public BuildList(Object object) {
-        builds = parseBuildMaps(toMaps(object));
-    }
-
     @Override
     public Object toObject() {
         return parseBuilds();
@@ -33,7 +29,7 @@ public class BuildList implements XmlRpcResponse<List<Build>> {
         return builds;
     }
 
-    private List<Build> parseBuildMaps(List<Map<String, Object>> maps) {
+    private static List<Build> parseBuildMaps(List<Map<String, Object>> maps) {
         if (maps == null) {
             return Collections.emptyList();
         }
@@ -44,7 +40,7 @@ public class BuildList implements XmlRpcResponse<List<Build>> {
         return builds;
     }
 
-    private Build parseBuildMap(Map<String, Object> map) {
+    private static Build parseBuildMap(Map<String, Object> map) {
         return new Build(
                 (Integer) map.get(Constants.build_id),
                 (String) map.get(Constants.name),
@@ -76,5 +72,9 @@ public class BuildList implements XmlRpcResponse<List<Build>> {
         map.put(Constants.completion_time, build.getCompletionTime());
         // map.put(Constants.rpms, parseRpms(build.getRpms()));
         return map;
+    }
+
+    public static BuildList create(Object object) {
+        return new BuildList(parseBuildMaps(toMaps(object)));
     }
 }
