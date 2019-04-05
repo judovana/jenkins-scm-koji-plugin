@@ -18,13 +18,13 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiListBuilds.class);
 
-    private final KojiBuildProvider[] kojiBuildProviders;
+    private final Iterable<KojiBuildProvider> kojiBuildProviders;
     private final KojiScmConfig config;
     private final GlobPredicate tagPredicate;
     private final Predicate<String> notProcessedNvrPredicate;
 
     public KojiListBuilds(
-            KojiBuildProvider[] kojiBuildProviders,
+            Iterable<KojiBuildProvider> kojiBuildProviders,
             KojiScmConfig config,
             Predicate<String> notProcessedNvrPredicate
     ) {
