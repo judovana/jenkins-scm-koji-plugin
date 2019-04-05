@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.fakekoji.core.FakeKojiTestUtil;
 import org.fakekoji.server.JavaServer;
@@ -67,6 +70,29 @@ public class KojiListBuildsTest {
         return new KojiBuildProvider(
                 "https://brewhub.engineering.redhat.com/brewhub",
                 "http://download.eng.bos.redhat.com/brewroot/packages/"
+        );
+    }
+
+    static List<KojiBuildProvider> createBrewOnlyList() {
+        return Collections.singletonList(createBrewHubKojiBuildProvider());
+    }
+
+    static List<KojiBuildProvider> createKojiOnlyList() {
+        return Collections.singletonList(createKojiHubKojiBuildProvider());
+    }
+
+    static List<KojiBuildProvider> createLocalhostOnlyList() {
+        return Collections.singletonList(createLocalhostKojiBuildProvider());
+    }
+
+    static List<KojiBuildProvider> createHydraOnlyList() {
+        return Collections.singletonList(createHydraKojiBuildProvider());
+    }
+
+    static List<KojiBuildProvider> createKojiBrewList() {
+        return Arrays.asList(
+                createKojiHubKojiBuildProvider(),
+                createBrewHubKojiBuildProvider()
         );
     }
 
@@ -430,11 +456,8 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsCustomF() throws Exception {
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createLocalhostKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createLocalhostOnlyList(),
                 createConfigCustomFedora(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -443,11 +466,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsCustomF28() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createHydraKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createHydraOnlyList(),
                 createConfigCustomFedora28(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -459,11 +479,8 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsCustomFsrcOnly() throws Exception {
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createLocalhostKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createLocalhostOnlyList(),
                 createConfigCustomFedoraSrcOnly(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -472,11 +489,8 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsCustomWindows() throws Exception {
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createLocalhostKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createLocalhostOnlyList(),
                 createConfigCustomWindows(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -485,11 +499,8 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsCustomRhel() throws Exception {
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createLocalhostKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createLocalhostOnlyList(),
                 createConfigCustomRhel7(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -499,12 +510,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsMultipleValidUrls() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createKojiHubKojiBuildProvider(),
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createKojiBrewList(),
                 createConfigMultipleValidUrls(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         //KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigMultipleValidUrls(), new NotProcessedNvrPredicate(new HashSet<>()));
@@ -514,12 +521,8 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsF() throws Exception {
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createKojiHubKojiBuildProvider()
-        };
-
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createKojiOnlyList(),
                 createConfigF(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -528,11 +531,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR7() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR7(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -541,11 +541,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR6() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61));
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -554,11 +551,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR6_ibm6() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR6_ibm6(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -569,11 +563,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR5_ibm6() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR5_ibm6(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -584,11 +575,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR7_ibm() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR7_ibm71(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -599,11 +587,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR5_sun6() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR5_sun6(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -614,11 +599,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR6_oracle7() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR6_oracle7(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -629,11 +611,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsR7_oracle8() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigR7_oracle8(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -644,11 +623,8 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsWindows() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigWindows(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -659,11 +635,8 @@ public class KojiListBuildsTest {
     @Test
     public void testNoArchPresentBuilds() throws Exception {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createBrewHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createBrewOnlyList(),
                 createConfigWithEmptyArch(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -674,11 +647,8 @@ public class KojiListBuildsTest {
     @Test
     public void testMultiproductBuilds() throws IOException, InterruptedException {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createKojiHubKojiBuildProvider()
-        };
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createKojiOnlyList(),
                 createMultiProductConfig(),
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -689,14 +659,11 @@ public class KojiListBuildsTest {
     @Test
     public void testMultiproductBuildsWithNonExistingProduct() throws IOException, InterruptedException {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-                createKojiHubKojiBuildProvider()
-        };
         KojiScmConfig config = new KojiScmConfig(
                 "this_package_name_hopefully_does_not_exist java-1.8.0-openjdk",
                 null, "*", null, null, null, false, false, 10);
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createKojiOnlyList(),
                 config,
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
@@ -707,14 +674,11 @@ public class KojiListBuildsTest {
     @Test
     public void testNonExistingBuilds() throws IOException, InterruptedException {
         assumeTrue(onRhNet);
-        final KojiBuildProvider[] kojiBuildProviders = new KojiBuildProvider[] {
-
-        };
         KojiScmConfig config = new KojiScmConfig(
                 "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
                 null, "*", null, null, null, false, false, 10);
         KojiListBuilds worker = new KojiListBuilds(
-                kojiBuildProviders,
+                createKojiOnlyList(),
                 config,
                 new NotProcessedNvrPredicate(new ArrayList<>())
         );
