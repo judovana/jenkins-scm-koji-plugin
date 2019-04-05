@@ -19,6 +19,10 @@ public class ArchiveList implements XmlRpcResponse<List<String>> {
 
     @Override
     public Object toObject() {
+        /*
+            Normally, it should return array of maps (as array of objects),
+            but it is not implemented in fake-koji so I return empty array
+         */
         return new Object[]{};
     }
 

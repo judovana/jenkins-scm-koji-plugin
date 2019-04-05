@@ -6,10 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestUtils.starStarLabel;
-import static org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestUtils.stateLabel;
 import static org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestUtils.toMap;
 
 public class ListBuilds implements XmlRpcRequestParams {
+
+    // always is 1, that means we want successfully completed builds
+    private static final String stateLabel = "state";
+
     private final Integer packageId;
 
     public ListBuilds(Integer packageId) {

@@ -7,8 +7,8 @@ import java.util.Map;
 
 public class XmlRpcRequestUtils {
 
+    // this parameter allows XML-RPC contain non primitive data like maps
     static final String starStarLabel = "__starstar";
-    static final String stateLabel = "state";
 
     static Map<String, Object> toMap(Object object) {
         return (Map<String, Object>) object;
