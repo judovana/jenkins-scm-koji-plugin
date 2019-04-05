@@ -39,7 +39,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private static final int MAX_REDIRECTIONS = 10;
     private static final int BUFFER_SIZE = 8192;
 
-    private final KojiBuildProvider[] kojiBuildProviders;
+    private final Iterable<KojiBuildProvider> kojiBuildProviders;
     private final KojiScmConfig config;
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
@@ -47,7 +47,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private Build build;
 
     public KojiBuildDownloader(
-            KojiBuildProvider[] kojiBuildProviders,
+            Iterable<KojiBuildProvider> kojiBuildProviders,
             KojiScmConfig config,
             Predicate<String> notProcessedNvrPredicate,
             Build build

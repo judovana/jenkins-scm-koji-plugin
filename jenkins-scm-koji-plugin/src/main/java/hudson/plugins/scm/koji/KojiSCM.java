@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Predicate;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -44,7 +45,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     public static final KojiScmDescriptor DESCRIPTOR = new KojiScmDescriptor();
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private static final boolean verbose = true;
-    private final KojiBuildProvider[] kojiBuildProviders;
+    private final Collection<KojiBuildProvider> kojiBuildProviders;
     private String packageName;
     private String arch;
     private String tag;
@@ -115,7 +116,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     @DataBoundConstructor
-    public KojiSCM(KojiBuildProvider[] kojiBuildProviders,
+    public KojiSCM(Collection<KojiBuildProvider> kojiBuildProviders,
                    String packageName,
                    String arch,
                    String tag,
@@ -280,7 +281,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
                                  downloadDir, cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
     }
 
-    public KojiBuildProvider[] getKojiBuildProviders() {
+    public Collection<KojiBuildProvider> getKojiBuildProviders() {
         return kojiBuildProviders;
     }
 
