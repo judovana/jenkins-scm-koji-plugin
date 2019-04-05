@@ -42,6 +42,8 @@ import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Collections;
+import java.util.List;
 
 import static hudson.plugins.scm.koji.client.KojiListBuildsTest.createLocalhostKojiBuildProvider;
 import static org.junit.Assert.assertEquals;
@@ -72,10 +74,8 @@ public class KojiJenkinsTest {
         }
     }
 
-    private KojiBuildProvider[] createKojiBuildProviders() {
-        return new KojiBuildProvider[]{
-                createLocalhostKojiBuildProvider()
-        };
+    private List<KojiBuildProvider> createKojiBuildProviders() {
+        return Collections.singletonList(createLocalhostKojiBuildProvider());
     }
 
     public void runTest(KojiScmConfig config, String shellScript, boolean successExpected) throws Exception {
