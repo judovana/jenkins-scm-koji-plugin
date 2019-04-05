@@ -108,20 +108,20 @@ public class XmlRpcKojiService {
             final XmlRpcResponse response;
             switch (xmlRpcRequest.getMethodName()) {
                 case Constants.getPackageID:
-                    response = new PackageId(kojiDb.getPkgId(new GetPackageId(parameter).getPackageName()));
+                    response = new PackageId(kojiDb.getPkgId(GetPackageId.create(parameter).getPackageName()));
                     break;
                 case Constants.listBuilds:
-                    response = new BuildList(kojiDb.getProjectBuilds(new ListBuilds(parameter).getPackageId()));
+                    response = new BuildList(kojiDb.getProjectBuilds(ListBuilds.create(parameter).getPackageId()));
                     break;
                 case Constants.listTags:
-                    response = new TagSet(kojiDb.getTags(new ListTags(parameter).getBuildId()));
+                    response = new TagSet(kojiDb.getTags(ListTags.create(parameter).getBuildId()));
                     break;
                 case Constants.listRPMs:
-                    final ListRPMs listRPMsParams = new ListRPMs(parameter);
+                    final ListRPMs listRPMsParams = ListRPMs.create(parameter);
                     response = new RPMList(kojiDb.getRpms(listRPMsParams.getBuildId(), listRPMsParams.getArchs()));
                     break;
                 case Constants.listArchives:
-                    final ListArchives listArchivesParams = new ListArchives(parameter);
+                    final ListArchives listArchivesParams = ListArchives.create(parameter);
                     response = new ArchiveList(kojiDb.getArchives(listArchivesParams.getBuildId(), listArchivesParams.getArchs()));
                     break;
                 default:

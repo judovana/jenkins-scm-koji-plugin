@@ -16,11 +16,6 @@ public class ListBuilds implements XmlRpcRequestParams {
         this.packageId = packageId;
     }
 
-    public ListBuilds(Object object) {
-        final Map<String, Object> map = toMap(object);
-        this.packageId = (Integer) map.get(Constants.packageID);
-    }
-
     @Override
     public Object toObject() {
         final Map<String, Object> map = new HashMap<>();
@@ -37,5 +32,10 @@ public class ListBuilds implements XmlRpcRequestParams {
 
     public Integer getPackageId() {
         return packageId;
+    }
+
+    public static ListBuilds create(Object object) {
+        final Map<String, Object> map = toMap(object);
+        return new ListBuilds((Integer) map.get(Constants.packageID));
     }
 }

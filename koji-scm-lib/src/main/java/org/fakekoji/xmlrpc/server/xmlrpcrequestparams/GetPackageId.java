@@ -10,10 +10,6 @@ public class GetPackageId implements XmlRpcRequestParams {
         this.packageName = packageName;
     }
 
-    public GetPackageId(Object object) {
-        this.packageName = (String) object;
-    }
-
     @Override
     public Object toObject() {
         return packageName;
@@ -26,5 +22,9 @@ public class GetPackageId implements XmlRpcRequestParams {
 
     public String getPackageName() {
         return packageName;
+    }
+
+    public static GetPackageId create(Object object) {
+        return new GetPackageId((String) object);
     }
 }

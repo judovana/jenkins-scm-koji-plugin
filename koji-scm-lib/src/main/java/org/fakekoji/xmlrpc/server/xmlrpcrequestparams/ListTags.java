@@ -16,11 +16,6 @@ public class ListTags implements XmlRpcRequestParams {
         this.buildId = buildId;
     }
 
-    public ListTags(Object object) {
-        final Map<String, Object> map = toMap(object);
-        this.buildId = (Integer) map.get(Constants.build);
-    }
-
     @Override
     public Object toObject() {
         final Map<String, Object> map = new HashMap<>();
@@ -36,5 +31,10 @@ public class ListTags implements XmlRpcRequestParams {
 
     public Integer getBuildId() {
         return buildId;
+    }
+
+    public static ListTags create(Object object) {
+        final Map<String, Object> map = toMap(object);
+        return new ListTags((Integer) map.get(Constants.build));
     }
 }
