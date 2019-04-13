@@ -27,14 +27,22 @@ import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
-import org.fakekoji.xmlrpc.server.XmlRpcRequestParams;
-import org.fakekoji.xmlrpc.server.XmlRpcRequestParamsBuilder;
-import org.fakekoji.xmlrpc.server.XmlRpcResponse;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetPackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListArchives;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListTags;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.ArchiveList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.XmlRpcResponse;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -114,11 +122,9 @@ public class BuildMatcher {
     }
 
     private Integer getPackageId(String packageName) {
-        final XmlRpcRequestParamsBuilder paramsBuilder = new XmlRpcRequestParamsBuilder();
-        paramsBuilder.setPackageName(packageName);
-        final XmlRpcRequestParams params = paramsBuilder.build();
-        final XmlRpcResponse response = execute(Constants.getPackageID, params);
-        return response.getPackageId();
+        final XmlRpcRequestParams params = new GetPackageId(packageName);
+        final PackageId response = PackageId.create(execute(params));
+        return response.getValue();
     }
 
     private List<Build> listPackageBuilds(String packageName) {
@@ -126,13 +132,9 @@ public class BuildMatcher {
         if (packageId == null) {
             return Collections.emptyList();
         }
-        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
-                .setPackageId(packageId)
-                .setStarstar(Boolean.TRUE)
-                .setState(1)
-                .build();
-        final XmlRpcResponse response = execute(Constants.listBuilds, params);
-        List<Build> builds = response.getBuilds();
+        final XmlRpcRequestParams params = new ListBuilds(packageId);
+        final BuildList response = BuildList.create(execute(params));
+        List<Build> builds = response.getValue();
         if (builds == null || builds.isEmpty()) {
             return Collections.emptyList();
         }
@@ -140,13 +142,9 @@ public class BuildMatcher {
     }
 
     private Set<String> retrieveTags(Integer buildId) {
-        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
-                .setBuildId(buildId)
-                .setStarstar(Boolean.TRUE)
-                .build();
-
-        final XmlRpcResponse response = execute(Constants.listTags, params);
-        return response.getTags();
+        final XmlRpcRequestParams params = new ListTags(buildId);
+        final TagSet response = TagSet.create(execute(params));
+        return response.getValue();
     }
 
     private boolean matchesTagPredicate(Set<String> tags) {
@@ -156,13 +154,9 @@ public class BuildMatcher {
     }
 
     private List<RPM> retrieveRPMs(Integer buildId) {
-        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
-                .setBuildId(buildId)
-                .setStarstar(Boolean.TRUE)
-                .setArchs(composeArchesList())
-                .build();
-        final XmlRpcResponse response = execute(Constants.listRPMs, params);
-        final List<RPM> rpms = response.getRpms();
+        final XmlRpcRequestParams params = new ListRPMs(buildId, composeArchesList());
+        final RPMList response = RPMList.create(execute(params));
+        final List<RPM> rpms = response.getValue();
         return rpms == null ? Collections.emptyList() : rpms;
     }
 
@@ -178,12 +172,9 @@ public class BuildMatcher {
         final List<String> desiredArches = composeArchesList();
         final List<String> supportedArches = new ArrayList<>(1);
         supportedArches.add("win");
-        final XmlRpcRequestParams params = new XmlRpcRequestParamsBuilder()
-                .setBuildId(build.getId())
-                .setStarstar(Boolean.TRUE)
-                .build();
-        final XmlRpcResponse response = execute(Constants.listArchives, params);
-        final List<String> archivefilenames = response.getArchives();
+        final XmlRpcRequestParams params = new ListArchives(build.getId(), null);
+        final ArchiveList response = ArchiveList.create(execute(params));
+        final List<String> archivefilenames = response.getValue();
         if (archivefilenames == null || archivefilenames.isEmpty()) {
         	return Collections.emptyList();
 		}
@@ -219,8 +210,8 @@ public class BuildMatcher {
         return composeList(arch);
     }
 
-    protected XmlRpcResponse execute(String methodName, XmlRpcRequestParams params) {
-        return new XmlRpcHelper.XmlRpcExecutioner(currentURL).execute(methodName, params);
+    protected Object execute(XmlRpcRequestParams params) {
+        return new XmlRpcHelper.XmlRpcExecutioner(currentURL).execute(params);
     }
 
     private static List<String> composeList(String values) {

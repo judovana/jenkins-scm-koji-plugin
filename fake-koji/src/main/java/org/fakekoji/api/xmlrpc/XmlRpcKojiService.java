@@ -24,18 +24,26 @@
 package org.fakekoji.api.xmlrpc;
 
 import hudson.plugins.scm.koji.Constants;
-import java.io.IOException;
-import java.util.logging.Logger;
-
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
-import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.fakekoji.xmlrpc.server.XmlRpcRequestParams;
-import org.fakekoji.xmlrpc.server.XmlRpcRequestParamsBuilder;
-import org.fakekoji.xmlrpc.server.XmlRpcResponseBuilder;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetPackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListArchives;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListTags;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.ArchiveList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.XmlRpcResponse;
+
+import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * This Server implements Koji XmlRpc API (It is called by jenkins koji plugin )
@@ -95,30 +103,31 @@ public class XmlRpcKojiService {
                 //testing method
                 return sum(xmlRpcRequest.getParameter(0), xmlRpcRequest.getParameter(1));
             }
-            XmlRpcRequestParamsBuilder paramsBuilder = new XmlRpcRequestParamsBuilder();
+            final Object parameter = xmlRpcRequest.getParameter(0);
 
-            final String methodName = xmlRpcRequest.getMethodName();
-            XmlRpcRequestParams params = paramsBuilder.build(xmlRpcRequest.getParameter(0), methodName);
-
-            final XmlRpcResponseBuilder responseBuilder = new XmlRpcResponseBuilder();
-            switch (methodName) {
+            final XmlRpcResponse response;
+            switch (xmlRpcRequest.getMethodName()) {
                 case Constants.getPackageID:
-                    responseBuilder.setPackageId(kojiDb.getPkgId(params.getPackageName()));
+                    response = new PackageId(kojiDb.getPkgId(GetPackageId.create(parameter).getPackageName()));
                     break;
                 case Constants.listBuilds:
-                    responseBuilder.setBuilds(kojiDb.getProjectBuilds(params.getPackageId()));
+                    response = new BuildList(kojiDb.getProjectBuilds(ListBuilds.create(parameter).getPackageId()));
                     break;
                 case Constants.listTags:
-                    responseBuilder.setTags(kojiDb.getTags(params.getBuildId()));
+                    response = new TagSet(kojiDb.getTags(ListTags.create(parameter).getBuildId()));
                     break;
                 case Constants.listRPMs:
-                    responseBuilder.setRpms(kojiDb.getRpms(params.getBuildId(), params.getArchs()));
+                    final ListRPMs listRPMsParams = ListRPMs.create(parameter);
+                    response = new RPMList(kojiDb.getRpms(listRPMsParams.getBuildId(), listRPMsParams.getArchs()));
                     break;
                 case Constants.listArchives:
-                    responseBuilder.setArchives(kojiDb.getArchives(params.getBuildId(), params.getArchs()));
+                    final ListArchives listArchivesParams = ListArchives.create(parameter);
+                    response = new ArchiveList(kojiDb.getArchives(listArchivesParams.getBuildId(), listArchivesParams.getArchs()));
                     break;
+                default:
+                    return null;
             }
-            return responseBuilder.build().toObject();
+            return response.toObject();
         };
         webServer.getXmlRpcServer().setHandlerMapping(xxx);
         //server.addHandler("sample", new JavaServer());

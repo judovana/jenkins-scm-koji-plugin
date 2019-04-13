@@ -24,8 +24,9 @@
 package hudson.plugins.scm.koji.client.tools;
 
 import java.net.URL;
-import java.util.Arrays;
+import java.util.Collections;
 
+import hudson.plugins.scm.koji.Constants;
 import org.apache.ws.commons.util.NamespaceContextImpl;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
@@ -37,9 +38,13 @@ import org.apache.xmlrpc.parser.TypeParser;
 import org.apache.xmlrpc.serializer.I4Serializer;
 import org.apache.xmlrpc.serializer.TypeSerializer;
 import org.apache.xmlrpc.serializer.TypeSerializerImpl;
-import org.fakekoji.xmlrpc.server.XmlRpcRequestParams;
-import org.fakekoji.xmlrpc.server.XmlRpcResponse;
-import org.fakekoji.xmlrpc.server.XmlRpcResponseBuilder;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.ArchiveList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.XmlRpcResponse;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -63,13 +68,12 @@ public class XmlRpcHelper {
             this.timeout = timeout;
         }
 
-        public XmlRpcResponse execute(String methodName, XmlRpcRequestParams params) {
+        public Object execute(XmlRpcRequestParams params) {
             try {
                 final XmlRpcClient client = createClient();
-                final XmlRpcResponseBuilder responseBuilder = new XmlRpcResponseBuilder();
-                return responseBuilder.build(methodName, client.execute(methodName, Arrays.asList(params.toObject(methodName))));
+                return client.execute(params.getMethodName(), Collections.singletonList(params.toObject()));
             } catch (Exception ex) {
-                throw new RuntimeException("Exception while executing " + methodName, ex);
+                throw new RuntimeException("Exception while executing " + params.getMethodName(), ex);
             }
         }
 
