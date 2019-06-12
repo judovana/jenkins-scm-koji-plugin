@@ -1,4 +1,5 @@
 # Fake Koji SCM
+Stable version for 0.x and 1.x releases
 
 ### Table of Contents
 * [Fake Koji](#fake-koji)
