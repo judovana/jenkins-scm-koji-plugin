@@ -30,6 +30,8 @@ import org.apache.xmlrpc.webserver.WebServer;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetPackageId;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListArchives;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
@@ -37,6 +39,8 @@ import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListTags;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.ArchiveList;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.BuildList;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildDetail;
+import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildList;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.PackageId;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.RPMList;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.TagSet;
@@ -123,6 +127,14 @@ public class XmlRpcKojiService {
                 case Constants.listArchives:
                     final ListArchives listArchivesParams = ListArchives.create(parameter);
                     response = new ArchiveList(kojiDb.getArchives(listArchivesParams.getBuildId(), listArchivesParams.getArchs()));
+                    break;
+                case Constants.getBuildList:
+                    final GetBuildList getBuildListParams = GetBuildList.create(parameter);
+                    response = new FakeBuildList(kojiDb.getBuildList(getBuildListParams));
+                    break;
+                case Constants.getBuildDetail:
+                    final GetBuildDetail getBuildDetailParams = GetBuildDetail.create(parameter);
+                    response = new FakeBuildDetail(kojiDb.getBuildDetail(getBuildDetailParams));
                     break;
                 default:
                     return null;

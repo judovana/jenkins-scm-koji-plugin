@@ -34,6 +34,8 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.core.utils.DirFilter;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 
 /**
  * Hart beat of fake koji. This class works over directory, with similar
@@ -224,5 +226,13 @@ public class FakeKojiDB {
     // all files other than rpms(tarxz, msi, ...) should be contained here
     public List<String> getArchives(Object get, Object get0) {
         return Collections.emptyList();
+    }
+
+    public List<Build> getBuildList(GetBuildList getBuildListParams) {
+        return null; // TODO
+    }
+
+    public Build getBuildDetail(GetBuildDetail getBuildDetailParams) {
+        return null; // TODO
     }
 }
