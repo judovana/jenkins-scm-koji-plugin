@@ -30,6 +30,9 @@ abstract public class Constants {
     public static final String arch = "arch";
     public static final String filename = "filename";
 
+    public static final String getBuildList = "getBuildList";
+    public static final String getBuildDetail = "getBuildDetail";
+
     public static final DateTimeFormatter DTF = new DateTimeFormatterBuilder()
             .appendValue(ChronoField.YEAR, 4)
             .appendLiteral('-')
