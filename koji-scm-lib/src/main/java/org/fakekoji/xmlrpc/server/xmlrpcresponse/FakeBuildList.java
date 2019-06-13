@@ -21,4 +21,8 @@ public class FakeBuildList implements XmlRpcResponse<List<Build>> {
     public List<Build> getValue() {
         return buildList;
     }
+
+    public static FakeBuildList create(Object object) {
+        return (FakeBuildList) object;
+    }
 }

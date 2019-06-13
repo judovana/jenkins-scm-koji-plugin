@@ -19,4 +19,8 @@ public class FakeBuildDetail implements XmlRpcResponse<Build> {
     public Build getValue() {
         return build;
     }
+
+    public static FakeBuildDetail create(Object object) {
+        return (FakeBuildDetail) object;
+    }
 }
