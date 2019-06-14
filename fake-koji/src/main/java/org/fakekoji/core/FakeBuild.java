@@ -78,6 +78,10 @@ public class FakeBuild {
     }
 
     public Build toBuild() {
+        return toBuild(getTags());
+    }
+
+    public Build toBuild(Set<String> tags) {
         return new Build(
                 getBuildID(),
                 name,
@@ -86,7 +90,7 @@ public class FakeBuild {
                 getNVR(),
                 Constants.DTF.format(getFinishingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()),
                 getRpms(),
-                getTags(),
+                tags,
                 null
         );
     }
@@ -194,16 +198,16 @@ public class FakeBuild {
     /**
      * This method is crucial for fake koji and its cooperation with
      * scm-koji-plugin.
-     *
+     * <p>
      * This method is trying to guess tags based on content of the build is it
      * win? Windows is it specific rhel/fedora - that one is it static? all!
-     *
+     * <p>
      * x
-     *
+     * <p>
      * is it openjdk? is it oracle? is it ibm??
-     *
+     * <p>
      * x
-     *
+     * <p>
      * is the build finished?
      *
      * @return
@@ -222,13 +226,13 @@ public class FakeBuild {
                 if (release.contains("el")) {
                     int osVersion = determineRhOs(release);
                     return prefixIfNecessary(new String[]{
-                        TagsProvider.getRhel5Rhel6Base(osVersion),
-                        TagsProvider.getRhel7Base(osVersion)});
+                            TagsProvider.getRhel5Rhel6Base(osVersion),
+                            TagsProvider.getRhel7Base(osVersion)});
                 }
                 if (release.contains("fc")) {
                     int osVersion = determineRhOs(release);
                     return prefixIfNecessary(new String[]{
-                        TagsProvider.getFedoraBase(osVersion)
+                            TagsProvider.getFedoraBase(osVersion)
                     });
                 }
                 if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
@@ -248,7 +252,7 @@ public class FakeBuild {
                     return prefixIfNecessary(connect(TagsProvider.getSuplementaryRhel5LikeTag(), TagsProvider.getSuplementaryRhel6LikeTag(), TagsProvider.getSuplementaryRhel7LikeTag()));
                 }
             }
-            if (name.startsWith("thermostat-ng")){
+            if (name.startsWith("thermostat-ng")) {
                 if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {
                     return prefixIfNecessary(connect(TagsProvider.getFedoraTags(), TagsProvider.getRHELtags(), TagsProvider.getRhelTags(), TagsProvider.getWinTags()));
                 }
@@ -324,7 +328,7 @@ public class FakeBuild {
         return text.replaceFirst("(?s)(.*)" + regex, "$1" + replacement);
     }
 
-    private Date getFinishingDate() {
+    public Date getFinishingDate() {
         File f = getNewestFile();
         if (f == null) {
             //keep running?
@@ -357,10 +361,10 @@ public class FakeBuild {
 
     /**
      * Each src archive must be be attempted on all those archs.
-     *
+     * <p>
      * If the build fails, or arch is not accessible, the column must have
      * FAILED file instead of build. (+ ideally logs).
-     *
+     * <p>
      * Little bit more generally - if the arch dir don't exists or is empty, is
      * considered as not build
      */
@@ -391,12 +395,29 @@ public class FakeBuild {
         }
     }
 
+    public boolean isBuilt() throws ProjectMappingExceptions.ProjectMappingException {
+        boolean allBuilt = true;
+        String[] thisOnesArches = getSupportedArches();
+        LOGGER.info("isBuilt on: " + Arrays.toString(thisOnesArches) + "?");
+        for (String arch : thisOnesArches) {
+            File archDir = new File(dir, arch);
+            if (archDir.exists() && archDir.isDirectory() && archDir.list().length > 0) {
+                //hmm no op?
+            } else {
+                allBuilt = false;
+                //return
+            }
+        }
+        return allBuilt;
+    }
+
+
     private String[] prefixIfNecessary(String[] connectedTags) throws ProjectMappingExceptions.ProjectMappingException {
         List<String> arches = getArches();
         Collections.sort(getArches());
         //primary case - the build have src, so we expect to build it in time onall arches
         if (arches.contains("src")) {
-            boolean allBuilt = true;
+            boolean allBuilt = true; //warning! duplicated code with isBuilt!
             //there may be IO involved
             String[] thisOnesArches = getSupportedArches();
             LOGGER.info("Expected to build on: " + Arrays.toString(thisOnesArches));
@@ -498,7 +519,7 @@ public class FakeBuild {
             bufferedWriter.write("# First non # non empty line is considered as arches line and splitted on \\\\s+, returned, reading stopped");
             bufferedWriter.write("# ############## #\n");
             bufferedWriter.write("# Please always keep comment here describing above.\n");
-            bufferedWriter.write("# Generated from: "+System.getProperty("user.dir")+"\n");
+            bufferedWriter.write("# Generated from: " + System.getProperty("user.dir") + "\n");
             bufferedWriter.flush();
 
         }
@@ -527,4 +548,57 @@ public class FakeBuild {
         }
     }
 
+    public static final String HOTSPOT = "hotspot";
+    public static final String ZERO = "zero";
+    public static final String OPENJ9 = "openj9";
+
+    public static boolean isValidVm(String s) {
+        return (s.equals(ZERO) || s.equals(HOTSPOT) || s.equals(OPENJ9));
+    }
+
+    public String getJvm() {
+        if (nvr.contains(HOTSPOT)) {
+            return HOTSPOT;
+        } else if (nvr.contains(ZERO)) {
+            return ZERO;
+        } else if (nvr.contains(OPENJ9)) {
+            return OPENJ9;
+        } else {
+            return HOTSPOT;
+        }
+    }
+
+
+    public static final String RELEASE = "release";
+    public static final String FASTDEBUG = "fastdebug";
+    public static final String SLOWDEBUG = "slowdebug";
+
+    public static boolean isValidBuildVariant(String s) {
+        return (s.equals(RELEASE) || s.equals(FASTDEBUG) || s.equals(SLOWDEBUG));
+    }
+
+    public String getBuildVariant() {
+        if (nvr.contains(RELEASE)) {
+            return RELEASE;
+        } else if (nvr.contains(FASTDEBUG)) {
+            return FASTDEBUG;
+        } else if (nvr.contains(SLOWDEBUG)) {
+            return SLOWDEBUG;
+        } else {
+            return RELEASE;
+        }
+    }
+
+    public String getRepoOfOriginProject() throws ProjectMappingExceptions.ProjectMappingException {
+        return projectMapping.getProjectOfNvra(getNVR()/*+".arch.sufix"?*/);
+    }
+
+    public boolean haveSrcs() {
+        File srcDir = new File(dir, "src");
+        if (srcDir.exists() && srcDir.isDirectory()) {
+            File[] content = srcDir.listFiles();
+            return content.length > 0 && content[0].getName().length() >= 5 && content[0].length() > 5;
+        }
+        return false;
+    }
 }

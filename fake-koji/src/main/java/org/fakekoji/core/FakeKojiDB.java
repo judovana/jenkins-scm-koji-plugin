@@ -24,13 +24,13 @@
 package org.fakekoji.core;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.Nvr;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.core.utils.DirFilter;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
@@ -228,8 +228,53 @@ public class FakeKojiDB {
         return Collections.emptyList();
     }
 
-    public List<Build> getBuildList(GetBuildList getBuildListParams) {
-        return null; // TODO
+    //n,v,r,
+    //*.tarxz else oldApi
+    public List<Nvr> getBuildList(GetBuildList params) {
+        List<Nvr> r = new ArrayList<>();
+        for (FakeBuild b : builds) {
+            List<RPM> files = b.getRpms();
+            boolean isOkForNewApi = false;
+            for (RPM file : files) {
+                if (file.getFilename("ignored").endsWith(".tarxz")) {
+                    isOkForNewApi = true;
+                    break;
+                }
+            }
+            if (!isOkForNewApi) {
+                break;
+            }
+            if (FakeBuild.isValidVm(params.getJvm()) && b.getJvm().equals(params.getJvm())) {
+                if (FakeBuild.isValidBuildVariant(params.getBuildVariant()) && b.getBuildVariant().equals(params.getBuildVariant())) {
+                    if (new IsFailedBuild(b.getDir()).reCheck().getLastResult()) {
+                        continue;
+                    }
+                    try {
+                        if (b.getRepoOfOriginProject().equals(params.getProjectName())) {
+                            if (params.isBuilt() && b.isBuilt()) {
+                                add(r, b);
+                            }
+                            if (params.isSupposedToGetBuild() && b.haveSrcs() && !b.isBuilt()) {
+                                add(r, b);
+                            }
+                        }
+                    } catch (ProjectMappingExceptions.ProjectMappingException ex) {
+                        LOGGER.log(Level.INFO, ex.getMessage(), ex);
+                    }
+                }
+            }
+        }
+        return r;
+    }
+
+    private void add(List<Nvr> r, FakeBuild b) {
+        Build bb = b.toBuild(new HashSet<>());
+        List<RPM> rpms = b.getRpms();
+        List<String> l = new ArrayList<>();
+        for (RPM rpm : rpms) {
+            l.add(rpm.getFilename("tarxz"));
+        }
+        r.add(new Nvr(bb.getName(), bb.getVersion(), bb.getRelease(), b.getFinishingDate().getTime(), l));
     }
 
     public Build getBuildDetail(GetBuildDetail getBuildDetailParams) {

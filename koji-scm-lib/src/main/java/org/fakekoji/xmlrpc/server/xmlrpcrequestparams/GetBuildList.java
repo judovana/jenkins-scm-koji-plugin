@@ -22,6 +22,11 @@ public class GetBuildList implements XmlRpcRequestParams {
     }
 
     @Override
+    public String toString() {
+        return projectName + "; " + jvm + "; " + buildVariant + "; " + isBuilt;
+    }
+
+    @Override
     public Object toObject() {
         return this;
     }
@@ -43,8 +48,18 @@ public class GetBuildList implements XmlRpcRequestParams {
         return buildVariant;
     }
 
+    /**
+     * true = if the built is already finished
+     * false = the built is about to be build
+     *
+     * @return
+     */
     public boolean isBuilt() {
         return isBuilt;
+    }
+
+    public boolean isSupposedToGetBuild() {
+        return !isBuilt;
     }
 
     public static GetBuildList create(Object object) {

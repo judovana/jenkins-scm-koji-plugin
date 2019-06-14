@@ -23,6 +23,8 @@ abstract public class Constants {
     public static final String name = "name";
     public static final String rpms = "rpms";
     public static final String nvr = "nvr";
+    public static final String files = "files";
+    public static final String file = "file";
     public static final String completion_time = "completion_time";
     public static final String build_id = "build_id";
     public static final String version = "version";
