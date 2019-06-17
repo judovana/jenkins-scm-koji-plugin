@@ -68,7 +68,7 @@ public class RPM implements java.io.Serializable {
             return nvr;
         }
         Suffix suffix = Suffix.INSTANCE;
-        return nvr + '.' + arch + '.' + suffix.getSuffix(url);
+        return nvr + '.' + arch + '.' + suffix.getSuffix(url, filename);
     }
 
     public String getFilename(String suffix) {
@@ -104,6 +104,13 @@ public class RPM implements java.io.Serializable {
             return suffixes;
         }
 
+        public String getSuffix(String url, String filename) {
+            if (url==null){
+                return getSuffix(filename);
+            } else {
+                return getSuffix(url);
+            }
+        }
         public String getSuffix(String url) {
             if (url == null) {
                 return "";

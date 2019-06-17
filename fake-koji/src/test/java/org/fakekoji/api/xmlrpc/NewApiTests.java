@@ -2,10 +2,12 @@ package org.fakekoji.api.xmlrpc;
 
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.Nvr;
+import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.api.ssh.TestSshApi;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeBuild;
 import org.fakekoji.core.FakeKojiDB;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildList;
 import org.junit.AfterClass;
@@ -27,6 +29,7 @@ public class NewApiTests {
     private static AccessibleSettings as;
     private static FakeKojiDB kojiDB;
     private static File dbRoot;
+    private static final String[] archEnum = new String[]{"src", "el7_x86_64", "el6_i686", "win10", "win2016s", "win2012_x86_64", "el8_ppc64le", "el7_aarch64"};
 
     @BeforeClass
     public static void prepareDb() throws IOException {
@@ -37,7 +40,6 @@ public class NewApiTests {
         builds.mkdir();
         File repos = new File(dbRoot, "repos");
         repos.mkdir();
-        String[] archEnum = new String[]{"src", "el7_x86_64", "el6_i686", "win10", "win2016s", "win2012_x86_64", "el8_ppc64le", "el7_aarch64"};
         String[] projects = new String[]{"java-1.8.0-openjdk-shenandoah", "java-1.8.0-openjdk", "java-X-openjdk-shenandoah", "java-12-openjdk-updates", "java-1.7.0-openjdk-forest", "java-1.8.0-openjdk-aarch64-shenandoah", "java-11-openjdk-updates", "java-12-openjdk", "java-1.7.0-openjdk-forest-26", "java-1.8.0-openjdk-dev", "java-1.7.0-openjdk", "java-11-openjdk-shenandoah", "java-9-openjdk", "java-1.8.0-openjdk-aarch64", "java-10-openjdk", "java-9-openjdk-shenandoah", "java-X-openjdk", "java-11-openjdk", "thermostat-ng", "java-9-openjdk-updates", "java-9-openjdk-dev", "java-10-openjdk-updates"};
         for (String project : projects) {
             File p = new File(repos, project);
@@ -150,7 +152,7 @@ public class NewApiTests {
         List<Nvr> r = kojiDB.getBuildList(getBuildListParams);
         //there is 8 mathcing records, however we removed one to be failed
         //shouldbe missing java-11-openjdk-v2-r2.shenandoah.slowdebug
-        Assert.assertEquals(7, r.size());
+        Assert.assertEquals(archEnum.length-1, r.size());
     }
 
     @Test
@@ -161,7 +163,7 @@ public class NewApiTests {
         List<Nvr> r = kojiDB.getBuildList(getBuildListParams);
         //java-1.8.0-openjdk-v1-r1.aarch64.shenandoah.release.zero
         //is forced to be not yet build in setup
-        Assert.assertEquals(7, r.size());
+        Assert.assertEquals(archEnum.length-1, r.size());
     }
 
     @Test
@@ -184,7 +186,7 @@ public class NewApiTests {
         List<Nvr> r = kojiDB.getBuildList(getBuildListParams);
         //there is 16 release of aarch64-shenandoah forjjdk8 hotspot (release and nothing are doublig it)
         //hoewer java-1.8.0-openjdk-v2-r2.aarch64.shenandoah.release are rpms, thuis old api only
-        Assert.assertEquals(15, r.size());
+        Assert.assertEquals((archEnum.length*2)-1, r.size());
     }
 
     @Test
@@ -193,5 +195,29 @@ public class NewApiTests {
         List<Build> r = kojiDB.getProjectBuilds(kojiDB.getPkgId("java-1.8.0-openjdk"), new HashSet<>());
         //hoewer java-1.8.0-openjdk-v2-r2.aarch64.shenandoah.release are rpms, thuis old api only
         Assert.assertEquals(1, r.size());
+    }
+
+    @Test
+    public void getBuildDetailsBasicTest() throws IOException, InterruptedException {
+        //usual one
+        GetBuildDetail requestedNvr = new GetBuildDetail("java-12-openjdk", "v1", "r1.updates");
+        Build b = kojiDB.getBuildDetail(requestedNvr);
+        Assert.assertEquals(archEnum.length, b.getRpms().size());
+        //the old api one
+        requestedNvr = new GetBuildDetail("java-1.8.0-openjdk", "v2", "r2.aarch64.shenandoah.release");
+        b = kojiDB.getBuildDetail(requestedNvr);
+        Assert.assertEquals(archEnum.length, b.getRpms().size());
+        //one normal from set with one dedicated to old api
+        requestedNvr = new GetBuildDetail("java-1.8.0-openjdk", "v1", "r1.aarch64.shenandoah.release");
+        b = kojiDB.getBuildDetail(requestedNvr);
+        Assert.assertEquals(archEnum.length, b.getRpms().size());
+        //one to be built
+        requestedNvr = new GetBuildDetail("java-1.8.0-openjdk", "v1", "r1.aarch64.shenandoah.release.zero");
+        b = kojiDB.getBuildDetail(requestedNvr);
+        Assert.assertEquals(archEnum.length-1/*last non built arch*/, b.getRpms().size());
+        // the failed el7_x86_64
+        requestedNvr = new GetBuildDetail("java-11-openjdk", "v2", "r2.shenandoah.slowdebug");
+        b = kojiDB.getBuildDetail(requestedNvr);
+        Assert.assertEquals(archEnum.length/*also failed build is listed, but file name is broken*/, b.getRpms().size());
     }
 }

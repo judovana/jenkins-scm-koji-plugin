@@ -88,7 +88,7 @@ public class FakeKojiDB {
         return null;
     }
 
-    public List<Build> getProjectBuilds(Integer projectId, Set<String> fakeTags ) {
+    public List<Build> getProjectBuilds(Integer projectId, Set<String> fakeTags) {
         List<Build> projectBuilds = new ArrayList<>();
         for (FakeBuild build : builds) {
             if (build.getProjectID() == projectId && isOkForOldApi(build)) {
@@ -297,11 +297,11 @@ public class FakeKojiDB {
         r.add(new Nvr(bb.getName(), bb.getVersion(), bb.getRelease(), b.getFinishingDate().getTime(), l));
     }
 
-    public Build getBuildDetail(GetBuildDetail getBuildDetailParams) {
-       //find dir by nvr (direct!, no searching
-        //waht to do with suffix and arch? fail...
-        //construct fake build without tags
-        //done?
-        return null;
+    public Build getBuildDetail(GetBuildDetail i) {
+        File dir = new File(settings.getDbFileRoot().getAbsolutePath() + "/" +
+                i.n + "/" + i.v + "/" + i.r);
+        FakeBuild fb = new FakeBuild(i.n, i.v, i.r, dir, settings.getProjectMapping());
+        return fb.toBuild(new HashSet<>());
     }
+
 }
