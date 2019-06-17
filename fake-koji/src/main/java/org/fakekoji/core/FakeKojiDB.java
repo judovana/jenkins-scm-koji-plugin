@@ -88,18 +88,26 @@ public class FakeKojiDB {
         return null;
     }
 
-    public List<Build> getProjectBuilds(Integer projectId) {
+    public List<Build> getProjectBuilds(Integer projectId, Set<String> fakeTags ) {
         List<Build> projectBuilds = new ArrayList<>();
         for (FakeBuild build : builds) {
-            if (build.getProjectID() == projectId) {
+            if (build.getProjectID() == projectId && isOkForOldApi(build)) {
                 if (new IsFailedBuild(build.getDir()).reCheck().getLastResult()) {
                     LOGGER.info("Removing build " + build.toString() + " from result. Contains FAILED records");
                     continue;
                 }
-                projectBuilds.add(build.toBuild());
+                if (fakeTags == null) {
+                    projectBuilds.add(build.toBuild());
+                } else {
+                    projectBuilds.add(build.toBuild(fakeTags));
+                }
             }
         }
         return projectBuilds;
+    }
+
+    public List<Build> getProjectBuilds(Integer projectId) {
+        return getProjectBuilds(projectId, null);
     }
 
     FakeBuild getBuildById(Integer buildId) {
@@ -233,16 +241,8 @@ public class FakeKojiDB {
     public List<Nvr> getBuildList(GetBuildList params) {
         List<Nvr> r = new ArrayList<>();
         for (FakeBuild b : builds) {
-            List<RPM> files = b.getRpms();
-            boolean isOkForNewApi = false;
-            for (RPM file : files) {
-                if (file.getFilename("ignored").endsWith(".tarxz")) {
-                    isOkForNewApi = true;
-                    break;
-                }
-            }
-            if (!isOkForNewApi) {
-                break;
+            if (!isOkForNewApi(b)) {
+                continue;
             }
             if (FakeBuild.isValidVm(params.getJvm()) && b.getJvm().equals(params.getJvm())) {
                 if (FakeBuild.isValidBuildVariant(params.getBuildVariant()) && b.getBuildVariant().equals(params.getBuildVariant())) {
@@ -267,6 +267,26 @@ public class FakeKojiDB {
         return r;
     }
 
+    private boolean isOkForNewApi(FakeBuild b) {
+        List<File> files = b.getNonLogs();
+        for (File file : files) {
+            if (file.getName().endsWith(".tarxz")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isOkForOldApi(FakeBuild b) {
+        List<File> files = b.getNonLogs();
+        for (File file : files) {
+            if (file.getName().endsWith(".rpm")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void add(List<Nvr> r, FakeBuild b) {
         Build bb = b.toBuild(new HashSet<>());
         List<RPM> rpms = b.getRpms();
@@ -278,6 +298,10 @@ public class FakeKojiDB {
     }
 
     public Build getBuildDetail(GetBuildDetail getBuildDetailParams) {
-        return null; // TODO
+       //find dir by nvr (direct!, no searching
+        //waht to do with suffix and arch? fail...
+        //construct fake build without tags
+        //done?
+        return null;
     }
 }
