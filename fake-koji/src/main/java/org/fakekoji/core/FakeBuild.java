@@ -548,6 +548,7 @@ public class FakeBuild {
         }
     }
 
+    //FIXME - read from DB!
     public static final String HOTSPOT = "hotspot";
     public static final String ZERO = "zero";
     public static final String OPENJ9 = "openj9";
@@ -555,6 +556,7 @@ public class FakeBuild {
     public static boolean isValidVm(String s) {
         return (s.equals(ZERO) || s.equals(HOTSPOT) || s.equals(OPENJ9));
     }
+
 
     public String getJvm() {
         if (nvr.contains(HOTSPOT)) {
@@ -569,6 +571,7 @@ public class FakeBuild {
     }
 
 
+    //FIXME - read from DB!
     public static final String RELEASE = "release";
     public static final String FASTDEBUG = "fastdebug";
     public static final String SLOWDEBUG = "slowdebug";
