@@ -1,6 +1,8 @@
 package hudson.plugins.scm.koji;
 
+import hudson.DescriptorExtensionList;
 import hudson.scm.SCMDescriptor;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -21,6 +23,10 @@ public class KojiScmDescriptor extends SCMDescriptor<KojiSCM> {
             LOG.error(ex.toString());
             ex.printStackTrace();
         }
+    }
+
+    public DescriptorExtensionList<KojiXmlRpcApi, KojiXmlRpcApi.KojiXmlRpcApiDescriptor> getKojiXmlRpcApiDescriptorList() {
+        return Jenkins.getActiveInstance().<KojiXmlRpcApi, KojiXmlRpcApi.KojiXmlRpcApiDescriptor>getDescriptorList(KojiXmlRpcApi.class);
     }
 
     @Override
