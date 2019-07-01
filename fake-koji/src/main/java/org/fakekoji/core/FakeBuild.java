@@ -91,6 +91,7 @@ public class FakeBuild {
                 Constants.DTF.format(getFinishingDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()),
                 getRpms(),
                 tags,
+                null,
                 null
         );
     }
