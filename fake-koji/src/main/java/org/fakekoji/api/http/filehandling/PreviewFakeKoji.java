@@ -26,9 +26,6 @@ package org.fakekoji.api.http.filehandling;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import hudson.plugins.scm.koji.NotProcessedNvrPredicate;
-import hudson.plugins.scm.koji.client.BuildMatcher;
-import hudson.plugins.scm.koji.client.GlobPredicate;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
 import java.io.File;
@@ -585,16 +582,7 @@ public class PreviewFakeKoji {
                         .append(detailsLink(unusedBuilds))
                         .append(" missing builds")
                         .append("</p>\n");
-                if (!usedBuilds.isEmpty()) {
-                    if (BuildMatcher.compareBuildsByCompletionTime(usedBuilds.get(0), usedBuilds.get(usedBuilds.size() - 1)) > 0) {
-                        Collections.reverse(usedBuilds);
-                    }
-                }
-                if (!requestedFastDebugBuilds.isEmpty()) {
-                    if (BuildMatcher.compareBuildsByCompletionTime(requestedFastDebugBuilds.get(0), requestedFastDebugBuilds.get(requestedFastDebugBuilds.size() - 1)) > 0) {
-                        Collections.reverse(requestedFastDebugBuilds);
-                    }
-                }
+                // TODO sort builds (without buildmatcher)
                 for (Build usedBuild : usedBuilds) {
                     sb.append("<a name='").append(usedBuild.getNvr()).append("'/>");
                     offerBuild(usedBuild, allProjectsFastdebugBuilds, sb, null, dwnld);
@@ -733,12 +721,8 @@ public class PreviewFakeKoji {
 
     private static Object[] getBuildfForProduct(Product product, URL xmlrpc) {
         //get all products of top-project
-        Object[] buildObjects = new BuildMatcher(
-                xmlrpc.toExternalForm(),
-                new NotProcessedNvrPredicate(new ArrayList<>()),
-                new GlobPredicate("*"),
-                5000, product.getName(), null).getAll();
-        return buildObjects;
+        // TODO use other method than xml-rpc to retrieve builds
+        return new Object[]{};
     }
 
     private static String detailsLink(Collection<Build> items) {
