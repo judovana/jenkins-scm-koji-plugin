@@ -151,43 +151,6 @@ public class KojiJenkinsTest {
     }
 
     @Test
-    public void testMultiproductWithOneNotExisting() throws Exception {
-        /* Test koji scm plugin on multi-product build with non-existing build
-           -> should end with success */
-                String shellString = "find . | grep \"java-1.8.0-openjdk.*x86_64.tarxz\"\n"
-                + "find . | grep \"java-1.8.0-openjdk.*src.tarxz\"";
-        runTest(
-                new RealKojiXmlRpcApi(
-                "non-existing-build java-1.8.0-openjdk",
-                "x86_64,src",
-                "fastdebug-f24*",
-                "",
-                null
-                ),
-                shellString,
-                true
-        );
-    }
-
-    @Test
-    public void testMultiproductWithNoExisting() throws Exception {
-        /* Test koji scm plugin on multi-product build with no existing build
-           -> should end with failure */
-        String shellString = "! find . | grep \".*tarxz\"";
-        runTest(
-                new RealKojiXmlRpcApi(
-                        "non-existing-build also-not-existing-build",
-                        "x86_64,src",
-                        "fastdebug-f24*",
-                        "",
-                        null
-                ),
-                shellString,
-                false
-        );
-    }
-
-    @Test
     public void testWhitelist() throws Exception {
         String shellString = "! find . | grep \"ojdk\" &&"
                 + "! find . | grep \"itw\" && "

@@ -598,39 +598,6 @@ public class KojiListBuildsTest {
     }
 
     @Test
-    public void testMultiproductBuilds() throws IOException, InterruptedException {
-        assumeTrue(onRhNet);
-        KojiListBuilds worker = new KojiListBuilds(
-                createKojiOnlyList(),
-                createMultiProductConfig(),
-                new NotProcessedNvrPredicate(new ArrayList<>()),
-                10
-        );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
-    }
-
-    @Test
-    public void testMultiproductBuildsWithNonExistingProduct() throws IOException, InterruptedException {
-        assumeTrue(onRhNet);
-        RealKojiXmlRpcApi config = new RealKojiXmlRpcApi(
-                        "this_package_name_hopefully_does_not_exist java-1.8.0-openjdk",
-                        null,
-                        "*",
-                        null,
-                        null
-        );
-        KojiListBuilds worker = new KojiListBuilds(
-                createKojiOnlyList(),
-                config,
-                new NotProcessedNvrPredicate(new ArrayList<>()),
-                10
-        );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
-    }
-
-    @Test
     public void testNonExistingBuilds() throws IOException, InterruptedException {
         assumeTrue(onRhNet);
         RealKojiXmlRpcApi config = new RealKojiXmlRpcApi(
