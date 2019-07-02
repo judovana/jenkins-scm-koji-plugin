@@ -4,6 +4,7 @@ import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetPackageId;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListArchives;
@@ -48,10 +49,11 @@ class KojiBuildMatcher extends BuildMatcher {
         this.archs = composeArchList(kojiXmlRpcApi.getArch());
     }
 
-    List<Build> getBuilds(String url) {
+    @Override
+    List<Build> getBuilds(BuildProvider buildProvider) {
         final List<Build> builds = new ArrayList<>();
-        for (final Build build : listPackageBuilds(url, pkgName)) {
-            final Set<String> tags = retrieveTags(url, build);
+        for (final Build build : listPackageBuilds(buildProvider.getTopUrl(), pkgName)) {
+            final Set<String> tags = retrieveTags(buildProvider.getTopUrl(), build);
             if (matchesTagPredicate(tags)) {
                 builds.add(
                         new Build(
@@ -63,7 +65,7 @@ class KojiBuildMatcher extends BuildMatcher {
                                 build.getCompletionTime(),
                                 null,
                                 tags,
-                                url,
+                                buildProvider,
                                 null
                         )
                 );
@@ -90,7 +92,7 @@ class KojiBuildMatcher extends BuildMatcher {
                         build.getCompletionTime(),
                         rpms,
                         build.getTags(),
-                        build.getProviderUrl(),
+                        build.getProvider(),
                         null
             );
         }
@@ -131,7 +133,7 @@ class KojiBuildMatcher extends BuildMatcher {
 
     private List<RPM> retrieveRPMs(Build build) {
         final XmlRpcRequestParams params = new ListRPMs(build.getId(), archs);
-        final RPMList response = RPMList.create(execute(build.getProviderUrl(), params));
+        final RPMList response = RPMList.create(execute(build.getProvider().getTopUrl(), params));
         final List<RPM> rpms = response.getValue();
         return rpms == null ? Collections.emptyList() : rpms;
     }
@@ -148,7 +150,7 @@ class KojiBuildMatcher extends BuildMatcher {
         final List<String> supportedArches = new ArrayList<>(1);
         supportedArches.add("win");
         final XmlRpcRequestParams params = new ListArchives(build.getId(), null);
-        final ArchiveList response = ArchiveList.create(execute(build.getProviderUrl(), params));
+        final ArchiveList response = ArchiveList.create(execute(build.getProvider().getTopUrl(), params));
         final List<String> archivefilenames = response.getValue();
         if (archivefilenames == null || archivefilenames.isEmpty()) {
             return Collections.emptyList();

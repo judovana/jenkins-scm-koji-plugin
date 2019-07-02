@@ -129,7 +129,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             List<String> rpmFiles = downloadRPMs(targetDir, build, realKojiXmlRpcApi);
             String srcUrl = "";
             for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
-                srcUrl = composeSrcUrl(build.getProviderUrl(), build, suffix);
+                srcUrl = composeSrcUrl(build.getProvider().getDownloadUrl(), build, suffix);
                 if (isUrlReachable(srcUrl)) {
                     build.setSrcUrl(new URL(srcUrl));
                     break;
@@ -208,7 +208,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
             for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
-                String urlString = composeUrl(build.getProviderUrl(), build, rpm, suffix);
+                String urlString = composeUrl(build.getProvider().getDownloadUrl(), build, rpm, suffix);
                 log(InetAddress.getLocalHost().getHostName());
                 log(new Date().toString());
                 if (build.isManual()) {

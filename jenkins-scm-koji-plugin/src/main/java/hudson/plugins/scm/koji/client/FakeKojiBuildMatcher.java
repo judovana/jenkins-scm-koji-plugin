@@ -3,6 +3,7 @@ package hudson.plugins.scm.koji.client;
 import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.BuildProvider;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildDetail;
@@ -28,14 +29,14 @@ class FakeKojiBuildMatcher extends BuildMatcher {
     }
 
     @Override
-    List<Build> getBuilds(String url) {
+    List<Build> getBuilds(BuildProvider buildProvider) {
         final GetBuildList getBuildListParams = new GetBuildList(
                 xmlRpcApi.getProjectName(),
                 xmlRpcApi.getJvm(),
                 xmlRpcApi.getBuildVariant(),
                 xmlRpcApi.isBuilt()
         );
-        final FakeBuildList buildList = FakeBuildList.create(execute(url, getBuildListParams));
+        final FakeBuildList buildList = FakeBuildList.create(execute(buildProvider.getTopUrl(), getBuildListParams));
         return buildList.getValue();
     }
 
@@ -46,7 +47,7 @@ class FakeKojiBuildMatcher extends BuildMatcher {
             final Build build = buildOptional.get();
             final GetBuildDetail getBuildDetailParams = new GetBuildDetail(build.getNvr());
             final FakeBuildDetail fakeBuildDetailResponse = FakeBuildDetail.create(execute(
-                    build.getProviderUrl(),
+                    build.getProvider().getTopUrl(),
                     getBuildDetailParams
             ));
             return fakeBuildDetailResponse.getValue();

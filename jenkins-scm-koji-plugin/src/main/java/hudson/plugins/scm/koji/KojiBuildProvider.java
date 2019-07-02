@@ -3,6 +3,7 @@ package hudson.plugins.scm.koji;
 import hudson.Extension;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
+import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
@@ -16,13 +17,11 @@ import java.net.URL;
 
 public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serializable {
 
-    private final String topUrl;
-    private final String downloadUrl;
+    private final BuildProvider buildProvider;
 
     @DataBoundConstructor
     public KojiBuildProvider(String topUrl, String downloadUrl) {
-        this.topUrl = topUrl;
-        this.downloadUrl = downloadUrl;
+        buildProvider = new BuildProvider(replaceXPort(topUrl), replaceDPORT(downloadUrl));
     }
 
     @SuppressWarnings("unchecked")
@@ -31,12 +30,8 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
         return Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
     }
 
-    public String getTopUrl() {
-        return replaceXPort(topUrl);
-    }
-
-    public String getDownloadUrl() {
-        return replaceDPORT(downloadUrl);
+    public BuildProvider getBuildProvider() {
+        return buildProvider;
     }
 
     private static String replaceDPORT(String url) {

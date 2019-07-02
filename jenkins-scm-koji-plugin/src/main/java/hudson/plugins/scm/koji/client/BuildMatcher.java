@@ -27,6 +27,7 @@ import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.BuildProvider;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 
 import java.time.LocalDateTime;
@@ -63,7 +64,7 @@ abstract class BuildMatcher {
     public Build getBuild() {
        return getBuild(
                StreamSupport.stream(buildProviders.spliterator(), false)
-                       .map(KojiBuildProvider::getTopUrl)
+                       .map(KojiBuildProvider::getBuildProvider)
                        .map(this::getBuilds)
                        .flatMap(Collection::stream)
                        .filter(buildDownload -> notProcessedNvrPredicate.test(getBuild().getNvr()))
@@ -72,7 +73,7 @@ abstract class BuildMatcher {
        );
     }
 
-    abstract List<Build> getBuilds(String url);
+    abstract List<Build> getBuilds(BuildProvider buildProvider);
 
     abstract Build getBuild(Stream<Build> buildStream);
 
