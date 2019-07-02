@@ -67,7 +67,7 @@ abstract class BuildMatcher {
                        .map(KojiBuildProvider::getBuildProvider)
                        .map(this::getBuilds)
                        .flatMap(Collection::stream)
-                       .filter(buildDownload -> notProcessedNvrPredicate.test(getBuild().getNvr()))
+                       .filter(build -> notProcessedNvrPredicate.test(build.getNvr()))
                        .sorted(this::compare)
                        .limit(maxBuilds)
        );
