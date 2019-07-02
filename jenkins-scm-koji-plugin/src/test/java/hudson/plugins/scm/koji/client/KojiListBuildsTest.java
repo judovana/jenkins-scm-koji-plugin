@@ -2,8 +2,16 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.NotProcessedNvrPredicate;
+import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
-import hudson.plugins.scm.koji.model.KojiScmConfig;
+import org.fakekoji.core.FakeKojiTestUtil;
+import org.fakekoji.server.JavaServer;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -16,17 +24,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.fakekoji.core.FakeKojiTestUtil;
-import org.fakekoji.server.JavaServer;
-import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
-import org.junit.BeforeClass;
 
 public class KojiListBuildsTest {
 
@@ -96,255 +96,183 @@ public class KojiListBuildsTest {
         );
     }
 
-     KojiScmConfig createConfigCustomFedora28() {
-        return new KojiScmConfig(
+     RealKojiXmlRpcApi createConfigCustomFedora28() {
+        return new RealKojiXmlRpcApi(
                 "java-11-openjdk",
                 "x86_64,src",
                 "f28*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigCustomFedora() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigCustomFedora() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "fastdebug-f24*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigCustomFedoraSrcOnly() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigCustomFedoraSrcOnly() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "src",
                 "f24*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigCustomRhel7() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigCustomRhel7() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "rhel-7.*-candidate",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigF() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigF() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "f24*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigMultipleValidUrls() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigMultipleValidUrls() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "f24*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR7() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR7() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "rhel-7.*-candidate",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR6_ibm6() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR6_ibm6() {
+        return new RealKojiXmlRpcApi(
                 "java-1.6.0-ibm",
                 "x86_64",
                 "rhel-6.*-supp*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR5_ibm6() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR5_ibm6() {
+        return new RealKojiXmlRpcApi(
                 "java-1.6.0-ibm",
                 "i386",
                 "dist-5*-extras*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR7_ibm71() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR7_ibm71() {
+        return new RealKojiXmlRpcApi(
                 "java-1.7.1-ibm",
                 "x86_64",
                 "supp-rhel-7.*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR6() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR6() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
                 "RHEL-6.*-candidate",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR6_oracle7() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR6_oracle7() {
+        return new RealKojiXmlRpcApi(
                 "java-1.7.0-oracle",
                 "i686",
                 "oracle-java-rhel-6.*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR5_sun6() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR5_sun6() {
+        return new RealKojiXmlRpcApi(
                 "java-1.6.0-sun",
                 "x86_64",
                 "oracle-java-rhel-5*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigR7_oracle8() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigR7_oracle8() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-oracle",
                 "x86_64",
                 "oracle-java-rhel-7.*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigWindows() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigWindows() {
+        return new RealKojiXmlRpcApi(
                 "openjdk8-win",
                 "win",
                 "openjdk-win*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigCustomWindows() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigCustomWindows() {
+        return new RealKojiXmlRpcApi(
                 "openjdk8-win",
                 "win",
                 "openjdk-win*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createConfigWithEmptyArch() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createConfigWithEmptyArch() {
+        return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 null,
                 "RHEL-6.*-candidate",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
-    KojiScmConfig createMultiProductConfig() {
-        return new KojiScmConfig(
+    RealKojiXmlRpcApi createMultiProductConfig() {
+        return new RealKojiXmlRpcApi(
                 "java-1.7.0-openjdk java-1.8.0-openjdk java-9-openjdk",
                 null,
                 "*",
                 "",
-                null,
-                null,
-                false,
-                false,
-                10
+                null
         );
     }
 
@@ -459,7 +387,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createLocalhostOnlyList(),
                 createConfigCustomFedora(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         testListMatchingBuildsCustom(worker);
     }
@@ -469,7 +398,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createHydraOnlyList(),
                 createConfigCustomFedora28(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
@@ -482,7 +412,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createLocalhostOnlyList(),
                 createConfigCustomFedoraSrcOnly(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         testListMatchingBuildsCustom(worker);
     }
@@ -492,7 +423,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createLocalhostOnlyList(),
                 createConfigCustomWindows(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         testListMatchingBuildsCustom(worker);
     }
@@ -502,7 +434,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createLocalhostOnlyList(),
                 createConfigCustomRhel7(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         testListMatchingBuildsCustom(worker);
     }
@@ -512,7 +445,10 @@ public class KojiListBuildsTest {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiBrewList(),
-                createConfigMultipleValidUrls(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1));
+                createConfigMultipleValidUrls(),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1),
+                10
+        );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         //KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigMultipleValidUrls(), new NotProcessedNvrPredicate(new HashSet<>()));
         //dwldr.downloadRPMs(new File("/tmp"), build);
@@ -523,7 +459,10 @@ public class KojiListBuildsTest {
     public void testListMatchingBuildsF() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
-                createConfigF(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1));
+                createConfigF(),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1),
+                10
+        );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
@@ -533,7 +472,10 @@ public class KojiListBuildsTest {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
-                createConfigR7(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71));
+                createConfigR7(),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71),
+                10
+        );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
@@ -543,7 +485,10 @@ public class KojiListBuildsTest {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
-                createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61));
+                createConfigR6(),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61),
+                10
+        );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
@@ -554,7 +499,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR6_ibm6(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -566,7 +512,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR5_ibm6(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -578,7 +525,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR7_ibm71(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -590,7 +538,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR5_sun6(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -602,7 +551,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR6_oracle7(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -614,7 +564,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR7_oracle8(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -626,7 +577,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigWindows(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -638,7 +590,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigWithEmptyArch(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -650,7 +603,8 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
                 createMultiProductConfig(),
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -659,13 +613,18 @@ public class KojiListBuildsTest {
     @Test
     public void testMultiproductBuildsWithNonExistingProduct() throws IOException, InterruptedException {
         assumeTrue(onRhNet);
-        KojiScmConfig config = new KojiScmConfig(
-                "this_package_name_hopefully_does_not_exist java-1.8.0-openjdk",
-                null, "*", null, null, null, false, false, 10);
+        RealKojiXmlRpcApi config = new RealKojiXmlRpcApi(
+                        "this_package_name_hopefully_does_not_exist java-1.8.0-openjdk",
+                        null,
+                        "*",
+                        null,
+                        null
+        );
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
                 config,
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
@@ -674,13 +633,18 @@ public class KojiListBuildsTest {
     @Test
     public void testNonExistingBuilds() throws IOException, InterruptedException {
         assumeTrue(onRhNet);
-        KojiScmConfig config = new KojiScmConfig(
+        RealKojiXmlRpcApi config = new RealKojiXmlRpcApi(
                 "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
-                null, "*", null, null, null, false, false, 10);
+                null,
+                "*",
+                null,
+                null
+        );
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
                 config,
-                new NotProcessedNvrPredicate(new ArrayList<>())
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNull(build);
