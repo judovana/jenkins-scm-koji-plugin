@@ -45,7 +45,7 @@ class FakeKojiBuildMatcher extends BuildMatcher {
         final Optional<Build> buildOptional = buildStream.findFirst();
         if (buildOptional.isPresent()) {
             final Build build = buildOptional.get();
-            final GetBuildDetail getBuildDetailParams = new GetBuildDetail(build.getNvr());
+            final GetBuildDetail getBuildDetailParams = new GetBuildDetail(build.getName(), build.getVersion(), build.getRelease());
             final FakeBuildDetail fakeBuildDetailResponse = FakeBuildDetail.create(execute(
                     build.getProvider().getTopUrl(),
                     getBuildDetailParams

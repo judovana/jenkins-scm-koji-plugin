@@ -1,15 +1,11 @@
 package org.fakekoji.api.xmlrpc;
 
 import hudson.plugins.scm.koji.model.Build;
-import hudson.plugins.scm.koji.model.Nvr;
-import hudson.plugins.scm.koji.model.RPM;
-import org.fakekoji.api.ssh.TestSshApi;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeBuild;
 import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
-import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildList;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -149,7 +145,7 @@ public class NewApiTests {
         GetBuildList gbl = new GetBuildList("java-11-openjdk-shenandoah", "hotspot", "slowdebug", true);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
-        List<Nvr> r = kojiDB.getBuildList(getBuildListParams);
+        List<Build> r = kojiDB.getBuildList(getBuildListParams);
         //there is 8 mathcing records, however we removed one to be failed
         //shouldbe missing java-11-openjdk-v2-r2.shenandoah.slowdebug
         Assert.assertEquals(archEnum.length-1, r.size());
@@ -160,7 +156,7 @@ public class NewApiTests {
         GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", "zero", "release", true);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
-        List<Nvr> r = kojiDB.getBuildList(getBuildListParams);
+        List<Build> r = kojiDB.getBuildList(getBuildListParams);
         //java-1.8.0-openjdk-v1-r1.aarch64.shenandoah.release.zero
         //is forced to be not yet build in setup
         Assert.assertEquals(archEnum.length-1, r.size());
@@ -171,7 +167,7 @@ public class NewApiTests {
         GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", "zero", "release", false);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
-        List<Nvr> r = kojiDB.getBuildList(getBuildListParams);
+        List<Build> r = kojiDB.getBuildList(getBuildListParams);
         //java-1.8.0-openjdk-v1-r1.aarch64.shenandoah.release.zero
         //is forced to be not yet build in setup
         Assert.assertEquals(1, r.size());
@@ -183,7 +179,7 @@ public class NewApiTests {
         GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", "hotspot", "release", true);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
-        List<Nvr> r = kojiDB.getBuildList(getBuildListParams);
+        List<Build> r = kojiDB.getBuildList(getBuildListParams);
         //there is 16 release of aarch64-shenandoah forjjdk8 hotspot (release and nothing are doublig it)
         //hoewer java-1.8.0-openjdk-v2-r2.aarch64.shenandoah.release are rpms, thuis old api only
         Assert.assertEquals((archEnum.length*2)-1, r.size());

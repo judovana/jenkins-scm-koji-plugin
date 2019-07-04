@@ -1,15 +1,14 @@
 package org.fakekoji.xmlrpc.server.xmlrpcresponse;
 
 import hudson.plugins.scm.koji.model.Build;
-import hudson.plugins.scm.koji.model.Nvr;
 
 import java.util.List;
 
-public class FakeBuildList implements XmlRpcResponse<List<Nvr>> {
+public class FakeBuildList implements XmlRpcResponse<List<Build>> {
 
-    private final List<Nvr> buildList;
+    private final List<Build> buildList;
 
-    public FakeBuildList(List<Nvr> buildList) {
+    public FakeBuildList(List<Build> buildList) {
         this.buildList = buildList;
     }
 
@@ -19,7 +18,7 @@ public class FakeBuildList implements XmlRpcResponse<List<Nvr>> {
     }
 
     @Override
-    public List<Nvr> getValue() {
+    public List<Build> getValue() {
         return buildList;
     }
 

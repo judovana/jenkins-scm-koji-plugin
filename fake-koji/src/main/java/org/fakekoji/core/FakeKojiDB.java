@@ -30,7 +30,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import hudson.plugins.scm.koji.model.Build;
-import hudson.plugins.scm.koji.model.Nvr;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.core.utils.DirFilter;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
@@ -238,8 +237,8 @@ public class FakeKojiDB {
 
     //n,v,r,
     //*.tarxz else oldApi
-    public List<Nvr> getBuildList(GetBuildList params) {
-        List<Nvr> r = new ArrayList<>();
+    public List<Build> getBuildList(GetBuildList params) {
+        List<Build> r = new ArrayList<>();
         for (FakeBuild b : builds) {
             if (!isOkForNewApi(b)) {
                 continue;
@@ -287,14 +286,9 @@ public class FakeKojiDB {
         return false;
     }
 
-    private void add(List<Nvr> r, FakeBuild b) {
+    private void add(List<Build> r, FakeBuild b) {
         Build bb = b.toBuild(new HashSet<>());
-        List<RPM> rpms = b.getRpms();
-        List<String> l = new ArrayList<>();
-        for (RPM rpm : rpms) {
-            l.add(rpm.getFilename("tarxz"));
-        }
-        r.add(new Nvr(bb.getName(), bb.getVersion(), bb.getRelease(), b.getFinishingDate().getTime(), l));
+        r.add(bb);
     }
 
     public Build getBuildDetail(GetBuildDetail i) {
