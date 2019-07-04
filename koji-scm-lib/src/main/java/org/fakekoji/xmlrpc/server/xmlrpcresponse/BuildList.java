@@ -50,6 +50,7 @@ public class BuildList implements XmlRpcResponse<List<Build>> {
                 (String) map.get(Constants.completion_time),
                 null,
                 null,
+                null,
                 null
         );
     }

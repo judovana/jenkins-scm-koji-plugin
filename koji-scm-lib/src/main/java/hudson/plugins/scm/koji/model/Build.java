@@ -40,11 +40,21 @@ public class Build implements Comparable<Build>, java.io.Serializable {
     @XmlElementWrapper(name = "tags")
     @XmlElement(name = "tag")
     private final Set<String> tags;
-    private String downloadUrl;
+    @XmlElement(name = "provider", type = BuildProvider.class)
+    private BuildProvider provider;
     private URL srcUrl;
 
-    public Build(Integer id, String name, String version, String release, String nvr, String completionTime,
-            List<RPM> rpms, Set<String> tags, Boolean manual) {
+    public Build(
+            Integer id,
+            String name,
+            String version,
+            String release,
+            String nvr,
+            String completionTime,
+            List<RPM> rpms,
+            Set<String> tags,
+            BuildProvider provider,
+            Boolean manual) {
         this.id = id;
         this.name = name;
         this.version = version;
@@ -54,6 +64,7 @@ public class Build implements Comparable<Build>, java.io.Serializable {
         this.manual = manual;
         this.rpms = rpms == null ? Collections.emptyList() : new ArrayList<>(rpms);
         this.tags = tags == null ? Collections.emptySet() : new HashSet<>(tags);
+        this.provider = provider;
     }
 
     public Build() {
@@ -127,12 +138,8 @@ public class Build implements Comparable<Build>, java.io.Serializable {
         return thatCompletionDateTime.compareTo(thisCompletionDateTime);
     }
 
-    public String getDownloadUrl() {
-        return downloadUrl;
-    }
-
-    public void setDownloadUrl(String downloadUrl) {
-        this.downloadUrl = downloadUrl;
+    public BuildProvider getProvider() {
+        return provider;
     }
 
     public URL getSrcUrl() {

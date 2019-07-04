@@ -11,7 +11,6 @@ import hudson.plugins.scm.koji.client.KojiBuildDownloader;
 import hudson.plugins.scm.koji.client.KojiListBuilds;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
-import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.scm.ChangeLogParser;
 import hudson.scm.PollingResult;
 import hudson.scm.SCM;
@@ -22,6 +21,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Predicate;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -44,13 +44,8 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     public static final KojiScmDescriptor DESCRIPTOR = new KojiScmDescriptor();
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private static final boolean verbose = true;
-    private String kojiTopUrl;
-    private String kojiDownloadUrl;
-    private String packageName;
-    private String arch;
-    private String tag;
-    private String excludeNvr;
-    private String whitelistNvr;
+    private final Collection<KojiBuildProvider> kojiBuildProviders;
+    private final KojiXmlRpcApi kojiXmlRpcApi;
     private String downloadDir;
     private boolean cleanDownloadDir;
     private boolean dirPerNvr;
@@ -116,24 +111,16 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     }
 
     @DataBoundConstructor
-    public KojiSCM(String kojiTopUrl,
-                   String kojiDownloadUrl,
-                   String packageName,
-                   String arch,
-                   String tag,
-                   String excludeNvr,
-                   String whitelistNvr,
-                   String downloadDir,
-                   boolean cleanDownloadDir,
-                   boolean dirPerNvr,
-                   int maxPreviousBuilds) {
-        this.kojiTopUrl = kojiTopUrl;
-        this.kojiDownloadUrl = kojiDownloadUrl;
-        this.packageName = packageName;
-        this.arch = arch;
-        this.tag = tag;
-        this.excludeNvr = excludeNvr;
-        this.whitelistNvr = whitelistNvr;
+    public KojiSCM(
+            Collection<KojiBuildProvider> kojiBuildProviders,
+            KojiXmlRpcApi kojiXmlRpcApi,
+            String downloadDir,
+            boolean cleanDownloadDir,
+            boolean dirPerNvr,
+            int maxPreviousBuilds
+    ) {
+        this.kojiBuildProviders = kojiBuildProviders;
+        this.kojiXmlRpcApi = kojiXmlRpcApi;
         this.downloadDir = downloadDir;
         this.cleanDownloadDir = cleanDownloadDir;
         this.dirPerNvr = dirPerNvr;
@@ -159,9 +146,16 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         File checkoutBuildFile = new File(run.getParent().getRootDir(), BUILD_XML);
-        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(createConfig(),
+        KojiBuildDownloader downloadWorker = new KojiBuildDownloader(
+                kojiBuildProviders,
+                kojiXmlRpcApi,
                 createNotProcessedNvrPredicate(run.getParent()),
-                new BuildsSerializer().read(checkoutBuildFile));
+                new BuildsSerializer().read(checkoutBuildFile),
+                downloadDir,
+                maxPreviousBuilds,
+                cleanDownloadDir,
+                dirPerNvr
+        );
         downloadWorker.setListener(listener);
         KojiBuildDownloadResult downloadResult = workspace.act(downloadWorker);
 
@@ -219,7 +213,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        KojiListBuilds worker = new KojiListBuilds(createConfig(), createNotProcessedNvrPredicate(project));
+        KojiListBuilds worker = new KojiListBuilds(kojiBuildProviders, kojiXmlRpcApi, createNotProcessedNvrPredicate(project), maxPreviousBuilds);
         Build build;
         if (!DESCRIPTOR.getKojiSCMConfig()) {
             // when requiresWorkspaceForPolling is set to false (based on descriptor), worksapce may be null.
@@ -278,72 +272,12 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         return NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(processedNvrFile);
     }
 
-    private KojiScmConfig createConfig() {
-        return new KojiScmConfig(kojiTopUrl, kojiDownloadUrl, packageName, arch, tag, excludeNvr, whitelistNvr,
-                                 downloadDir, cleanDownloadDir, dirPerNvr, maxPreviousBuilds);
+    public Collection<KojiBuildProvider> getKojiBuildProviders() {
+        return kojiBuildProviders;
     }
 
-    public String getKojiTopUrl() {
-        return kojiTopUrl;
-    }
-
-    @DataBoundSetter
-    public void setKojiTopUrl(String kojiTopUrl) {
-        this.kojiTopUrl = kojiTopUrl;
-    }
-
-    public String getKojiDownloadUrl() {
-        return kojiDownloadUrl;
-    }
-
-    @DataBoundSetter
-    public void setKojiDownloadUrl(String kojiDownloadUrl) {
-        this.kojiDownloadUrl = kojiDownloadUrl;
-    }
-
-    public String getPackageName() {
-        return packageName;
-    }
-
-    @DataBoundSetter
-    public void setPackageName(String packageName) {
-        this.packageName = packageName;
-    }
-
-    public String getArch() {
-        return arch;
-    }
-
-    @DataBoundSetter
-    public void setArch(String arch) {
-        this.arch = arch;
-    }
-
-    public String getTag() {
-        return tag;
-    }
-
-    @DataBoundSetter
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
-    public String getExcludeNvr() {
-        return excludeNvr;
-    }
-
-    @DataBoundSetter
-    public void setExcludeNvr(String excludeNvr) {
-        this.excludeNvr = excludeNvr;
-    }
-
-    public String getWhitelistNvr() {
-        return whitelistNvr;
-    }
-
-    @DataBoundSetter
-    public void setWhitelistNvr(String whitelistNvr) {
-        this.whitelistNvr = whitelistNvr;
+    public KojiXmlRpcApi getKojiXmlRpcApi() {
+        return kojiXmlRpcApi;
     }
 
     public String getDownloadDir() {

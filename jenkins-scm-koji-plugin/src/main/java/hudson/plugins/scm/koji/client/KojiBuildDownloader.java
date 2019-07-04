@@ -1,19 +1,30 @@
 package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
-import hudson.model.Job;
 import hudson.model.TaskListener;
-import hudson.plugins.scm.koji.BuildsSerializer;
+import hudson.plugins.scm.koji.KojiBuildProvider;
+import hudson.plugins.scm.koji.KojiXmlRpcApi;
+import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
-import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.remoting.VirtualChannel;
 import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.LoggerHelp;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,10 +34,6 @@ import java.util.stream.Collectors;
 import java.util.Date;
 
 import org.jenkinsci.remoting.RoleChecker;
-
-import static hudson.plugins.scm.koji.Constants.BUILD_XML;
-
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,22 +45,46 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private static final int MAX_REDIRECTIONS = 10;
     private static final int BUFFER_SIZE = 8192;
 
-    private final KojiScmConfig config;
+    private final Iterable<KojiBuildProvider> kojiBuildProviders;
+    private final KojiXmlRpcApi kojiXmlRpcApi;
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
     private final boolean verbose = true;
     private Build build;
+    private final String downloadDir;
+    private final int maxPreviousBuilds;
+    private final boolean cleanDownloadDir;
+    private final boolean dirPerNvr;
 
-    public KojiBuildDownloader(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate, Build build) {
-        this.config = config;
+    public KojiBuildDownloader(
+            Iterable<KojiBuildProvider> kojiBuildProviders,
+            KojiXmlRpcApi kojiXmlRpcApi,
+            Predicate<String> notProcessedNvrPredicate,
+            Build build,
+            String downloadDir,
+            int maxPreviousBuilds,
+            boolean cleanDownloadDir,
+            boolean dirPerNvr
+    ) {
+        this.kojiBuildProviders = kojiBuildProviders;
+        this.kojiXmlRpcApi = kojiXmlRpcApi;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
         this.build = build;
+        this.downloadDir = downloadDir;
+        this.maxPreviousBuilds = maxPreviousBuilds;
+        this.cleanDownloadDir = cleanDownloadDir;
+        this.dirPerNvr = dirPerNvr;
     }
 
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         if (build == null) {
-            build = new KojiListBuilds(config, notProcessedNvrPredicate).invoke(workspace, channel);
+            build = new KojiListBuilds(
+                    kojiBuildProviders,
+                    kojiXmlRpcApi,
+                    notProcessedNvrPredicate,
+                    maxPreviousBuilds
+            ).invoke(workspace, channel);
             if (build == null) {
                 // if we are here - no remote changes on first build, exiting:
                 return null;
@@ -61,15 +92,15 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         }
         // we got the build info in workspace, downloading:
         File targetDir = workspace;
-        if (config.getDownloadDir() != null && config.getDownloadDir().length() > 0) {
+        if (downloadDir != null && downloadDir.length() > 0) {
             // target dir was specified,
-            targetDir = new File(targetDir, config.getDownloadDir());
+            targetDir = new File(targetDir, downloadDir);
             // checkbox for dir per nvr was specified:
-            if (config.isDirPerNvr()) {
+            if (dirPerNvr) {
                 targetDir = new File(targetDir, build.getNvr());
             }
             // do not delete the workspace dir if user specified '.' or hardcoded workspace:
-            if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists() && config.isCleanDownloadDir()) {
+            if (!targetDir.getAbsoluteFile().equals(workspace.getAbsoluteFile()) && targetDir.exists() && cleanDownloadDir) {
                 if (!build.isManual()) {
                     log("cleaning " + targetDir.toString());
                     cleanDirRecursively(targetDir);
@@ -89,38 +120,41 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 log("" + targetDir.getAbsoluteFile());
                 log("" + workspace.getAbsoluteFile());
                 log("" + targetDir.exists());
-                log("" + config.isCleanDownloadDir());
-
+                log("" + cleanDownloadDir);
             }
             targetDir.mkdirs();
         }
-        List<String> rpmFiles = downloadRPMs(targetDir, build);
-        String srcUrl = "";
-        for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
-            srcUrl = composeSrcUrl(build.getDownloadUrl(), build, suffix);
-            if (isUrlReachable(srcUrl)) {
-                build.setSrcUrl(new URL(srcUrl));
-                break;
+        if (kojiXmlRpcApi instanceof RealKojiXmlRpcApi) {
+            final RealKojiXmlRpcApi realKojiXmlRpcApi = (RealKojiXmlRpcApi) kojiXmlRpcApi;
+            List<String> rpmFiles = downloadRPMs(targetDir, build, realKojiXmlRpcApi);
+            String srcUrl = "";
+            for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
+                srcUrl = composeSrcUrl(build.getProvider().getDownloadUrl(), build, suffix);
+                if (isUrlReachable(srcUrl)) {
+                    build.setSrcUrl(new URL(srcUrl));
+                    break;
+                }
             }
-        }
-        // if source file is not found, we try find the directory it might be found in
-        if (build.getSrcUrl() == null) {
-            URL url = new URL(srcUrl);
-            try {
-                // this loop iterates until valid url is found or there is no parent directory anymore
-                // ".." at the end of url indicates there is no parent directory
-                do {
-                    URI uri = url.toURI();
-                    // https://stackoverflow.com/questions/10159186/how-to-get-parent-url-in-java
-                    uri = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
-                    url = uri.toURL();
-                } while (!isUrlReachable(url.toString()) && !url.toString().endsWith(".."));
-                build.setSrcUrl(url);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            // if source file is not found, we try find the directory it might be found in
+            if (build.getSrcUrl() == null) {
+                URL url = new URL(srcUrl);
+                try {
+                    // this loop iterates until valid url is found or there is no parent directory anymore
+                    // ".." at the end of url indicates there is no parent directory
+                    do {
+                        URI uri = url.toURI();
+                        // https://stackoverflow.com/questions/10159186/how-to-get-parent-url-in-java
+                        uri = uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".");
+                        url = uri.toURL();
+                    } while (!isUrlReachable(url.toString()) && !url.toString().endsWith(".."));
+                    build.setSrcUrl(url);
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
             }
+            return new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles);
         }
-        return new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles);
+        return null;
     }
 
     private void cleanDirRecursively(File file) {
@@ -137,16 +171,18 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         }
     }
 
-    public List<String> downloadRPMs(File targetDir, Build build) {
+    public List<String> downloadRPMs(File targetDir, Build build, RealKojiXmlRpcApi realKojiXmlRpcApi) {
         Predicate<RPM> nvrPredicate = i -> true;
-        if (config.getExcludeNvr() != null && !config.getExcludeNvr().isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(config.getExcludeNvr());
+        final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
+        if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
+            GlobPredicate glob = new GlobPredicate(subpackageBlacklist);
             nvrPredicate = rpm -> !glob.test(rpm.getNvr());
         }
 
         Predicate<RPM> whitelistPredicate = i -> true;
-        if (config.getWhitelistNvr() != null && !config.getWhitelistNvr().isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(config.getWhitelistNvr());
+        final String subpackageWhitelist = realKojiXmlRpcApi.getSubpackageWhitelist();
+        if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
+            GlobPredicate glob = new GlobPredicate(subpackageWhitelist);
             whitelistPredicate = rpm -> glob.test(rpm.getNvr());
         }
 
@@ -171,39 +207,34 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
         try {
-            //FIXME do this better, do not iterate here, but rember origin from checkout. See also help-kojiDownloadUrl.html
-            for (String url : config.getKojiDownloadUrls()) {
-                //tarxz is special suffix used for internal builds/results. it  is .tar.xz, but without dot, as we need to follow same number of dots as .rpm have (none)
-                for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
-                    String urlString = composeUrl(url, build, rpm, suffix);
-                    log(InetAddress.getLocalHost().getHostName());
-                    log(new Date().toString());
-                    if (build.isManual()) {
-                        log("Manual tag provided - skipping download of ", urlString);
-                    } else {
-                        log("Downloading: ", urlString);
-                    }
-                    if (!isUrlReachable(urlString)) {
-                        log("Not accessible, trying another suffix in: ", rpm.getFilename(suffix));
-                        continue;
-                    }
-                    rpm.setUrl(urlString);
-                    build.setDownloadUrl(url);
-                    File targetFile = new File(targetDir, rpm.getFilename(suffix));
-                    log("To: ", targetFile);
-                    if (!build.isManual()) {
-                        try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
-                                InputStream in = httpDownloadStream(urlString)) {
-                            byte[] buffer = new byte[BUFFER_SIZE];
-                            int read;
-                            while ((read = in.read(buffer)) != -1) {
-                                out.write(buffer, 0, read);
-                            }
+            for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
+                String urlString = composeUrl(build.getProvider().getDownloadUrl(), build, rpm, suffix);
+                log(InetAddress.getLocalHost().getHostName());
+                log(new Date().toString());
+                if (build.isManual()) {
+                    log("Manual tag provided - skipping download of ", urlString);
+                } else {
+                    log("Downloading: ", urlString);
+                }
+                if (!isUrlReachable(urlString)) {
+                    log("Not accessible, trying another suffix in: ", rpm.getFilename(suffix));
+                    continue;
+                }
+                rpm.setUrl(urlString);
+                File targetFile = new File(targetDir, rpm.getFilename(suffix));
+                log("To: ", targetFile);
+                if (!build.isManual()) {
+                    try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
+                         InputStream in = httpDownloadStream(urlString)) {
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        int read;
+                        while ((read = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, read);
                         }
                     }
-                    rpm.setHashSum(hashSum(targetFile));
-                    return targetFile;
                 }
+                rpm.setHashSum(hashSum(targetFile));
+                return targetFile;
             }
         } catch (RuntimeException ex) {
             throw ex;

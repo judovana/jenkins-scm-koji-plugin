@@ -140,7 +140,7 @@ public class KojiSCMtest {
         System.arraycopy(s1, 0, s11, 0, s1.length);
         System.arraycopy(sn, 0, s11, s1.length, sn.length);
         KojiSCM.appendBuildNvrToProcessed(tmp,
-                new Build(0, "new", "nvr", "a", sn[0], "now", new ArrayList<>(), new HashSet<>(), false)
+                new Build(0, "new", "nvr", "a", sn[0], "now", new ArrayList<>(), new HashSet<>(), null, false)
         );
         String[] t2 = fileToStrings(tmp);
         Assert.assertEquals(s11.length, t2.length);

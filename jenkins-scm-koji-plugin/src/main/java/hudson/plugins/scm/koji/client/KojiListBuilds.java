@@ -1,51 +1,60 @@
 package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
+import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
+import hudson.plugins.scm.koji.KojiBuildProvider;
+import hudson.plugins.scm.koji.KojiXmlRpcApi;
+import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
-import hudson.plugins.scm.koji.model.KojiScmConfig;
 import hudson.remoting.VirtualChannel;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Optional;
-import java.util.function.Predicate;
-
 import org.jenkinsci.remoting.RoleChecker;
 
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.io.File;
+import java.util.function.Predicate;
 
 public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KojiListBuilds.class);
-
-    private final KojiScmConfig config;
-    private final GlobPredicate tagPredicate;
+    private final Iterable<KojiBuildProvider> kojiBuildProviders;
+    private final KojiXmlRpcApi kojiXmlRpcApi;
     private final Predicate<String> notProcessedNvrPredicate;
+    private final int maxPreviousBuilds;
 
-    public KojiListBuilds(KojiScmConfig config, Predicate<String> notProcessedNvrPredicate) {
-        this.config = config;
-        this.tagPredicate = new GlobPredicate(config.getTag());
+    public KojiListBuilds(
+            Iterable<KojiBuildProvider> kojiBuildProviders,
+            KojiXmlRpcApi kojiXmlRpcApi,
+            Predicate<String> notProcessedNvrPredicate,
+            int maxPreviousBuilds
+    ) {
+        this.kojiBuildProviders = kojiBuildProviders;
+        this.kojiXmlRpcApi = kojiXmlRpcApi;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
+        this.maxPreviousBuilds = maxPreviousBuilds;
     }
 
     @Override
-    public Build invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
-        Optional<Build> buildOpt = Optional.empty();
-        for (String url : config.getKojiTopUrls()) {
-            BuildMatcher bm = new BuildMatcher(url, notProcessedNvrPredicate, tagPredicate, config.getMaxPreviousBuilds(), config.getPackageName(), config.getArch());
-            buildOpt = bm.getResult();
-            if (buildOpt.isPresent()) {
-                break;
-            }
+    public Build invoke(File workspace, VirtualChannel channel) {
+        final BuildMatcher buildMatcher;
+
+        if (kojiXmlRpcApi instanceof RealKojiXmlRpcApi) {
+            buildMatcher = new KojiBuildMatcher(
+                    kojiBuildProviders,
+                    notProcessedNvrPredicate,
+                    maxPreviousBuilds,
+                    (RealKojiXmlRpcApi) kojiXmlRpcApi
+            );
+        } else if (kojiXmlRpcApi instanceof FakeKojiXmlRpcApi) {
+
+            buildMatcher = new FakeKojiBuildMatcher(
+                    kojiBuildProviders,
+                    notProcessedNvrPredicate,
+                    maxPreviousBuilds,
+                    (FakeKojiXmlRpcApi) kojiXmlRpcApi
+            );
+        } else {
+            throw new RuntimeException("Unknown XML-RPC API: " + kojiXmlRpcApi.getDescriptor().getDisplayName());
         }
-        if (buildOpt.isPresent()) {
-            Build build = buildOpt.get();
-            LOG.info("oldest not processed build: " + build.getNvr());
-            return build;
-        }
-        return null;
+
+        return buildMatcher.getBuild();
     }
 
     @Override

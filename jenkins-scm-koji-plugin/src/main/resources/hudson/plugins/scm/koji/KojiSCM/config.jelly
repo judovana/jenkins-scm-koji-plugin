@@ -2,33 +2,49 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
-    <f:entry title="Koji top URLs" field="kojiTopUrl">
-        <f:textbox/>
+    <f:entry
+            name="kojiBuildProviders"
+            title="Koji build providers">
+
+        <f:repeatableProperty
+                field="kojiBuildProviders"
+                minimum="1"
+                noAddButton="true"/>
+
     </f:entry>
 
-    <f:entry title="Koji download URLs" field="kojiDownloadUrl">
-        <f:textbox/>
-    </f:entry>
+    <f:dropdownList
+            name="kojiXmlRpcApi"
+            title="XML-RPC API">
 
-    <f:entry title="Package name" field="packageName">
-        <f:textbox/>
-    </f:entry>
+        <j:forEach
+                var="currentDescriptor"
+                items="${descriptor.kojiXmlRpcApiDescriptorList}"
+                varStatus="loop">
 
-    <f:entry title="Package arch" field="arch">
-        <f:textbox/>
-    </f:entry>
+            <f:dropdownListBlock
+                    title="${currentDescriptor.displayName}"
+                    value="${loop.index}"
+                    selected="${currentDescriptor == instance.kojiXmlRpcApi.descriptor or (instance.kojiXmlRpcApi == null and currentDescriptor.displayName=='Real Koji')}"
+                    staplerClass="${currentDescriptor.clazz.name}">
 
-    <f:entry title="Package tag" field="tag">
-        <f:textbox/>
-    </f:entry>
+                <j:set
+                        var="instance"
+                        value="${instance.kojiXmlRpcApi}"/>
+                <j:set
+                        var="descriptor"
+                        value="${instance.descriptor}"/>
+                <st:include
+                        page="${currentDescriptor.configPage}"
+                        from="${currentDescriptor}"
+                />
 
-    <f:entry title="Blacklisted subpackages" field="excludeNvr">
-        <f:textbox/>
-    </f:entry>
+            </f:dropdownListBlock>
 
-    <f:entry title="Whitelisted subpackages" field="whitelistNvr">
-        <f:textbox/>
-    </f:entry>
+        </j:forEach>
+
+    </f:dropdownList>
+
 
     <f:entry title="Download directory" field="downloadDir">
         <f:textbox/>
@@ -45,5 +61,6 @@
     <f:entry title="Create subdirectory for each NVR" field="dirPerNvr">
         <f:checkbox/>
     </f:entry>
+
 
 </j:jelly>
