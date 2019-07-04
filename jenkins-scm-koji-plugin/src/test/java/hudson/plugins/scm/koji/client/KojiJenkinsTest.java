@@ -128,7 +128,7 @@ public class KojiJenkinsTest {
                         null
                 ),
                 shellString,
-                true
+                false
         );
     }
 

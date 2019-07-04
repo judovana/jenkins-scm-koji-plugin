@@ -367,6 +367,10 @@ public class KojiListBuildsTest {
     }
 
     public void testListMatchingBuildsCustom(KojiListBuilds worker) throws Exception {
+        testListMatchingBuildsCustom(worker, false);
+    }
+
+    public void testListMatchingBuildsCustom(KojiListBuilds worker, boolean invertAssert) throws Exception {
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
         JavaServer javaServer =
@@ -374,9 +378,11 @@ public class KojiListBuildsTest {
         try {
             javaServer.start();
             Build build = worker.invoke(temporaryFolder.newFolder(), null);
-//        KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigCustomFedora(), new NotProcessedNvrPredicate(new HashSet<>()));
-//        dwldr.downloadRPMs(new File("/tmp"), build);
-            assertNotNull(build);
+            if (invertAssert){
+                assertNull(build);
+            } else {
+                assertNotNull(build);
+            }
         } finally {
             javaServer.stop();
         }
@@ -390,7 +396,7 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        testListMatchingBuildsCustom(worker);
+        testListMatchingBuildsCustom(worker, true);
     }
     @Test
     public void testListMatchingBuildsCustomF28() throws Exception {

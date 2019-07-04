@@ -279,7 +279,11 @@ public class FakeKojiDB {
     private boolean isOkForOldApi(FakeBuild b) {
         List<File> files = b.getNonLogs();
         for (File file : files) {
-            if (file.getName().endsWith(".rpm")) {
+            if (
+                    file.getName().endsWith(".rpm") ||
+                    file.getName().endsWith(".msi") ||
+                    file.getName().endsWith(".zip")
+            ) {
                 return true;
             }
         }
