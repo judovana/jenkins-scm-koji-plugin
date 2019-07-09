@@ -41,23 +41,35 @@ public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Seri
 
     private static final Logger LOG = LoggerFactory.getLogger(NotProcessedNvrPredicate.class);
 
-    public static Predicate<String> createNotProcessedNvrPredicateFromFile(File processedNvrFile) throws IOException {
-        if (processedNvrFile.exists()) {
+    public static Predicate<String> createNotProcessedNvrPredicateFromFile(File processedNvrFile, File globalprocessedNvrFile) throws IOException {
+        List<String> singleJobProcessed = fileToList(processedNvrFile);
+        List<String> globalProcessed = fileToList(globalprocessedNvrFile);
+        List<String> joinedList = new ArrayList<>(singleJobProcessed.size()+globalProcessed.size());
+        joinedList.addAll(singleJobProcessed);
+        joinedList.addAll(globalProcessed);
+        return new NotProcessedNvrPredicate(joinedList);
+    }
+    
+    private static List<String> fileToList(File processedNvrFile) throws IOException {    
+        if (processedNvrFile!= null && processedNvrFile.exists()) {
             if (processedNvrFile.isFile() && processedNvrFile.canRead()) {
                 try (Stream<String> stream = Files.lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)) {
-                    return createNotProcessedNvrPredicateFromStream(stream);
+                    return streamToList(stream);
                 }
             } else {
                 throw new IOException("Processed NVRs is not readable: " + processedNvrFile.getAbsolutePath());
             }
         } else {
-            return new NotProcessedNvrPredicate(new HashSet<>());
+            return new ArrayList<>(0);
         }
     }
 
-    public static Predicate<String> createNotProcessedNvrPredicateFromStream(Stream<String> stream) throws IOException {
-        List<String> l1 = stream.collect(Collectors.toList());
-        return new NotProcessedNvrPredicate(l1);
+    public static List<String> streamToList(Stream<String> stream) throws IOException {
+        return stream.collect(Collectors.toList());
+    }
+    
+    public static Predicate<String> createNotProcessedNvrPredicate(List<String> stream) throws IOException {
+        return new NotProcessedNvrPredicate(stream);
     }
 
     private final Set<String> processedNvrs;

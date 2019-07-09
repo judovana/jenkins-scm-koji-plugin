@@ -90,40 +90,40 @@ public class NotProcessedNvrPredicateTest {
     @Test
     public void checTruePredicate() throws IOException {
         List<String> l = Arrays.asList(ojdk8);
-        assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-jdk8u162.b00-351.dev.upstream"));
+        assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("java-1.8.0-openjdk-jdk8u162.b00-351.dev.upstream"));
     }
     @Test
     public void checTruePredicateWithGarbage() throws IOException {
         List<String> l = Arrays.asList(ojdk8);
-        assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-1.8.0.131-10.b12.el7"));
+        assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("java-1.8.0-openjdk-1.8.0.131-10.b12.el7"));
     }
     @Test
     public void checTruePredicateWithMoreGarbage() throws IOException {
         List<String> l = Arrays.asList(ojdk8);
-        assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-jdk8u144.b01-31.upstream"));
+        assertFalse(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("java-1.8.0-openjdk-jdk8u144.b01-31.upstream"));
     }
     
      @Test
     public void checFalsePredicate() throws IOException {
         List<String> l = Arrays.asList(ojdk8);
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("blah"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("blah"));
     }
     
     @Test
     public void checFalsePredicateWithGarbage() throws IOException {
         List<String> l = Arrays.asList(ojdk8);
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-1.8.0.131-10.b12.el7 some garbage"));
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("some garbage"));
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("some"));
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("java-1.8.0-openjdk-1.8.0.131-10.b12.el7 some garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("some garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("some"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("garbage"));
     }
     @Test
     public void checFalsePredicateWithMoreGarbage() throws IOException {
         List<String> l = Arrays.asList(ojdk8);
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("java-1.8.0-openjdk-jdk8u144.b01-31.upstream     more garbage"));
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("more garbage"));
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("more"));
-        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromStream(l.stream()).test("garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("java-1.8.0-openjdk-jdk8u144.b01-31.upstream     more garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("more garbage"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("more"));
+        assertTrue(NotProcessedNvrPredicate.createNotProcessedNvrPredicate(l).test("garbage"));
         
     }
 

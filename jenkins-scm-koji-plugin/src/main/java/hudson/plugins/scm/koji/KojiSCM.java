@@ -275,7 +275,8 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
     private Predicate<String> createNotProcessedNvrPredicate(Job<?, ?> job) throws IOException {
         File processedNvrFile = new File(job.getRootDir(), PROCESSED_BUILDS_HISTORY);
-        return NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(processedNvrFile);
+        File globalProcessedNvrFile = new File(job.getRootDir().getParentFile(), PROCESSED_BUILDS_HISTORY);
+        return NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(processedNvrFile, globalProcessedNvrFile);
     }
 
     private KojiScmConfig createConfig() {
