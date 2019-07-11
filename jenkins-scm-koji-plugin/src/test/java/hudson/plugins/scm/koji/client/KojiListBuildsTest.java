@@ -4,13 +4,7 @@ import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.NotProcessedNvrPredicate;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
-import org.fakekoji.core.FakeKojiTestUtil;
-import org.fakekoji.server.JavaServer;
-import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,10 +13,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import org.fakekoji.core.FakeKojiTestUtil;
+import org.fakekoji.server.JavaServer;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -373,8 +376,8 @@ public class KojiListBuildsTest {
     public void testListMatchingBuildsCustom(KojiListBuilds worker, boolean invertAssert) throws Exception {
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
-        JavaServer javaServer =
-                FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
+        JavaServer javaServer
+                = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
         try {
             javaServer.start();
             Build build = worker.invoke(temporaryFolder.newFolder(), null);
@@ -398,6 +401,7 @@ public class KojiListBuildsTest {
         );
         testListMatchingBuildsCustom(worker, true);
     }
+
     @Test
     public void testListMatchingBuildsCustomF28() throws Exception {
         assumeTrue(onRhNet);
@@ -452,7 +456,7 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiBrewList(),
                 createConfigMultipleValidUrls(),
-                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1, null),
                 10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
@@ -466,7 +470,7 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
                 createConfigF(),
-                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1, null),
                 10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
@@ -479,7 +483,7 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR7(),
-                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71, null),
                 10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
@@ -492,11 +496,29 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createBrewOnlyList(),
                 createConfigR6(),
-                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, null),
                 10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
+    }
+
+    @Test
+    public void testListMatchingBuildsR6WithGlobal() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker1 = new KojiListBuilds(createBrewOnlyList(), createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, null), 10);
+        Build build1 = worker1.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build1);
+        File gf = File.createTempFile("globalTest", "koji.scm");
+        KojiListBuilds worker3 = new KojiListBuilds(createBrewOnlyList(),createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, gf), 10);
+        Build build3 = worker3.invoke(temporaryFolder.newFolder(), null);
+        int a = build1.compareTo(build3);
+        Assert.assertTrue(0 == a);
+        Files.write(gf.toPath(), build1.getNvr().getBytes("utf-8"));
+        KojiListBuilds worker2 = new KojiListBuilds(createBrewOnlyList(),createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, gf), 10);
+        Build build2 = worker2.invoke(temporaryFolder.newFolder(), null);
+        int b = build1.compareTo(build2);
+        Assert.assertTrue(0 != b);
     }
 
     @Test
@@ -623,3 +645,4 @@ public class KojiListBuildsTest {
         assertNull(build);
     }
 }
+
