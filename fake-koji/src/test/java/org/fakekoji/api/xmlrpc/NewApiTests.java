@@ -142,7 +142,7 @@ public class NewApiTests {
 
     @Test
     public void slowdebugHotspot() throws IOException, InterruptedException {
-        GetBuildList gbl = new GetBuildList("java-11-openjdk-shenandoah", "hotspot", "slowdebug", true);
+        GetBuildList gbl = new GetBuildList("java-11-openjdk-shenandoah", new String[] {"hotspot", "slowdebug"}, true);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
         List<Build> r = kojiDB.getBuildList(getBuildListParams);
@@ -153,7 +153,7 @@ public class NewApiTests {
 
     @Test
     public void releaseZero() throws IOException, InterruptedException {
-        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", "zero", "release", true);
+        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", new String[] {"zero", "release"}, true);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
         List<Build> r = kojiDB.getBuildList(getBuildListParams);
@@ -164,7 +164,7 @@ public class NewApiTests {
 
     @Test
     public void releaseZeroToBeBUild() throws IOException, InterruptedException {
-        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", "zero", "release", false);
+        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", new String[] {"zero", "release"}, false);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
         List<Build> r = kojiDB.getBuildList(getBuildListParams);
@@ -176,7 +176,7 @@ public class NewApiTests {
 
     @Test
     public void oneGoneToOldApi() throws IOException, InterruptedException {
-        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", "hotspot", "release", true);
+        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", new String[] {"hotspot", "release"}, true);
         final GetBuildList getBuildListParams = GetBuildList.create(gbl);//??
         //kojiDB.getArchives( )
         List<Build> r = kojiDB.getBuildList(getBuildListParams);
@@ -187,7 +187,7 @@ public class NewApiTests {
 
     @Test
     public void oneForOldapi() throws IOException, InterruptedException {
-        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", "hotspot", "release", true);
+        GetBuildList gbl = new GetBuildList("java-1.8.0-openjdk-aarch64-shenandoah", new String[] {"hotspot", "release"}, true);
         List<Build> r = kojiDB.getProjectBuilds(kojiDB.getPkgId("java-1.8.0-openjdk"), new HashSet<>());
         //hoewer java-1.8.0-openjdk-v2-r2.aarch64.shenandoah.release are rpms, thuis old api only
         Assert.assertEquals(1, r.size());
