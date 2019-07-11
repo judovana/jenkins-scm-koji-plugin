@@ -45,6 +45,10 @@ public class FakeKojiDB {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
+    // TODO: use configs instead of hardcoded values
+    private static final int JVM = 0;
+    private static final int BUILD_VARIANT = 1;
+
     private final String[] projects;
     private final List<FakeBuild> builds;
     private final AccessibleSettings settings;
@@ -243,8 +247,10 @@ public class FakeKojiDB {
             if (!isOkForNewApi(b)) {
                 continue;
             }
-            if (FakeBuild.isValidVm(params.getJvm()) && b.getJvm().equals(params.getJvm())) {
-                if (FakeBuild.isValidBuildVariant(params.getBuildVariant()) && b.getBuildVariant().equals(params.getBuildVariant())) {
+            final String jvm = params.getBuildVariants()[JVM];
+            final String buildVariant = params.getBuildVariants()[BUILD_VARIANT];
+            if (FakeBuild.isValidVm(jvm) && b.getJvm().equals(jvm)) {
+                if (FakeBuild.isValidBuildVariant(buildVariant) && b.getBuildVariant().equals(buildVariant)) {
                     if (new IsFailedBuild(b.getDir()).reCheck().getLastResult()) {
                         continue;
                     }

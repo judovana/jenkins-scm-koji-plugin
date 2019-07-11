@@ -2,28 +2,27 @@ package org.fakekoji.xmlrpc.server.xmlrpcrequestparams;
 
 import hudson.plugins.scm.koji.Constants;
 
+import java.util.Arrays;
+
 public class GetBuildList implements XmlRpcRequestParams {
 
     private final String projectName;
-    private final String jvm;
-    private final String buildVariant;
+    private final String[] buildVariants;
     private final boolean isBuilt;
 
     public GetBuildList(
             String projectName,
-            String jvm,
-            String buildVariant,
+            String[] buildVariants,
             boolean isBuilt
     ) {
         this.projectName = projectName;
-        this.jvm = jvm;
-        this.buildVariant = buildVariant;
+        this.buildVariants = buildVariants;
         this.isBuilt = isBuilt;
     }
 
     @Override
     public String toString() {
-        return projectName + "; " + jvm + "; " + buildVariant + "; " + isBuilt;
+        return projectName + "; " + Arrays.toString(buildVariants) + "; " + isBuilt;
     }
 
     @Override
@@ -40,12 +39,8 @@ public class GetBuildList implements XmlRpcRequestParams {
         return projectName;
     }
 
-    public String getJvm() {
-        return jvm;
-    }
-
-    public String getBuildVariant() {
-        return buildVariant;
+    public String[] getBuildVariants() {
+        return buildVariants;
     }
 
     /**

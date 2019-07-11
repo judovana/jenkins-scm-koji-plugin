@@ -32,8 +32,7 @@ class FakeKojiBuildMatcher extends BuildMatcher {
     List<Build> getBuilds(BuildProvider buildProvider) {
         final GetBuildList getBuildListParams = new GetBuildList(
                 xmlRpcApi.getProjectName(),
-                xmlRpcApi.getJvm(),
-                xmlRpcApi.getBuildVariant(),
+                xmlRpcApi.getBuildVariants().trim().split(" "),
                 xmlRpcApi.isBuilt()
         );
         final FakeBuildList buildList = FakeBuildList.create(execute(buildProvider.getTopUrl(), getBuildListParams));
