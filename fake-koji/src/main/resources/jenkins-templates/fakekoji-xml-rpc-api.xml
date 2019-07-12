@@ -1,0 +1,7 @@
+<kojiXmlRpcApi class="hudson.plugins.scm.koji.FakeKojiXmlRpcApi">
+      <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>
+      <projectName>%{PROJECT}</projectName>
+      <buildVariants>%{BUILD_VARIANTS}</buildVariants>
+      <buildPlatform>%{PLATFORM}</buildPlatform>
+      <isBuilt>%{IS_BUILT}</isBuilt>
+</kojiXmlRpcApi>

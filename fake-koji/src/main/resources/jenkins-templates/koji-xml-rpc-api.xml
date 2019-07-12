@@ -1,0 +1,8 @@
+<kojiXmlRpcApi class="hudson.plugins.scm.koji.RealKojiXmlRpcApi">
+    <xmlRpcApiType>REAL_KOJI</xmlRpcApiType>
+    <packageName>%{PACKAGE_NAME}</packageName>
+    <arch>%{ARCH}</arch>
+    <tag>%{TAG}</tag>
+    <subpackageBlacklist>%{BLACKLIST}</subpackageBlacklist>
+    <subpackageWhitelist>%{WHITELIST}</subpackageWhitelist>
+</kojiXmlRpcApi>
