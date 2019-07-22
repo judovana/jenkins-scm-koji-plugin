@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +24,7 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
     @Override
     public void store(String id, T t) throws StorageException {
         try {
-            final File file = new File(storageFile.getAbsolutePath() + '/' + id + SUFFIX);
+            final File file = Paths.get(storageFile.getAbsolutePath(), id + SUFFIX).toFile();
             final PrintWriter writer = new PrintWriter(file.getAbsolutePath(), "UTF-8");
             final ObjectMapper objectMapper = new ObjectMapper();
             writer.write(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(t));
@@ -37,7 +38,7 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
 
     @Override
     public void delete(String id) throws StorageException {
-        final File file = new File(storageFile.getAbsolutePath() + '/' + id + SUFFIX);
+        final File file = Paths.get(storageFile.getAbsolutePath(), id + SUFFIX).toFile();
         if (!file.delete()) {
             throw new StorageException("Failed to delete " + file.getName());
         }
@@ -45,7 +46,7 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
 
     @Override
     public T load(String id, Class<T> valueType) throws StorageException {
-        final File fileToLoad = new File(storageFile.getAbsolutePath() + '/' + id + SUFFIX);
+        final File fileToLoad = Paths.get(storageFile.getAbsolutePath(), id + SUFFIX).toFile();
         try {
             final BufferedReader reader = new BufferedReader(
                     new FileReader(fileToLoad.getAbsolutePath())
