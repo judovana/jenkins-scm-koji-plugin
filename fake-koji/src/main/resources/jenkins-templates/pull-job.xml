@@ -15,9 +15,9 @@
   <builders>
     <hudson.tasks.Shell>
       <command>
-          #!/bin/sh
-          #export NO_CHANGE_RETURN=-1
-          bash &apos;/home/tester/vm-shared/TckScripts/jenkins/static/tempt-ojdk-repo.sh&apos; &apos;%{PROJECT}&apos;
+#!/bin/sh
+#export NO_CHANGE_RETURN=-1
+bash &apos;/home/tester/vm-shared/TckScripts/jenkins/static/tempt-ojdk-repo.sh&apos; &apos;%{PROJECT}&apos;
       </command>
     </hudson.tasks.Shell>
   </builders>

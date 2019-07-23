@@ -2,7 +2,7 @@
     <xmlRpcApiType>REAL_KOJI</xmlRpcApiType>
     <packageName>%{PACKAGE_NAME}</packageName>
     <arch>%{ARCH}</arch>
-    <tag>%{TAG}</tag>
-    <subpackageBlacklist>%{BLACKLIST}</subpackageBlacklist>
-    <subpackageWhitelist>%{WHITELIST}</subpackageWhitelist>
+    <tag>%{TAGS}</tag>
+    <subpackageBlacklist>%{SUBPACKAGE_BLACKLIST}</subpackageBlacklist>
+    <subpackageWhitelist>%{SUBPACKAGE_WHITELIST}</subpackageWhitelist>
 </kojiXmlRpcApi>

@@ -1,4 +1,4 @@
 <hudson.plugins.scm.koji.KojiBuildProvider>
-    <topUrl>%{PROVIDER_TOP_URL}</topUrl>
-    <providerUrl>%{PROVIDER_DOWNLOAD_URL}</providerUrl>
+    <topUrl>%{BUILD_PROVIDER_TOP_URL}</topUrl>
+    <providerUrl>%{BUILD_PROVIDER_DOWNLOAD_URL}</providerUrl>
 </hudson.plugins.scm.koji.KojiBuildProvider>

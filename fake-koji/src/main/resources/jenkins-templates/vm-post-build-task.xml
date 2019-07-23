@@ -9,10 +9,7 @@
             </logTexts>
             <EscalateStatus>true</EscalateStatus>
             <RunIfJobSuccessful>false</RunIfJobSuccessful>
-            <script>
-                #!/bin/bash&#xd;
-                bash /home/tester/vm-shared/TckScripts/jenkins/vagrant/destroy.sh %{PLATFORM}
-            </script>
+            <script>#!/bin/bash&#13;bash /home/tester/vm-shared/TckScripts/jenkins/vagrant/destroy.sh %{PLATFORM_NAME}&#13;</script>
         </hudson.plugins.postbuildtask.TaskProperties>
     </tasks>
 </hudson.plugins.postbuildtask.PostbuildTask>

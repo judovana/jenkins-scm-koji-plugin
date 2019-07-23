@@ -1,18 +1,17 @@
-<?xml label='1.1' encoding='UTF-8'?>
 <project>
     <actions/>
     <description/>
     <keepDependencies>false</keepDependencies>
     <properties/>
     <scm class="hudson.plugins.scm.koji.KojiSCM" plugin="jenkins-scm-koji-plugin@0.2-SNAPSHOT">
-        %{PROVIDERS}
+        %{BUILD_PROVIDERS}
         %{XML_RPC_API}
         <downloadDir>rpms</downloadDir>
         <cleanDownloadDir>true</cleanDownloadDir>
         <dirPerNvr>false</dirPerNvr>
         <maxPreviousBuilds>10</maxPreviousBuilds>
     </scm>
-    <assignedNode>%{PLATFORM_PROVIDER}</assignedNode>
+    <assignedNode>%{NODES}</assignedNode>
     <canRoam>false</canRoam>
     <disabled>false</disabled>
     <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
@@ -26,14 +25,12 @@
     <concurrentBuild>false</concurrentBuild>
     <builders>
         <hudson.tasks.Shell>
-            <command>
-                {{SCRIPT}}
-            </command>
+            %{SHELL_SCRIPT}
         </hudson.tasks.Shell>
     </builders>
     <publishers>
-        %{VM_POST_BUILD_TASK}
-        %{POST_BUILD_TASKS}
+%{VM_POST_BUILD_TASK}
+%{POST_BUILD_TASKS}
     </publishers>
     <buildWrappers/>
 </project>
