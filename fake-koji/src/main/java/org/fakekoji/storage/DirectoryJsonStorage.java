@@ -1,12 +1,10 @@
 package org.fakekoji.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.fakekoji.Utils;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,12 +22,10 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
     @Override
     public void store(String id, T t) throws StorageException {
         try {
-            final File file = Paths.get(storageFile.getAbsolutePath(), id + SUFFIX).toFile();
-            final PrintWriter writer = new PrintWriter(file.getAbsolutePath(), "UTF-8");
-            final ObjectMapper objectMapper = new ObjectMapper();
-            writer.write(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(t));
-            writer.flush();
-            writer.close();
+            Utils.writeToFile(
+                    Paths.get(storageFile.getAbsolutePath(), id + SUFFIX),
+                    new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(t)
+            );
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
         }
@@ -46,17 +42,11 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
 
     @Override
     public T load(String id, Class<T> valueType) throws StorageException {
-        final File fileToLoad = Paths.get(storageFile.getAbsolutePath(), id + SUFFIX).toFile();
         try {
-            final BufferedReader reader = new BufferedReader(
-                    new FileReader(fileToLoad.getAbsolutePath())
+            return new ObjectMapper().readValue(
+                    Utils.readFile(Paths.get(storageFile.getAbsolutePath(), id + SUFFIX).toFile()),
+                    valueType
             );
-            final StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            return new ObjectMapper().readValue(stringBuilder.toString(), valueType);
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
         }
