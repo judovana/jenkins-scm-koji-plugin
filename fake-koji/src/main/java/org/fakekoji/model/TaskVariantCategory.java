@@ -3,7 +3,7 @@ package org.fakekoji.model;
 import java.util.Map;
 import java.util.Objects;
 
-public class TaskVariantCategory {
+public class TaskVariantCategory implements Comparable<TaskVariantCategory> {
 
     private final String id;
     private final String label;
@@ -81,18 +81,35 @@ public class TaskVariantCategory {
                 '}';
     }
 
+    @Override
+    public int compareTo(TaskVariantCategory taskVariantCategory) {
+        if (type == null || taskVariantCategory == null || taskVariantCategory.type == null) {
+            return 0;
+        }
+        if (type.order == taskVariantCategory.type.order) {
+            return order - taskVariantCategory.order;
+        }
+        return type.order - taskVariantCategory.type.order;
+    }
+
     public enum Usage {
-        BUILD("BUILD"),
-        TEST("TEST");
+        BUILD("BUILD", 0),
+        TEST("TEST", 1);
 
         private final String value;
+        private final int order;
 
-        Usage(String value) {
+        Usage(String value, int order) {
             this.value = value;
+            this.order = order;
         }
 
         public String getValue() {
             return value;
+        }
+
+        public int getOrder() {
+            return order;
         }
     }
 }
