@@ -15,7 +15,7 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
     private static final String SUFFIX= ".json";
     private final File storageFile;
 
-    DirectoryJsonStorage(File storageFile) {
+    public DirectoryJsonStorage(File storageFile) {
         this.storageFile = storageFile;
     }
 
