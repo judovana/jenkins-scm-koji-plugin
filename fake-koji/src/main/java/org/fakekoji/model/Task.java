@@ -247,6 +247,7 @@ public class Task {
     }
 
     public enum BinaryRequirements {
+        NONE("NONE"),
         BINARY("BINARY"),
         BINARIES("BINARIES");
 
