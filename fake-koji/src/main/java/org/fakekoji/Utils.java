@@ -6,7 +6,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class Utils {
 
@@ -42,5 +45,9 @@ public class Utils {
         writer.write(content);
         writer.flush();
         writer.close();
+    }
+
+    public static void moveFile(File source, File target) throws IOException {
+        Files.move(source.toPath(), target.toPath(), REPLACE_EXISTING);
     }
 }
