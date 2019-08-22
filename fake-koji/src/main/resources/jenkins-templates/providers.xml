@@ -1,0 +1,3 @@
+<kojiBuildProviders class="list">
+    %{BUILD_PROVIDERS}
+</kojiBuildProviders>
