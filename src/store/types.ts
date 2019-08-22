@@ -27,7 +27,7 @@ export enum TaskType {
     TEST = "TEST"
 }
 
-export interface Project {
+export interface JDKProject {
     readonly name: string;
     readonly url: string;
     readonly product: string;

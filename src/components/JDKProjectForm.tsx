@@ -5,10 +5,10 @@ import Dropdown from "./Dropdown";
 import JobConfigComponent from "./JobConfigComponent";
 
 import { AppState } from "../store/reducer";
-import { Item, Project, JobConfig } from "../store/types";
+import { Item, JDKProject, JobConfig } from "../store/types";
 
 interface Props {
-    project?: Project;
+    project?: JDKProject;
 }
 
 interface StateProps {
