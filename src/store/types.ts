@@ -5,6 +5,29 @@ export interface ConfigsState {
     tasks: {[id: string]: Task};
 }
 
+export interface ProjectsState {
+    projectCategories: {[id: string]: ProjectCategory};
+    projects: {[id: string]: Project};
+    selectedProjectCategoryId: string;
+    selectedProjectId: string;
+}
+
+export interface ProjectCategory extends Item {
+    description: string;
+    list: string[];
+}
+
+export enum ProjectType {
+    JDK_PROJECT = "JDK_PROJECT",
+    JDK_TEST_PROJECT = "JDK_TEST_PROJECT",
+    JAVA_PROJECT = "JAVA_PROJECT"
+}
+
+export interface Project {
+    readonly name: string;
+    readonly type: ProjectType
+}
+
 export interface Task extends Item {
     type: TaskType;
 }
@@ -27,8 +50,7 @@ export enum TaskType {
     TEST = "TEST"
 }
 
-export interface JDKProject {
-    readonly name: string;
+export interface JDKProject extends Project {
     readonly url: string;
     readonly product: string;
     readonly jobConfig: JobConfig;

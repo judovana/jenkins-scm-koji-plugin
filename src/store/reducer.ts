@@ -1,9 +1,11 @@
 import { combineReducers } from "redux";
 
 import configs from "./configs/reducer";
+import projects from "./projects/reducer";
 
 const rootReducer = combineReducers({
-    configs: configs
+    configs: configs,
+    projects: projects
 });
 
 export default rootReducer;
