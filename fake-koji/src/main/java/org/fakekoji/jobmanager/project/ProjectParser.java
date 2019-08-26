@@ -3,8 +3,8 @@ package org.fakekoji.jobmanager.project;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementUtils;
 import org.fakekoji.jobmanager.Parser;
+import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.PlatformConfig;
-import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.TaskConfig;
 import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.jobmanager.model.BuildJob;
@@ -27,7 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class ProjectParser implements Parser<Project, Set<Job>> {
+public class ProjectParser implements Parser<JDKProject, Set<Job>> {
 
     private final JobBuilder jobBuilder;
     private final ConfigManager configManager;
@@ -38,7 +38,7 @@ public class ProjectParser implements Parser<Project, Set<Job>> {
     }
 
     @Override
-    public Set<Job> parse(Project project) throws ManagementException, StorageException {
+    public Set<Job> parse(JDKProject project) throws ManagementException, StorageException {
         if (!configManager.getProductStorage().contains(project.getProduct())) {
             throw new ManagementException("Unknown product: " + project.getProduct());
         }

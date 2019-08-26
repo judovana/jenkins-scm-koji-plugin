@@ -1,9 +1,9 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
-import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariantCategory;
 import org.fakekoji.storage.DirectoryJsonStorage;
@@ -24,7 +24,7 @@ public class ConfigManager {
     private final Storage<Product> productStorage;
     private final Storage<TaskVariantCategory> taskVariantCategoryStorage;
     private final Storage<Platform> platformStorage;
-    private final Storage<Project> projectStorage;
+    private final Storage<JDKProject> jdkProjectStorage;
     private final Storage<Task> taskStorage;
 
     private ConfigManager(
@@ -32,14 +32,14 @@ public class ConfigManager {
             Storage<Product> productStorage,
             Storage<TaskVariantCategory> taskVariantCategoryStorage,
             Storage<Platform> platformStorage,
-            Storage<Project> projectStorage,
+            Storage<JDKProject> jdkProjectStorage,
             Storage<Task> taskStorage
     ) {
         this.buildProviderStorage = buildProviderStorage;
         this.productStorage = productStorage;
         this.taskVariantCategoryStorage = taskVariantCategoryStorage;
         this.platformStorage = platformStorage;
-        this.projectStorage = projectStorage;
+        this.jdkProjectStorage = jdkProjectStorage;
         this.taskStorage = taskStorage;
     }
 
@@ -70,8 +70,8 @@ public class ConfigManager {
         return platformStorage;
     }
 
-    public Storage<Project> getProjectStorage() {
-        return projectStorage;
+    public Storage<JDKProject> getJdkProjectStorage() {
+        return jdkProjectStorage;
     }
 
     public Storage<Task> getTaskStorage() {

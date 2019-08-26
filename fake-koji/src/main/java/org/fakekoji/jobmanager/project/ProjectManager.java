@@ -5,8 +5,8 @@ import org.fakekoji.Utils;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
+import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.Job;
-import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 
@@ -41,12 +41,12 @@ public class ProjectManager implements Manager {
     @Override
     public String create(String json) throws StorageException, ManagementException {
         final ObjectMapper mapper = new ObjectMapper();
-        final Project project;
-        final Storage<Project> storage = configManager.getProjectStorage();
+        final JDKProject project;
+        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         try {
-            project = mapper.readValue(json, Project.class);
+            project = mapper.readValue(json, JDKProject.class);
             if (storage.contains(project.getId())) {
-                throw new ManagementException("Project with id: " + project.getId() + " already exists");
+                throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
             }
             final Set<Job> jobs = new ProjectParser(configManager).parse(project);
             // TODO: clone repo
@@ -71,14 +71,14 @@ public class ProjectManager implements Manager {
     @Override
     public String update(String id, String json) throws StorageException, ManagementException {
         final ObjectMapper mapper = new ObjectMapper();
-        final Project project;
-        final Storage<Project> storage = configManager.getProjectStorage();
+        final JDKProject project;
+        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         if (!storage.contains(id)) {
-            throw new ManagementException("Project with id: " + id + " doesn't exists");
+            throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
         }
-        final Project oldProject = storage.load(id, Project.class);
+        final JDKProject oldProject = storage.load(id, JDKProject.class);
         try {
-            project = mapper.readValue(json, Project.class);
+            project = mapper.readValue(json, JDKProject.class);
             final Set<Job> newProjectJobs = new ProjectParser(configManager).parse(project);
             final Set<Job> oldProjectJobs = new ProjectParser(configManager).parse(oldProject);
             final Set<File> jobFiles = Arrays.stream(jenkinsJobsRoot.listFiles())

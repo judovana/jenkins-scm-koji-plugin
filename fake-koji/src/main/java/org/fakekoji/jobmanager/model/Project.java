@@ -1,56 +1,28 @@
 package org.fakekoji.jobmanager.model;
 
 import java.util.Objects;
-import java.util.Set;
 
 public class Project {
 
     private final String id;
-    private final String url;
-    private final Set<String> buildProviders;
-    private final String product;
-    private final JobConfiguration jobConfiguration;
+    private final ProjectType type;
 
     public Project() {
         id = null;
-        url = null;
-        buildProviders = null;
-        product = null;
-        jobConfiguration = null;
+        type = null;
     }
 
-    public Project(
-            String id,
-            String url,
-            Set<String> buildProviders,
-            String product,
-            JobConfiguration jobConfiguration
-    ) {
+    public Project(String id, ProjectType type) {
         this.id = id;
-        this.url = url;
-        this.buildProviders = buildProviders;
-        this.product = product;
-        this.jobConfiguration = jobConfiguration;
+        this.type = type;
     }
 
     public String getId() {
         return id;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public Set<String> getBuildProviders() {
-        return buildProviders;
-    }
-
-    public String getProduct() {
-        return product;
-    }
-
-    public JobConfiguration getJobConfiguration() {
-        return jobConfiguration;
+    public ProjectType getType() {
+        return type;
     }
 
     @Override
@@ -59,25 +31,34 @@ public class Project {
         if (!(o instanceof Project)) return false;
         Project project = (Project) o;
         return Objects.equals(id, project.id) &&
-                Objects.equals(url, project.url) &&
-                Objects.equals(buildProviders, project.buildProviders) &&
-                Objects.equals(product, project.product) &&
-                Objects.equals(jobConfiguration, project.jobConfiguration);
+                type == project.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, url, product, jobConfiguration);
+        return Objects.hash(id, type);
     }
 
     @Override
     public String toString() {
         return "Project{" +
                 "id='" + id + '\'' +
-                ", url='" + url + '\'' +
-                ", buildProviders='" + buildProviders + "\'" +
-                ", product='" + product + '\'' +
-                ", jobConfiguration=" + jobConfiguration +
+                ", type=" + type +
                 '}';
+    }
+
+    public enum ProjectType {
+        JDK_PROJECT("JDK_PROJECT"),
+        JDK_TEST_PROJECT("JKD_TEST_PROJECT");
+
+        private final String value;
+
+        ProjectType(final String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }
