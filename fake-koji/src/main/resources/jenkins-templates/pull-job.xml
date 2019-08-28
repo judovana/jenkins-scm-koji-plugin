@@ -1,11 +1,10 @@
-<?xml label='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
   <description/>
   <keepDependencies>false</keepDependencies>
   <properties/>
   <scm class="hudson.scm.NullSCM"/>
-  <assignedNode>%{PLATFORM_PROVIDER}</assignedNode>
+  <assignedNode>Hydra</assignedNode>
   <canRoam>false</canRoam>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
@@ -14,11 +13,7 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>
-#!/bin/sh
-#export NO_CHANGE_RETURN=-1
-bash &apos;/home/tester/vm-shared/TckScripts/jenkins/static/tempt-ojdk-repo.sh&apos; &apos;%{PROJECT}&apos;
-      </command>
+      <command>%{PULL_SCRIPT}</command>
     </hudson.tasks.Shell>
   </builders>
   <publishers>

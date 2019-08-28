@@ -5,6 +5,7 @@ import org.fakekoji.jobmanager.ManagementUtils;
 import org.fakekoji.jobmanager.Parser;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TaskConfig;
 import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.jobmanager.model.BuildJob;
@@ -19,6 +20,8 @@ import org.fakekoji.model.TaskVariantCategory;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.jobmanager.ConfigManager;
 
+import java.io.File;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,9 +34,11 @@ public class ProjectParser implements Parser<JDKProject, Set<Job>> {
 
     private final JobBuilder jobBuilder;
     private final ConfigManager configManager;
+    private final File repositoriesRoot;
 
-    ProjectParser(final ConfigManager configManager) throws StorageException {
+    ProjectParser(final ConfigManager configManager, File repositoriesRoot) throws StorageException {
         this.configManager = configManager;
+        this.repositoriesRoot = repositoriesRoot;
         jobBuilder = new JobBuilder(configManager);
     }
 
@@ -58,6 +63,7 @@ public class ProjectParser implements Parser<JDKProject, Set<Job>> {
 
         project.getJobConfiguration().getPlatforms().forEach(getPlatformsConsumer());
 
+        jobBuilder.buildPullJob();
         return jobBuilder.getJobs();
     }
 
@@ -99,6 +105,7 @@ public class ProjectParser implements Parser<JDKProject, Set<Job>> {
         private final Map<String, TaskVariantCategory> buildVariantCategoriesMap;
 
         private final Set<Job> jobs;
+        private final Set<String> buildVariantsStrings;
 
         private String projectName;
         private Product product;
@@ -113,6 +120,7 @@ public class ProjectParser implements Parser<JDKProject, Set<Job>> {
 
         JobBuilder(final ConfigManager configManager) throws StorageException {
             jobs = new HashSet<>();
+            buildVariantsStrings = new HashSet<>();
             buildPlatform = null;
             buildTask = null;
             buildVariants = null;
@@ -155,6 +163,15 @@ public class ProjectParser implements Parser<JDKProject, Set<Job>> {
             this.buildProviders = buildProviders;
         }
 
+        private void buildPullJob() {
+            jobs.add(new PullJob(
+                    projectName,
+                    product,
+                    buildVariantsStrings,
+                    repositoriesRoot
+            ));
+        }
+
         private void buildBuildJob() {
             buildJob = new BuildJob(
                     projectName,
@@ -164,6 +181,10 @@ public class ProjectParser implements Parser<JDKProject, Set<Job>> {
                     buildPlatform,
                     buildVariants
             );
+            buildVariantsStrings.add(buildJob.getVariants().entrySet().stream()
+                    .sorted(Comparator.comparing(Map.Entry::getKey))
+                    .map(entry -> entry.getValue().getId())
+                    .collect(Collectors.joining(Job.DELIMITER)));
             jobs.add(buildJob);
         }
 

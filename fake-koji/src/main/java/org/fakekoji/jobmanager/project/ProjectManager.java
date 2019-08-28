@@ -48,7 +48,7 @@ public class ProjectManager implements Manager {
             if (storage.contains(project.getId())) {
                 throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
             }
-            final Set<Job> jobs = new ProjectParser(configManager).parse(project);
+            final Set<Job> jobs = new ProjectParser(configManager, repositoriesRoot).parse(project);
             // TODO: clone repo
             generate(jobs);
             storage.store(project.getId(), project);
@@ -79,8 +79,8 @@ public class ProjectManager implements Manager {
         final JDKProject oldProject = storage.load(id, JDKProject.class);
         try {
             project = mapper.readValue(json, JDKProject.class);
-            final Set<Job> newProjectJobs = new ProjectParser(configManager).parse(project);
-            final Set<Job> oldProjectJobs = new ProjectParser(configManager).parse(oldProject);
+            final Set<Job> newProjectJobs = new ProjectParser(configManager, repositoriesRoot).parse(project);
+            final Set<Job> oldProjectJobs = new ProjectParser(configManager, repositoriesRoot).parse(oldProject);
             final Set<File> jobFiles = Arrays.stream(jenkinsJobsRoot.listFiles())
                     .filter(file -> file.getName().contains(project.getId()))
                     .collect(Collectors.toSet());

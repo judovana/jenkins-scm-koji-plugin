@@ -3,6 +3,7 @@ package org.fakekoji.jobmanager;
 import org.fakekoji.Utils;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
+import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantCategory;
@@ -62,6 +63,7 @@ public class JenkinsJobTemplateBuilder {
     static final String RUN_SCRIPT = "%{RUN_SCRIPT}";
     static final String EXPORTED_VARIABLES = "%{EXPORTED_VARIABLES}";
     static final String PLATFORM_NAME = "%{PLATFORM_NAME}";
+    static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
 
     static final String XML_NEW_LINE = "&#13;";
     static final String LOCAL = "local";
@@ -73,6 +75,25 @@ public class JenkinsJobTemplateBuilder {
 
     public JenkinsJobTemplateBuilder(String template) {
         this.template = template;
+    }
+
+    public JenkinsJobTemplateBuilder buildPullScriptTemplate(
+            String projectName,
+            Product product,
+            Set<String> buildVariants,
+            String repositoriesRootPath
+    ) {
+        final String pullScript = "#!/bin/sh" + XML_NEW_LINE +
+                EXPORT + " PROJECT=&apos;" + projectName + "&apos;" + XML_NEW_LINE +
+                EXPORT + " NAME=&apos;" + product.getPackageName() + "&apos;" + XML_NEW_LINE +
+                EXPORT + " RELEASES=\"\"" + XML_NEW_LINE +
+                buildVariants.stream()
+                        .map(variant -> "RELEASES+='" + projectName + '.' + variant + '\'')
+                        .collect(Collectors.joining(XML_NEW_LINE)) + XML_NEW_LINE +
+                "bash '/home/tester/vm-shared/TckScripts/otool/pull.sh'";
+
+        template = template.replace(PULL_SCRIPT, pullScript);
+        return this;
     }
 
     public JenkinsJobTemplateBuilder buildBuildProvidersTemplate(Set<BuildProvider> buildProviders) throws IOException {
