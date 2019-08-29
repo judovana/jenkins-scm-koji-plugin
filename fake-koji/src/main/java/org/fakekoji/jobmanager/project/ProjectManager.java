@@ -14,8 +14,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ProjectManager implements Manager {
 
@@ -79,36 +80,15 @@ public class ProjectManager implements Manager {
         final JDKProject oldProject = storage.load(id, JDKProject.class);
         try {
             project = mapper.readValue(json, JDKProject.class);
-            final Set<Job> newProjectJobs = new ProjectParser(configManager, repositoriesRoot).parse(project);
-            final Set<Job> oldProjectJobs = new ProjectParser(configManager, repositoriesRoot).parse(oldProject);
-            final Set<File> jobFiles = Arrays.stream(jenkinsJobsRoot.listFiles())
-                    .filter(file -> file.getName().contains(project.getId()))
-                    .collect(Collectors.toSet());
-            final Set<File> jobFilesToRevive = Arrays.stream(jenkinsJobsArchiveRoot.listFiles())
-                    .filter(file -> file.getName().contains(project.getId()))
-                    .filter(file -> newProjectJobs
-                            .stream()
-                            .anyMatch((Job job) -> job.toString().startsWith(file.getName())))
-                    .collect(Collectors.toSet());
-            final Set<File> jobFilesToArchive = oldProjectJobs
-                    .stream()
-                    .filter(job -> !newProjectJobs.contains(job))
-                    .map(job -> jobFiles
-                            .stream()
-                            .filter((File file) -> file.getName().startsWith(job.toString()))
-                            .findFirst().orElse(null)
-                    )
-                    .collect(Collectors.toSet());
-            final Set<Job> jobsToCreate = newProjectJobs
-                    .stream()
-                    .filter(job -> !oldProjectJobs.contains(job))
-                    .collect(Collectors.toSet());
-            revive(jobFilesToRevive);
-            archive(jobFilesToArchive);
-            generate(jobsToCreate);
         } catch (IOException e) {
             throw new ManagementException("Invalid json", e);
         }
+        if (!oldProject.getUrl().equals(project.getUrl())) {
+            updateProjectUrl();
+        }
+        final Set<Job> newJobs = new ProjectParser(configManager, repositoriesRoot).parse(project);
+        final Set<Job> oldJobs = new ProjectParser(configManager, repositoriesRoot).parse(oldProject);
+        updateJobs(newJobs, oldJobs);
         return null;
     }
 
@@ -117,32 +97,89 @@ public class ProjectManager implements Manager {
         return null; // TODO
     }
 
+    void updateProjectUrl() {
+        // TODO: implement
+    }
+
+    void updateJobs(Set<Job> oldJobs, Set<Job> newJobs) {
+        final Set<String> archivedJobs = new HashSet<>(Arrays.asList(jenkinsJobsArchiveRoot.list()));
+        oldJobs.stream()
+                .filter(oldJob -> newJobs.stream().noneMatch(newJob -> oldJob.toString().equals(newJob.toString())))
+                .forEach(this::archive);
+        for (final Job job : newJobs) {
+            if (archivedJobs.contains(job.toString())) {
+                revive(job);
+                continue;
+            }
+            final Optional<Job> optional = oldJobs.stream()
+                    .filter(oldJob -> job.toString().equals(oldJob.toString()))
+                    .findAny();
+            if (optional.isPresent()) {
+                final Job oldJob = optional.get();
+                if (!oldJob.equals(job)) {
+                    update(job);
+                }
+                continue;
+            }
+            generate(job);
+        }
+    }
+
     void generate(Set<Job> jobs) throws IOException {
         for (final Job job : jobs) {
-            final File jobDir = Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile();
-            jobDir.mkdir();
+            generate(job);
+        }
+    }
+
+    boolean generate(Job job) {
+        final File jobDir = Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile();
+        if (!jobDir.mkdir()) {
+            return false;
+        }
+        try {
             Utils.writeToFile(
                     Paths.get(jobDir.getAbsolutePath(), CONFIG_FILE),
                     job.generateTemplate()
             );
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
-    void archive(Set<File> jobFiles) throws IOException {
-        for (final File jobFile : jobFiles) {
+    boolean revive(Job job) {
+        try {
             Utils.moveFile(
-                    jobFile,
-                    Paths.get(jenkinsJobsArchiveRoot.getAbsolutePath(), jobFile.getName()).toFile()
+                    Paths.get(jenkinsJobsArchiveRoot.getAbsolutePath(), job.toString()).toFile(),
+                    Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile()
             );
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 
-    void revive(Set<File> jobFiles) throws IOException {
-        for (final File jobFile : jobFiles) {
+    boolean archive(Job job) {
+        try {
             Utils.moveFile(
-                    jobFile,
-                    Paths.get(jenkinsJobsRoot.getAbsolutePath(), jobFile.getName()).toFile()
+                    Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile(),
+                    Paths.get(jenkinsJobsArchiveRoot.getAbsolutePath(), job.toString()).toFile()
             );
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    boolean update(Job job) {
+        try {
+            Utils.writeToFile(
+                    Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()),
+                    job.generateTemplate()
+            );
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 }
