@@ -30,13 +30,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class ProjectParser implements Parser<JDKProject, Set<Job>> {
+public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
 
     private final JobBuilder jobBuilder;
     private final ConfigManager configManager;
     private final File repositoriesRoot;
 
-    ProjectParser(final ConfigManager configManager, File repositoriesRoot) throws StorageException {
+    JDKProjectParser(final ConfigManager configManager, File repositoriesRoot) throws StorageException {
         this.configManager = configManager;
         this.repositoriesRoot = repositoriesRoot;
         jobBuilder = new JobBuilder(configManager);

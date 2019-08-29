@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class ProjectManager implements Manager {
+public class JDKProjectManager implements Manager {
 
     static final String CONFIG_FILE = "config.xml";
 
@@ -27,7 +27,7 @@ public class ProjectManager implements Manager {
     private final File jenkinsJobsArchiveRoot;
     private final File repositoriesRoot;
 
-    public ProjectManager(
+    public JDKProjectManager(
             final ConfigManager configManager,
             final File jenkinsJobsRoot,
             final File jenkinsJobsArchiveRoot,
@@ -49,7 +49,7 @@ public class ProjectManager implements Manager {
             if (storage.contains(project.getId())) {
                 throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
             }
-            final Set<Job> jobs = new ProjectParser(configManager, repositoriesRoot).parse(project);
+            final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot).parse(project);
             // TODO: clone repo
             generate(jobs);
             storage.store(project.getId(), project);
@@ -86,8 +86,8 @@ public class ProjectManager implements Manager {
         if (!oldProject.getUrl().equals(project.getUrl())) {
             updateProjectUrl();
         }
-        final Set<Job> newJobs = new ProjectParser(configManager, repositoriesRoot).parse(project);
-        final Set<Job> oldJobs = new ProjectParser(configManager, repositoriesRoot).parse(oldProject);
+        final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(project);
+        final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(oldProject);
         updateJobs(newJobs, oldJobs);
         return null;
     }
