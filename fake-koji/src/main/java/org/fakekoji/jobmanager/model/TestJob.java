@@ -117,9 +117,4 @@ public class TestJob extends TaskJob {
         return Objects.equals(buildPlatform, testJob.buildPlatform) &&
                 Objects.equals(buildVariants, testJob.buildVariants);
     }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), buildPlatform, buildVariants);
-    }
 }

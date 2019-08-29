@@ -1,10 +1,16 @@
 package org.fakekoji.jobmanager.model;
 
 import java.io.IOException;
+import java.util.Objects;
 
-public interface Job {
+public abstract class Job {
 
-    String DELIMITER = "-";
+    public static final String DELIMITER = "-";
 
-    String generateTemplate() throws IOException;
+    public abstract String generateTemplate() throws IOException;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(toString());
+    }
 }

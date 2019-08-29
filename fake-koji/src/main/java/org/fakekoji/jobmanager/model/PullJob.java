@@ -12,7 +12,7 @@ import java.util.Set;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.PULL_JOB_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.XML_DECLARATION;
 
-public class PullJob implements Job {
+public class PullJob extends Job {
 
     public static final String PULL = "pull";
 
@@ -49,11 +49,6 @@ public class PullJob implements Job {
                 Objects.equals(product, pullJob.product) &&
                 Objects.equals(buildVariants, pullJob.buildVariants) &&
                 Objects.equals(repositoriesRoot, pullJob.repositoriesRoot);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(projectName, product, buildVariants, repositoriesRoot);
     }
 
     @Override

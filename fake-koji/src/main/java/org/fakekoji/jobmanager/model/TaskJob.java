@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public abstract class TaskJob implements Job {
+public abstract class TaskJob extends Job {
 
     private final String projectName;
     private final Product product;
@@ -72,10 +72,5 @@ public abstract class TaskJob implements Job {
                 Objects.equals(task, taskJob.task) &&
                 Objects.equals(platform, taskJob.platform) &&
                 Objects.equals(variants, taskJob.variants);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(projectName, product, buildProviders, task, platform, variants);
     }
 }
