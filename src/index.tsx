@@ -1,14 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
+import { Provider } from "mobx-react";
 
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
-import store from './store';
+
+import configStore from "./stores/ConfigStore";
+import projectStore from './stores/ProjectStore';
 
 ReactDOM.render(
-    <Provider store={store}>
+    <Provider
+        configStore={configStore}
+        projectStore={projectStore}>
         <App />
     </Provider>,
     document.getElementById('root')
