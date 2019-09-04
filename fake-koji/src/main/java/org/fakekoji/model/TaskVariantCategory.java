@@ -7,7 +7,7 @@ public class TaskVariantCategory implements Comparable<TaskVariantCategory> {
 
     private final String id;
     private final String label;
-    private final Usage type;
+    private final Task.Type type;
     private final int order;
     private final Map<String, TaskVariant> variants;
 
@@ -22,7 +22,7 @@ public class TaskVariantCategory implements Comparable<TaskVariantCategory> {
     public TaskVariantCategory(
             String id,
             String label,
-            Usage type,
+            Task.Type type,
             int order,
             Map<String, TaskVariant> variants
     ) {
@@ -41,7 +41,7 @@ public class TaskVariantCategory implements Comparable<TaskVariantCategory> {
         return label;
     }
 
-    public Usage getType() {
+    public Task.Type getType() {
         return type;
     }
 
@@ -86,30 +86,9 @@ public class TaskVariantCategory implements Comparable<TaskVariantCategory> {
         if (type == null || taskVariantCategory == null || taskVariantCategory.type == null) {
             return 0;
         }
-        if (type.order == taskVariantCategory.type.order) {
+        if (type.getOrder() == taskVariantCategory.type.getOrder()) {
             return order - taskVariantCategory.order;
         }
-        return type.order - taskVariantCategory.type.order;
-    }
-
-    public enum Usage {
-        BUILD("BUILD", 0),
-        TEST("TEST", 1);
-
-        private final String value;
-        private final int order;
-
-        Usage(String value, int order) {
-            this.value = value;
-            this.order = order;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
-        public int getOrder() {
-            return order;
-        }
+        return type.getOrder() - taskVariantCategory.type.getOrder();
     }
 }

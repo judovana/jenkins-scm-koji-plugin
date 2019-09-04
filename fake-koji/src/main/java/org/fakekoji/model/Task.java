@@ -7,6 +7,7 @@ public class Task {
 
     private final String id;
     private final String script;
+    private final Type type;
     private final MachinePreference machinePreference;
     private final Limitation<String> productLimitation;
     private final Limitation<String> platformLimitation;
@@ -17,6 +18,7 @@ public class Task {
     public Task() {
         id = null;
         script = null;
+        type = null;
         machinePreference = null;
         productLimitation = null;
         platformLimitation = null;
@@ -28,6 +30,7 @@ public class Task {
     public Task(
             String id,
             String script,
+            Type type,
             MachinePreference machinePreference,
             Limitation<String> productLimitation,
             Limitation<String> platformLimitation,
@@ -37,6 +40,7 @@ public class Task {
     ) {
         this.id = id;
         this.script = script;
+        this.type = type;
         this.machinePreference = machinePreference;
         this.productLimitation = productLimitation;
         this.platformLimitation = platformLimitation;
@@ -51,6 +55,10 @@ public class Task {
 
     public String getScript() {
         return script;
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public MachinePreference getMachinePreference() {
@@ -84,6 +92,7 @@ public class Task {
         Task task = (Task) o;
         return Objects.equals(id, task.id) &&
                 Objects.equals(script, task.script) &&
+                Objects.equals(type, task.type) &&
                 machinePreference == task.machinePreference &&
                 Objects.equals(productLimitation, task.productLimitation) &&
                 Objects.equals(platformLimitation, task.platformLimitation) &&
@@ -94,7 +103,7 @@ public class Task {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, script, machinePreference, productLimitation, platformLimitation, fileRequirements, xmlTemplate, rpmLimitation);
+        return Objects.hash(id, script, type, machinePreference, productLimitation, platformLimitation, fileRequirements, xmlTemplate, rpmLimitation);
     }
 
     public static class FileRequirements {
@@ -259,6 +268,27 @@ public class Task {
 
         public String getValue() {
             return value;
+        }
+    }
+
+    public enum Type {
+        BUILD("BUILD", 0),
+        TEST("TEST", 1);
+
+        private final String value;
+        private final int order;
+
+        Type(String value, int order) {
+            this.value = value;
+            this.order = order;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public int getOrder() {
+            return order;
         }
     }
 }
