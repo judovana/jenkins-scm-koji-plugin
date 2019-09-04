@@ -1,23 +1,19 @@
 import React from "react";
-import { TaskConfig, TaskVariantCategory, VariantsConfig, Task } from "../store/types";
+import { TaskConfig, VariantsConfig } from "../stores/model";
 import VariantComponent from "./VariantComponent";
-import { AppState } from "../store/reducer";
-import { connect } from "react-redux";
+import { inject, observer } from "mobx-react";
+import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 
 interface Props {
     id: string;
     config: TaskConfig;
-    task: Task;
+    configStore?: ConfigStore;
     onDelete: (id: string) => void;
     onChange: (config: TaskConfig) => void;
 }
 
-interface StateProps {
-    categories: TaskVariantCategory[];
 
-}
-
-class TaskComponent extends React.PureComponent<Props & StateProps> {
+class TaskComponent extends React.PureComponent<Props> {
 
     handleVariantChange = (index: number, config: VariantsConfig): void => {
         const { onChange, config: task } = this.props;
@@ -50,22 +46,26 @@ class TaskComponent extends React.PureComponent<Props & StateProps> {
     }
 
     render() {
+        const { configStore, id, config, onDelete } = this.props;
+        if (!configStore) {
+            return null;
+        }
+        const task = configStore.tasks.get(id);
         return (
             <div style={container}>
                 <div style={{ display: "flex", flexDirection: "row" }}>
-                    {this.props.task.label}
+                    {id}
                     <button onClick={this.onAdd}>Add variant</button>
-                    <button onClick={() => this.props.onDelete(this.props.task.id)}>X</button>
+                    <button onClick={() => onDelete(id)}>X</button>
                 </div>
                 {
-                    this.props.config.variants.map((variant, index) =>
+                    task && config.variants.map((variant, index) =>
                         <div key={index}>
                             <VariantComponent
-                                type={this.props.task.type}
-                                onChange={(_variant) => this.handleVariantChange(index, _variant)}
+                                type={task.type}
+                                onChange={variant => this.handleVariantChange(index, variant)}
                                 onDelete={() => this.onVariantDeletion(index)}
-                                categories={this.props.categories}
-                                variant={variant} />
+                                config={variant} />
                         </div>
                     )
                 }
@@ -74,14 +74,7 @@ class TaskComponent extends React.PureComponent<Props & StateProps> {
     }
 }
 
-const mapStateToProps = (state: AppState, ownProps: Props): StateProps => {
-    const { tasks, taskVariantCategories } = state.configs;
-    return {
-        categories: Object.values(taskVariantCategories).filter(category => category.type === tasks[ownProps.id].type)
-    };
-};
-
-export default connect(mapStateToProps)(TaskComponent);
+export default inject(CONFIG_STORE)(observer(TaskComponent));
 
 const container: React.CSSProperties = {
     marginLeft: 10

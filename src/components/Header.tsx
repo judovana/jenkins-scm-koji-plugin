@@ -1,46 +1,32 @@
 import React from "react";
+import { observer, inject } from "mobx-react";
 
-import { AppState } from "../store/reducer";
-import { connect } from "react-redux";
-import { Dispatch, Action } from "redux";
-import { ProjectCategory } from "../store/types";
-import { selectProjectCategory } from "../store/projects/actions";
+import { ProjectStore, PROJECT_STORE } from "../stores/ProjectStore";
 
-interface StateProps {
-    projects: ProjectCategory[];
+interface Props {
+    projectStore?: ProjectStore;
 }
 
-interface DispatchProps {
-    selectProject: (id: string) => void
-}
-
-class Header extends React.PureComponent<StateProps & DispatchProps> {
+class Header extends React.PureComponent<Props> {
 
     render() {
-        return (
+        const { projectStore } = this.props;
+        return (projectStore &&
             <div style={{
                 display: "flex",
                 flexDirection: "row"
             }}>
                 {
-                    this.props.projects.map(project =>
-                        <div className="HeaderItem" key={project.id} onClick={() => this.props.selectProject(project.id)}>
-                            <div style={{ textAlign: "center", fontSize: 20 }}>{project.label}</div>
-                            <div style={{ textAlign: "center" }}>{project.description}</div>
+                    Object.values(projectStore.projectCategories).map(category =>
+                        <div className="HeaderItem" key={category.id} onClick={() => { projectStore.selectedProjectCategoryId = category.id }}>
+                            <div style={{ textAlign: "center", fontSize: 20 }}>{category.label}</div>
+                            <div style={{ textAlign: "center" }}>{category.description}</div>
                         </div>
                     )
                 }
             </div>
-        )
+        );
     }
 }
 
-const mapStateToProps = (state: AppState): StateProps => ({
-    projects: Object.values(state.projects.projectCategories)
-})
-
-const mapDispatchToProps = (dispatch: Dispatch<Action>): DispatchProps => ({
-    selectProject: (id: string): void => { dispatch(selectProjectCategory(id)) }
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(Header);
+export default inject(PROJECT_STORE)(observer(Header));

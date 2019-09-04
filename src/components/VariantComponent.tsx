@@ -2,28 +2,24 @@ import React from "react";
 
 import PlatformComponent from "./PlatformComponent";
 
-import { VariantsConfig, TaskVariantCategory, Platform, PlatformConfig, TaskType } from "../store/types";
+import { VariantsConfig, PlatformConfig, TaskType, Item } from "../stores/model";
 import Dropdown from "./Dropdown";
-import { AppState } from "../store/reducer";
-import { connect } from "react-redux";
 import AddComponent from "./AddComponent";
+import { inject, observer } from "mobx-react";
+import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 
 interface Props {
     type: TaskType;
-    categories: TaskVariantCategory[];
-    variant: VariantsConfig;
+    configStore?: ConfigStore;
+    config: VariantsConfig;
     onChange: (config: VariantsConfig) => void;
     onDelete: () => void;
 }
 
-interface StateProps {
-    platforms: { [id: string]: Platform };
-}
-
-class VariantComponent extends React.PureComponent<Props & StateProps> {
+class VariantComponent extends React.PureComponent<Props> {
 
     handleVariantChange = (id: string, value: string): void => {
-        const { onChange, variant } = this.props;
+        const { onChange, config: variant } = this.props;
         onChange({
             ...variant,
             map: {
@@ -34,7 +30,7 @@ class VariantComponent extends React.PureComponent<Props & StateProps> {
     }
 
     handlePlatformChange = (id: string, platformConfig: PlatformConfig = { tasks: {} }): void => {
-        const { onChange, variant } = this.props;
+        const { onChange, config: variant } = this.props;
         onChange({
             ...variant,
             platforms: {
@@ -45,7 +41,7 @@ class VariantComponent extends React.PureComponent<Props & StateProps> {
     }
 
     handlePlatformDeletion = (id: string): void => {
-        const config = { ...this.props.variant };
+        const config = { ...this.props.config };
         if (!config.platforms) {
             return;
         }
@@ -54,26 +50,32 @@ class VariantComponent extends React.PureComponent<Props & StateProps> {
     }
 
     renderVariants = () => {
-        const platformConfigs = this.props.variant.platforms;
+        const { configStore, type } = this.props;
+        if (!configStore) {
+            return null;
+        }
+        const platforms = Array.from(configStore.platforms.values());
+        const platformConfigs = this.props.config.platforms;
         const selectedPlatformIds = platformConfigs ? Object.keys(platformConfigs) : [];
-        const unselectedPlatforms = Object.values(this.props.platforms).filter(platform => !selectedPlatformIds.includes(platform.id));
+        const unselectedPlatforms = platforms.filter(platform => !selectedPlatformIds.includes(platform.id));
+        const taskVariants = Array.from(configStore.taskVariants.values()).filter(taskVariant => taskVariant.type === type);
         return (
             <div style={variantContainer}>
                 {
-                    this.props.categories.map(category =>
+                    taskVariants.map(taskVariant =>
                         <Dropdown
-                            values={category.variants}
-                            label={category.label}
-                            value={this.props.variant.map[category.id]}
-                            onChange={(value: string) => this.handleVariantChange(category.id, value)}
-                            key={category.id} />
+                            values={Object.values(taskVariant.variants)}
+                            label={taskVariant.label}
+                            value={this.props.config.map[taskVariant.id]}
+                            onChange={(value: string) => this.handleVariantChange(taskVariant.id, value)}
+                            key={taskVariant.id} />
                     )
                 }
                 {
                     unselectedPlatforms.length === 0 || this.props.type === TaskType.TEST ? null :
                         <AddComponent
                             onAdd={this.handlePlatformChange}
-                            items={unselectedPlatforms}
+                            items={unselectedPlatforms as Item[]}
                             label={"Add platform"} />
                 }
                 <button onClick={this.props.onDelete}>X</button>
@@ -82,8 +84,7 @@ class VariantComponent extends React.PureComponent<Props & StateProps> {
     }
 
     renderPlatforms = () => {
-        const platforms = this.props.platforms;
-        const platformConfigs = this.props.variant.platforms;
+        const platformConfigs = this.props.config.platforms;
         return (
             <div>
                 {
@@ -91,10 +92,10 @@ class VariantComponent extends React.PureComponent<Props & StateProps> {
                         Object.keys(platformConfigs).map(id =>
                             <div key={id}>
                                 <PlatformComponent
-                                    onChange={(config) => this.handlePlatformChange(id, config)}
+                                    onChange={config => this.handlePlatformChange(id, config)}
                                     onDelete={this.handlePlatformDeletion}
                                     config={platformConfigs[id]}
-                                    platform={platforms[id]}
+                                    id={id}
                                     type={TaskType.TEST} />
                             </div>
                         )
@@ -113,11 +114,7 @@ class VariantComponent extends React.PureComponent<Props & StateProps> {
     }
 }
 
-const mapStateToProps = (state: AppState): StateProps => ({
-    platforms: state.configs.platforms
-})
-
-export default connect(mapStateToProps)(VariantComponent);
+export default inject(CONFIG_STORE)(observer(VariantComponent));
 
 const container: React.CSSProperties = {
     marginLeft: 20,

@@ -1,5 +1,5 @@
 import React from "react";
-import { Project, ProjectType, JDKProject } from "../store/types";
+import { Project, ProjectType, JDKProject } from "../stores/model";
 import JDKProjectForm from "./JDKProjectForm";
 
 interface Props {
@@ -15,6 +15,8 @@ class ProjectForm extends React.PureComponent<Props> {
                 return (
                     <JDKProjectForm project={project as JDKProject} />
                 )
+            default:
+                return null;
         }
     }
 }

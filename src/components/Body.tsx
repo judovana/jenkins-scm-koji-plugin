@@ -1,61 +1,75 @@
 import React from "react";
-import { ProjectCategory, Project } from "../store/types";
-import { connect } from "react-redux";
-import { AppState } from "../store/reducer";
 
-import { Dispatch, Action } from "redux";
-import { selectProject } from "../store/projects/actions";
+import { inject, observer } from "mobx-react";
+import { ProjectStore, PROJECT_STORE } from "../stores/ProjectStore";
 import ProjectForm from "./ProjectForm";
+import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 
-interface StateProps {
-    projectCategory: ProjectCategory;
-    project: Project;
+interface Props {
+    projectStore?: ProjectStore;
+    configStore?: ConfigStore;
 }
 
-interface DispatchProps {
-    selectProject: (id: string) => void
-}
+class Body extends React.PureComponent<Props> {
 
-class Body extends React.PureComponent<StateProps & DispatchProps> {
+    componentDidMount() {
+        const { configStore, projectStore } = this.props;
+
+        if (configStore) {
+            configStore.fetchPlatforms();
+            configStore.fetchProducts();
+            configStore.fetchTasks();
+            configStore.fetchTaskVariants();
+        }
+        if (projectStore) {
+            projectStore.fetchJDKProjects();
+        }
+    }
 
     render() {
-        const { projectCategory, project } = this.props;
+        const { projectStore } = this.props;
 
-        if (!projectCategory) {
-            return null;
+        if (!projectStore) {
+            return <div>no store</div>;
         }
+        const projectCategory = projectStore.selectedProjectCategory;
+        if (!projectCategory) {
+            return <div></div>
+        }
+        const projects = projectStore.projects;
+        const project = projectStore.selectedProject;
         return (
             <div className="Body">
-                <div className="List">
-                    <div className="ListHeader">
-                        Projects
-                    </div>
-                    {
-                        projectCategory.list.map(projectId =>
-                            <div className="ListItem" key={projectId} onClick={() => this.props.selectProject(projectId)}>
-                                {projectId}
-                            </div>
-                        )
-                    }
-                </div>
                 {
-                    !project ? null :
-                        <div className="Content">
-                            <ProjectForm project={project} />
+                    projectCategory &&
+                    <div className="List">
+                        <div className="ListHeader">
+                            {projectCategory.label}
                         </div>
+                        <div>
+                            {
+
+                                Array.from(projects.values()).map(project =>
+                                    <div
+                                        className="ListItem"
+                                        onClick={() => projectStore.selectedProjectId = project.id}
+                                        key={project.id}>
+                                        {project.id}
+                                    </div>
+                                )
+                            }
+                        </div>
+                    </div>
+                }
+                {
+                    project &&
+                    <div>
+                        <ProjectForm project={project} />
+                    </div>
                 }
             </div>
         )
     }
 }
 
-const mapStateToProps = (state: AppState): StateProps => ({
-    projectCategory: state.projects.projectCategories[state.projects.selectedProjectCategoryId],
-    project: state.projects.projects[state.projects.selectedProjectId]
-});
-
-const mapDispatchToProps = (dispatch: Dispatch<Action>): DispatchProps => ({
-    selectProject: id => dispatch(selectProject(id))
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(Body);
+export default inject(PROJECT_STORE, CONFIG_STORE)(observer(Body));

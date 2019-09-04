@@ -1,92 +1,84 @@
 import React from "react";
-import { connect } from "react-redux";
+
+import { observer, inject } from "mobx-react";
 
 import Dropdown from "./Dropdown";
 import JobConfigComponent from "./JobConfigComponent";
 
-import { AppState } from "../store/reducer";
-import { Item, JDKProject, JobConfig } from "../store/types";
+import { JDKProject, JobConfig, PlatformConfig } from "../stores/model";
+import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 
 interface Props {
     project?: JDKProject;
+    configStore?: ConfigStore;
 }
 
-interface StateProps {
-    products: Item[];
-}
+class JDKProjectForm extends React.PureComponent<Props, JDKProject> {
 
-interface State {
-    name: string;
-    url: string;
-    product: string;
-    jobConfig: JobConfig;
-}
-
-class ProjectForm extends React.PureComponent<Props & StateProps, State> {
-
-    constructor(props: Props & StateProps) {
+    constructor(props: Props) {
         super(props);
         this.state = props.project ? props.project :
-        {
-            name: "",
-            url: "",
-            product: "",
-            jobConfig: {
-                platforms: {}
-            }
-        };
+            {
+                id: "",
+                url: "",
+                product: "",
+                jobConfiguration: {
+                    platforms: {} as { [id: string]: PlatformConfig }
+                }
+            } as JDKProject;
     }
 
     handleNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        this.setState({name: event.currentTarget.value});
+        this.setState({ id: event.currentTarget.value });
     }
 
     handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        this.setState({url: event.currentTarget.value});
+        this.setState({ url: event.currentTarget.value });
     }
 
     handleJobConfigChange = (config: JobConfig): void => {
         this.setState({
-            jobConfig: config
+            jobConfiguration: config
         });
     }
 
     render() {
-        return(
+        const configStore = this.props.configStore;
+        if (!configStore) {
+            return null;
+        }
+        const products = Array.from(configStore.products.values());
+        return (this.props.configStore &&
             <div>
                 <div>
                     <label>name: </label>
                     <input
                         type="text"
-                        value={this.state.name}
-                        onChange={this.handleNameChange}/>
+                        value={this.state.id}
+                        onChange={this.handleNameChange} />
                 </div>
                 <div>
                     <label>url: </label>
                     <input
                         type="text"
                         value={this.state.url}
-                        onChange={this.handleUrlChange}/>
+                        onChange={this.handleUrlChange} />
                 </div>
                 <Dropdown
                     label={"Product"}
-                    values={this.props.products}
+                    values={products}
                     value={this.state.product}
-                    onChange={(value: string) => this.setState({product: value})}/>
+                    onChange={(value: string) => this.setState({ product: value })} />
                 <JobConfigComponent
                     onChange={this.handleJobConfigChange}
-                    jobConfig={this.state.jobConfig}/>
-                <br/>
-                <br/>
-                <br/>
+                    jobConfig={this.state.jobConfiguration} />
+                <br />
+                <br />
+                <br />
                 <p>{JSON.stringify(this.state)}</p>
             </div>
         )
     }
 }
 
-const mapStateToProps = (state: AppState): StateProps => ({
-    products: Object.values(state.configs.products)
-});
-
-export default connect(mapStateToProps)(ProjectForm);
+export default inject(CONFIG_STORE)(observer(JDKProjectForm));

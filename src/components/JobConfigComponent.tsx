@@ -1,20 +1,17 @@
 import React from "react";
-import { JobConfig, Platform, PlatformConfig, TaskType } from "../store/types";
+import { JobConfig, PlatformConfig, TaskType } from "../stores/model";
 import PlatformComponent from "./PlatformComponent";
-import { AppState } from "../store/reducer";
-import { connect } from "react-redux";
 import AddComponent from "./AddComponent";
+import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore";
+import { inject, observer } from "mobx-react";
 
 interface Props {
     jobConfig: JobConfig;
     onChange: (config: JobConfig) => void;
+    configStore?: ConfigStore;
 }
 
-interface StateProps {
-    platforms: { [id: string]: Platform };
-}
-
-class JobConfigComponent extends React.PureComponent<Props & StateProps> {
+class JobConfigComponent extends React.PureComponent<Props> {
 
     handlePlatformChange = (id: string, platformConfig: PlatformConfig = { tasks: {} }): void => {
         const { onChange, jobConfig } = this.props;
@@ -35,20 +32,27 @@ class JobConfigComponent extends React.PureComponent<Props & StateProps> {
 
     render() {
         const platformConfigs = this.props.jobConfig.platforms;
-        const unselectedPlatforms = Object.values(this.props.platforms).filter(platform => !Object.keys(platformConfigs).includes(platform.id));
+        const configStore = this.props.configStore;
+        if (!configStore) {
+            return null;
+        }
+        const platforms = configStore.platforms;
+        const unselectedPlatforms = Array.from(platforms.values()).filter(platform => !Object.keys(platformConfigs).includes(platform.id));
         return (
             <div>
                 {
-                    Object.keys(platformConfigs).map(id =>
-                        <div key={id}>
-                            <PlatformComponent
-                                onChange={(config) => this.handlePlatformChange(id, config)}
-                                onDelete={this.handlePlatformDeletion}
-                                config={platformConfigs[id]}
-                                platform={this.props.platforms[id]}
-                                type={TaskType.BUILD} />
-                        </div>
-                    )
+                    Object.keys(platformConfigs).map(id => {
+                        return (
+                            <div key={id}>
+                                <PlatformComponent
+                                    id={id}
+                                    onChange={(config: PlatformConfig) => this.handlePlatformChange(id, config)}
+                                    onDelete={this.handlePlatformDeletion}
+                                    config={platformConfigs[id]}
+                                    type={TaskType.BUILD} />
+                            </div>
+                        )
+                    })
                 }
                 {
                     unselectedPlatforms.length === 0 ? null :
@@ -62,11 +66,4 @@ class JobConfigComponent extends React.PureComponent<Props & StateProps> {
     }
 }
 
-const mapStateToProps = (state: AppState): StateProps => {
-    const platforms = state.configs.platforms;
-    return {
-        platforms: platforms
-    }
-}
-
-export default connect(mapStateToProps)(JobConfigComponent);
+export default inject(CONFIG_STORE)(observer(JobConfigComponent));
