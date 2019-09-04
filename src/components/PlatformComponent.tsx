@@ -44,7 +44,7 @@ class PlatformComponent extends React.PureComponent<Props> {
         }
         const tasks = configStore.tasks;
         const taskConfigs = config.tasks;
-        const unselectedTasks = Object.values(tasks)
+        const unselectedTasks = Array.from(tasks.values())
             .filter(task => task.type === type && !Object.keys(taskConfigs).includes(task.id));
         return (
             <div style={container}>
