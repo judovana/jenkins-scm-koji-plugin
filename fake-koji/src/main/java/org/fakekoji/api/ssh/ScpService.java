@@ -40,6 +40,7 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
@@ -62,6 +64,8 @@ import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.session.ServerSession;
+
+import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 /**
@@ -571,7 +575,7 @@ public class ScpService {
                 nvraName = type;
                 fileName = "";
             }
-            NVRA nvra = new NVRA(nvraName);
+            final NVRA nvra = NVRA.create(nvraName);
             if (name.contains("/logs")) {
                 return nvra.getBasePath() + "/data/logs/" + nvra.arch + "/" + fileName;
             } else if (name.contains("data/")) {
@@ -586,7 +590,7 @@ public class ScpService {
                 i = parts.length - 1;
             }
             String nvraName = parts[i];
-            NVRA nvra = new NVRA(nvraName);
+            NVRA nvra = NVRA.create(nvraName);
             if (i == parts.length - 1) {
                 return nvra.getArchedPath() + tail(i, parts);
             } else {
@@ -600,7 +604,7 @@ public class ScpService {
         for (int i = parts.length - 1; i >= 0; i--) {
             String part = parts[i];
             try {
-                NVRA nvra = new NVRA(part);
+                NVRA.create(part);
                 return i;
             } catch (Exception ex) {
             }
@@ -635,28 +639,59 @@ public class ScpService {
 
     private static class NVRA {
 
-        private final String releaseArchSuffix;
         private final String version;
-        private final String product;
+        private final String name;
         private final String suffix;
         private final String arch;
         private final String release;
 
-        public NVRA(String name) {
+        public NVRA(
+                final String name,
+                final String version,
+                final String release,
+                final String arch,
+                final String suffix
+        ) {
+            this.name = name;
+            this.version = version;
+            this.release = release;
+            this.arch = arch;
+            this.suffix = suffix;
+        }
+
+        public static NVRA create(String fileName) {
             try {
-                String[] split = name.split("-");
-                //split.length - 1 == release.arch.suffix
-                //split.length - 2 == version
-                //rest, down to 0, is product 
-                releaseArchSuffix = split[split.length - 1];
+                final String name;
+                final String version;
+                final String release;
+                final String arch;
+                final String suffix;
+
+                final String[] split = fileName.split("-");
+                final String[] releaseArchSuffix = split[split.length - 1].split("\\.");
+                name = Arrays.stream(split).limit(3).collect(Collectors.joining("-"));
                 version = split[split.length - 2];
-                product = name.replace("-" + version + "-" + releaseArchSuffix, "");
-                String[] ras = releaseArchSuffix.split("\\.");
-                suffix = ras[ras.length - 1];
-                arch = ras[ras.length - 2];
-                release = releaseArchSuffix.replace("." + arch + "." + suffix, "");
+                suffix = releaseArchSuffix[releaseArchSuffix.length - 1];
+                if (FakeKojiDB.isOkForOldApi(fileName)) {
+                    arch = releaseArchSuffix[releaseArchSuffix.length - 2];
+                    release = split[split.length - 1].replace("." + arch + "." + suffix, "");
+                } else if (FakeKojiDB.isOkForNewApi(fileName)) {
+                    release = releaseArchSuffix[0] + '.' + releaseArchSuffix[1];
+                    arch = split[split.length - 1]
+                            .replace(release + ".", "")
+                            .replace("." + suffix, "");
+                } else {
+                    throw new NvraParsingException(fileName);
+                }
+                return new NVRA(
+                        name,
+                        version,
+                        release,
+                        arch,
+                        suffix
+                );
             } catch (Exception ex) {
-                throw new NvraParsingException(name, ex);
+                throw new NvraParsingException(fileName, ex);
             }
         }
 
@@ -665,7 +700,7 @@ public class ScpService {
         }
 
         public String getBasePath() {
-            return product + "/" + version + "/" + release.replace("static", "upstream");
+            return name + "/" + version + "/" + release.replace("static", "upstream");
         }
     }
 

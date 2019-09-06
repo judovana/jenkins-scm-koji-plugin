@@ -266,10 +266,20 @@ public class FakeKojiDB {
         return r;
     }
 
+    public static boolean isOkForNewApi(String name) {
+        return name.endsWith(".tarxz");
+    }
+
+    public static boolean isOkForOldApi(String name) {
+        return name.endsWith(".rpm") ||
+                name.endsWith(".msi") ||
+                name.endsWith(".zip");
+    }
+
     private boolean isOkForNewApi(FakeBuild b) {
         List<File> files = b.getNonLogs();
         for (File file : files) {
-            if (file.getName().endsWith(".tarxz")) {
+            if (isOkForNewApi(file.getName())) {
                 return true;
             }
         }
@@ -279,11 +289,7 @@ public class FakeKojiDB {
     private boolean isOkForOldApi(FakeBuild b) {
         List<File> files = b.getNonLogs();
         for (File file : files) {
-            if (
-                    file.getName().endsWith(".rpm") ||
-                    file.getName().endsWith(".msi") ||
-                    file.getName().endsWith(".zip")
-            ) {
+            if (isOkForOldApi(file.getName())) {
                 return true;
             }
         }
