@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager.project;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.fakekoji.Utils;
 import org.fakekoji.jobmanager.ConfigManager;
@@ -15,10 +16,11 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-public class JDKProjectManager implements Manager {
+public class JDKProjectManager implements Manager<JDKProject> {
 
     static final String CONFIG_FILE = "config.xml";
 
@@ -40,12 +42,9 @@ public class JDKProjectManager implements Manager {
     }
 
     @Override
-    public String create(String json) throws StorageException, ManagementException {
-        final ObjectMapper mapper = new ObjectMapper();
-        final JDKProject project;
+    public void create(JDKProject project) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         try {
-            project = mapper.readValue(json, JDKProject.class);
             if (storage.contains(project.getId())) {
                 throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
             }
@@ -53,24 +52,26 @@ public class JDKProjectManager implements Manager {
             // TODO: clone repo
             generate(jobs);
             storage.store(project.getId(), project);
-            return mapper.writeValueAsString(project);
         } catch (IOException e) {
-            throw new ManagementException("Invalid json", e);
+            throw new StorageException(e.getMessage());
         }
     }
 
     @Override
-    public String read(String id) throws StorageException, ManagementException {
-        return null; // TODO
+    public JDKProject read(String id) throws StorageException, ManagementException {
+        if (!configManager.getJdkProjectStorage().contains(id)) {
+            throw new ManagementException("No project with id: " + id);
+        }
+        return configManager.getJdkProjectStorage().load(id, JDKProject.class);
     }
 
     @Override
-    public String readAll() throws StorageException {
-        return null; // TODO
+    public List<JDKProject> readAll() throws StorageException {
+        return configManager.getJdkProjectStorage().loadAll(JDKProject.class);
     }
 
     @Override
-    public String update(String id, String json) throws StorageException, ManagementException {
+    public void update(String id, String json) throws StorageException, ManagementException {
         final ObjectMapper mapper = new ObjectMapper();
         final JDKProject project;
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
@@ -89,12 +90,10 @@ public class JDKProjectManager implements Manager {
         final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(project);
         final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(oldProject);
         updateJobs(newJobs, oldJobs);
-        return null;
     }
 
     @Override
-    public String delete(String id) throws StorageException, ManagementException {
-        return null; // TODO
+    public void delete(String id) throws StorageException, ManagementException {
     }
 
     void updateProjectUrl() {

@@ -2,17 +2,19 @@ package org.fakekoji.jobmanager;
 
 import org.fakekoji.storage.StorageException;
 
-public interface Manager {
+import java.util.List;
 
-    String create(String json) throws StorageException, ManagementException;
+public interface Manager<T> {
 
-    String read(String id) throws StorageException, ManagementException;
+    void create(T t) throws StorageException, ManagementException;
 
-    String readAll() throws StorageException;
+    T read(String id) throws StorageException, ManagementException;
 
-    String update(String id, String json) throws StorageException, ManagementException;
+    List<T> readAll() throws StorageException;
 
-    String delete(String id) throws StorageException, ManagementException;
+    void update(String id, String json) throws StorageException, ManagementException;
+
+    void delete(String id) throws StorageException, ManagementException;
 
 
 }
