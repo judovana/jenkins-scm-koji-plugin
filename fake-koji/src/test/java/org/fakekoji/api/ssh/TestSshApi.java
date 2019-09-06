@@ -389,7 +389,7 @@ public class TestSshApi {
         }
 
         public String getName() {
-            return "terrible-x-name-version" + vid + "-release" + rid + ".arch" + aid + ".suffix";
+            return "terrible-x-name-version" + vid + "-release" + rid + ".arch" + aid + ".rpm";
         }
 
         public String getLocalName() {
@@ -2189,4 +2189,37 @@ public class TestSshApi {
         checkFileExists(x64LogFileLocal);
     }
 
+    /*
+        tests for otool
+    */
+
+    @Test
+    public void uploadSrcTarball() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = "java-11-openjdk-jdk.11.28-0.jdk11u.hotspot.fastdebug.f28.aarch64.tarxz";
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteFile = new File(kojiDb, "java-11-openjdk/jdk.11.28/0.jdk11u/hotspot.fastdebug.f28.aarch64/" + nvra);
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        checkFileExists(remoteFile);
+    }
+
+    @Test
+    public void uploadBinaryTarball() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = "java-11-openjdk-jdk.11.28-0.jdk11u.src.tarxz";
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteFile = new File(kojiDb, "java-11-openjdk/jdk.11.28/0.jdk11u/src/" + nvra);
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        checkFileExists(remoteFile);
+    }
 }
