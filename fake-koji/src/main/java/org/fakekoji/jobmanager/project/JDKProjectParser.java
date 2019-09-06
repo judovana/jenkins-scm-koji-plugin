@@ -138,12 +138,12 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
             testVariantCategoriesMap = configManager.getTaskVariantCategoryStorage()
                     .loadAll(TaskVariantCategory.class)
                     .stream()
-                    .filter(category -> category.getType().equals(TaskVariantCategory.Usage.TEST))
+                    .filter(category -> category.getType().equals(Task.Type.TEST))
                     .collect(Collectors.toMap(TaskVariantCategory::getId, taskVariantCategory -> taskVariantCategory));
             buildVariantCategoriesMap = configManager.getTaskVariantCategoryStorage()
                     .loadAll(TaskVariantCategory.class)
                     .stream()
-                    .filter(category -> category.getType().equals(TaskVariantCategory.Usage.BUILD))
+                    .filter(category -> category.getType().equals(Task.Type.BUILD))
                     .collect(Collectors.toMap(TaskVariantCategory::getId, taskVariantCategory -> taskVariantCategory));
         }
 
