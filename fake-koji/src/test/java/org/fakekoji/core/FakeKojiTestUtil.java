@@ -174,7 +174,7 @@ public class FakeKojiTestUtil {
         int downloadPort = getFakeKojiDownloadPort();
         int sshUploadPort = JavaServer.DFAULT_SSHUPLOAD_PORT;
 
-        AccessibleSettings settings = new AccessibleSettings(localBuilds, upstreamRepos,
+        AccessibleSettings settings = new AccessibleSettings(localBuilds, upstreamRepos, null, null, null,
                 rpcPort, downloadPort, sshUploadPort, previewPort, 8080);
         JavaServer javaServer = new JavaServer(settings);
         return javaServer;

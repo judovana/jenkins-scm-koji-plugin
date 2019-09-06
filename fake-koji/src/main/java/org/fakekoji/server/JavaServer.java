@@ -200,7 +200,7 @@ public class JavaServer {
         if (!wasUport) {
             realUPort = deductUpPort(realXPort);
         }
-        AccessibleSettings settings = new AccessibleSettings(dbFileRoot, reposFileRoot, realXPort, realDPort, realUPort, view1Port, realJport);
+        AccessibleSettings settings = new AccessibleSettings(dbFileRoot, reposFileRoot, null, null, null, realXPort, realDPort, realUPort, view1Port, realJport);
         if (hostname != null) {
             settings.setJekinsUrl(hostname);
         }

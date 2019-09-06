@@ -37,6 +37,9 @@ public class AccessibleSettings {
 
     private final File dbFileRoot;
     private final File localReposRoot;
+    private final File configRoot;
+    private final File jenkinsJobsRoot;
+    private final File jenkinsJobArchiveRoot;
 
     private final int realXPort;
     private final int realDPort;
@@ -48,9 +51,23 @@ public class AccessibleSettings {
     private URL jenkinsUrlString;
     private ProjectMapping projectMapping;
 
-    public AccessibleSettings(File dbFileRoot, File localReposRoot, int realXPort, int realDPort, int realUPort, int previewPort, int jenkinsPort) throws UnknownHostException, MalformedURLException {
+    public AccessibleSettings(
+            File dbFileRoot,
+            File localReposRoot,
+            File configRoot,
+            File jenkinsJobsRoot,
+            File jenkinsJobArchiveRoot,
+            int realXPort,
+            int realDPort,
+            int realUPort,
+            int previewPort,
+            int jenkinsPort
+    ) throws UnknownHostException, MalformedURLException {
         this.dbFileRoot = dbFileRoot;
         this.localReposRoot = localReposRoot;
+        this.configRoot = configRoot;
+        this.jenkinsJobsRoot = jenkinsJobsRoot;
+        this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
         this.realXPort = realXPort;
         this.realDPort = realDPort;
         this.realUPort = realUPort;
@@ -110,6 +127,18 @@ public class AccessibleSettings {
      */
     public File getLocalReposRoot() {
         return localReposRoot;
+    }
+
+    public File getConfigRoot() {
+        return configRoot;
+    }
+
+    public File getJenkinsJobsRoot() {
+        return jenkinsJobsRoot;
+    }
+
+    public File getJenkinsJobArchiveRoot() {
+        return jenkinsJobArchiveRoot;
     }
 
     /**
