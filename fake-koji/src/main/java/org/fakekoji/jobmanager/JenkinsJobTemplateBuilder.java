@@ -66,10 +66,13 @@ public class JenkinsJobTemplateBuilder {
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
 
     static final String XML_NEW_LINE = "&#13;";
+    static final String XML_APOS = "&apos;";
     static final String LOCAL = "local";
     static final String EXPORT = "export";
     static final String VM_NAME_OR_LOCAL = "VM_NAME_OR_LOCAL";
     static final String PLATFORM_PROVIDER = "PLATFORM_PROVIDER";
+    static final String PROJECT_PATH = "PROJECT_PATH";
+    static final String JAVA_VERSION = "JAVA_VERSION";
 
     private String template;
 
@@ -80,16 +83,13 @@ public class JenkinsJobTemplateBuilder {
     public JenkinsJobTemplateBuilder buildPullScriptTemplate(
             String projectName,
             Product product,
-            Set<String> buildVariants,
             String repositoriesRootPath
     ) {
         final String pullScript = "#!/bin/sh" + XML_NEW_LINE +
-                EXPORT + " PROJECT=&apos;" + projectName + "&apos;" + XML_NEW_LINE +
-                EXPORT + " NAME=&apos;" + product.getPackageName() + "&apos;" + XML_NEW_LINE +
-                EXPORT + " RELEASES=\"\"" + XML_NEW_LINE +
-                buildVariants.stream()
-                        .map(variant -> "RELEASES+='" + projectName + '.' + variant + '\'')
-                        .collect(Collectors.joining(XML_NEW_LINE)) + XML_NEW_LINE +
+                EXPORT + " " + PROJECT_NAME + "=" + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + PROJECT_PATH + "=" + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + JAVA_VERSION + "=" + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + PACKAGE_NAME + "=" + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
                 "bash '/home/tester/vm-shared/TckScripts/otool/pull.sh'";
 
         template = template.replace(PULL_SCRIPT, pullScript);
