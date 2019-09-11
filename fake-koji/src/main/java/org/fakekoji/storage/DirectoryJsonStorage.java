@@ -1,5 +1,6 @@
 package org.fakekoji.storage;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.fakekoji.Utils;
 
@@ -13,6 +14,12 @@ import java.util.List;
 public class DirectoryJsonStorage<T> implements Storage<T> {
 
     private static final String SUFFIX= ".json";
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    static {
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
     private final File storageFile;
 
     public DirectoryJsonStorage(File storageFile) {
@@ -24,7 +31,7 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
         try {
             Utils.writeToFile(
                     Paths.get(storageFile.getAbsolutePath(), id + SUFFIX),
-                    new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(t)
+                    mapper.writerWithDefaultPrettyPrinter().writeValueAsString(t)
             );
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
@@ -43,7 +50,7 @@ public class DirectoryJsonStorage<T> implements Storage<T> {
     @Override
     public T load(String id, Class<T> valueType) throws StorageException {
         try {
-            return new ObjectMapper().readValue(
+            return mapper.readValue(
                     Utils.readFile(Paths.get(storageFile.getAbsolutePath(), id + SUFFIX).toFile()),
                     valueType
             );
