@@ -63,7 +63,7 @@ public class XmlRpcKojiService {
 
     public XmlRpcKojiService(AccessibleSettings settings) {
         this.settings = settings;
-        this.webServer = new WebServer(settings.getRealXPort());
+        this.webServer = new WebServer(settings.getXmlRpcPort());
     }
 
     /**
@@ -89,11 +89,11 @@ public class XmlRpcKojiService {
     }
 
     public int getPort() {
-        return settings.getRealXPort();
+        return settings.getXmlRpcPort();
     }
 
     public void start() throws IOException {
-        webServer = new WebServer(settings.getRealXPort());
+        webServer = new WebServer(settings.getXmlRpcPort());
         webServer.setParanoid(false);
         XmlRpcServerConfigImpl config = new XmlRpcServerConfigImpl();
         config.setEnabledForExtensions(true);

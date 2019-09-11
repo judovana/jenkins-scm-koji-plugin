@@ -29,56 +29,39 @@ package org.fakekoji.server;
   mvn clean install
   cd target
 
-  java -cp ./fake-koji-...-jar-with-dependencies.jar:logging.jar  org.fakekoji.JavaServer
-  -kojidbhome=local-builds -reposhome=upstream-repos
+  java -cp ./fake-koji-...-jar-with-dependencies.jar:logging.jar  org.fakekoji.JavaServer /path/.properties
 
   where logging.jar is any logging implementation. Apache xmlrpc are happy with apache logging.
 
  */
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.fakekoji.core.AccessibleSettings;
-import org.fakekoji.api.http.filehandling.PreviewFakeKoji;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.api.http.filehandling.FileDownloadService;
 import org.fakekoji.api.xmlrpc.XmlRpcKojiService;
 import org.fakekoji.api.ssh.ScpService;
 
-/**
- * This class is emulating selected xml-rpc calls to koji, so you can easily let
- * jenkins-scm-koji-plugin to connect to your own "database".
- *
- */
 public class JavaServer {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     public static final int DEFAULT_JENKINS_PORT = 8080;
-    public static final int DFAULT_RP2C_PORT = 9848;
-    public static final int DFAULT_DWNLD_PORT = deductDwPort(DFAULT_RP2C_PORT);
-    public static final int DFAULT_SSHUPLOAD_PORT = deductUpPort(DFAULT_RP2C_PORT);
+    public static final int DEFAULT_XML_RPC_PORT = 9848;
 
-    public static final String xPortAxiom = "XPORT";
-    public static final String dPortAxiom = "DPORT";
+    private final XmlRpcKojiService xmlRpcKojiService;
+    private final FileDownloadService fileDownloadService;
+    private final ScpService scpService;
 
-    private final AccessibleSettings settings;
-
-    XmlRpcKojiService xmlRpcKojiService;
-    FileDownloadService fileDownloadService;
-    PreviewFakeKoji previewFakeKojiServer;
-    ScpService scpService;
-
-    public JavaServer(AccessibleSettings settings) throws UnknownHostException, MalformedURLException {
-        this.settings = settings;
+    public JavaServer(AccessibleSettings settings) {
         xmlRpcKojiService = new XmlRpcKojiService(settings);
-        fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getRealDPort());
-        previewFakeKojiServer = new PreviewFakeKoji(settings);
-        scpService = new ScpService(settings.getDbFileRoot(), settings.getRealUPort());
+        fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getFileDownloadPort());
+        scpService = new ScpService(settings.getDbFileRoot(), settings.getSshPort());
     }
 
     public void start() throws Exception {
@@ -90,10 +73,6 @@ public class JavaServer {
         LOGGER.info("Starting http server to return files.");
         fileDownloadService.start();
         LOGGER.info("Started successfully on " + fileDownloadService.getPort());
-        /* preview (builds in human readable way) */
-        LOGGER.info("Starting http server frontend with settings answers");
-        previewFakeKojiServer.start();
-        LOGGER.info("FrontEnd started successfully on " + previewFakeKojiServer.getPort());
         /* ssh server to upload files to fakekoji */
         LOGGER.info("Starting sshd server to accept files.");
         scpService.start();
@@ -106,115 +85,78 @@ public class JavaServer {
         } catch (IOException ex) {
             Logger.getLogger(JavaServer.class.getName()).log(Level.SEVERE, null, ex);
         }
-        previewFakeKojiServer.stop();
         fileDownloadService.stop();
         xmlRpcKojiService.stop();
     }
 
-    private static final String XMLRPC_SWITCH = "-xmlrpcport";
-    private static final String DOWNLOAD_SWITCH = "-downloadport";
-    private static final String SSH_UPLOAD_SWITCH = "-sshuploadport";
-    private static final String VIEW1_SWITCH = "-view1port";
-    private static final String JENKINS_SWITCH = "-jenkinsport";
-    private static final String REPOS_SWITCH = "-reposhome";
-    private static final String DB_SWITCH = "-kojidbhome";
-    private static final String JENKINS_HOST_NAME_SWITCH = "-jenkinshost";
-
     public static void main(String[] args) throws Exception {
-        int realXPort = DFAULT_RP2C_PORT;
-        int realDPort = DFAULT_DWNLD_PORT;
-        int realUPort = DFAULT_SSHUPLOAD_PORT;
-        int realJport = DEFAULT_JENKINS_PORT;
-        String hostname = null;
-        int view1Port = 80;
-        File dbFileRoot = null;
-        File reposFileRoot = null;
 
-        //to deduct or not to deduct? Alias how to enforce user to set them all :-)
-        boolean wasDport = false;
-        boolean wasUport = false;
-        //to enforce those two
-        boolean wasRepos = false;
-        boolean wasDbRoot = false;
-
-        //args = new String[]{DB_SWITCH + "=/home/jvanek/Desktop", REPOS_SWITCH + "=/home/jvanek/hg", VIEW1_SWITCH+"=8888"};
-        //args = new String[]{DB_SWITCH + "=/home/jvanek/Desktop", REPOS_SWITCH + "=/home/jvanek/hg", VIEW1_SWITCH+"=8888", JENKINS_HOST_NAME_SWITCH+"=hydra.brq.redhat.com"};
-        if (args.length < 2) {
-            throw new RuntimeException("\n"
-                    + "expected two mandatory switches: " + DB_SWITCH + "=/path/to/koji/like/db and " + REPOS_SWITCH + "=/path/to/repos/with/clones\n"
-                    + "Then you can use any of " + VIEW1_SWITCH + ", " + XMLRPC_SWITCH + ", " + DOWNLOAD_SWITCH + ", " + SSH_UPLOAD_SWITCH + " (-switch=value syntax) to overwrite defaults:\n"
-                    + "xml rpc have defaulr of " + DFAULT_RP2C_PORT + "\n"
-                    + "download port have default of " + DFAULT_DWNLD_PORT + " (deducted from XML_RPC by +1)\n"
-                    + "sshd port (have defualt defualt of " + DFAULT_SSHUPLOAD_PORT + "( XML_RPC port -26)\n"
-                    + "view1 have default of " + view1Port + "\n"
-                    + "jenkins have default of " + realJport + "\n"
-                    + "you may change jenkins hostname of this runtime via " + JENKINS_HOST_NAME_SWITCH + "\n");
-        }
-        for (String arg : args) {
-            String key = arg.split("=")[0];
-            String value = arg.split("=")[1];
-            key = key.replaceAll("^-+", "-");
-            switch (key) {
-                case (DB_SWITCH):
-                    dbFileRoot = new File(value);
-                    wasDbRoot = true;
-                    break;
-                case (REPOS_SWITCH):
-                    reposFileRoot = new File(value);
-                    wasRepos = true;
-                    break;
-                case (JENKINS_HOST_NAME_SWITCH):
-                    hostname = value;
-                    break;
-                case (XMLRPC_SWITCH):
-                    realXPort = Integer.valueOf(value);
-                    break;
-                case (DOWNLOAD_SWITCH):
-                    realDPort = Integer.valueOf(value);
-                    wasDport = true;
-                    break;
-                case (SSH_UPLOAD_SWITCH):
-                    realUPort = Integer.valueOf(value);
-                    wasUport = true;
-                    break;
-                case (VIEW1_SWITCH):
-                    view1Port = Integer.valueOf(value);
-                    break;
-                case (JENKINS_SWITCH):
-                    realJport = Integer.valueOf(value);
-                    break;
-                default:
-                    throw new RuntimeException("Unknown argument in token: " + arg);
-            }
-        }
-        if (!wasDbRoot) {
-            throw new RuntimeException(DB_SWITCH + " and " + REPOS_SWITCH + " are mandatory");
-        }
-        if (!wasRepos) {
-            throw new RuntimeException(DB_SWITCH + " and " + REPOS_SWITCH + " are mandatory");
+        if (args.length != 2) {
+            throw new RuntimeException("Expected path to properties file"); // TODO: add description of each property
         }
 
-        if (!wasDport) {
-            realDPort = deductDwPort(realXPort);
-        }
-        if (!wasUport) {
-            realUPort = deductUpPort(realXPort);
-        }
-        AccessibleSettings settings = new AccessibleSettings(dbFileRoot, reposFileRoot, null, null, null, realXPort, realDPort, realUPort, view1Port, realJport);
-        if (hostname != null) {
-            settings.setJekinsUrl(hostname);
-        }
-        JavaServer javaServer = new JavaServer(settings);
+        final String propertyFilePath = args[1];
+        final Properties props = new Properties();
+        props.load(new FileInputStream(new File(propertyFilePath)));
 
-        javaServer.start();
+        final int xmlRpcPort;
+        final int sshPort;
+        final int fileDownloadPort;
 
+        xmlRpcPort = getPort(props, Property.XML_RPC_PORT, DEFAULT_XML_RPC_PORT);
+        fileDownloadPort = getPort(props, Property.FILE_DOWNLOAD_PORT, xmlRpcPort + 1);
+        sshPort = getPort(props, Property.SSH_PORT, xmlRpcPort - 26);
+
+        final AccessibleSettings settings = new AccessibleSettings(
+                getRoot(props, Property.BUILD_DB_ROOT),
+                getRoot(props, Property.REPOS_ROOT),
+                getRoot(props, Property.CONFIGS_ROOT),
+                getRoot(props, Property.JENKINS_JOBS_ROOT),
+                getRoot(props, Property.JENKINS_JOB_ARCHIVE_ROOT),
+                xmlRpcPort,
+                fileDownloadPort,
+                sshPort,
+                getPort(props, Property.JENKINS_PORT, DEFAULT_JENKINS_PORT)
+        );
+
+        new JavaServer(settings).start();
     }
 
-    public static int deductDwPort(int xport) {
-        return xport + 1;
+    private enum Property {
+        XML_RPC_PORT("port.xml.rpc"),
+        FILE_DOWNLOAD_PORT("port.file.download"),
+        SSH_PORT("port.ssh"),
+        JENKINS_PORT("port.jenkins"),
+        REPOS_ROOT("root.repos"),
+        BUILD_DB_ROOT("root.build.db"),
+        JENKINS_JOBS_ROOT("root.jenkins.jobs"),
+        JENKINS_JOB_ARCHIVE_ROOT("root.jenkins.job.archive"),
+        CONFIGS_ROOT("root.configs"),
+        SCRIPTS_ROOT("root.scripts");
+
+        private final String value;
+
+        Property(final String value) {
+            this.value = value;
+        }
     }
 
-    public static int deductUpPort(int xport) {
-        return xport - 26;
+    private static int getPort(Properties props, Property prop, int defaultProp) {
+        return Integer.valueOf(props.getProperty(prop.value, String.valueOf(defaultProp)));
+    }
+
+    private static File getRoot(Properties props, Property prop) {
+        final String rootPath = props.getProperty(prop.value);
+        if (rootPath == null) {
+            throw new RuntimeException("Property " + prop.value + " not set!\n");
+        }
+        final File root = new File(rootPath);
+        if (!root.exists()) {
+            throw new RuntimeException("File " + root.getAbsolutePath() + " does not exist!\n");
+        }
+        if (!root.isDirectory()) {
+            throw new RuntimeException(prop.value + " must be a directory!\n");
+        }
+        return root;
     }
 }

@@ -84,7 +84,7 @@ public class PreviewFakeKoji {
 
     public void start() throws IOException {
         if (hs == null) {
-            hs = HttpServer.create(new InetSocketAddress(settings.getPreview1Port()), 0);
+            hs = HttpServer.create(new InetSocketAddress(0), 0);
             hs.createContext("/", ihh);
             hs.createContext("/details.html", dhh);
             hs.createContext("/get", ghh);
@@ -93,7 +93,7 @@ public class PreviewFakeKoji {
     }
 
     public final int getPort() {
-        return settings.getPreview1Port();
+        return 0;
     }
 
     public void stop() {
@@ -141,7 +141,7 @@ public class PreviewFakeKoji {
                 "builds   : " + builds + '\n';
         LOGGER.info(info);
 
-        AccessibleSettings settings = new AccessibleSettings(builds, repos, null, null, null, xmlrpcurl, download, JavaServer.DFAULT_SSHUPLOAD_PORT, PORT, JavaServer.DEFAULT_JENKINS_PORT);
+        AccessibleSettings settings = new AccessibleSettings(builds, repos, null, null, null, xmlrpcurl, download, PORT, 0);
 
         PreviewFakeKoji previewFakeKojiServer = new PreviewFakeKoji(settings);
         previewFakeKojiServer.start();

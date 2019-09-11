@@ -30,9 +30,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.TreeMap;
 
-/**
- *
- */
 public class AccessibleSettings {
 
     private final File dbFileRoot;
@@ -41,11 +38,10 @@ public class AccessibleSettings {
     private final File jenkinsJobsRoot;
     private final File jenkinsJobArchiveRoot;
 
-    private final int realXPort;
-    private final int realDPort;
-    private final int realUPort;
-    private final int realJPort;
-    private final int preview1Port;
+    private final int xmlRpcPort;
+    private final int fileDownloadPort;
+    private final int sshPort;
+    private final int jenkinsPort;
     private URL xmlRpcUrl;
     private URL downloadUrl;
     private URL jenkinsUrlString;
@@ -57,10 +53,9 @@ public class AccessibleSettings {
             File configRoot,
             File jenkinsJobsRoot,
             File jenkinsJobArchiveRoot,
-            int realXPort,
-            int realDPort,
-            int realUPort,
-            int previewPort,
+            int xmlRpcPort,
+            int fileDownloadPort,
+            int sshPort,
             int jenkinsPort
     ) throws UnknownHostException, MalformedURLException {
         this.dbFileRoot = dbFileRoot;
@@ -68,16 +63,15 @@ public class AccessibleSettings {
         this.configRoot = configRoot;
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
-        this.realXPort = realXPort;
-        this.realDPort = realDPort;
-        this.realUPort = realUPort;
-        this.realJPort = jenkinsPort;
-        this.preview1Port = previewPort;
+        this.xmlRpcPort = xmlRpcPort;
+        this.fileDownloadPort = fileDownloadPort;
+        this.sshPort = sshPort;
+        this.jenkinsPort = jenkinsPort;
         this.projectMapping = new ProjectMapping(this);
 
         String thisMachine = InetAddress.getLocalHost().getHostName();
-        this.xmlRpcUrl = new URL("http://" + thisMachine + ":" + realXPort + "/RPC2/");
-        this.downloadUrl = new URL("http://" + thisMachine + ":" + realDPort + "/");
+        this.xmlRpcUrl = new URL("http://" + thisMachine + ":" + this.xmlRpcPort + "/RPC2/");
+        this.downloadUrl = new URL("http://" + thisMachine + ":" + this.fileDownloadPort + "/");
         this.jenkinsUrlString = new URL("http://" + thisMachine + ":" + jenkinsPort + "/");
     }
 
@@ -89,7 +83,7 @@ public class AccessibleSettings {
      * @throws MalformedURLException
      */
     public void setDownloadUrl(String specialHost) throws MalformedURLException {
-        this.downloadUrl = new URL("http://" + specialHost + ":" + realDPort + "/");
+        this.downloadUrl = new URL("http://" + specialHost + ":" + fileDownloadPort + "/");
 
     }
 
@@ -101,7 +95,7 @@ public class AccessibleSettings {
      * @throws MalformedURLException
      */
     public void setXmlRpcUrl(String specialHost) throws MalformedURLException {
-        this.xmlRpcUrl = new URL("http://" + specialHost + ":" + realXPort + "/RPC2/");
+        this.xmlRpcUrl = new URL("http://" + specialHost + ":" + xmlRpcPort + "/RPC2/");
     }
 
     /**
@@ -112,7 +106,7 @@ public class AccessibleSettings {
      * @throws MalformedURLException
      */
     public void setJekinsUrl(String specialHost) throws MalformedURLException {
-        this.jenkinsUrlString = new URL("http://" + specialHost + ":" + realJPort + "/");
+        this.jenkinsUrlString = new URL("http://" + specialHost + ":" + jenkinsPort + "/");
     }
 
     /**
@@ -142,31 +136,24 @@ public class AccessibleSettings {
     }
 
     /**
-     * @return the realXPort
+     * @return the xmlRpcPort
      */
-    public int getRealXPort() {
-        return realXPort;
+    public int getXmlRpcPort() {
+        return xmlRpcPort;
     }
 
     /**
-     * @return the realDPort
+     * @return the fileDownloadPort
      */
-    public int getRealDPort() {
-        return realDPort;
+    public int getFileDownloadPort() {
+        return fileDownloadPort;
     }
 
     /**
-     * @return the realUPort
+     * @return the sshPort
      */
-    public int getRealUPort() {
-        return realUPort;
-    }
-
-    /**
-     * @return the previewPort
-     */
-    public int getPreview1Port() {
-        return preview1Port;
+    public int getSshPort() {
+        return sshPort;
     }
 
     public URL getXmlRpcUrl() {
@@ -190,10 +177,9 @@ public class AccessibleSettings {
 
         responseTreeMap.put("repos", new ResponseContainer.GetPathResponse(localReposRoot.getAbsolutePath(), "Path to folder containing repositories"));
         responseTreeMap.put("root", new ResponseContainer.GetPathResponse(dbFileRoot.getAbsolutePath(), "Path to folder containing builds"));
-        responseTreeMap.put("xport", new ResponseContainer.GetPortResponse(realXPort, "XML-RPC port"));
-        responseTreeMap.put("dport", new ResponseContainer.GetPortResponse(realDPort, "Download port"));
-        responseTreeMap.put("uport", new ResponseContainer.GetPortResponse(realUPort, "SSH upload port"));
-        responseTreeMap.put("view1port", new ResponseContainer.GetPortResponse(preview1Port, "View port"));
+        responseTreeMap.put("xport", new ResponseContainer.GetPortResponse(xmlRpcPort, "XML-RPC port"));
+        responseTreeMap.put("dport", new ResponseContainer.GetPortResponse(fileDownloadPort, "Download port"));
+        responseTreeMap.put("uport", new ResponseContainer.GetPortResponse(sshPort, "SSH upload port"));
         responseTreeMap.put("allProducts", new ResponseContainer.GetAllProductsResponse(projectMapping));
         responseTreeMap.put("allProjects", new ResponseContainer.GetAllProjectsResponse(projectMapping));
         responseTreeMap.put("projectsOfProduct", new ResponseContainer.GetProjectsOfProductResponse(projectMapping, value));
