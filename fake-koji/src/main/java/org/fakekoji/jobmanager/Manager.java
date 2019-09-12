@@ -12,7 +12,7 @@ public interface Manager<T> {
 
     List<T> readAll() throws StorageException;
 
-    void update(String id, String json) throws StorageException, ManagementException;
+    void update(String id, T t) throws StorageException, ManagementException;
 
     void delete(String id) throws StorageException, ManagementException;
 

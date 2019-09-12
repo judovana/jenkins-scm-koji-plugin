@@ -1,7 +1,5 @@
 package org.fakekoji.jobmanager.project;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.fakekoji.Utils;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
@@ -71,23 +69,16 @@ public class JDKProjectManager implements Manager<JDKProject> {
     }
 
     @Override
-    public void update(String id, String json) throws StorageException, ManagementException {
-        final ObjectMapper mapper = new ObjectMapper();
-        final JDKProject project;
+    public void update(String id, JDKProject jdkProject) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
         }
         final JDKProject oldProject = storage.load(id, JDKProject.class);
-        try {
-            project = mapper.readValue(json, JDKProject.class);
-        } catch (IOException e) {
-            throw new ManagementException("Invalid json", e);
-        }
-        if (!oldProject.getUrl().equals(project.getUrl())) {
+        if (!oldProject.getUrl().equals(jdkProject.getUrl())) {
             updateProjectUrl();
         }
-        final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(project);
+        final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(jdkProject);
         final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(oldProject);
         updateJobs(newJobs, oldJobs);
     }
