@@ -119,6 +119,6 @@ public class JavaTestClient {
     }
 
     protected static Object execute(XmlRpcRequestParams params) {
-        return new XmlRpcHelper.XmlRpcExecutioner("http://hydra.brq.redhat.com:" + JavaServer.DFAULT_RP2C_PORT + "/RPC2").execute(params);
+        return new XmlRpcHelper.XmlRpcExecutioner("http://hydra.brq.redhat.com:" + JavaServer.DEFAULT_XML_RPC_PORT + "/RPC2").execute(params);
     }
 }

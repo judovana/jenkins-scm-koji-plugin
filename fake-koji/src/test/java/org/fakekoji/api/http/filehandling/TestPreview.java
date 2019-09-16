@@ -59,7 +59,6 @@ public class TestPreview {
         }
     }
 
-    @Test
     public void testResponseCodeMainPage() throws Exception {
         int response = FakeKojiTestUtil.doHttpRequest("http://127.0.0.1:8080", "GET");
         assertEquals(HttpURLConnection.HTTP_OK, response);

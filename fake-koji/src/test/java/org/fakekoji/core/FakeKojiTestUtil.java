@@ -156,28 +156,11 @@ public class FakeKojiTestUtil {
         createFile(new File(upstreamRepos + "/java-1.8.0-openjdk-dev", "arches-expected"), a2 + " " + a3 + " " + a4 + "\n");
     }
 
-    public static int getFakeKojiPreviewPort() {
-        return 8080;
-    }
-
-    public static int getFakeKojiRpcPort() {
-        return JavaServer.DFAULT_RP2C_PORT;
-    }
-
-    public static int getFakeKojiDownloadPort() {
-        return JavaServer.DFAULT_DWNLD_PORT;
-    }
-
     public static JavaServer createDefaultFakeKojiServer(File localBuilds, File upstreamRepos) throws UnknownHostException, MalformedURLException {
-        int previewPort = getFakeKojiPreviewPort();
-        int rpcPort = getFakeKojiRpcPort();
-        int downloadPort = getFakeKojiDownloadPort();
-        int sshUploadPort = JavaServer.DFAULT_SSHUPLOAD_PORT;
 
         AccessibleSettings settings = new AccessibleSettings(localBuilds, upstreamRepos, null, null, null,
-                rpcPort, downloadPort, sshUploadPort, previewPort, 8080);
-        JavaServer javaServer = new JavaServer(settings);
-        return javaServer;
+                9848, 9849, 9843, 8080);
+        return new JavaServer(settings);
     }
 
     public static JavaServer createDefaultFakeKojiServerWithData(File tmpDir) throws Exception {

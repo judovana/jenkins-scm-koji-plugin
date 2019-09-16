@@ -91,7 +91,7 @@ public class ProjectMappingFileSystemTest {
                 new File(reposFile, project).mkdir();
             }
 
-            settings = new AccessibleSettings(productFile, reposFile, null, null, null,0, 0, 0, 0, 0);
+            settings = new AccessibleSettings(productFile, reposFile, null, null, null,0, 0, 0, 0);
             Arrays.sort(products);
             Arrays.sort(projects);
         } catch (IOException e) {
