@@ -131,7 +131,7 @@ public class NewApiTests {
         }
         File d1failFile = new File(d1ArchDir, "FAILED");
         d1failFile.createNewFile();
-        as = new AccessibleSettings(builds, repos, null, null, null, 9848, 9849, 9822, 8080);
+        as = new AccessibleSettings(builds, repos, null, null, null, null, 9848, 9849, 9822, 8080);
         kojiDB = new FakeKojiDB(as);
     }
 

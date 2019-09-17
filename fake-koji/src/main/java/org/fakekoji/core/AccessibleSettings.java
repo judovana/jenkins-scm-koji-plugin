@@ -37,6 +37,7 @@ public class AccessibleSettings {
     private final File configRoot;
     private final File jenkinsJobsRoot;
     private final File jenkinsJobArchiveRoot;
+    private final File scriptsRoot;
 
     private final int xmlRpcPort;
     private final int fileDownloadPort;
@@ -53,6 +54,7 @@ public class AccessibleSettings {
             File configRoot,
             File jenkinsJobsRoot,
             File jenkinsJobArchiveRoot,
+            File scriptsRoot,
             int xmlRpcPort,
             int fileDownloadPort,
             int sshPort,
@@ -63,6 +65,7 @@ public class AccessibleSettings {
         this.configRoot = configRoot;
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
+        this.scriptsRoot = scriptsRoot;
         this.xmlRpcPort = xmlRpcPort;
         this.fileDownloadPort = fileDownloadPort;
         this.sshPort = sshPort;
@@ -133,6 +136,10 @@ public class AccessibleSettings {
 
     public File getJenkinsJobArchiveRoot() {
         return jenkinsJobArchiveRoot;
+    }
+
+    public File getScriptsRoot() {
+        return scriptsRoot;
     }
 
     /**

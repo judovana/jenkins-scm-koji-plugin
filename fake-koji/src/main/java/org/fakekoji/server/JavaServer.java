@@ -113,6 +113,7 @@ public class JavaServer {
                 getRoot(props, Property.CONFIGS_ROOT),
                 getRoot(props, Property.JENKINS_JOBS_ROOT),
                 getRoot(props, Property.JENKINS_JOB_ARCHIVE_ROOT),
+                getRoot(props, Property.SCRIPTS_ROOT),
                 xmlRpcPort,
                 fileDownloadPort,
                 sshPort,
