@@ -7,6 +7,7 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantCategory;
 
+import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -19,6 +20,7 @@ public abstract class TaskJob extends Job {
     private final Task task;
     private final Platform platform;
     private final Map<TaskVariantCategory, TaskVariant> variants;
+    private final File scriptsRoot;
 
     TaskJob(
             String projectName,
@@ -27,7 +29,8 @@ public abstract class TaskJob extends Job {
             Task task,
             Platform platform,
             Map<TaskVariantCategory,
-                    TaskVariant> variants
+            TaskVariant> variants,
+            File scriptsRoot
     ) {
         this.projectName = projectName;
         this.product = product;
@@ -35,6 +38,7 @@ public abstract class TaskJob extends Job {
         this.task = task;
         this.platform = platform;
         this.variants = variants;
+        this.scriptsRoot = scriptsRoot;
     }
 
     public String getProjectName() {
@@ -61,6 +65,10 @@ public abstract class TaskJob extends Job {
         return variants;
     }
 
+    public File getScriptsRoot() {
+        return scriptsRoot;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -71,6 +79,7 @@ public abstract class TaskJob extends Job {
                 Objects.equals(buildProviders, taskJob.buildProviders) &&
                 Objects.equals(task, taskJob.task) &&
                 Objects.equals(platform, taskJob.platform) &&
-                Objects.equals(variants, taskJob.variants);
+                Objects.equals(variants, taskJob.variants) &&
+                Objects.equals(scriptsRoot, taskJob.scriptsRoot);
     }
 }

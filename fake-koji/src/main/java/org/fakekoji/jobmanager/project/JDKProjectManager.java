@@ -26,17 +26,20 @@ public class JDKProjectManager implements Manager<JDKProject> {
     private final File jenkinsJobsRoot;
     private final File jenkinsJobsArchiveRoot;
     private final File repositoriesRoot;
+    private final File scriptsRoot;
 
     public JDKProjectManager(
             final ConfigManager configManager,
             final File jenkinsJobsRoot,
             final File jenkinsJobsArchiveRoot,
-            final File repositoriesRoot
+            final File repositoriesRoot,
+            final File scriptsRoot
     ) {
         this.configManager = configManager;
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobsArchiveRoot = jenkinsJobsArchiveRoot;
         this.repositoriesRoot = repositoriesRoot;
+        this.scriptsRoot = scriptsRoot;
     }
 
     @Override
@@ -46,7 +49,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
             if (storage.contains(project.getId())) {
                 throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
             }
-            final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot).parse(project);
+            final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(project);
             // TODO: clone repo
             generate(jobs);
             storage.store(project.getId(), project);
@@ -78,8 +81,8 @@ public class JDKProjectManager implements Manager<JDKProject> {
         if (!oldProject.getUrl().equals(jdkProject.getUrl())) {
             updateProjectUrl();
         }
-        final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(jdkProject);
-        final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot).parse(oldProject);
+        final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
+        final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(oldProject);
         updateJobs(newJobs, oldJobs);
     }
 

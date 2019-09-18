@@ -21,6 +21,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -37,8 +38,6 @@ public class JenkinsJobTemplateBuilder {
 
     private static final String NEW_LINE = System.getProperty("line.separator");
     public static final String XML_DECLARATION = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n";
-
-    static final String RUN_SCRIPT_PATH = "/home/tester/TckScripts/run.sh";
 
     private static final String JENKINS_TEMPLATES = "jenkins-templates";
 
@@ -64,6 +63,7 @@ public class JenkinsJobTemplateBuilder {
     static final String EXPORTED_VARIABLES = "%{EXPORTED_VARIABLES}";
     static final String PLATFORM_NAME = "%{PLATFORM_NAME}";
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
+    static final String DESTROY_SCRIPT = "%{DESTROY_SCRIPT}";
 
     static final String XML_NEW_LINE = "&#13;";
     static final String XML_APOS = "&apos;";
@@ -73,6 +73,13 @@ public class JenkinsJobTemplateBuilder {
     static final String PLATFORM_PROVIDER = "PLATFORM_PROVIDER";
     static final String PROJECT_PATH = "PROJECT_PATH";
     static final String JAVA_VERSION = "JAVA_VERSION";
+    static final String O_TOOL = "otool";
+    static final String VAGRANT = "vagrant";
+    static final String PULL_SCRIPT_NAME = "pull.sh";
+    static final String RUN_SCRIPT_NAME = "run.sh";
+    static final String DESTROY_SCRIPT_NAME = "destroy.sh";
+    static final String BASH = "bash";
+    static final String SHEBANG = "#!/bin/sh";
 
     private String template;
 
@@ -83,14 +90,15 @@ public class JenkinsJobTemplateBuilder {
     public JenkinsJobTemplateBuilder buildPullScriptTemplate(
             String projectName,
             Product product,
-            String repositoriesRootPath
+            String repositoriesRootPath,
+            File scriptsRoot
     ) {
-        final String pullScript = "#!/bin/sh" + XML_NEW_LINE +
+        final String pullScript = SHEBANG + XML_NEW_LINE +
                 EXPORT + " " + PROJECT_NAME + "=" + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + PROJECT_PATH + "=" + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + JAVA_VERSION + "=" + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + PACKAGE_NAME + "=" + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
-                "bash '/home/tester/vm-shared/TckScripts/otool/pull.sh'";
+                BASH +  " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'";
 
         template = template.replace(PULL_SCRIPT, pullScript);
         return this;
@@ -179,7 +187,8 @@ public class JenkinsJobTemplateBuilder {
     public JenkinsJobTemplateBuilder buildScriptTemplate(
             Task task,
             Platform platform,
-            Map<TaskVariantCategory, TaskVariant> variants
+            Map<TaskVariantCategory, TaskVariant> variants,
+            File scriptsRoot
     ) throws IOException {
         final String vmName;
         final List<String> nodes;
@@ -217,18 +226,19 @@ public class JenkinsJobTemplateBuilder {
                 .replace(NODES, String.join(" ", nodes))
                 .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
                 .replace(TASK_SCRIPT, task.getScript())
-                .replace(RUN_SCRIPT, RUN_SCRIPT_PATH)
+                .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
                 .replace(EXPORTED_VARIABLES, fillExportedVariables(variants, vmName, platform.getProvider()));
         if (!vmName.equals(LOCAL)) {
-            return buildVmPostBuildTaskTemplate(vmName);
+            return buildVmPostBuildTaskTemplate(vmName, scriptsRoot);
         }
         template = template.replace(VM_POST_BUILD_TASK, "");
         return this;
     }
 
-    JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(String platformVmName) throws IOException {
+    JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(String platformVmName, File scriptsRoot) throws IOException {
         template = template
                 .replace(VM_POST_BUILD_TASK, loadTemplate(JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE))
+                .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), VAGRANT, DESTROY_SCRIPT_NAME).toString())
                 .replace(PLATFORM_NAME, platformVmName);
         return this;
     }

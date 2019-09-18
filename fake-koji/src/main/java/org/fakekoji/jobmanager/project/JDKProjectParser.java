@@ -35,10 +35,16 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
     private final JobBuilder jobBuilder;
     private final ConfigManager configManager;
     private final File repositoriesRoot;
+    private final File scriptsRoot;
 
-    JDKProjectParser(final ConfigManager configManager, File repositoriesRoot) throws StorageException {
+    JDKProjectParser(
+            final ConfigManager configManager,
+            File repositoriesRoot,
+            File scriptsRoot
+    ) throws StorageException {
         this.configManager = configManager;
         this.repositoriesRoot = repositoriesRoot;
+        this.scriptsRoot = scriptsRoot;
         jobBuilder = new JobBuilder(configManager);
     }
 
@@ -168,7 +174,8 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
                     projectName,
                     product,
                     buildVariantsStrings,
-                    repositoriesRoot
+                    repositoriesRoot,
+                    scriptsRoot
             ));
         }
 
@@ -179,7 +186,8 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
                     buildProviders,
                     buildTask,
                     buildPlatform,
-                    buildVariants
+                    buildVariants,
+                    scriptsRoot
             );
             buildVariantsStrings.add(buildJob.getVariants().entrySet().stream()
                     .sorted(Comparator.comparing(Map.Entry::getKey))

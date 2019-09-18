@@ -8,6 +8,7 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantCategory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -35,9 +36,10 @@ public class TestJob extends TaskJob {
             Platform platform,
             Map<TaskVariantCategory, TaskVariant> variants,
             Platform buildPlatform,
-            Map<TaskVariantCategory, TaskVariant> buildVariants
+            Map<TaskVariantCategory, TaskVariant> buildVariants,
+            File scriptsRoot
     ) {
-        super(projectName, product, buildProviders, task, platform, variants);
+        super(projectName, product, buildProviders, task, platform, variants, scriptsRoot);
         this.buildPlatform = buildPlatform;
         this.buildVariants = buildVariants;
     }
@@ -56,7 +58,8 @@ public class TestJob extends TaskJob {
                 platform,
                 variants,
                 buildJob.getPlatform(),
-                buildJob.getVariants()
+                buildJob.getVariants(),
+                buildJob.getScriptsRoot()
         );
     }
 
@@ -73,7 +76,7 @@ public class TestJob extends TaskJob {
                         fillBuildPlatform(getBuildPlatform(), getTask().getFileRequirements()),
                         true
                 )
-                .buildScriptTemplate(getTask(), getPlatform(), variants)
+                .buildScriptTemplate(getTask(), getPlatform(), variants, getScriptsRoot())
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }

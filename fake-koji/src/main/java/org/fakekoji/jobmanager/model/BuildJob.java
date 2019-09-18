@@ -8,6 +8,7 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantCategory;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -26,9 +27,10 @@ public class BuildJob extends TaskJob {
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
-            Map<TaskVariantCategory, TaskVariant> variants
+            Map<TaskVariantCategory, TaskVariant> variants,
+            File scriptsRoot
     ) {
-        super(projectName, product, buildProviders, task, platform, variants);
+        super(projectName, product, buildProviders, task, platform, variants, scriptsRoot);
     }
 
     @Override
@@ -41,7 +43,7 @@ public class BuildJob extends TaskJob {
                         JenkinsJobTemplateBuilder.fillBuildPlatform(getPlatform(), getTask().getFileRequirements()),
                         false
                 )
-                .buildScriptTemplate(getTask(), getPlatform(), getVariants())
+                .buildScriptTemplate(getTask(), getPlatform(), getVariants(), getScriptsRoot())
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }

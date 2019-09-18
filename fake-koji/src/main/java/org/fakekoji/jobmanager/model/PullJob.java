@@ -19,22 +19,25 @@ public class PullJob extends Job {
     private final String projectName;
     private final Product product;
     private final File repositoriesRoot;
+    private final File scriptsRoot;
 
     public PullJob(
             String projectName,
             Product product,
             Set<String> buildVariants,
-            File repositoriesRoot
+            File repositoriesRoot,
+            File scriptsRoot
     ) {
         this.projectName = projectName;
         this.product = product;
         this.repositoriesRoot = repositoriesRoot;
+        this.scriptsRoot = scriptsRoot;
     }
 
     @Override
     public String generateTemplate() throws IOException {
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(PULL_JOB_TEMPLATE))
-                .buildPullScriptTemplate(projectName, product, repositoriesRoot.getAbsolutePath())
+                .buildPullScriptTemplate(projectName, product, repositoriesRoot.getAbsolutePath(), scriptsRoot)
                 .prettyPrint();
     }
 
