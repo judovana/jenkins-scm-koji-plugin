@@ -81,6 +81,9 @@ public class JenkinsJobTemplateBuilder {
     static final String BASH = "bash";
     static final String SHEBANG = "#!/bin/sh";
 
+    static final String PROJECT_NAME_VAR = "PROJECT_NAME";
+    static final String PACKAGE_NAME_VAR = "PACKAGE_NAME";
+
     private String template;
 
     public JenkinsJobTemplateBuilder(String template) {
@@ -94,10 +97,10 @@ public class JenkinsJobTemplateBuilder {
             File scriptsRoot
     ) {
         final String pullScript = SHEBANG + XML_NEW_LINE +
-                EXPORT + " " + PROJECT_NAME + "=" + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + PROJECT_NAME_VAR + "=" + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + PROJECT_PATH + "=" + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + JAVA_VERSION + "=" + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + PACKAGE_NAME + "=" + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + PACKAGE_NAME_VAR + "=" + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
                 BASH +  " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'";
 
         template = template.replace(PULL_SCRIPT, pullScript);
