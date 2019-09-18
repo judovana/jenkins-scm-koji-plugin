@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Set;
 
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.PULL_JOB_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.XML_DECLARATION;
@@ -24,7 +23,6 @@ public class PullJob extends Job {
     public PullJob(
             String projectName,
             Product product,
-            Set<String> buildVariants,
             File repositoriesRoot,
             File scriptsRoot
     ) {
