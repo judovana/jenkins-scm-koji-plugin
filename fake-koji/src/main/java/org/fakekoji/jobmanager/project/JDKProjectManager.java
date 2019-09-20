@@ -1,7 +1,7 @@
 package org.fakekoji.jobmanager.project;
 
-import org.fakekoji.Utils;
 import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKProject;
@@ -15,32 +15,25 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public class JDKProjectManager implements Manager<JDKProject> {
 
-    static final String CONFIG_FILE = "config.xml";
-
     private final ConfigManager configManager;
-    private final File jenkinsJobsRoot;
-    private final File jenkinsJobsArchiveRoot;
+    private final JobUpdater jobUpdater;
     private final File repositoriesRoot;
     private final File scriptsRoot;
 
     public JDKProjectManager(
             final ConfigManager configManager,
-            final File jenkinsJobsRoot,
-            final File jenkinsJobsArchiveRoot,
+            final JobUpdater jobUpdater,
             final File repositoriesRoot,
             final File scriptsRoot
     ) {
         this.configManager = configManager;
-        this.jenkinsJobsRoot = jenkinsJobsRoot;
-        this.jenkinsJobsArchiveRoot = jenkinsJobsArchiveRoot;
+        this.jobUpdater = jobUpdater;
         this.repositoriesRoot = repositoriesRoot;
         this.scriptsRoot = scriptsRoot;
     }
@@ -63,7 +56,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
         );
         storage.store(project.getId(), setProjectRepoStatus(project, repoState));
         try {
-            generate(jobs);
+            jobUpdater.update(Collections.emptySet(), jobs);
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
         }
@@ -94,7 +87,11 @@ public class JDKProjectManager implements Manager<JDKProject> {
         }
         final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
         final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(oldProject);
-        updateJobs(newJobs, oldJobs);
+        try {
+            jobUpdater.update(newJobs, oldJobs);
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
     }
 
     @Override
@@ -136,88 +133,6 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     void updateProjectUrl() {
         // TODO: implement
-    }
-
-    void updateJobs(Set<Job> oldJobs, Set<Job> newJobs) {
-        final Set<String> archivedJobs = new HashSet<>(Arrays.asList(jenkinsJobsArchiveRoot.list()));
-        oldJobs.stream()
-                .filter(oldJob -> newJobs.stream().noneMatch(newJob -> oldJob.toString().equals(newJob.toString())))
-                .forEach(this::archive);
-        for (final Job job : newJobs) {
-            if (archivedJobs.contains(job.toString())) {
-                revive(job);
-                continue;
-            }
-            final Optional<Job> optional = oldJobs.stream()
-                    .filter(oldJob -> job.toString().equals(oldJob.toString()))
-                    .findAny();
-            if (optional.isPresent()) {
-                final Job oldJob = optional.get();
-                if (!oldJob.equals(job)) {
-                    update(job);
-                }
-                continue;
-            }
-            generate(job);
-        }
-    }
-
-    void generate(Set<Job> jobs) throws IOException {
-        for (final Job job : jobs) {
-            generate(job);
-        }
-    }
-
-    boolean generate(Job job) {
-        final File jobDir = Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile();
-        if (!jobDir.mkdir()) {
-            return false;
-        }
-        try {
-            Utils.writeToFile(
-                    Paths.get(jobDir.getAbsolutePath(), CONFIG_FILE),
-                    job.generateTemplate()
-            );
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    boolean revive(Job job) {
-        try {
-            Utils.moveFile(
-                    Paths.get(jenkinsJobsArchiveRoot.getAbsolutePath(), job.toString()).toFile(),
-                    Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile()
-            );
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    boolean archive(Job job) {
-        try {
-            Utils.moveFile(
-                    Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile(),
-                    Paths.get(jenkinsJobsArchiveRoot.getAbsolutePath(), job.toString()).toFile()
-            );
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    boolean update(Job job) {
-        try {
-            Utils.writeToFile(
-                    Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()),
-                    job.generateTemplate()
-            );
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
     }
 
     JDKProject setProjectRepoStatus(final JDKProject jdkProject, final JDKProject.RepoState repoState) {
