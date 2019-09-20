@@ -6,11 +6,14 @@ import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.Job;
+import org.fakekoji.model.Product;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -45,14 +48,22 @@ public class JDKProjectManager implements Manager<JDKProject> {
     @Override
     public void create(JDKProject project) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
+        final Storage<Product> productStorage = configManager.getProductStorage();
+        final Product product = productStorage.load(project.getProduct(), Product.class);
+        if (storage.contains(project.getId())) {
+            throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
+        }
+        final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(project);
+        storage.store(project.getId(), setProjectRepoStatus(project, JDKProject.RepoState.CLONING));
+        final JDKProject.RepoState repoState = cloneProject(
+                project.getId(),
+                project.getUrl(),
+                repositoriesRoot,
+                product
+        );
+        storage.store(project.getId(), setProjectRepoStatus(project, repoState));
         try {
-            if (storage.contains(project.getId())) {
-                throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
-            }
-            final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(project);
-            // TODO: clone repo
             generate(jobs);
-            storage.store(project.getId(), project);
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
         }
@@ -88,6 +99,39 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     @Override
     public void delete(String id) throws StorageException, ManagementException {
+    }
+
+    JDKProject.RepoState cloneProject(
+            final String projectName,
+            final String projectUrl,
+            final File repositoriesRoot,
+            final Product product
+    ) {
+        final ProcessBuilder processBuilder = new ProcessBuilder(
+                "bash",
+                Paths.get(scriptsRoot.getAbsolutePath(), "otool", "clone_repo.sh").toString(),
+                product.getVersion(),
+                projectUrl,
+                Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString()
+        );
+        processBuilder.directory(repositoriesRoot);
+        try {
+            final Process cloningProcess = processBuilder.start();
+            final int exitCode = cloningProcess.waitFor();
+            String line;
+            final BufferedReader outputReader = new BufferedReader(new InputStreamReader(cloningProcess.getInputStream()));
+            while ((line = outputReader.readLine()) != null) {
+                System.out.println(line);
+            }
+            final BufferedReader errorReader = new BufferedReader(new InputStreamReader(cloningProcess.getErrorStream()));
+            while ((line = errorReader.readLine()) != null) {
+                System.out.println(line);
+            }
+            return exitCode == 0 ? JDKProject.RepoState.CLONED : JDKProject.RepoState.CLONE_ERROR;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return JDKProject.RepoState.CLONE_ERROR;
+        }
     }
 
     void updateProjectUrl() {
@@ -174,5 +218,17 @@ public class JDKProjectManager implements Manager<JDKProject> {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    JDKProject setProjectRepoStatus(final JDKProject jdkProject, final JDKProject.RepoState repoState) {
+        return new JDKProject(
+                jdkProject.getId(),
+                jdkProject.getType(),
+                repoState,
+                jdkProject.getUrl(),
+                jdkProject.getBuildProviders(),
+                jdkProject.getProduct(),
+                jdkProject.getJobConfiguration()
+        );
     }
 }
