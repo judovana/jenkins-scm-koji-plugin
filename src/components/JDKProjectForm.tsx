@@ -3,21 +3,24 @@ import React from "react";
 import { observer, inject } from "mobx-react";
 
 import Dropdown from "./Dropdown";
-import JobConfigComponent from "./JobConfigComponent";
-
 import { JDKProject, JobConfig, PlatformConfig } from "../stores/model";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
+import { observable } from "mobx";
+import JobConfigComponent from "./JobConfigComponent";
 
 interface Props {
     project?: JDKProject;
     configStore?: ConfigStore;
 }
 
-class JDKProjectForm extends React.PureComponent<Props, JDKProject> {
+class JDKProjectForm extends React.PureComponent<Props> {
+
+    @observable
+    private jdkProject: JDKProject;
 
     constructor(props: Props) {
         super(props);
-        this.state = props.project ? props.project :
+        this.jdkProject = props.project ? props.project :
             {
                 id: "",
                 url: "",
@@ -47,6 +50,7 @@ class JDKProjectForm extends React.PureComponent<Props, JDKProject> {
         if (!configStore) {
             return null;
         }
+        const project = this.jdkProject;
         const products = Array.from(configStore.products.values());
         return (this.props.configStore &&
             <div>
@@ -54,28 +58,28 @@ class JDKProjectForm extends React.PureComponent<Props, JDKProject> {
                     <label>name: </label>
                     <input
                         type="text"
-                        value={this.state.id}
+                        value={project.id}
                         onChange={this.handleNameChange} />
                 </div>
                 <div>
                     <label>url: </label>
                     <input
                         type="text"
-                        value={this.state.url}
+                        value={project.url}
                         onChange={this.handleUrlChange} />
                 </div>
                 <Dropdown
                     label={"Product"}
                     values={products}
-                    value={this.state.product}
+                    value={project.product}
                     onChange={(value: string) => this.setState({ product: value })} />
-                <JobConfigComponent
-                    onChange={this.handleJobConfigChange}
-                    jobConfig={this.state.jobConfiguration} />
+                {
+                    <JobConfigComponent jobConfig={project.jobConfiguration} />
+                }
                 <br />
                 <br />
                 <br />
-                <p>{JSON.stringify(this.state)}</p>
+                <p>{JSON.stringify(project)}</p>
             </div>
         )
     }

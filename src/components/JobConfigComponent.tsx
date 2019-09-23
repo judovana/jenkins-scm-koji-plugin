@@ -4,65 +4,61 @@ import PlatformComponent from "./PlatformComponent";
 import AddComponent from "./AddComponent";
 import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore";
 import { inject, observer } from "mobx-react";
+import TreeNode from "./TreeNode";
 
 interface Props {
     jobConfig: JobConfig;
-    onChange: (config: JobConfig) => void;
     configStore?: ConfigStore;
 }
 
 class JobConfigComponent extends React.PureComponent<Props> {
 
-    handlePlatformChange = (id: string, platformConfig: PlatformConfig = { tasks: {} }): void => {
-        const { onChange, jobConfig } = this.props;
-        onChange({
-            ...jobConfig,
-            platforms: {
-                ...jobConfig.platforms,
-                [id]: platformConfig
-            }
-        })
+    onPlatformAdd = (id: string, platformConfig: PlatformConfig = { tasks: {} }): void => {
+        this.props.jobConfig.platforms[id] = platformConfig;
     }
 
-    handlePlatformDeletion = (id: string): void => {
-        const config = { ...this.props.jobConfig };
-        delete config.platforms[id];
-        this.props.onChange(config);
+    onPlatformDelete = (id: string): void => {
+        delete this.props.jobConfig.platforms[id];
     }
 
     render() {
         const platformConfigs = this.props.jobConfig.platforms;
-        const configStore = this.props.configStore;
-        if (!configStore) {
-            return null;
-        }
+        const configStore = this.props.configStore!;
         const platforms = configStore.platforms;
         const unselectedPlatforms = Array.from(platforms.values()).filter(platform => !Object.keys(platformConfigs).includes(platform.id));
         return (
             <div>
-                {
-                    Object.keys(platformConfigs).map(id => {
-                        return (
-                            <div key={id}>
+                <TreeNode level={0}>
+                    <TreeNode.Title level={0}>
+                        Job Configuration
+                    </TreeNode.Title>
+                    <TreeNode.NodeInfo>
+                        Platforms ({Object.keys(platformConfigs).length})
+                    </TreeNode.NodeInfo>
+                    <TreeNode.Options>
+                        {
+                            unselectedPlatforms.length !== 0 && <AddComponent
+                                onAdd={this.onPlatformAdd}
+                                items={unselectedPlatforms}
+                                label={"Add platform"} />
+                        }
+                    </TreeNode.Options>
+                    <TreeNode.ChildNodes>
+                        {
+                            Object.keys(platformConfigs).map(id =>
                                 <PlatformComponent
+                                    onDelete={this.onPlatformDelete}
+                                    key={id}
                                     id={id}
-                                    onChange={(config: PlatformConfig) => this.handlePlatformChange(id, config)}
-                                    onDelete={this.handlePlatformDeletion}
                                     config={platformConfigs[id]}
-                                    type={TaskType.BUILD} />
-                            </div>
-                        )
-                    })
-                }
-                {
-                    unselectedPlatforms.length === 0 ? null :
-                        <AddComponent
-                            onAdd={this.handlePlatformChange}
-                            items={unselectedPlatforms}
-                            label={"Add platform"} />
-                }
+                                    type={TaskType.BUILD}
+                                    level={1} />
+                            )
+                        }
+                    </TreeNode.ChildNodes>
+                </TreeNode>
             </div>
-        );
+        )
     }
 }
 

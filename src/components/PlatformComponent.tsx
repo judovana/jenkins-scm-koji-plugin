@@ -1,84 +1,79 @@
 import React from "react";
-import { PlatformConfig, TaskConfig, TaskType, Item } from "../stores/model";
-import TaskComponent from "./TaskComponent";
+import { PlatformConfig, TaskType, Item } from "../stores/model";
 import AddComponent from "./AddComponent";
 import { inject, observer } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
+import TreeNode from "./TreeNode";
+import TaskComponent from "./TaskComponent";
 
 interface Props {
-    onChange: (config: PlatformConfig) => void;
-    onDelete: (id: string) => void;
     config: PlatformConfig;
     type: TaskType;
     configStore?: ConfigStore;
+    onDelete: (id: string) => void;
     id: string;
+    level: number;
 }
 
 class PlatformComponent extends React.PureComponent<Props> {
 
-    handleTaskChange = (id: string, task: TaskConfig = { variants: [] }): void => {
-        const { onChange, config } = this.props;
-        onChange({
-            ...config,
-            tasks: {
-                ...config.tasks,
-                [id]: task
-            }
-        });
+    onAdd = (id: string): void => {
+        this.props.config.tasks[id] = { variants: [] };
     }
 
-    handleTaskDeletion = (id: string): void => {
-        const config = { ...this.props.config };
-        delete config.tasks[id];
-        this.props.onChange(config);
+    onTaskDelete = (id: string): void => {
+        delete this.props.config.tasks[id];
     }
 
     render() {
-        const { configStore, id, config, type } = this.props;
-        if (!configStore) {
-            return null;
-        }
-        const platform = configStore.platforms.get(id);
+        const { configStore, id, config, type, onDelete } = this.props;
+        const platform = configStore!.platforms.get(id);
         if (!platform) {
             return <div>unknown platform</div>
         }
-        const tasks = configStore.tasks;
+        const tasks = configStore!.tasks;
         const taskConfigs = config.tasks;
         const unselectedTasks = Array.from(tasks.values())
             .filter(task => task.type === type && !Object.keys(taskConfigs).includes(task.id));
         return (
-            <div style={container}>
-                <div style={{ display: "flex", flexDirection: "row" }}>
-                    {platform.id}
-                    {
-                        unselectedTasks.length === 0 ? null :
-                            <AddComponent
-                                onAdd={this.handleTaskChange}
+            <div>
+                <TreeNode level={this.props.level + 1}>
+                    <TreeNode.Title level={this.props.level + 1}>
+                        {platform.id}
+                    </TreeNode.Title>
+                    <TreeNode.NodeInfo>
+                        Tasks ({Object.keys(taskConfigs).length})
+                    </TreeNode.NodeInfo>
+                    <TreeNode.Options>
+                        {[
+                            unselectedTasks.length !== 0 && <AddComponent
+                                key="add"
+                                onAdd={this.onAdd}
                                 items={unselectedTasks as Item[]}
-                                label={"Add task"} />
-                    }
-                    <button onClick={() => this.props.onDelete(platform.id)}>X</button>
-                </div>
-                {
-                    Object.keys(taskConfigs).map(id => {
-                        return (
-                            <div key={id}>
+                                label={"Add task"} />,
+                            <button
+                                key="remove"
+                                style={{ display: "block", justifySelf: "flex-end" }}
+                                className="Remove"
+                                onClick={() => onDelete(platform.id)}>X</button>
+                        ]}
+                    </TreeNode.Options>
+                    <TreeNode.ChildNodes>
+                        {
+                            Object.keys(taskConfigs).map(id =>
                                 <TaskComponent
-                                    onChange={config => this.handleTaskChange(id, config)}
-                                    onDelete={this.handleTaskDeletion}
+                                    key={id}
+                                    onDelete={this.onTaskDelete}
                                     id={id}
-                                    config={taskConfigs[id]} />
-                            </div>
-                        )
-                    })
-                }
+                                    config={taskConfigs[id]}
+                                    level={this.props.level + 1} />
+                            )
+                        }
+                    </TreeNode.ChildNodes>
+                </TreeNode>
             </div>
-        );
+        )
     }
 }
 
 export default inject(CONFIG_STORE)(observer(PlatformComponent));
-
-const container = {
-    paddingLeft: 20
-}

@@ -1,33 +1,159 @@
-.App {
-  text-align: center;
+html {
+    box-sizing: border-box;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 40vmin;
-  pointer-events: none;
+*, *:before, *:after {
+    box-sizing: inherit;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.HeaderItem {
+    border-bottom: 2px solid white;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+    padding: 10px;
+    justify-content: space-around;
+    min-height: 200px;
 }
 
-.App-link {
-  color: #61dafb;
+.HeaderItem:hover {
+    border-color: black;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.Body {
+    display: grid;
+    grid-template-columns: 2fr 5fr;
+    column-gap: 50px;
+    width: 100%;
+}
+
+.VerticalSeparator {
+    background-color: black;
+    height: 100%;
+    width: 1px;
+}
+
+.Content {
+    width: 100%;
+}
+
+.List {
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.ListHeader {
+    border-bottom: 1px solid black;
+    padding: 15px 0 15px 10px;
+}
+
+.ListItem {
+    width: 100%;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.ListItem:hover {
+    background-color: wheat;
+}
+
+.Add {
+    background-color: green;
+    border: 1px solid green;
+    border-radius: 100px;
+    color: white;
+    cursor: pointer;
+}
+
+.Add:hover {
+    background-color: white;
+    border-color: green;
+    color: green;
+}
+
+.Remove {
+    background-color: crimson;
+    border: 1px solid crimson;
+    border-radius: 100px;
+    color: white;
+    cursor: pointer;
+}
+
+.Remove:hover {
+    background-color: white;
+    border-color: crimson;
+    color: crimson;
+}
+
+.Dropdown {
+    position: relative;
+    display: block;
+}
+
+.DropdownLabel {
+    background-color: bisque;
+    border: none;
+    padding: 5px 15px;
+    cursor: pointer;
+}
+
+.DropdownLabel:focus {
+    outline: none;
+}
+
+.DropdownList {
+    background-color: white;
+    border: 1px solid bisque;
+    display: flex;
+    flex-direction: column;
+    min-width: 100px;
+    position: absolute;
+    z-index: 1;
+}
+
+.DropdownListItem {
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.DropdownListItem:hover {
+    background-color: bisque;
+}
+
+.tree-node {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.tree-node-label {
+    border-color: rgba(0, 0, 0, 0.1);
+    border-style: solid;
+    border-width: 1px 0 1px 0;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    padding-bottom: 10px;
+    padding-top: 10px;
+}
+
+.tree-node-label:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.tree-node-options {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.tree-node-info {
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+}
+
+.tree-node-info:hover {
+    text-decoration: underline;
 }

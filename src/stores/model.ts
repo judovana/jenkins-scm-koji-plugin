@@ -18,7 +18,6 @@ export interface JDKProject extends Project {
 
 export interface Item {
     readonly id: string;
-    readonly label: string;
 }
 
 export enum TaskType {
@@ -32,20 +31,20 @@ export enum ProjectType {
 
 
 export interface JobConfig {
-    readonly platforms: { [id: string]: PlatformConfig };
+    platforms: { [id: string]: PlatformConfig };
 }
 
 export interface PlatformConfig {
-    readonly tasks: { [id: string]: TaskConfig };
+    tasks: { [id: string]: TaskConfig };
 }
 
 export interface TaskConfig {
-    readonly variants: VariantsConfig[];
+    variants: VariantsConfig[];
 }
 
 export interface VariantsConfig {
-    readonly map: { [key: string]: string };
-    readonly platforms?: { [id: string]: PlatformConfig };
+    map: { [key: string]: string };
+    platforms?: { [id: string]: PlatformConfig };
 }
 
 export interface Task extends Item {

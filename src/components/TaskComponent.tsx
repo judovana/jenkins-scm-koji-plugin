@@ -1,81 +1,66 @@
 import React from "react";
-import { TaskConfig, VariantsConfig } from "../stores/model";
+import { TaskConfig } from "../stores/model";
 import VariantComponent from "./VariantComponent";
 import { inject, observer } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
+import TreeNode from "./TreeNode";
 
 interface Props {
     id: string;
     config: TaskConfig;
     configStore?: ConfigStore;
     onDelete: (id: string) => void;
-    onChange: (config: TaskConfig) => void;
+    level: number;
 }
 
 
 class TaskComponent extends React.PureComponent<Props> {
 
-    handleVariantChange = (index: number, config: VariantsConfig): void => {
-        const { onChange, config: task } = this.props;
-        onChange({
-            ...task,
-            variants: [
-                ...task.variants.splice(0, index),
-                config,
-                ...task.variants.splice(index + 1)
-            ]
-        });
-    }
-
     onAdd = (): void => {
-        const variants = [...this.props.config.variants];
-        variants.push({ map: {} });
-        this.props.onChange({
-            ...this.props.config,
-            variants
-        });
+        this.props.config.variants.push({ map: {} });
     }
 
-    onVariantDeletion = (index: number): void => {
-        const variants = [...this.props.config.variants];
-        variants.splice(index, 1);
-        this.props.onChange({
-            ...this.props.config,
-            variants
-        })
+    onVariantDelete = (index: number): void => {
+        this.props.config.variants.splice(index, 1);
     }
 
     render() {
         const { configStore, id, config, onDelete } = this.props;
-        if (!configStore) {
-            return null;
+        const task = configStore!.tasks.get(id);
+        if (!task) {
+            return (
+                <div>uknown task</div>
+            )
         }
-        const task = configStore.tasks.get(id);
+        const variantConfigs = config.variants
         return (
-            <div style={container}>
-                <div style={{ display: "flex", flexDirection: "row" }}>
-                    {id}
-                    <button onClick={this.onAdd}>Add variant</button>
-                    <button onClick={() => onDelete(id)}>X</button>
-                </div>
-                {
-                    task && config.variants.map((variant, index) =>
-                        <div key={index}>
+            <TreeNode level={this.props.level + 1}>
+                <TreeNode.Title level={this.props.level + 1}>{id}</TreeNode.Title>
+                <TreeNode.NodeInfo>Variants ({variantConfigs.length})</TreeNode.NodeInfo>
+                <TreeNode.Options>
+                    {[
+                        <button key="add" onClick={this.onAdd} className="Add">+</button>,
+                        <button
+                            key="remove"
+                            className="Remove"
+                            onClick={() => onDelete(id)}>X</button>
+                    ]}
+                </TreeNode.Options>
+                <TreeNode.ChildNodes>
+                    {
+                        variantConfigs.map((variantConfig, index) =>
                             <VariantComponent
+                                key={index}
                                 type={task.type}
-                                onChange={variant => this.handleVariantChange(index, variant)}
-                                onDelete={() => this.onVariantDeletion(index)}
-                                config={variant} />
-                        </div>
-                    )
-                }
-            </div>
-        );
+                                onDelete={() => this.onVariantDelete(index)}
+                                config={variantConfig}
+                                level={this.props.level + 1} />
+                        )
+                    }
+                </TreeNode.ChildNodes>
+            </TreeNode>
+        )
     }
 }
 
 export default inject(CONFIG_STORE)(observer(TaskComponent));
-
-const container: React.CSSProperties = {
-    marginLeft: 10
-}

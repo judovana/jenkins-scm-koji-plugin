@@ -35,22 +35,25 @@ class Dropdown extends React.PureComponent<Props, State> {
         if (!formItem) {
             return this.props.label;
         }
-        return formItem.label;
+        return formItem.id;
     }
 
     render() {
         return (
-            <div>
-                <button onClick={this.handleClick}>{this.getLabel()}</button>
+            <div className="Dropdown">
+                <button
+                    className="DropdownLabel"
+                    onClick={this.handleClick}>{this.getLabel()}</button>
                 {
                     !this.state.expanded ? null :
-                        <div>
+                        <div className="DropdownList">
                             {
                                 this.props.values.map((value, index) =>
                                     <div
+                                        className="DropdownListItem"
                                         onClick={() => this.handleSelect(value.id)}
                                         key={index.toString()}>
-                                        {value.label}
+                                        {value.id}
                                     </div>
                                 )
                             }

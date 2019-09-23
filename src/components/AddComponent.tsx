@@ -32,17 +32,20 @@ class AddComponent extends React.PureComponent<Props, State> {
     render() {
         const { label, items } = this.props;
         return (
-            <div>
-                <button onClick={this.handleClick}>{label}</button>
+            <div className="Dropdown">
+                <button
+                    className="DropdownLabel"
+                    onClick={this.handleClick}>{label}</button>
                 {
                     !this.state.expanded ? null :
-                        <div>
+                        <div className="DropdownList">
                             {
                                 items.map((item, index) =>
                                     <div
+                                    className="DropdownListItem"
                                         onClick={() => this.handleAdd(item.id)}
                                         key={index.toString()}>
-                                        {item.label}
+                                        {item.id}
                                     </div>
                                 )
                             }
