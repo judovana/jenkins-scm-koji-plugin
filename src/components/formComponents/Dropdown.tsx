@@ -1,5 +1,5 @@
 import React from "react";
-import { Item } from "../stores/model";
+import { Item } from "../../stores/model";
 
 interface Props {
     values: Item[];
