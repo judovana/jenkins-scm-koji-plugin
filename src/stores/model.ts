@@ -17,7 +17,7 @@ export interface JDKProject extends Project {
 }
 
 export interface Item {
-    readonly id: string;
+    id: string;
 }
 
 export enum TaskType {
@@ -48,7 +48,31 @@ export interface VariantsConfig {
 }
 
 export interface Task extends Item {
+    script: string;
     type: TaskType;
+    machinePreference: "VM" | "VM_ONLY" | "HW" | "HW_ONLY";
+    productLimitation: Limitation;
+    platformLimitation: Limitation;
+    fileRequirements: FileRequirements;
+    xmlTemplate: string;
+    rpmLimitaion: RPMLimitaion;
+}
+
+export interface FileRequirements {
+    source: boolean;
+    binary: "NONE" | "BINARY" | "BINARIES";
+}
+
+export type LimitFlag = "BLACKLIST" | "WHITELIST";
+
+export interface Limitation {
+    list: string[];
+    flag: LimitFlag;
+}
+
+export interface RPMLimitaion {
+    glob: string;
+    flag: LimitFlag;
 }
 
 export interface Platform extends Item {
