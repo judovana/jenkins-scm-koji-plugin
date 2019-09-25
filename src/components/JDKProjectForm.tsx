@@ -2,7 +2,7 @@ import React from "react";
 
 import { observer, inject } from "mobx-react";
 
-import Dropdown from "./Dropdown";
+import Dropdown from "./formComponents/Dropdown";
 import { JDKProject, JobConfig, PlatformConfig } from "../stores/model";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import { observable } from "mobx";

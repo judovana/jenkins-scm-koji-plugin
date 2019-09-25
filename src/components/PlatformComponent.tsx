@@ -1,6 +1,6 @@
 import React from "react";
 import { PlatformConfig, TaskType, Item } from "../stores/model";
-import AddComponent from "./AddComponent";
+import AddComponent from "./formComponents/AddComponent";
 import { inject, observer } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import TreeNode from "./TreeNode";
@@ -27,14 +27,15 @@ class PlatformComponent extends React.PureComponent<Props> {
 
     render() {
         const { configStore, id, config, type, onDelete } = this.props;
-        const platform = configStore!.platforms.get(id);
+        const platform = configStore!.getPlatform(id);
         if (!platform) {
             return <div>unknown platform</div>
         }
         const tasks = configStore!.tasks;
         const taskConfigs = config.tasks;
-        const unselectedTasks = Array.from(tasks.values())
-            .filter(task => task.type === type && !Object.keys(taskConfigs).includes(task.id));
+        const taskConfigIds = Object.keys(taskConfigs);
+        const unselectedTasks = tasks
+            .filter(task => task.type === type && !taskConfigIds.includes(task.id));
         return (
             <div>
                 <TreeNode level={this.props.level + 1}>
@@ -42,7 +43,7 @@ class PlatformComponent extends React.PureComponent<Props> {
                         {platform.id}
                     </TreeNode.Title>
                     <TreeNode.NodeInfo>
-                        Tasks ({Object.keys(taskConfigs).length})
+                        Tasks ({taskConfigIds.length})
                     </TreeNode.NodeInfo>
                     <TreeNode.Options>
                         {[
@@ -60,7 +61,7 @@ class PlatformComponent extends React.PureComponent<Props> {
                     </TreeNode.Options>
                     <TreeNode.ChildNodes>
                         {
-                            Object.keys(taskConfigs).map(id =>
+                            taskConfigIds.map(id =>
                                 <TaskComponent
                                     key={id}
                                     onDelete={this.onTaskDelete}

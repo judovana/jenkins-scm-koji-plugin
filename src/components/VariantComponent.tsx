@@ -3,8 +3,8 @@ import React from "react";
 import PlatformComponent from "./PlatformComponent";
 
 import { VariantsConfig, TaskType } from "../stores/model";
-import Dropdown from "./Dropdown";
-import AddComponent from "./AddComponent";
+import Dropdown from "./formComponents/Dropdown";
+import AddComponent from "./formComponents/AddComponent";
 import { inject, observer } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import TreeNode from "./TreeNode";
@@ -37,7 +37,7 @@ class VariantComponent extends React.PureComponent<Props> {
 
     render() {
         const { config, configStore, type, onDelete } = this.props;
-        const taskVariants = Array.from(configStore!.taskVariants.values()).filter(taskVariant => taskVariant.type === type);
+        const taskVariants = configStore!.taskVariants.filter(taskVariant => taskVariant.type === type);
         const platformConfigs = config.platforms || {};
         const selectedPlatformIds = Object.keys(platformConfigs);
         const unselectedPlatforms = Array.from(configStore!.platforms.values()).filter(platform => !selectedPlatformIds.includes(platform.id));

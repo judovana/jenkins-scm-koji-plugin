@@ -1,7 +1,7 @@
 import React from "react";
 import { JobConfig, PlatformConfig, TaskType } from "../stores/model";
 import PlatformComponent from "./PlatformComponent";
-import AddComponent from "./AddComponent";
+import AddComponent from "./formComponents/AddComponent";
 import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore";
 import { inject, observer } from "mobx-react";
 import TreeNode from "./TreeNode";
@@ -22,10 +22,11 @@ class JobConfigComponent extends React.PureComponent<Props> {
     }
 
     render() {
-        const platformConfigs = this.props.jobConfig.platforms;
-        const configStore = this.props.configStore!;
-        const platforms = configStore.platforms;
-        const unselectedPlatforms = Array.from(platforms.values()).filter(platform => !Object.keys(platformConfigs).includes(platform.id));
+        const { configStore, jobConfig } = this.props;
+        const platformConfigs = jobConfig.platforms;
+        const platforms = configStore!.platforms;
+        const platformConfigsIds = Object.keys(platformConfigs);
+        const unselectedPlatforms = platforms.filter(platform => !platformConfigsIds.includes(platform.id));
         return (
             <div>
                 <TreeNode level={0}>
@@ -33,7 +34,7 @@ class JobConfigComponent extends React.PureComponent<Props> {
                         Job Configuration
                     </TreeNode.Title>
                     <TreeNode.NodeInfo>
-                        Platforms ({Object.keys(platformConfigs).length})
+                        Platforms ({platformConfigsIds.length})
                     </TreeNode.NodeInfo>
                     <TreeNode.Options>
                         {

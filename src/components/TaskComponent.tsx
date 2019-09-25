@@ -26,7 +26,7 @@ class TaskComponent extends React.PureComponent<Props> {
 
     render() {
         const { configStore, id, config, onDelete } = this.props;
-        const task = configStore!.tasks.get(id);
+        const task = configStore!.getTask(id);
         if (!task) {
             return (
                 <div>uknown task</div>
