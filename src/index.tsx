@@ -7,12 +7,10 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 
 import configStore from "./stores/ConfigStore";
-import projectStore from './stores/ProjectStore';
 
 ReactDOM.render(
     <Provider
-        configStore={configStore}
-        projectStore={projectStore}>
+        configStore={configStore}>
         <App />
     </Provider>,
     document.getElementById('root')
