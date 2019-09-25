@@ -1,26 +1,28 @@
 import React from "react";
 import { observer, inject } from "mobx-react";
 
-import { ProjectStore, PROJECT_STORE } from "../stores/ProjectStore";
+import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore";
 
 interface Props {
-    projectStore?: ProjectStore;
+    configStore?: ConfigStore;
 }
 
 class Header extends React.PureComponent<Props> {
 
     render() {
-        const { projectStore } = this.props;
-        return (projectStore &&
+        const configStore = this.props.configStore!;
+        return (
             <div style={{
+                margin: "0 auto",
                 display: "flex",
-                flexDirection: "row"
+                flexDirection: "row",
+                justifyContent: "space-between",
+                width: "80%"
             }}>
                 {
-                    Object.values(projectStore.projectCategories).map(category =>
-                        <div className="HeaderItem" key={category.id} onClick={() => { projectStore.selectedProjectCategoryId = category.id }}>
-                            <div style={{ textAlign: "center", fontSize: 20 }}>{category.label}</div>
-                            <div style={{ textAlign: "center" }}>{category.description}</div>
+                    configStore.configGroups.map(group =>
+                        <div className="HeaderItem" key={group.id} onClick={() => configStore.selectGroup(group.id) }>
+                            <div style={{ textAlign: "center", fontSize: 20 }}>{group.id}</div>
                         </div>
                     )
                 }
@@ -29,4 +31,4 @@ class Header extends React.PureComponent<Props> {
     }
 }
 
-export default inject(PROJECT_STORE)(observer(Header));
+export default inject(CONFIG_STORE)(observer(Header));
