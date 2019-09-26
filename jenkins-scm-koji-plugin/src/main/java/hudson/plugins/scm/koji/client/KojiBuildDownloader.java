@@ -318,6 +318,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     }
 
     private String composeSrcUrl(String kojiDownloadUrl, Build build, String suffix) {
+        if (kojiDownloadUrl==null || build == null || suffix == null) {
+            return "http://unknonw.or/not/found.sorry";
+        }
         StringBuilder sb = new StringBuilder(255);
         sb.append(kojiDownloadUrl);
         if (kojiDownloadUrl.charAt(kojiDownloadUrl.length() - 1) != '/') {
