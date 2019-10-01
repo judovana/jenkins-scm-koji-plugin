@@ -15,7 +15,7 @@ type TextAreaProps = TextAreaPropsRequired & TextAreaPropsOptional
 class TextArea extends React.PureComponent<TextAreaProps> {
 
     static defaultProps: TextAreaPropsOptional = {
-        onChange: _ => null,
+        onChange: _ => {},
         placeholder: "",
         value: ""
     }
@@ -27,12 +27,16 @@ class TextArea extends React.PureComponent<TextAreaProps> {
     render() {
         const { label, placeholder, value } = this.props
         return (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-                <label>{label}</label>
-                <textarea
-                    placeholder={placeholder}
-                    value={value}
-                    onChange={this.onChange} />
+            <div className="field-container">
+                <div className="label-container">
+                    <label>{label}</label>
+                </div>
+                <div className="value-container">
+                    <textarea
+                        placeholder={placeholder}
+                        value={value}
+                        onChange={this.onChange} />
+                </div>
             </div>
         )
     }

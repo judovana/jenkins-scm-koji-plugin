@@ -28,13 +28,17 @@ class TextInput extends React.PureComponent<TextInputProps> {
     render() {
         const { label, placeholder, value } = this.props
         return (
-            <div style={{ display: "flex", flexDirection: "column" }}>
-                <label>{label}</label>
-                <input
-                    placeholder={placeholder}
-                    type="text"
-                    value={value}
-                    onChange={this.onChange} />
+            <div className="field-container">
+                <div className="label-container">
+                    <label>{label}</label>
+                </div>
+                <div className="value-container">
+                    <input
+                        placeholder={placeholder}
+                        type="text"
+                        value={value}
+                        onChange={this.onChange} />
+                </div>
             </div>
         )
     }

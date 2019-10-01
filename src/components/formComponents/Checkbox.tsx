@@ -25,12 +25,16 @@ class Checkbox extends React.PureComponent<CheckboxProps> {
     render() {
         const { label, value } = this.props
         return (
-            <div style={{ display: "flex" }}>
-                <div>{label}</div>
-                <input
-                    checked={value}
-                    onChange={this.onChange}
-                    type="checkbox" />
+            <div className="field-container">
+                <div className="label-container">
+                    {label}
+                </div>
+                <div className="value-container">
+                    <input
+                        checked={value}
+                        onChange={this.onChange}
+                        type="checkbox" />
+                </div>
             </div>
         )
     }
