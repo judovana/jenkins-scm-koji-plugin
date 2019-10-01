@@ -2,8 +2,6 @@ import React from "react";
 import { observer } from "mobx-react";
 
 import { Limitation, Item, LimitFlag } from "../../stores/model";
-import Dropdown from "./Dropdown";
-import List from "./List";
 import Select from "./Select";
 import MultiSelect from "./MultiSelect";
 
@@ -46,7 +44,7 @@ class LimitationForm extends React.PureComponent<LimitationProps> {
                         value={limitation.flag}
                     />
                     {
-                        !limitation.flag || limitation.flag !== "NONE" &&
+                        (!limitation.flag || limitation.flag !== "NONE") &&
                         <MultiSelect
                             label={"list"}
                             onChange={this.onListChange}
