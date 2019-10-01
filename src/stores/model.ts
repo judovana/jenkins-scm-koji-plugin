@@ -20,11 +20,6 @@ export interface Item {
     id: string;
 }
 
-export enum TaskType {
-    BUILD = "BUILD",
-    TEST = "TEST"
-}
-
 export enum ProjectType {
     JDK_PROJECT = "JDK_PROJECT"
 }
@@ -50,7 +45,7 @@ export interface VariantsConfig {
 export interface Task extends Item {
     script: string;
     type: TaskType;
-    machinePreference: "VM" | "VM_ONLY" | "HW" | "HW_ONLY";
+    machinePreference: MachinePreference;
     productLimitation: Limitation;
     platformLimitation: Limitation;
     fileRequirements: FileRequirements;
@@ -58,12 +53,18 @@ export interface Task extends Item {
     rpmLimitaion: RPMLimitaion;
 }
 
+export type TaskType = "BUILD" | "TEST"
+
+export type MachinePreference = "VM" | "VM_ONLY" | "HW" | "HW_ONLY"
+
+export type BinaryRequirement = "NONE" | "BINARY" | "BINARIES"
+
 export interface FileRequirements {
     source: boolean;
-    binary: "NONE" | "BINARY" | "BINARIES";
+    binary: BinaryRequirement;
 }
 
-export type LimitFlag = "BLACKLIST" | "WHITELIST";
+export type LimitFlag = "BLACKLIST" | "WHITELIST" | "NONE";
 
 export interface Limitation {
     list: string[];

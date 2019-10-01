@@ -52,7 +52,7 @@ class JobConfigComponent extends React.PureComponent<Props> {
                                     key={id}
                                     id={id}
                                     config={platformConfigs[id]}
-                                    type={TaskType.BUILD}
+                                    type={"BUILD"}
                                     level={1} />
                             )
                         }

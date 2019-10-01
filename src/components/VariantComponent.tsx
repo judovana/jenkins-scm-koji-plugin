@@ -61,7 +61,7 @@ class VariantComponent extends React.PureComponent<Props> {
                     <div>Platforms ({Object.keys(platformConfigs).length})</div>
                 </TreeNode.NodeInfo>
                 <TreeNode.Options>{[
-                    unselectedPlatforms.length !== 0 && type !== TaskType.TEST && <AddComponent
+                    unselectedPlatforms.length !== 0 && type !== "TEST" && <AddComponent
                         key="add"
                         onAdd={this.onPlatformAdd}
                         items={unselectedPlatforms}
@@ -79,7 +79,7 @@ class VariantComponent extends React.PureComponent<Props> {
                                 id={id}
                                 onDelete={this.onPlatformDelete}
                                 config={platformConfigs[id]}
-                                type={TaskType.TEST}
+                                type={"TEST"}
                                 level={this.props.level + 1} />
                         )
                     }
