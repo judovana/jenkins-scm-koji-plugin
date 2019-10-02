@@ -2,15 +2,15 @@ import React from "react";
 import { observable } from "mobx";
 import { observer, inject } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import { Task, TaskType, FileRequirements } from "../stores/model";
-import Dropdown from "./formComponents/Dropdown";
+import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation } from "../stores/model";
 import LimitationForm from "./formComponents/LimitationForm";
 import TextInput from "./formComponents/TextInput";
 import TextArea from "./formComponents/TextArea";
 import Checkbox from "./formComponents/Checkbox";
+import Select from "./formComponents/Select";
 
 interface Props {
-    task: Task;
+    task?: Task;
     configStore?: ConfigStore;
 }
 
@@ -20,69 +20,150 @@ class TaskForm extends React.PureComponent<Props> {
     task: Task;
 
     constructor(props: Props) {
-        super(props);
-        this.task = props.task;
+        super(props)
+        this.task = props.task || defaultTask
     }
 
-    componentDidUpdate() {
-        if (this.task.id !== this.props.task.id) {
-            this.task = this.props.task;
+    onIdChange = (value: string) => {
+        this.task.id = value
+    }
+
+    onTypeChange = (value: string) => {
+        this.task.type = value as TaskType
+    }
+
+    onMachinePreferenceChange = (value: string) => {
+        this.task.machinePreference = value as MachinePreference
+    }
+
+    onSourcesChange = (value: boolean) => {
+        this.task.fileRequirements.source = value
+    }
+
+    onBinaryChange = (value: string) => {
+        this.task.fileRequirements.binary = value as BinaryRequirement
+    }
+
+    onXmlTemplateChange = (value: string) => {
+        this.task.xmlTemplate = value
+    }
+
+    onRPMLimitationFlagChange = (value: string) => {
+        this.task.rpmLimitation.flag = value as LimitFlag
+    }
+
+    onRPMLimitationGlobChange = (value: string) => {
+        this.task.rpmLimitation.glob = value
+    }
+
+    renderRPMLimitaion = (rpmLimitation: RPMLimitation) => {
+        let flag: LimitFlag
+        let glob: string
+        if (!rpmLimitation) {
+            flag = "NONE"
+            glob = ""
+        } else {
+            flag = rpmLimitation.flag || "NONE"
+            glob = rpmLimitation.glob || ""
         }
+        return (
+            <div className="field-container">
+                <div className="label-container">RPM limitation</div>
+                <div className="value-container">
+                    <Select
+                        onChange={this.onRPMLimitationFlagChange}
+                        options={["NONE", "WHITELIST", "BLACKLIST"]}
+                        value={flag} />
+                    {
+                        flag !== "NONE" &&
+                        <TextInput
+                            label={"glob"}
+                            onChange={this.onRPMLimitationGlobChange}
+                            placeholder={"Enter glob"}
+                            value={glob} />
+                    }
+                </div>
+            </div>
+        )
     }
 
     render() {
         const configStore = this.props.configStore!;
         const { id, platformLimitation, productLimitation } = this.task;
         return (
-            <div>
+            <fieldset>
                 <TextInput
                     label={"Task id"}
-                    onChange={(value) => this.task.id = value}
+                    onChange={this.onIdChange}
                     value={id} />
-                <div style={{ height: 20 }} />
-                <Dropdown
-                    onChange={(value => this.task.type = value as TaskType)}
-                    value={this.task.type}
-                    values={[{ id: "BUILD" as TaskType }, { id: "TEST" as TaskType }]}
-                    label={"type"} />
-                <div style={{ height: 20 }} />
-                <Dropdown
-                    onChange={(value => this.task.machinePreference = value as "VM" | "VM_ONLY" | "HW" | "HW_ONLY")}
-                    value={this.task.machinePreference}
-                    values={[{ id: "VM" }, { id: "VM_ONLY" }, { id: "HW" }, { id: "HW_ONLY" }]}
-                    label={"machine preference"} />
-                <div style={{ height: 20 }} />
-                <TextArea
+                <Select
+                    label={"type"}
+                    onChange={this.onTypeChange}
+                    options={["BUILD", "TEST"]}
+                    value={this.task.type} />
+                <Select
+                    label={"machine preference"}
+                    onChange={this.onMachinePreferenceChange}
+                    options={["VM", "VM_ONLY", "HW", "HW_ONLY"]}
+                    value={this.task.machinePreference} />
+                <TextInput
                     label={"script"}
                     value={this.task.script}
                     onChange={(value) => { this.task.script = value }}
-                    placeholder={"Enter bash script"} />
-                <div style={{ height: 20 }} />
+                    placeholder={"Enter path to bash script"} />
                 <LimitationForm
                     label={"platform limitations"}
                     limitation={platformLimitation}
                     items={configStore.platforms} />
-                <div style={{ height: 20 }} />
                 <LimitationForm
                     label={"product limitations"}
                     limitation={productLimitation}
                     items={configStore.products} />
-                <div style={{ height: 20 }} />
                 <Checkbox
                     label="require sources"
                     value={this.task.fileRequirements.source}
-                    onChange={(value) => this.task.fileRequirements.source = value} />
-                <Dropdown
-                    onChange={(value) => this.task.fileRequirements.binary = value as "NONE" | "BINARY" | "BINARIES"}
-                    values={[{ id: "NONE" }, { id: "BINARY" }, { id: "BINARIES" }]}
-                    value={this.task.fileRequirements.binary}
-                    label={"binary requirements"} />
+                    onChange={this.onSourcesChange} />
+                <Select
+                    label={"binary requirements"}
+                    onChange={this.onBinaryChange}
+                    options={["NONE", "BINARY", "BINARIES"]}
+                    value={this.task.fileRequirements.binary} />
+                <TextArea
+                    label={"xml template"}
+                    onChange={this.onXmlTemplateChange}
+                    placeholder={"Enter xml template for post build tasks"}
+                    value={this.task.xmlTemplate} />
+                {this.renderRPMLimitaion(this.task.rpmLimitation)}
                 <br />
                 <br />
                 <br />
                 {JSON.stringify(this.task)}
-            </div>
+            </fieldset>
         );
+    }
+}
+
+const defaultTask: Task = {
+    id: "",
+    script: "",
+    type: "TEST",
+    machinePreference: "VM",
+    productLimitation: {
+        flag: "NONE",
+        list: []
+    },
+    platformLimitation: {
+        flag: "NONE",
+        list: []
+    },
+    fileRequirements: {
+        source: false,
+        binary: "NONE"
+    },
+    xmlTemplate: "",
+    rpmLimitation: {
+        flag: "NONE",
+        glob: ""
     }
 }
 
