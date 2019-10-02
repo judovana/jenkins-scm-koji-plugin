@@ -38,15 +38,13 @@ class LimitationForm extends React.PureComponent<LimitationProps> {
                 </div>
                 <div className="value-container">
                     <Select
-                        label={"flag"}
                         onChange={this.onFlagChange}
                         options={["NONE", "WHITELIST", "BLACKLIST"]}
                         value={limitation.flag}
                     />
                     {
-                        (!limitation.flag || limitation.flag !== "NONE") &&
+                        (limitation.flag && limitation.flag !== "NONE") &&
                         <MultiSelect
-                            label={"list"}
                             onChange={this.onListChange}
                             options={items.map(item => item.id)}
                             values={limitation.list} />
