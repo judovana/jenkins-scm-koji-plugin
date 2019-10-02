@@ -7,50 +7,28 @@ interface Props {
     onAdd: (id: string) => void;
 }
 
-interface State {
-    expanded: boolean;
-}
+class AddComponent extends React.PureComponent<Props> {
 
-class AddComponent extends React.PureComponent<Props, State> {
-
-    constructor(props: Props) {
-        super(props);
-        this.state = {
-            expanded: false
-        }
-    }
-
-    handleAdd = (id: string): void => {
-        this.props.onAdd(id);
-        this.setState({ expanded: false });
-    }
-
-    handleClick = (): void => {
-        this.setState({ expanded: !this.state.expanded });
+    onClick = (value: string): void => {
+        this.props.onAdd(value);
     }
 
     render() {
         const { label, items } = this.props;
         return (
-            <div className="Dropdown">
-                <button
-                    className="DropdownLabel"
-                    onClick={this.handleClick}>{label}</button>
-                {
-                    !this.state.expanded ? null :
-                        <div className="DropdownList">
-                            {
-                                items.map((item, index) =>
-                                    <div
-                                    className="DropdownListItem"
-                                        onClick={() => this.handleAdd(item.id)}
-                                        key={index.toString()}>
-                                        {item.id}
-                                    </div>
-                                )
-                            }
-                        </div>
-                }
+            <div
+                className="dropdown"
+                defaultValue="Add">
+                <div className="dropdown-button">{label}</div>
+                <div className="dropdown-content">
+                    {
+                        items.map(item =>
+                            <a
+                                onClick={() => this.onClick(item.id)}>
+                                {item.id}</a>
+                        )
+                    }
+                </div>
             </div>
         );
     }
