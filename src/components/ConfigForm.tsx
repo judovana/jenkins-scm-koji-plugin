@@ -4,6 +4,8 @@ import { JDKProject, Item, Task } from "../stores/model";
 import JDKProjectForm from "./JDKProjectForm";
 import TaskForm from "./TaskForm";
 
+import "../styles/Forms.css";
+
 interface Props {
     group: string;
     config: Item;
@@ -11,7 +13,7 @@ interface Props {
 
 class ConfigForm extends React.PureComponent<Props> {
 
-    render() {
+    renderForm = () => {
         const { config, group } = this.props;
         switch (group) {
             case "jdkProjects":
@@ -25,6 +27,14 @@ class ConfigForm extends React.PureComponent<Props> {
             default:
                 return null;
         }
+    }
+
+    render() {
+        return (
+            <form>
+                {this.renderForm()}
+            </form>
+        )
     }
 }
 
