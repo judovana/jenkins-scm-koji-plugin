@@ -1,5 +1,6 @@
 import React from "react";
 import { Item } from "../../stores/model";
+import Button from "../Button"
 
 interface Props {
     items: Item[];
@@ -19,7 +20,7 @@ class AddComponent extends React.PureComponent<Props> {
             <div
                 className="dropdown"
                 defaultValue="Add">
-                <div className="dropdown-button">{label}</div>
+                <Button>{label}</Button>
                 <div className="dropdown-content">
                     {
                         items.map(item =>
