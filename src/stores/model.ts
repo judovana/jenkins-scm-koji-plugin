@@ -50,7 +50,7 @@ export interface Task extends Item {
     platformLimitation: Limitation;
     fileRequirements: FileRequirements;
     xmlTemplate: string;
-    rpmLimitaion: RPMLimitaion;
+    rpmLimitation: RPMLimitation;
 }
 
 export type TaskType = "BUILD" | "TEST"
@@ -71,7 +71,7 @@ export interface Limitation {
     flag: LimitFlag;
 }
 
-export interface RPMLimitaion {
+export interface RPMLimitation {
     glob: string;
     flag: LimitFlag;
 }
