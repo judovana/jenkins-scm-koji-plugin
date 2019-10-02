@@ -12,8 +12,8 @@ export interface ProjectCategory {
 
 export interface JDKProject extends Project {
     url: string;
-    readonly product: string;
-    readonly jobConfiguration: JobConfig;
+    product: string;
+    jobConfiguration: JobConfig;
 }
 
 export interface Item {

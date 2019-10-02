@@ -1,5 +1,5 @@
 import React from "react";
-import { JobConfig, PlatformConfig, TaskType } from "../stores/model";
+import { JobConfig, PlatformConfig } from "../stores/model";
 import PlatformComponent from "./PlatformComponent";
 import AddComponent from "./formComponents/AddComponent";
 import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore";
@@ -25,16 +25,16 @@ class JobConfigComponent extends React.PureComponent<Props> {
         const { configStore, jobConfig } = this.props;
         const platformConfigs = jobConfig.platforms;
         const platforms = configStore!.platforms;
-        const platformConfigsIds = Object.keys(platformConfigs);
-        const unselectedPlatforms = platforms.filter(platform => !platformConfigsIds.includes(platform.id));
+        const platformConfigIds = Object.keys(platformConfigs);
+        const unselectedPlatforms = platforms.filter(platform => !platformConfigIds.includes(platform.id));
         return (
             <div>
-                <TreeNode level={0}>
-                    <TreeNode.Title level={0}>
+                <TreeNode>
+                    <TreeNode.Title>
                         Job Configuration
                     </TreeNode.Title>
                     <TreeNode.NodeInfo>
-                        Platforms ({platformConfigsIds.length})
+                        Platforms ({platformConfigIds.length})
                     </TreeNode.NodeInfo>
                     <TreeNode.Options>
                         {
@@ -46,14 +46,13 @@ class JobConfigComponent extends React.PureComponent<Props> {
                     </TreeNode.Options>
                     <TreeNode.ChildNodes>
                         {
-                            Object.keys(platformConfigs).map(id =>
+                            platformConfigIds.map(id =>
                                 <PlatformComponent
                                     onDelete={this.onPlatformDelete}
                                     key={id}
                                     id={id}
                                     config={platformConfigs[id]}
-                                    type={"BUILD"}
-                                    level={1} />
+                                    type={"BUILD"} />
                             )
                         }
                     </TreeNode.ChildNodes>

@@ -5,6 +5,7 @@ import { inject, observer } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import TreeNode from "./TreeNode";
 import TaskComponent from "./TaskComponent";
+import Button from "./Button";
 
 interface Props {
     config: PlatformConfig;
@@ -12,7 +13,6 @@ interface Props {
     configStore?: ConfigStore;
     onDelete: (id: string) => void;
     id: string;
-    level: number;
 }
 
 class PlatformComponent extends React.PureComponent<Props> {
@@ -38,8 +38,8 @@ class PlatformComponent extends React.PureComponent<Props> {
             .filter(task => task.type === type && !taskConfigIds.includes(task.id));
         return (
             <div>
-                <TreeNode level={this.props.level + 1}>
-                    <TreeNode.Title level={this.props.level + 1}>
+                <TreeNode>
+                    <TreeNode.Title>
                         {platform.id}
                     </TreeNode.Title>
                     <TreeNode.NodeInfo>
@@ -52,11 +52,10 @@ class PlatformComponent extends React.PureComponent<Props> {
                                 onAdd={this.onAdd}
                                 items={unselectedTasks as Item[]}
                                 label={"Add task"} />,
-                            <button
+                            <Button
                                 key="remove"
-                                style={{ display: "block", justifySelf: "flex-end" }}
-                                className="Remove"
-                                onClick={() => onDelete(platform.id)}>X</button>
+                                color="red"
+                                onClick={() => onDelete(platform.id)}>Remove</Button>
                         ]}
                     </TreeNode.Options>
                     <TreeNode.ChildNodes>
@@ -66,8 +65,7 @@ class PlatformComponent extends React.PureComponent<Props> {
                                     key={id}
                                     onDelete={this.onTaskDelete}
                                     id={id}
-                                    config={taskConfigs[id]}
-                                    level={this.props.level + 1} />
+                                    config={taskConfigs[id]} />
                             )
                         }
                     </TreeNode.ChildNodes>

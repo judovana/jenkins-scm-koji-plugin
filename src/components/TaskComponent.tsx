@@ -4,13 +4,13 @@ import VariantComponent from "./VariantComponent";
 import { inject, observer } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import TreeNode from "./TreeNode";
+import Button from "./Button";
 
 interface Props {
     id: string;
     config: TaskConfig;
     configStore?: ConfigStore;
     onDelete: (id: string) => void;
-    level: number;
 }
 
 
@@ -34,16 +34,18 @@ class TaskComponent extends React.PureComponent<Props> {
         }
         const variantConfigs = config.variants
         return (
-            <TreeNode level={this.props.level + 1}>
-                <TreeNode.Title level={this.props.level + 1}>{id}</TreeNode.Title>
+            <TreeNode>
+                <TreeNode.Title>{id}</TreeNode.Title>
                 <TreeNode.NodeInfo>Variants ({variantConfigs.length})</TreeNode.NodeInfo>
                 <TreeNode.Options>
                     {[
-                        <button key="add" onClick={this.onAdd} className="Add">+</button>,
-                        <button
+                        <Button
+                            key="add"
+                            onClick={this.onAdd}>Add variant</Button>,
+                        <Button
                             key="remove"
-                            className="Remove"
-                            onClick={() => onDelete(id)}>X</button>
+                            color="red"
+                            onClick={() => onDelete(id)}>Remove</Button>
                     ]}
                 </TreeNode.Options>
                 <TreeNode.ChildNodes>
@@ -53,8 +55,7 @@ class TaskComponent extends React.PureComponent<Props> {
                                 key={index}
                                 type={task.type}
                                 onDelete={() => this.onVariantDelete(index)}
-                                config={variantConfig}
-                                level={this.props.level + 1} />
+                                config={variantConfig} />
                         )
                     }
                 </TreeNode.ChildNodes>

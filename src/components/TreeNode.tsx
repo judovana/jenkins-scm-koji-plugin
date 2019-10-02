@@ -1,9 +1,6 @@
 import React from "react";
 
-import Constants from "../Contants";
-
 interface TitleProps {
-    level: number;
     children: React.ReactNode;
 }
 
@@ -20,9 +17,7 @@ interface ChildNodesProps {
 }
 
 const Title = (props: TitleProps): JSX.Element => (
-    <div
-        className="tree-node-title"
-        style={{ paddingLeft: props.level * Constants.TREE_PADDING_OFFSET }}>
+    <div className="tree-node-title">
         {props.children}
     </div>
 );
@@ -40,7 +35,9 @@ const Options = (props: OptionsProps): JSX.Element => (
 );
 
 const ChildNodes = (props: ChildNodesProps): JSX.Element => (
-    <div>{props.children}</div>
+    <div className="tree-node-nodes">
+        {props.children}
+    </div>
 );
 
 interface Props {
@@ -50,41 +47,24 @@ interface Props {
         React.ReactElement<OptionsProps>,
         React.ReactElement<ChildNodesProps>
     ];
-    level: number;
 }
 
-interface State {
-    isExpanded: boolean;
-}
-
-class TreeNode extends React.PureComponent<Props, State> {
+class TreeNode extends React.PureComponent<Props> {
 
     static Title: typeof Title = Title;
     static NodeInfo: typeof NodeInfo = NodeInfo;
     static Options: typeof Options = Options;
     static ChildNodes: typeof ChildNodes = ChildNodes;
 
-    constructor(props: Props) {
-        super(props);
-        this.state = { isExpanded: true };
-    }
-
-    toggleChildNodes = (): void => {
-        this.setState({ isExpanded: !this.state.isExpanded });
-    }
-
     render() {
         const [title, nodeInfo, options, childNodes] = this.props.children;
-        const { isExpanded } = this.state;
         return (
             <div className="tree-node-wrapper">
-                <div className="tree-node-label">
-                    {title}
-                    {nodeInfo}
-                    {options}
-                </div>
-                {isExpanded && childNodes}
-            </div >
+                {title}
+                {nodeInfo}
+                {options}
+                {childNodes}
+            </div>
         );
     }
 }

@@ -124,36 +124,44 @@ html {
     background-color: bisque;
 }
 
-.tree-node {
-    background-color: rgba(0, 0, 0, 0.1);
-}
-
-.tree-node-label {
-    border-color: rgba(0, 0, 0, 0.1);
-    border-style: solid;
-    border-width: 1px 0 1px 0;
+.tree-node-wrapper {
+    border-radius: 3px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr;
-    padding-bottom: 10px;
-    padding-top: 10px;
+    grid-template-areas:
+    "title options"
+    "node-info node-info"
+    "nodes nodes";
+    margin: 5px 10px 10px 25px;
 }
 
-.tree-node-label:hover {
-    background-color: rgba(0, 0, 0, 0.1);
+.tree-node-title {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    grid-area: title;
+    justify-content: center;
+    padding: 7px;
 }
 
 .tree-node-options {
+    align-items: flex-start;
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    grid-area: options;
+    justify-content: flex-end;
+    padding: 7px;
 }
 
 .tree-node-info {
-    cursor: pointer;
+    border-top: 1px solid #ccc;
     display: flex;
     flex-direction: row;
+    grid-area: node-info;
+    margin-top: 5px;
+    padding: 10px 0 10px 25px;
 }
 
-.tree-node-info:hover {
-    text-decoration: underline;
+.tree-node-nodes {
+    grid-area: nodes;
 }

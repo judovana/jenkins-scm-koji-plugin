@@ -3,18 +3,18 @@ import React from "react";
 import PlatformComponent from "./PlatformComponent";
 
 import { VariantsConfig, TaskType } from "../stores/model";
-import Dropdown from "./formComponents/Dropdown";
+import Select from "./formComponents/Select";
 import AddComponent from "./formComponents/AddComponent";
 import { inject, observer } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import TreeNode from "./TreeNode";
+import Button from "./Button";
 
 interface Props {
     type: TaskType;
     configStore?: ConfigStore;
     config: VariantsConfig;
     onDelete: () => void;
-    level: number;
 }
 
 class VariantComponent extends React.PureComponent<Props> {
@@ -41,14 +41,15 @@ class VariantComponent extends React.PureComponent<Props> {
         const platformConfigs = config.platforms || {};
         const selectedPlatformIds = Object.keys(platformConfigs);
         const unselectedPlatforms = Array.from(configStore!.platforms.values()).filter(platform => !selectedPlatformIds.includes(platform.id));
+        const isExtendable = type !== "TEST"
         return (
-            <TreeNode level={this.props.level + 1}>
-                <TreeNode.Title level={this.props.level + 1}>
-                    <div style={{ display: "flex", flexDirection: "row" }}>
+            <TreeNode>
+                <TreeNode.Title>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
                         {
                             taskVariants.map(taskVariant =>
-                                <Dropdown
-                                    values={Object.values(taskVariant.variants)}
+                                <Select
+                                    options={Object.values(taskVariant.variants).map(variant => variant.id)}
                                     label={taskVariant.id}
                                     value={this.props.config.map[taskVariant.id]}
                                     onChange={(value: string) => this.onVariantChange(taskVariant.id, value)}
@@ -58,29 +59,32 @@ class VariantComponent extends React.PureComponent<Props> {
                     </div>
                 </TreeNode.Title>
                 <TreeNode.NodeInfo>
-                    <div>Platforms ({Object.keys(platformConfigs).length})</div>
+                    {
+                        isExtendable &&
+                        <div>Platforms ({selectedPlatformIds.length})</div>
+                    }
                 </TreeNode.NodeInfo>
                 <TreeNode.Options>{[
-                    unselectedPlatforms.length !== 0 && type !== "TEST" && <AddComponent
+                    unselectedPlatforms.length !== 0 && isExtendable && <AddComponent
                         key="add"
                         onAdd={this.onPlatformAdd}
                         items={unselectedPlatforms}
                         label={"Add platform"} />,
-                    <button
+                    <Button
                         key="remove"
-                        className="Remove"
-                        onClick={() => onDelete()}>X</button>
+                        color="red"
+                        onClick={() => onDelete()}>Remove</Button>
                 ]}</TreeNode.Options>
                 <TreeNode.ChildNodes>
                     {
-                        Object.keys(platformConfigs).map(id =>
+                        isExtendable &&
+                        selectedPlatformIds.map(id =>
                             <PlatformComponent
                                 key={id}
                                 id={id}
                                 onDelete={this.onPlatformDelete}
                                 config={platformConfigs[id]}
-                                type={"TEST"}
-                                level={this.props.level + 1} />
+                                type={"TEST"} />
                         )
                     }
                 </TreeNode.ChildNodes>

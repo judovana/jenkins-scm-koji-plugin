@@ -2,11 +2,12 @@ import React from "react";
 
 import { observer, inject } from "mobx-react";
 
-import Dropdown from "./formComponents/Dropdown";
-import { JDKProject, JobConfig, PlatformConfig } from "../stores/model";
+import { JDKProject, PlatformConfig, ProjectType } from "../stores/model";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import { observable } from "mobx";
 import JobConfigComponent from "./JobConfigComponent";
+import TextInput from "./formComponents/TextInput";
+import Select from "./formComponents/Select";
 
 interface Props {
     project?: JDKProject;
@@ -20,68 +21,57 @@ class JDKProjectForm extends React.PureComponent<Props> {
 
     constructor(props: Props) {
         super(props);
-        this.jdkProject = props.project ? props.project :
-            {
-                id: "",
-                url: "",
-                product: "",
-                jobConfiguration: {
-                    platforms: {} as { [id: string]: PlatformConfig }
-                }
-            } as JDKProject;
+        this.jdkProject = props.project ? props.project : defaultProject
     }
 
-    handleNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        this.setState({ id: event.currentTarget.value });
+    onIdChange = (value: string) => {
+        this.jdkProject.id = value
     }
 
-    handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        this.setState({ url: event.currentTarget.value });
+    onUrlChange = (value: string) => {
+        this.jdkProject.url = value
     }
 
-    handleJobConfigChange = (config: JobConfig): void => {
-        this.setState({
-            jobConfiguration: config
-        });
+    onProductChange = (value: string) => {
+        this.jdkProject.product = value
     }
 
     render() {
-        const configStore = this.props.configStore;
-        if (!configStore) {
-            return null;
-        }
-        const project = this.jdkProject;
-        const products = Array.from(configStore.products.values());
-        return (this.props.configStore &&
-            <div>
-                <div>
-                    <label>name: </label>
-                    <input
-                        type="text"
-                        value={project.id}
-                        onChange={this.handleNameChange} />
-                </div>
-                <div>
-                    <label>url: </label>
-                    <input
-                        type="text"
-                        value={project.url}
-                        onChange={this.handleUrlChange} />
-                </div>
-                <Dropdown
+        const configStore = this.props.configStore!
+        const project = this.jdkProject
+        const products = configStore.products
+        return (
+            <fieldset>
+                <TextInput
+                    label={"id"}
+                    value={project.id}
+                    onChange={this.onIdChange} />
+                <TextInput
+                    label={"url"}
+                    value={project.url}
+                    onChange={this.onUrlChange} />
+                <Select
                     label={"Product"}
-                    values={products}
+                    options={products.map(product => product.id)}
                     value={project.product}
                     onChange={(value: string) => this.setState({ product: value })} />
-                {
-                    <JobConfigComponent jobConfig={project.jobConfiguration} />
-                }
+                <JobConfigComponent jobConfig={project.jobConfiguration} />
                 <br />
                 <br />
                 <br />
                 <p>{JSON.stringify(project)}</p>
-            </div>
+            </fieldset>
         )
+    }
+}
+
+const defaultProject: JDKProject = {
+    id: "",
+    type: ProjectType.JDK_PROJECT,
+    url: "",
+    product: "",
+    jobConfiguration: {
+        platforms: {} as { [id: string]: PlatformConfig }
     }
 }
 
