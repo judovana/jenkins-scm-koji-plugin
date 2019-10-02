@@ -1,11 +1,11 @@
 import React from "react"
 
 type SelectPropsRequired = {
-    label: string
     options: string[]
 }
 
 type SelectPropsOptional = {
+    label?: string
     onChange: (value: string) => void
     value: string
 }
@@ -23,28 +23,40 @@ class Select extends React.PureComponent<SelectProps> {
         this.props.onChange(event.target.value)
     }
 
+    renderSelect = () => {
+        const { value, options } = this.props
+        return (
+            <select
+                defaultValue={value}
+                onChange={this.onChange}>
+                {
+                    options.map(option =>
+                        <option
+                            key={option}
+                            value={option}>
+                            {option}
+                        </option>
+                    )
+                }
+            </select>
+        )
+    }
+
     render() {
-        const { label, options, value } = this.props
+        const label = this.props.label
+        if (!label) {
+            return (
+                <div className="value-container">
+                    {this.renderSelect()}
+                </div>
+            )
+        }
         return (
             <div className="field-container">
                 <div className="label-container">
                     <label>{label}</label>
                 </div>
-                <div className="value-container">
-                    <select
-                        defaultValue={value}
-                        onChange={this.onChange}>
-                        {
-                            options.map(option =>
-                                <option
-                                    key={option}
-                                    value={option}>
-                                    {option}
-                                </option>
-                            )
-                        }
-                    </select>
-                </div>
+                {this.renderSelect()}
             </div>
         )
     }

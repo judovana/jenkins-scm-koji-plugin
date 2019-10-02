@@ -2,11 +2,11 @@ import React from "react"
 import Checkbox from "./Checkbox";
 
 type MultiSelectPropsRequired = {
-    label: string
     options: string[]
 }
 
 type MultiSelectPropsOptional = {
+    label?: string
     onChange: (values: string[]) => void
     values: string[]
 }
@@ -29,24 +29,34 @@ class MultiSelect extends React.PureComponent<MultiSelectProps> {
         }
     }
 
+    renderMultiSelect = () => {
+        const { options, values } = this.props
+        return (
+            <div className="value-container">
+                {
+                    options.map((option, index) =>
+                        <Checkbox
+                            key={index}
+                            label={option}
+                            onChange={value => this.onChange(option, value, index)}
+                            value={values.indexOf(option) >= 0} />
+                    )
+                }
+            </div>
+        )
+    }
+
     render() {
-        const { label, options, values } = this.props
+        const { label } = this.props
+        if (!label) {
+            return this.renderMultiSelect()
+        }
         return (
             <div className="field-container">
                 <div className="label-container">
                     <label>{label}</label>
                 </div>
-                <div className="value-container">
-                    {
-                        options.map((option, index) =>
-                            <Checkbox
-                                key={index}
-                                label={option}
-                                onChange={value => this.onChange(option, value, index)}
-                                value={values.indexOf(option) >= 0} />
-                        )
-                    }
-                </div>
+                {this.renderMultiSelect()}
             </div>
         )
     }
