@@ -23,9 +23,10 @@ class AddComponent extends React.PureComponent<Props> {
                 <div className="dropdown-content">
                     {
                         items.map(item =>
-                            <a
+                            <span
+                                key={item.id}
                                 onClick={() => this.onClick(item.id)}>
-                                {item.id}</a>
+                                {item.id}</span>
                         )
                     }
                 </div>

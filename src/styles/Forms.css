@@ -50,7 +50,7 @@ input[type=text], select, textarea {
     z-index: 1;
 }
 
-.dropdown-content a {
+.dropdown-content span {
     color: black;
     cursor: pointer;
     display: block;
@@ -58,7 +58,7 @@ input[type=text], select, textarea {
     text-decoration: none;
 }
 
-.dropdown-content a:hover {
+.dropdown-content span:hover {
     background-color: #f1f1f1;
 }
 
