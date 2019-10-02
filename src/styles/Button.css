@@ -1,0 +1,22 @@
+.button {
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 12px 16px;
+}
+
+.button-red {
+    background-color: #d23;
+}
+
+.button-green {
+    background-color: #2d3;
+}
+
+.button-blue {
+    background-color: #23d
+}
+
+.button-gray {
+    background-color: #999;
+}
