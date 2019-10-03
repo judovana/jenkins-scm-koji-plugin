@@ -35,13 +35,13 @@ export class ConfigStore {
     }
 
     @action
-    selectGroup(id: string) {
+    selectGroup = (id: string) => {
         this._selectedGroupId = id;
         this._selectedConfig = undefined;
     }
 
     @action
-    selectConfig(config: Item) {
+    selectConfig = (config: Item) => {
         this._selectedConfig = config;
     }
 
