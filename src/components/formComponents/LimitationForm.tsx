@@ -31,6 +31,7 @@ class LimitationForm extends React.PureComponent<LimitationProps> {
 
     render() {
         const { label, limitation, items } = this.props;
+        const flag = limitation && limitation.flag || "NONE"
         return (
             <div className="field-container">
                 <div className="label-container">
@@ -40,10 +41,10 @@ class LimitationForm extends React.PureComponent<LimitationProps> {
                     <Select
                         onChange={this.onFlagChange}
                         options={["NONE", "WHITELIST", "BLACKLIST"]}
-                        value={limitation.flag}
+                        value={flag}
                     />
                     {
-                        (limitation.flag && limitation.flag !== "NONE") &&
+                        (flag !== "NONE") &&
                         <MultiSelect
                             onChange={this.onListChange}
                             options={items.map(item => item.id)}
