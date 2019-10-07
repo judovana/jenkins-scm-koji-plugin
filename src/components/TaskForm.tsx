@@ -1,59 +1,75 @@
 import React from "react";
-import { observable } from "mobx";
+import { observable, runInAction } from "mobx";
 import { observer, inject } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation } from "../stores/model";
+import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements } from "../stores/model";
 import LimitationForm from "./formComponents/LimitationForm";
 import TextInput from "./formComponents/TextInput";
 import TextArea from "./formComponents/TextArea";
 import Checkbox from "./formComponents/Checkbox";
 import Select from "./formComponents/Select";
 
-interface Props {
-    task?: Task;
+type TaskFormProps = {
+    task: Task
     configStore?: ConfigStore;
 }
 
-class TaskForm extends React.PureComponent<Props> {
+class TaskForm extends React.PureComponent<TaskFormProps> {
 
     @observable
-    task: Task;
+    task?: Task;
 
-    constructor(props: Props) {
-        super(props)
-        this.task = props.task || defaultTask
+    componentDidMount() {
+        const task = this.props.task
+        this.task = { ...task }
+    }
+
+    componentDidUpdate() {
+        const task = this.props.task
+        if (task.id === "") {
+            return
+        }
+        if (this.task!.id !== task.id) {
+            runInAction(() => {
+                this.task = { ...task }
+            })
+        }
     }
 
     onIdChange = (value: string) => {
-        this.task.id = value
+        this.task!.id = value
     }
 
     onTypeChange = (value: string) => {
-        this.task.type = value as TaskType
+        this.task!.type = value as TaskType
     }
 
     onMachinePreferenceChange = (value: string) => {
-        this.task.machinePreference = value as MachinePreference
+        this.task!.machinePreference = value as MachinePreference
     }
 
     onSourcesChange = (value: boolean) => {
-        this.task.fileRequirements.source = value
+        this.task!.fileRequirements.source = value
+    }
+
+    onScriptChange = (value: string) => {
+        this.task!.script = value
     }
 
     onBinaryChange = (value: string) => {
-        this.task.fileRequirements.binary = value as BinaryRequirement
+        this.task!.fileRequirements.binary = value as BinaryRequirement
     }
 
     onXmlTemplateChange = (value: string) => {
-        this.task.xmlTemplate = value
+        this.task!.xmlTemplate = value
     }
 
     onRPMLimitationFlagChange = (value: string) => {
-        this.task.rpmLimitation.flag = value as LimitFlag
+        this.task!.rpmLimitation.flag = value as LimitFlag
     }
 
     onRPMLimitationGlobChange = (value: string) => {
-        this.task.rpmLimitation.glob = value
+        this.task!.rpmLimitation.glob = value
     }
 
     renderRPMLimitaion = (rpmLimitation: RPMLimitation) => {
@@ -87,9 +103,37 @@ class TaskForm extends React.PureComponent<Props> {
         )
     }
 
+    renderFileRequirementsForm = (fileRequirements: FileRequirements) => {
+        let requireSources = false
+        let binaryRequirement: BinaryRequirement = "NONE"
+        if (fileRequirements) {
+            requireSources = fileRequirements.source || false
+            binaryRequirement = fileRequirements.binary || "NONE"
+        }
+        return (
+            <div className="field-container">
+                <div className="label-container">file requirements</div>
+                <div className="value-container">
+                    <Checkbox
+                        label="require sources"
+                        onChange={this.onSourcesChange}
+                        value={requireSources} />
+                    <Select
+                        label={"binary requirements"}
+                        onChange={this.onBinaryChange}
+                        options={["NONE", "BINARY", "BINARIES"]}
+                        value={binaryRequirement} />
+                </div>
+            </div>
+        )
+    }
+
     render() {
         const configStore = this.props.configStore!;
-        const { id, platformLimitation, productLimitation } = this.task;
+        if (!this.task) {
+            return null
+        }
+        const { id, fileRequirements, platformLimitation, productLimitation } = this.task;
         return (
             <fieldset>
                 <TextInput
@@ -109,7 +153,7 @@ class TaskForm extends React.PureComponent<Props> {
                 <TextInput
                     label={"script"}
                     value={this.task.script}
-                    onChange={(value) => { this.task.script = value }}
+                    onChange={this.onScriptChange}
                     placeholder={"Enter path to bash script"} />
                 <LimitationForm
                     label={"platform limitations"}
@@ -119,15 +163,7 @@ class TaskForm extends React.PureComponent<Props> {
                     label={"product limitations"}
                     limitation={productLimitation}
                     items={configStore.products} />
-                <Checkbox
-                    label="require sources"
-                    value={this.task.fileRequirements.source}
-                    onChange={this.onSourcesChange} />
-                <Select
-                    label={"binary requirements"}
-                    onChange={this.onBinaryChange}
-                    options={["NONE", "BINARY", "BINARIES"]}
-                    value={this.task.fileRequirements.binary} />
+                {this.renderFileRequirementsForm(fileRequirements)}
                 <TextArea
                     label={"xml template"}
                     onChange={this.onXmlTemplateChange}
@@ -140,30 +176,6 @@ class TaskForm extends React.PureComponent<Props> {
                 {JSON.stringify(this.task)}
             </fieldset>
         );
-    }
-}
-
-const defaultTask: Task = {
-    id: "",
-    script: "",
-    type: "TEST",
-    machinePreference: "VM",
-    productLimitation: {
-        flag: "NONE",
-        list: []
-    },
-    platformLimitation: {
-        flag: "NONE",
-        list: []
-    },
-    fileRequirements: {
-        source: false,
-        binary: "NONE"
-    },
-    xmlTemplate: "",
-    rpmLimitation: {
-        flag: "NONE",
-        glob: ""
     }
 }
 
