@@ -89,3 +89,4 @@ export interface TaskVariant extends Item {
 
 export type ProjectCategories = { [id: string]: ProjectCategory };
 
+export type ConfigState = "create" | "update"

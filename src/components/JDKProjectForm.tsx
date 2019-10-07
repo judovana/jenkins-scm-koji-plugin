@@ -2,7 +2,7 @@ import React from "react";
 
 import { observer, inject } from "mobx-react";
 
-import { JDKProject } from "../stores/model";
+import { JDKProject, ConfigState } from "../stores/model";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import { observable, runInAction } from "mobx";
 import JobConfigComponent from "./JobConfigComponent";
@@ -19,17 +19,26 @@ class JDKProjectForm extends React.PureComponent<Props> {
     @observable
     private jdkProject?: JDKProject;
 
+    @observable
+    private jdkProjectState?: ConfigState
+
     componentDidMount() {
         const jdkProject = this.props.project
+        this.jdkProjectState = jdkProject.id === "" ? "create" : "update"
         this.jdkProject = { ...jdkProject }
     }
 
     componentDidUpdate() {
         const task = this.props.project
-        if (task.id === "") {
+        const state = this.props.configStore!.configState
+        if (state !== this.jdkProjectState) {
+            runInAction(() => {
+                this.jdkProject = { ...task }
+                this.jdkProjectState = state
+            })
             return
         }
-        if (this.jdkProject!.id !== task.id) {
+        if (state === "update" && this.jdkProject!.id !== task.id) {
             runInAction(() => {
                 this.jdkProject = { ...task }
             })

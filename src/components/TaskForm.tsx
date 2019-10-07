@@ -2,12 +2,13 @@ import React from "react";
 import { observable, runInAction } from "mobx";
 import { observer, inject } from "mobx-react";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements } from "../stores/model";
+import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements, ConfigState } from "../stores/model";
 import LimitationForm from "./formComponents/LimitationForm";
 import TextInput from "./formComponents/TextInput";
 import TextArea from "./formComponents/TextArea";
 import Checkbox from "./formComponents/Checkbox";
 import Select from "./formComponents/Select";
+import Button from "./Button";
 
 type TaskFormProps = {
     task: Task
@@ -19,17 +20,26 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
     @observable
     task?: Task;
 
+    @observable
+    taskState?: ConfigState
+
     componentDidMount() {
         const task = this.props.task
+        this.taskState = task.id === "" ? "create" : "update"
         this.task = { ...task }
     }
 
     componentDidUpdate() {
         const task = this.props.task
-        if (task.id === "") {
+        const state = this.props.configStore!.configState
+        if (state !== this.taskState) {
+            runInAction(() => {
+                this.task = { ...task }
+                this.taskState = state
+            })
             return
         }
-        if (this.task!.id !== task.id) {
+        if (state === "update" && this.task!.id !== task.id) {
             runInAction(() => {
                 this.task = { ...task }
             })
@@ -133,6 +143,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
         if (!this.task) {
             return null
         }
+        const configState = configStore.configState
         const { id, fileRequirements, platformLimitation, productLimitation } = this.task;
         return (
             <fieldset>
@@ -170,6 +181,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
                     placeholder={"Enter xml template for post build tasks"}
                     value={this.task.xmlTemplate} />
                 {this.renderRPMLimitaion(this.task.rpmLimitation)}
+                <Button>{configState}</Button>
                 <br />
                 <br />
                 <br />
