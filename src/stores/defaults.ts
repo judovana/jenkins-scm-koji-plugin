@@ -28,6 +28,7 @@ const defaultJDKProject: JDKProject = {
     id: "",
     type: ProjectType.JDK_PROJECT,
     url: "",
+    buildProviders: [],
     product: "",
     jobConfiguration: {
         platforms: {} as { [id: string]: PlatformConfig }

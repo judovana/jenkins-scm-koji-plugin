@@ -9,6 +9,7 @@ import JobConfigComponent from "./JobConfigComponent";
 import TextInput from "./formComponents/TextInput";
 import Select from "./formComponents/Select";
 import Button from "./Button";
+import MultiSelect from "./formComponents/MultiSelect";
 
 interface Props {
     project: JDKProject;
@@ -50,6 +51,10 @@ class JDKProjectForm extends React.PureComponent<Props> {
         this.jdkProject!.id = value
     }
 
+    onBuildProvidersChange = (values: string[]) => {
+        this.jdkProject!.buildProviders = values
+    }
+
     onUrlChange = (value: string) => {
         this.jdkProject!.url = value
     }
@@ -67,6 +72,18 @@ class JDKProjectForm extends React.PureComponent<Props> {
             case "update":
                 break;
         }
+    }
+
+    renderBuildProvidersForm = () => {
+        const buildProviders = this.props.configStore!.buildProviders
+        return (
+            <MultiSelect
+                label={"build providers"}
+                onChange={this.onBuildProvidersChange}
+                options={buildProviders.map(buildProvider => buildProvider.id)}
+                values={this.jdkProject!.buildProviders}
+                />
+        )
     }
 
     render() {
@@ -87,6 +104,7 @@ class JDKProjectForm extends React.PureComponent<Props> {
                     label={"url"}
                     value={jdkProject!.url}
                     onChange={this.onUrlChange} />
+                {this.renderBuildProvidersForm()}
                 <Select
                     label={"Product"}
                     options={products.map(product => product.id)}

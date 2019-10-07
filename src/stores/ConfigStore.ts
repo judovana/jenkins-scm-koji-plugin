@@ -1,11 +1,14 @@
 import { observable, runInAction, action } from "mobx";
 
-import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState } from "./model";
+import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider } from "./model";
 import { defaultTask, defaultJDKProject } from "./defaults";
 
 export const CONFIG_STORE = "configStore";
 
 export class ConfigStore {
+
+    @observable
+    private _buildProviders: Map<string, BuildProvider>;
 
     @observable
     private _platforms: Map<string, Platform>;
@@ -32,6 +35,7 @@ export class ConfigStore {
     private _configState: ConfigState = "create"
 
     constructor() {
+        this._buildProviders = new Map<string, BuildProvider>();
         this._platforms = new Map<string, Platform>();
         this._products = new Map<string, Product>();
         this._taskVariants = new Map<string, TaskVariant>();
@@ -77,6 +81,7 @@ export class ConfigStore {
 
     get selectedGroup(): Item[] {
         switch (this._selectedGroupId) {
+            case "buildProviders": return Array.from(this._buildProviders.values())
             case "platforms": return Array.from(this._platforms.values());
             case "products": return Array.from(this._products.values());
             case "taskVariants": return Array.from(this._taskVariants.values());
@@ -87,7 +92,7 @@ export class ConfigStore {
     }
 
     get configGroups(): Item[] {
-        return [{ id: "platforms" }, { id: "products" }, { id: "taskVariants" }, { id: "tasks" }, { id: "jdkProjects" }];
+        return [{id: "buildProviders"}, { id: "platforms" }, { id: "products" }, { id: "taskVariants" }, { id: "tasks" }, { id: "jdkProjects" }];
     }
 
     get selectedConfig(): Item | undefined {
@@ -103,6 +108,16 @@ export class ConfigStore {
             console.log(response)
         }).catch(error => {
             console.log(error)
+        })
+    }
+
+    async fetchBuildProviders() {
+        const response = await fetch("http://localhost:8081/buildProviders")
+        const buildProviders: BuildProvider[] = await response.json()
+        runInAction(() => {
+            buildProviders.forEach(buildProvider => {
+                this._buildProviders.set(buildProvider.id, buildProvider)
+            })
         })
     }
 
@@ -139,6 +154,10 @@ export class ConfigStore {
         runInAction(() => {
             projects.forEach(project => this._jdkProjects.set(project.id, project));
         });
+    }
+
+    get buildProviders(): BuildProvider[] {
+        return Array.from(this._buildProviders.values());
     }
 
     get platforms(): Platform[] {

@@ -13,6 +13,7 @@ export interface ProjectCategory {
 export interface JDKProject extends Project {
     url: string;
     product: string;
+    buildProviders: string[];
     jobConfiguration: JobConfig;
 }
 
@@ -77,6 +78,9 @@ export interface RPMLimitation {
 }
 
 export interface Platform extends Item {
+}
+
+export interface BuildProvider extends Item {
 }
 
 export interface Product extends Item {
