@@ -16,6 +16,9 @@ class ConfigForm extends React.PureComponent<Props> {
 
     renderForm = () => {
         const { selectedConfig, selectedGroupId } = this.props.configStore!;
+        if (!selectedConfig) {
+            return
+        }
         switch (selectedGroupId) {
             case "jdkProjects":
                 return (
