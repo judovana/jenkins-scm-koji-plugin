@@ -1,13 +1,16 @@
 import React from 'react';
-import './App.css';
 import Header from './components/Header';
-import Body from "./components/Body";
+import List from './components/List'
+import ConfigForm from './components/ConfigForm'
+
+import "./styles/Layout.css"
 
 const App: React.FC = () => {
   return (
-    <div>
+    <div className="app-container">
       <Header />
-      <Body />
+      <List />
+      <ConfigForm />
     </div>
   );
 }

@@ -1,28 +1,29 @@
 import React from "react";
+import { inject, observer } from "mobx-react"
 
-import { JDKProject, Item, Task } from "../stores/model";
+import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore"
+import { JDKProject, Task } from "../stores/model"
 import JDKProjectForm from "./JDKProjectForm";
 import TaskForm from "./TaskForm";
 
 import "../styles/Forms.css";
 
 interface Props {
-    group: string;
-    config: Item;
+    configStore?: ConfigStore
 }
 
 class ConfigForm extends React.PureComponent<Props> {
 
     renderForm = () => {
-        const { config, group } = this.props;
-        switch (group) {
+        const { selectedConfig, selectedGroupId } = this.props.configStore!;
+        switch (selectedGroupId) {
             case "jdkProjects":
                 return (
-                    <JDKProjectForm project={config as JDKProject} />
+                    <JDKProjectForm project={selectedConfig as JDKProject} />
                 );
             case "tasks":
                 return (
-                    <TaskForm task={config as Task} />
+                    <TaskForm task={selectedConfig as Task} />
                 );
             default:
                 return null;
@@ -31,11 +32,13 @@ class ConfigForm extends React.PureComponent<Props> {
 
     render() {
         return (
-            <form>
-                {this.renderForm()}
-            </form>
+            <div className="form-container">
+                <form>
+                    {this.renderForm()}
+                </form>
+            </div>
         )
     }
 }
 
-export default ConfigForm;
+export default inject(CONFIG_STORE)(observer(ConfigForm));

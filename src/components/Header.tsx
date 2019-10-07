@@ -9,20 +9,26 @@ interface Props {
 
 class Header extends React.PureComponent<Props> {
 
+    componentDidMount() {
+        const configStore = this.props.configStore!;
+        configStore.fetchPlatforms();
+        configStore.fetchProducts();
+        configStore.fetchTasks();
+        configStore.fetchTaskVariants();
+        configStore.fetchJDKProjects();
+    }
+
     render() {
         const configStore = this.props.configStore!;
         return (
-            <div style={{
-                margin: "0 auto",
-                display: "flex",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                width: "80%"
-            }}>
+            <div className="header-container">
                 {
                     configStore.configGroups.map(group =>
-                        <div className="HeaderItem" key={group.id} onClick={() => configStore.selectGroup(group.id) }>
-                            <div style={{ textAlign: "center", fontSize: 20 }}>{group.id}</div>
+                        <div
+                            className="header-item"
+                            key={group.id}
+                            onClick={() => configStore.selectGroup(group.id)}>
+                            <div>{group.id}</div>
                         </div>
                     )
                 }
