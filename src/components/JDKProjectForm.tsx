@@ -8,6 +8,7 @@ import { observable, runInAction } from "mobx";
 import JobConfigComponent from "./JobConfigComponent";
 import TextInput from "./formComponents/TextInput";
 import Select from "./formComponents/Select";
+import Button from "./Button";
 
 interface Props {
     project: JDKProject;
@@ -57,12 +58,24 @@ class JDKProjectForm extends React.PureComponent<Props> {
         this.jdkProject!.product = value
     }
 
+    onSubmit = () => {
+        const configStore = this.props.configStore!
+        switch (this.jdkProjectState) {
+            case "create":
+                configStore.postConfig(this.jdkProject!)
+                break
+            case "update":
+                break;
+        }
+    }
+
     render() {
         const configStore = this.props.configStore!
         const jdkProject = this.jdkProject
         if (!jdkProject) {
             return null
         }
+        const configState = configStore.configState
         const products = configStore.products
         return (
             <fieldset>
@@ -78,8 +91,9 @@ class JDKProjectForm extends React.PureComponent<Props> {
                     label={"Product"}
                     options={products.map(product => product.id)}
                     value={jdkProject!.product}
-                    onChange={(value: string) => this.setState({ product: value })} />
+                    onChange={this.onProductChange} />
                 <JobConfigComponent jobConfig={jdkProject!.jobConfiguration} />
+                <Button onClick={this.onSubmit}>{configState}</Button>
                 <br />
                 <br />
                 <br />
