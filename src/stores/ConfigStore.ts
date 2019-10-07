@@ -1,6 +1,7 @@
 import { observable, runInAction, action } from "mobx";
 
 import { Platform, Product, TaskVariant, Task, JDKProject, Item } from "./model";
+import { defaultTask } from "./defaults";
 
 export const CONFIG_STORE = "configStore";
 
@@ -24,7 +25,8 @@ export class ConfigStore {
     @observable
     private _selectedGroupId: string | undefined = "tasks";
 
-    @observable _selectedConfig: Item | undefined;
+    @observable
+    private _selectedConfig: Item | undefined;
 
     constructor() {
         this._platforms = new Map<string, Platform>();
@@ -43,6 +45,15 @@ export class ConfigStore {
     @action
     selectConfig = (config: Item) => {
         this._selectedConfig = config;
+    }
+
+    @action
+    selectNewConfig = (groupId: string) => {
+        switch (groupId) {
+            case "tasks":
+                this._selectedConfig = defaultTask
+                break
+        }
     }
 
     get selectedGroupId(): string | undefined {
