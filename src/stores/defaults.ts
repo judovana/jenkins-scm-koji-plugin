@@ -1,4 +1,4 @@
-import { Task } from "./model";
+import { Task, JDKProject, ProjectType, PlatformConfig } from "./model";
 
 const defaultTask: Task = {
     id: "",
@@ -24,4 +24,14 @@ const defaultTask: Task = {
     }
 }
 
-export { defaultTask }
+const defaultJDKProject: JDKProject = {
+    id: "",
+    type: ProjectType.JDK_PROJECT,
+    url: "",
+    product: "",
+    jobConfiguration: {
+        platforms: {} as { [id: string]: PlatformConfig }
+    }
+}
+
+export { defaultTask, defaultJDKProject }

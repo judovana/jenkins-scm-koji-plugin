@@ -1,7 +1,7 @@
 import { observable, runInAction, action } from "mobx";
 
 import { Platform, Product, TaskVariant, Task, JDKProject, Item } from "./model";
-import { defaultTask } from "./defaults";
+import { defaultTask, defaultJDKProject } from "./defaults";
 
 export const CONFIG_STORE = "configStore";
 
@@ -50,6 +50,9 @@ export class ConfigStore {
     @action
     selectNewConfig = (groupId: string) => {
         switch (groupId) {
+            case "jdkProjects":
+                this._selectedConfig = defaultJDKProject
+                break
             case "tasks":
                 this._selectedConfig = defaultTask
                 break
