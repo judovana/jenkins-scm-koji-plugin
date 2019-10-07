@@ -60,7 +60,7 @@ class JDKProjectForm extends React.PureComponent<Props> {
     render() {
         const configStore = this.props.configStore!
         const jdkProject = this.jdkProject
-        if (jdkProject) {
+        if (!jdkProject) {
             return null
         }
         const products = configStore.products
