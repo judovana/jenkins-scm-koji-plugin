@@ -82,6 +82,18 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
         this.task!.rpmLimitation.glob = value
     }
 
+    onSubmit = () => {
+        const configStore = this.props.configStore!
+        switch (this.taskState) {
+            case "create":
+                configStore.postConfig(this.task!)
+                break
+            case "update":
+                configStore.putConfig(this.task!)
+                break;
+        }
+    }
+
     renderRPMLimitaion = (rpmLimitation: RPMLimitation) => {
         let flag: LimitFlag
         let glob: string
@@ -181,7 +193,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
                     placeholder={"Enter xml template for post build tasks"}
                     value={this.task.xmlTemplate} />
                 {this.renderRPMLimitaion(this.task.rpmLimitation)}
-                <Button>{configState}</Button>
+                <Button onClick={this.onSubmit}>{configState}</Button>
                 <br />
                 <br />
                 <br />
