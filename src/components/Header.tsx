@@ -11,12 +11,7 @@ class Header extends React.PureComponent<Props> {
 
     componentDidMount() {
         const configStore = this.props.configStore!;
-        configStore.fetchBuildProviders();
-        configStore.fetchPlatforms();
-        configStore.fetchProducts();
-        configStore.fetchTasks();
-        configStore.fetchTaskVariants();
-        configStore.fetchJDKProjects();
+        configStore.fetchConfigs()
     }
 
     render() {

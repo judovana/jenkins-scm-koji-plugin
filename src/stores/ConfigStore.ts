@@ -1,6 +1,6 @@
 import { observable, runInAction, action } from "mobx";
 
-import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider } from "./model";
+import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, ConfigGroup } from "./model";
 import { defaultTask, defaultJDKProject } from "./defaults";
 
 export const CONFIG_STORE = "configStore";
@@ -8,22 +8,7 @@ export const CONFIG_STORE = "configStore";
 export class ConfigStore {
 
     @observable
-    private _buildProviders: Map<string, BuildProvider>;
-
-    @observable
-    private _platforms: Map<string, Platform>;
-
-    @observable
-    private _products: Map<string, Product>;
-
-    @observable
-    private _taskVariants: Map<string, TaskVariant>;
-
-    @observable
-    private _tasks: Map<string, Task>;
-
-    @observable
-    private _jdkProjects: Map<string, JDKProject>;
+    private _configGroups: ConfigGroups
 
     @observable
     private _selectedGroupId: string | undefined = "tasks";
@@ -35,12 +20,7 @@ export class ConfigStore {
     private _configState: ConfigState = "create"
 
     constructor() {
-        this._buildProviders = new Map<string, BuildProvider>();
-        this._platforms = new Map<string, Platform>();
-        this._products = new Map<string, Product>();
-        this._taskVariants = new Map<string, TaskVariant>();
-        this._tasks = new Map<string, Task>();
-        this._jdkProjects = new Map<string, JDKProject>();
+        this._configGroups = {}
     }
 
     @action
@@ -80,19 +60,12 @@ export class ConfigStore {
     }
 
     get selectedGroup(): Item[] {
-        switch (this._selectedGroupId) {
-            case "buildProviders": return Array.from(this._buildProviders.values())
-            case "platforms": return Array.from(this._platforms.values());
-            case "products": return Array.from(this._products.values());
-            case "taskVariants": return Array.from(this._taskVariants.values());
-            case "tasks": return Array.from(this._tasks.values());
-            case "jdkProjects": return Array.from(this._jdkProjects.values());
-            default: return [];
-        }
+        const groupId = this._selectedGroupId || ""
+        return Object.values(this._configGroups[groupId] || {})
     }
 
     get configGroups(): Item[] {
-        return [{id: "buildProviders"}, { id: "platforms" }, { id: "products" }, { id: "taskVariants" }, { id: "tasks" }, { id: "jdkProjects" }];
+        return [{ id: "buildProviders" }, { id: "platforms" }, { id: "products" }, { id: "taskVariants" }, { id: "tasks" }, { id: "jdkProjects" }];
     }
 
     get selectedConfig(): Item | undefined {
@@ -138,93 +111,66 @@ export class ConfigStore {
         })
     }
 
-    async fetchBuildProviders() {
-        const response = await fetch("http://localhost:8081/buildProviders")
-        const buildProviders: BuildProvider[] = await response.json()
-        runInAction(() => {
-            buildProviders.forEach(buildProvider => {
-                this._buildProviders.set(buildProvider.id, buildProvider)
-            })
+    async fetchConfigs() {
+        this.configGroups.forEach(configGroup => {
+            this.fetchConfig(configGroup.id)
         })
     }
 
-    async fetchPlatforms() {
-        const response = await fetch("http://localhost:8081/platforms");
-        const platforms: Platform[] = await response.json();
-        runInAction(() => platforms.forEach(platform => this._platforms.set(platform.id, platform)));
-    }
-
-    async fetchProducts() {
-        const response = await fetch("http://localhost:8081/products");
-        const products: Product[] = await response.json();
-        runInAction(() => products.forEach(product => this._products.set(product.id, product)));
-    }
-
-    async fetchTasks() {
-        const response = await fetch("http://localhost:8081/tasks");
-        const tasks: Task[] = await response.json();
-        runInAction(() => tasks.forEach(task => {
-            this._tasks.set(task.id, task);
-            this._selectedConfig = this._tasks.get("tck");
-        }));
-    }
-
-    async fetchTaskVariants() {
-        const response = await fetch("http://localhost:8081/taskVariants");
-        const taskVariants: TaskVariant[] = await response.json();
-        runInAction(() => taskVariants.forEach(taskVariant => this._taskVariants.set(taskVariant.id, taskVariant)));
-    }
-
-    async fetchJDKProjects() {
-        const response = await fetch("http://localhost:8081/jdkProjects");
-        const projects: JDKProject[] = await response.json();
+    async fetchConfig(id: string) {
+        const response = await fetch(`http://localhost:8081/${id}`)
+        const buildProviders: Item[] = await response.json()
+        const buildProvidersMap: ConfigGroup = {}
+        buildProviders.forEach(buildProvider =>
+            buildProvidersMap[buildProvider.id] = buildProvider
+        )
         runInAction(() => {
-            projects.forEach(project => this._jdkProjects.set(project.id, project));
-        });
+            this._configGroups[id] = buildProvidersMap
+        })
     }
 
     get buildProviders(): BuildProvider[] {
-        return Array.from(this._buildProviders.values());
+        return Object.values(this._configGroups["buildProviders"])
     }
 
     get platforms(): Platform[] {
-        return Array.from(this._platforms.values());
+        return Object.values(this._configGroups["platforms"])
     }
 
     getPlatform(id: string): Platform | undefined {
-        return this._platforms.get(id);
+        return this._configGroups["platforms"][id] as Task | undefined
     }
 
     get products(): Product[] {
-        return Array.from(this._products.values());
+        return Object.values(this._configGroups["products"]) as Product[]
     }
 
     getProduct(id: string): Product | undefined {
-        return this._products.get(id);
+        return this._configGroups["products"][id] as Task | undefined
     }
 
     get taskVariants(): TaskVariant[] {
-        return Array.from(this._taskVariants.values());
+        return Object.values(this._configGroups["taskVariants"]) as TaskVariant[]
     }
 
     getTaskVariant(id: string): TaskVariant | undefined {
-        return this._taskVariants.get(id);
+        return this._configGroups["taskVariants"][id] as TaskVariant | undefined
     }
 
     get tasks(): Task[] {
-        return Array.from(this._tasks.values());
+        return Object.values(this._configGroups["tasks"]) as Task[]
     }
 
     getTask(id: string): Task | undefined {
-        return this._tasks.get(id);
+        return this._configGroups["tasks"][id] as Task | undefined
     }
 
     get jdkProjects(): JDKProject[] {
-        return Array.from(this._jdkProjects.values());
+        return Object.values(this._configGroups["jdkProjects"]) as JDKProject[]
     }
 
     getJDKProject(id: string): JDKProject | undefined {
-        return this._jdkProjects.get(id);
+        return this._configGroups["jdkProjects"][id] as JDKProject | undefined
     }
 }
 
