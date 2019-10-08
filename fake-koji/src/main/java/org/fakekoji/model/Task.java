@@ -224,6 +224,7 @@ public class Task {
     }
 
     public enum LimitFlag {
+        NONE("NONE"),
         WHITELIST("WHITELIST"),
         BLACKLIST("BLACKLIST");
 
