@@ -91,11 +91,11 @@ export class ConfigStore {
 
     }
 
-    patchConfig = async (config: Item) => {
+    putConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
         fetch(`http://localhost:8081/${groupId}/${config.id}`, {
             body: JSON.stringify(config),
-            method: "PATCH"
+            method: "PUT"
         }).then(response => {
             console.log(response)
         }).catch(error => {
