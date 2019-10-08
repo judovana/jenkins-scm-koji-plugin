@@ -101,9 +101,36 @@ export class ConfigStore {
 
     postConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
-        fetch(`http://localhost:8081/${groupId}`, {
+        try {
+            const response = await fetch(`http://localhost:8081/${groupId}`, {
+                body: JSON.stringify(config),
+                method: "POST"
+            })
+            if (response.status === 201) {
+                // TODO: store config in its group
+            }
+        } catch (error) {
+            console.log(error)
+        }
+
+    }
+
+    patchConfig = async (config: Item) => {
+        const groupId = this._selectedGroupId
+        fetch(`http://localhost:8081/${groupId}/${config.id}`, {
             body: JSON.stringify(config),
-            method: "POST"
+            method: "PATCH"
+        }).then(response => {
+            console.log(response)
+        }).catch(error => {
+            console.log(error)
+        })
+    }
+
+    deleteConfig = async (id: string) => {
+        const groupId = this._selectedGroupId
+        fetch(`http://localhost:8081/${groupId}/${id}`, {
+            method: "DELETE"
         }).then(response => {
             console.log(response)
         }).catch(error => {
