@@ -88,10 +88,11 @@ public class JDKProjectManager implements Manager<JDKProject> {
         final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
         final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(oldProject);
         try {
-            jobUpdater.update(newJobs, oldJobs);
+            jobUpdater.update(oldJobs, newJobs);
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
         }
+        storage.store(id, jdkProject);
     }
 
     @Override
