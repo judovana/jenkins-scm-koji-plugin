@@ -74,13 +74,16 @@ export class ConfigStore {
 
     postConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
+        if (!groupId) {
+            return
+        }
         try {
             const response = await fetch(`http://localhost:8081/${groupId}`, {
                 body: JSON.stringify(config),
                 method: "POST"
             })
             if (response.status === 201) {
-                // TODO: store config in its group
+                this._configGroups[groupId][config.id] = {...config}
             }
         } catch (error) {
             console.log(error)
@@ -102,13 +105,19 @@ export class ConfigStore {
 
     deleteConfig = async (id: string) => {
         const groupId = this._selectedGroupId
-        fetch(`http://localhost:8081/${groupId}/${id}`, {
-            method: "DELETE"
-        }).then(response => {
-            console.log(response)
-        }).catch(error => {
+        if (!groupId) {
+            return
+        }
+        try {
+            const response = await fetch(`http://localhost:8081/${groupId}/${id}`, {
+                method: "DELETE"
+            })
+            if (response.status === 200) {
+                delete this._configGroups[groupId][id]
+            }
+        } catch (error) {
             console.log(error)
-        })
+        }
     }
 
     async fetchConfigs() {
