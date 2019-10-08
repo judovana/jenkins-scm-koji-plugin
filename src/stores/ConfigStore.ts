@@ -93,14 +93,20 @@ export class ConfigStore {
 
     putConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
-        fetch(`http://localhost:8081/${groupId}/${config.id}`, {
-            body: JSON.stringify(config),
-            method: "PUT"
-        }).then(response => {
-            console.log(response)
-        }).catch(error => {
+        if (!groupId) {
+            return
+        }
+        try {
+            const response = await fetch(`http://localhost:8081/${groupId}/${config.id}`, {
+                body: JSON.stringify(config),
+                method: "PUT"
+            })
+            if (response.status === 204) {
+                this._configGroups[groupId][config.id] = { ...config }
+            }
+        } catch (error) {
             console.log(error)
-        })
+        }
     }
 
     deleteConfig = async (id: string) => {
