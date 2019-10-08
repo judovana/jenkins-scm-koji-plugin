@@ -97,6 +97,18 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     @Override
     public void delete(String id) throws StorageException, ManagementException {
+        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
+        if (!storage.contains(id)) {
+            throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
+        }
+        final JDKProject jdkProject = storage.load(id, JDKProject.class);
+        final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
+        try {
+            jobUpdater.update(jobs, Collections.emptySet());
+        } catch (IOException e) {
+            throw new StorageException(e.getMessage());
+        }
+        storage.delete(id);
     }
 
     JDKProject.RepoState cloneProject(
