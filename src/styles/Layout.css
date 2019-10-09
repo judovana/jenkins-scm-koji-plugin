@@ -1,0 +1,105 @@
+html {
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+
+.app-container {
+    display: grid;
+    grid-template-columns: 2fr 5fr;
+    grid-template-areas:
+        "header header"
+        "list form"
+}
+
+.header-container {
+    display: flex;
+    flex-direction: row;
+    grid-area: header;
+}
+
+.header-container .header-item {
+    cursor: pointer;
+    padding: 20px 25px;
+}
+
+.header-container .header-item:hover {
+    background-color: rgba(1, 1, 1, 0.1);
+}
+
+.list-container {
+    grid-area: list
+}
+
+.list-container .header {
+    display: flex;
+    font-size: 30px;
+    justify-content: space-between;
+    padding: 20px 30px;
+}
+
+.list-container .body {
+    display: flex;
+    flex-direction: column
+}
+
+.list-container .list-item {
+    align-items: center;
+    background-color: rgba(1, 1, 1, 0.1);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 25px;
+}
+
+.list-container .list-item:hover {
+    background-color: rgba(1, 1, 1, 0.0);
+}
+
+.form-container {
+    grid-area: form
+}
+
+.tree-node-wrapper {
+    border-radius: 3px;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19);
+    display: grid;
+    grid-template-areas:
+    "title options"
+    "node-info node-info"
+    "nodes nodes";
+    margin: 5px 10px 10px 25px;
+}
+
+.tree-node-title {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    grid-area: title;
+    justify-content: center;
+    padding: 7px;
+}
+
+.tree-node-options {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: row;
+    grid-area: options;
+    justify-content: flex-end;
+    padding: 7px;
+}
+
+.tree-node-info {
+    border-top: 1px solid #ccc;
+    display: flex;
+    flex-direction: row;
+    grid-area: node-info;
+    margin-top: 5px;
+    padding: 10px 0 10px 25px;
+}
+
+.tree-node-nodes {
+    grid-area: nodes;
+}
