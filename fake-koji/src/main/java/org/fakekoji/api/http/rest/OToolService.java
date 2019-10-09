@@ -19,7 +19,7 @@ import java.io.File;
 public class OToolService {
 
     private static final String ID = "id";
-    private static final String CONFIG_ID = "/:ID";
+    private static final String CONFIG_ID = "/:" + ID;
     private static final String BUILD_PROVIDERS = "/buildProviders";
     private static final String BUILD_PROVIDER = BUILD_PROVIDERS + CONFIG_ID;
     private static final String PRODUCTS = "/products";
