@@ -83,7 +83,10 @@ export class ConfigStore {
                 method: "POST"
             })
             if (response.status === 201) {
+
                 this._configGroups[groupId][config.id] = {...config}
+                this._selectedConfig = this._configGroups[groupId][config.id]
+                this._configState = "update"
             }
         } catch (error) {
             console.log(error)
@@ -120,6 +123,10 @@ export class ConfigStore {
             })
             if (response.status === 200) {
                 delete this._configGroups[groupId][id]
+                const selectedConfig = this._selectedConfig
+                if (selectedConfig && id === selectedConfig.id) {
+                    this._selectedConfig = undefined
+                }
             }
         } catch (error) {
             console.log(error)
