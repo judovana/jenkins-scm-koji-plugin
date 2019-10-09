@@ -6,7 +6,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantCategory;
+import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.loadTemplate;
 public class TestJob extends TaskJob {
 
     private final Platform buildPlatform;
-    private final Map<TaskVariantCategory, TaskVariant> buildVariants;
+    private final Map<TaskVariant, TaskVariantValue> buildVariants;
 
     public TestJob(
             String projectName,
@@ -34,9 +34,9 @@ public class TestJob extends TaskJob {
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
-            Map<TaskVariantCategory, TaskVariant> variants,
+            Map<TaskVariant, TaskVariantValue> variants,
             Platform buildPlatform,
-            Map<TaskVariantCategory, TaskVariant> buildVariants,
+            Map<TaskVariant, TaskVariantValue> buildVariants,
             File scriptsRoot
     ) {
         super(projectName, product, buildProviders, task, platform, variants, scriptsRoot);
@@ -48,7 +48,7 @@ public class TestJob extends TaskJob {
             BuildJob buildJob,
             Task task,
             Platform platform,
-            Map<TaskVariantCategory, TaskVariant> variants
+            Map<TaskVariant, TaskVariantValue> variants
     ) {
         this(
                 buildJob.getProjectName(),
@@ -65,7 +65,7 @@ public class TestJob extends TaskJob {
 
     @Override
     public String generateTemplate() throws IOException {
-        final Map<TaskVariantCategory, TaskVariant> variants = new HashMap<>();
+        final Map<TaskVariant, TaskVariantValue> variants = new HashMap<>();
         variants.putAll(getBuildVariants());
         variants.putAll(getVariants());
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(loadTemplate(TASK_JOB_TEMPLATE))
@@ -85,7 +85,7 @@ public class TestJob extends TaskJob {
         return buildPlatform;
     }
 
-    public Map<TaskVariantCategory, TaskVariant> getBuildVariants() {
+    public Map<TaskVariant, TaskVariantValue> getBuildVariants() {
         return buildVariants;
     }
 

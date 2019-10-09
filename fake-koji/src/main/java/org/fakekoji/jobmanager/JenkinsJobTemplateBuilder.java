@@ -6,7 +6,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantCategory;
+import org.fakekoji.model.TaskVariantValue;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -141,7 +141,7 @@ public class JenkinsJobTemplateBuilder {
 
     public JenkinsJobTemplateBuilder buildFakeKojiXmlRpcApiTemplate(
             String projectName,
-            Map<TaskVariantCategory, TaskVariant> buildVariants,
+            Map<TaskVariant, TaskVariantValue> buildVariants,
             String platform,
             boolean isBuilt
     ) throws IOException {
@@ -158,7 +158,7 @@ public class JenkinsJobTemplateBuilder {
     }
 
     String fillExportedVariables(
-            Map<TaskVariantCategory, TaskVariant> variants,
+            Map<TaskVariant, TaskVariantValue> variants,
             String platformName,
             String platformProvider
     ) {
@@ -190,7 +190,7 @@ public class JenkinsJobTemplateBuilder {
     public JenkinsJobTemplateBuilder buildScriptTemplate(
             Task task,
             Platform platform,
-            Map<TaskVariantCategory, TaskVariant> variants,
+            Map<TaskVariant, TaskVariantValue> variants,
             File scriptsRoot
     ) throws IOException {
         final String vmName;

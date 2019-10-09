@@ -4,8 +4,8 @@ import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantCategory;
 
 import java.io.File;
 import java.util.Map;
@@ -19,7 +19,7 @@ public abstract class TaskJob extends Job {
     private final Set<BuildProvider> buildProviders;
     private final Task task;
     private final Platform platform;
-    private final Map<TaskVariantCategory, TaskVariant> variants;
+    private final Map<TaskVariant, TaskVariantValue> variants;
     private final File scriptsRoot;
 
     TaskJob(
@@ -28,8 +28,7 @@ public abstract class TaskJob extends Job {
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
-            Map<TaskVariantCategory,
-            TaskVariant> variants,
+            Map<TaskVariant, TaskVariantValue> variants,
             File scriptsRoot
     ) {
         this.projectName = projectName;
@@ -61,7 +60,7 @@ public abstract class TaskJob extends Job {
         return platform;
     }
 
-    public Map<TaskVariantCategory, TaskVariant> getVariants() {
+    public Map<TaskVariant, TaskVariantValue> getVariants() {
         return variants;
     }
 

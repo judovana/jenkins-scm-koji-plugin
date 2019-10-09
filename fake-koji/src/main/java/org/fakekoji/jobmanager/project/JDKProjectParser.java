@@ -16,7 +16,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantCategory;
+import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.jobmanager.ConfigManager;
 
@@ -106,8 +106,8 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
 
         private final Map<String, Platform> platformsMap;
         private final Map<String, Task> tasksMap;
-        private final Map<String, TaskVariantCategory> testVariantCategoriesMap;
-        private final Map<String, TaskVariantCategory> buildVariantCategoriesMap;
+        private final Map<String, TaskVariant> testVariantsMap;
+        private final Map<String, TaskVariant> buildVariantsMap;
 
         private final Set<Job> jobs;
 
@@ -116,11 +116,11 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
         private Set<BuildProvider> buildProviders;
         private Platform buildPlatform;
         private Task buildTask;
-        private Map<TaskVariantCategory, TaskVariant> buildVariants;
+        private Map<TaskVariant, TaskVariantValue> buildVariants;
         private Platform testPlatform;
         private Task testTask;
         private BuildJob buildJob;
-        private Map<TaskVariantCategory, TaskVariant> testVariants;
+        private Map<TaskVariant, TaskVariantValue> testVariants;
 
         JobBuilder(final ConfigManager configManager) throws StorageException {
             jobs = new HashSet<>();
@@ -138,16 +138,16 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
                     .loadAll(Platform.class)
                     .stream()
                     .collect(Collectors.toMap(Platform::getId, platform -> platform));
-            testVariantCategoriesMap = configManager.getTaskVariantCategoryStorage()
-                    .loadAll(TaskVariantCategory.class)
+            testVariantsMap = configManager.getTaskVariantStorage()
+                    .loadAll(TaskVariant.class)
                     .stream()
-                    .filter(category -> category.getType().equals(Task.Type.TEST))
-                    .collect(Collectors.toMap(TaskVariantCategory::getId, taskVariantCategory -> taskVariantCategory));
-            buildVariantCategoriesMap = configManager.getTaskVariantCategoryStorage()
-                    .loadAll(TaskVariantCategory.class)
+                    .filter(variant -> variant.getType().equals(Task.Type.TEST))
+                    .collect(Collectors.toMap(TaskVariant::getId, taskVariant -> taskVariant));
+            buildVariantsMap = configManager.getTaskVariantStorage()
+                    .loadAll(TaskVariant.class)
                     .stream()
-                    .filter(category -> category.getType().equals(Task.Type.BUILD))
-                    .collect(Collectors.toMap(TaskVariantCategory::getId, taskVariantCategory -> taskVariantCategory));
+                    .filter(variant -> variant.getType().equals(Task.Type.BUILD))
+                    .collect(Collectors.toMap(TaskVariant::getId, taskVariant -> taskVariant));
         }
 
         Set<Job> getJobs() {
@@ -262,15 +262,15 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
             if (buildVariants == null) {
                 buildVariants = new HashMap<>(variants.size());
                 variants.forEach((String key, String value) -> {
-                    final TaskVariantCategory category = buildVariantCategoriesMap.get(key);
-                    if (category == null) {
-                        throw new RuntimeException("Unknown variant category");
-                    }
-                    final TaskVariant variant = category.getVariants().get(value);
+                    final TaskVariant variant = buildVariantsMap.get(key);
                     if (variant == null) {
                         throw new RuntimeException("Unknown variant");
                     }
-                    buildVariants.put(category, variant);
+                    final TaskVariantValue variantValue = variant.getVariants().get(value);
+                    if (variantValue == null) {
+                        throw new RuntimeException("Unknown variant");
+                    }
+                    buildVariants.put(variant, variantValue);
                 });
                 buildBuildJob();
                 return;
@@ -278,15 +278,15 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
             if (testVariants == null) {
                 testVariants = new HashMap<>(variants.size());
                 variants.forEach((String key, String value) -> {
-                    final TaskVariantCategory category = testVariantCategoriesMap.get(key);
-                    if (category == null) {
-                        throw new RuntimeException("Unknown variant category");
-                    }
-                    final TaskVariant variant = category.getVariants().get(value);
+                    final TaskVariant variant = testVariantsMap.get(key);
                     if (variant == null) {
                         throw new RuntimeException("Unknown variant");
                     }
-                    testVariants.put(category, variant);
+                    final TaskVariantValue variantValue = variant.getVariants().get(value);
+                    if (variantValue == null) {
+                        throw new RuntimeException("Unknown variant");
+                    }
+                    testVariants.put(variant, variantValue);
                 });
                 buildTestJob();
                 return;

@@ -5,8 +5,8 @@ import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantCategory;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class BuildJob extends TaskJob {
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
-            Map<TaskVariantCategory, TaskVariant> variants,
+            Map<TaskVariant, TaskVariantValue> variants,
             File scriptsRoot
     ) {
         super(projectName, product, buildProviders, task, platform, variants, scriptsRoot);

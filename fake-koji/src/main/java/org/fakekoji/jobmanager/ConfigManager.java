@@ -5,7 +5,7 @@ import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
-import org.fakekoji.model.TaskVariantCategory;
+import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.DirectoryJsonStorage;
 import org.fakekoji.storage.Storage;
 
@@ -15,14 +15,14 @@ public class ConfigManager {
 
     private final static String BUILD_PROVIDERS = "buildProviders";
     private final static String PRODUCTS = "products";
-    private final static String TASK_VARIANT_CATEGORIES = "taskVariantCategories";
+    private final static String TASK_VARIANTS = "taskVariants";
     private final static String PLATFORMS = "platforms";
     private final static String PROJECTS = "projects";
     private final static String TASKS = "tasks";
 
     private final Storage<BuildProvider> buildProviderStorage;
     private final Storage<Product> productStorage;
-    private final Storage<TaskVariantCategory> taskVariantCategoryStorage;
+    private final Storage<TaskVariant> taskVariantStorage;
     private final Storage<Platform> platformStorage;
     private final Storage<JDKProject> jdkProjectStorage;
     private final Storage<Task> taskStorage;
@@ -30,14 +30,14 @@ public class ConfigManager {
     private ConfigManager(
             Storage<BuildProvider> buildProviderStorage,
             Storage<Product> productStorage,
-            Storage<TaskVariantCategory> taskVariantCategoryStorage,
+            Storage<TaskVariant> taskVariantStorage,
             Storage<Platform> platformStorage,
             Storage<JDKProject> jdkProjectStorage,
             Storage<Task> taskStorage
     ) {
         this.buildProviderStorage = buildProviderStorage;
         this.productStorage = productStorage;
-        this.taskVariantCategoryStorage = taskVariantCategoryStorage;
+        this.taskVariantStorage = taskVariantStorage;
         this.platformStorage = platformStorage;
         this.jdkProjectStorage = jdkProjectStorage;
         this.taskStorage = taskStorage;
@@ -47,7 +47,7 @@ public class ConfigManager {
         return new ConfigManager(
                 new DirectoryJsonStorage<>(Paths.get(storagePath, BUILD_PROVIDERS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, PRODUCTS).toFile()),
-                new DirectoryJsonStorage<>(Paths.get(storagePath, TASK_VARIANT_CATEGORIES).toFile()),
+                new DirectoryJsonStorage<>(Paths.get(storagePath, TASK_VARIANTS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, PLATFORMS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, PROJECTS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, TASKS).toFile())
@@ -62,8 +62,8 @@ public class ConfigManager {
         return productStorage;
     }
 
-    public Storage<TaskVariantCategory> getTaskVariantCategoryStorage() {
-        return taskVariantCategoryStorage;
+    public Storage<TaskVariant> getTaskVariantStorage() {
+        return taskVariantStorage;
     }
 
     public Storage<Platform> getPlatformStorage() {
