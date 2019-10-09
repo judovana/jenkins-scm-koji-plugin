@@ -5,7 +5,7 @@
 
     <groupId>fake-koji</groupId>
     <artifactId>koji-scm</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Koji SCM</name>
