@@ -78,16 +78,13 @@ export class ConfigStore {
             return
         }
         try {
-            const response = await fetch(`http://localhost:8081/${groupId}`, {
+            await fetch(`http://localhost:8081/${groupId}`, {
                 body: JSON.stringify(config),
                 method: "POST"
             })
-            if (response.status === 201) {
-
-                this._configGroups[groupId][config.id] = {...config}
-                this._selectedConfig = this._configGroups[groupId][config.id]
-                this._configState = "update"
-            }
+            this._configGroups[groupId][config.id] = { ...config }
+            this._selectedConfig = this._configGroups[groupId][config.id]
+            this._configState = "update"
         } catch (error) {
             console.log(error)
         }
@@ -100,13 +97,11 @@ export class ConfigStore {
             return
         }
         try {
-            const response = await fetch(`http://localhost:8081/${groupId}/${config.id}`, {
+            await fetch(`http://localhost:8081/${groupId}/${config.id}`, {
                 body: JSON.stringify(config),
                 method: "PUT"
             })
-            if (response.status === 204) {
-                this._configGroups[groupId][config.id] = { ...config }
-            }
+            this._configGroups[groupId][config.id] = { ...config }
         } catch (error) {
             console.log(error)
         }
@@ -118,15 +113,13 @@ export class ConfigStore {
             return
         }
         try {
-            const response = await fetch(`http://localhost:8081/${groupId}/${id}`, {
+            await fetch(`http://localhost:8081/${groupId}/${id}`, {
                 method: "DELETE"
             })
-            if (response.status === 200) {
-                delete this._configGroups[groupId][id]
-                const selectedConfig = this._selectedConfig
-                if (selectedConfig && id === selectedConfig.id) {
-                    this._selectedConfig = undefined
-                }
+            delete this._configGroups[groupId][id]
+            const selectedConfig = this._selectedConfig
+            if (selectedConfig && id === selectedConfig.id) {
+                this._selectedConfig = undefined
             }
         } catch (error) {
             console.log(error)
