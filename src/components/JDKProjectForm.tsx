@@ -70,6 +70,7 @@ class JDKProjectForm extends React.PureComponent<Props> {
                 configStore.postConfig(this.jdkProject!)
                 break
             case "update":
+                configStore.putConfig(this.jdkProject!)
                 break;
         }
     }
