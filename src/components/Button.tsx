@@ -24,12 +24,17 @@ class Button extends React.PureComponent<ButtonProps> {
         color: "blue"
     }
 
+    onClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+        event.stopPropagation()
+        this.props.onClick()
+    }
+
     render() {
-        const { children, onClick, color } = this.props
+        const { children, color } = this.props
         return (
             <div
                 className={`button button-${color}`}
-                onClick={onClick}>
+                onClick={this.onClick}>
                 {children}
             </div>
         )
