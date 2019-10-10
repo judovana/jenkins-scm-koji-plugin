@@ -598,6 +598,26 @@ public class KojiListBuildsTest {
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
+    
+    @Test
+    public void testListMatchingBuildsAnything64_OpenJ9() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(new KojiScmConfig(
+                "http://hydra.brq.redhat.com:"+ JavaServerConstants.xPortAxiom + "/RPC2",
+                "http://hydra.brq.redhat.com:" + JavaServerConstants.dPortAxiom,
+                "java-1.8.0-openj9",
+                "x86_64",
+                "*",
+                "",
+                null,
+                null,
+                false,
+                false,
+                10
+        ), new NotProcessedNvrPredicate(new ArrayList<>()));
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        assertNotNull(build);
+    }
 
     @Test
     public void testListMatchingBuildsWindows() throws Exception {
