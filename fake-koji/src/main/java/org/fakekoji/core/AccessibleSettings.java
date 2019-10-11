@@ -43,6 +43,7 @@ public class AccessibleSettings {
     private final int fileDownloadPort;
     private final int sshPort;
     private final int jenkinsPort;
+    private final int webappPort;
     private URL xmlRpcUrl;
     private URL downloadUrl;
     private URL jenkinsUrlString;
@@ -58,7 +59,8 @@ public class AccessibleSettings {
             int xmlRpcPort,
             int fileDownloadPort,
             int sshPort,
-            int jenkinsPort
+            int jenkinsPort,
+            int webappPort
     ) throws UnknownHostException, MalformedURLException {
         this.dbFileRoot = dbFileRoot;
         this.localReposRoot = localReposRoot;
@@ -70,6 +72,7 @@ public class AccessibleSettings {
         this.fileDownloadPort = fileDownloadPort;
         this.sshPort = sshPort;
         this.jenkinsPort = jenkinsPort;
+        this.webappPort = webappPort;
         this.projectMapping = new ProjectMapping(this);
 
         String thisMachine = InetAddress.getLocalHost().getHostName();
@@ -161,6 +164,10 @@ public class AccessibleSettings {
      */
     public int getSshPort() {
         return sshPort;
+    }
+
+    public int getWebappPort() {
+        return webappPort;
     }
 
     public URL getXmlRpcUrl() {

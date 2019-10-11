@@ -141,7 +141,7 @@ public class PreviewFakeKoji {
                 "builds   : " + builds + '\n';
         LOGGER.info(info);
 
-        AccessibleSettings settings = new AccessibleSettings(builds, repos, null, null, null, null, xmlrpcurl, download, PORT, 0);
+        AccessibleSettings settings = new AccessibleSettings(builds, repos, null, null, null, null, xmlrpcurl, download, PORT, 0, 0);
 
         PreviewFakeKoji previewFakeKojiServer = new PreviewFakeKoji(settings);
         previewFakeKojiServer.start();

@@ -111,4 +111,8 @@ public class OToolService {
     public void stop() {
         app.stop();
     }
+
+    public int getPort() {
+        return port;
+    }
 }

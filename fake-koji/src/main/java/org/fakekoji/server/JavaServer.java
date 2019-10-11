@@ -41,7 +41,10 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.fakekoji.api.http.rest.OToolService;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.api.http.filehandling.FileDownloadService;
 import org.fakekoji.api.xmlrpc.XmlRpcKojiService;
@@ -53,15 +56,25 @@ public class JavaServer {
 
     public static final int DEFAULT_JENKINS_PORT = 8080;
     public static final int DEFAULT_XML_RPC_PORT = 9848;
+    public static final int DEFAULT_WEBAPP_PORT = 80;
 
     private final XmlRpcKojiService xmlRpcKojiService;
     private final FileDownloadService fileDownloadService;
     private final ScpService scpService;
+    private final OToolService oToolService;
 
     public JavaServer(AccessibleSettings settings) {
         xmlRpcKojiService = new XmlRpcKojiService(settings);
         fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getFileDownloadPort());
         scpService = new ScpService(settings.getDbFileRoot(), settings.getSshPort());
+        oToolService = new OToolService(
+                settings.getWebappPort(),
+                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                settings.getJenkinsJobsRoot(),
+                settings.getJenkinsJobArchiveRoot(),
+                settings.getLocalReposRoot(),
+                settings.getScriptsRoot()
+        );
     }
 
     public void start() throws Exception {
@@ -77,6 +90,9 @@ public class JavaServer {
         LOGGER.info("Starting sshd server to accept files.");
         scpService.start();
         LOGGER.info("Sshd server started successfully on " + scpService.getPort());
+        LOGGER.info("Starting Rest API service");
+        oToolService.start();
+        LOGGER.info("Rest API service started successfully on " + oToolService.getPort());
     }
 
     public void stop() {
@@ -87,6 +103,7 @@ public class JavaServer {
         }
         fileDownloadService.stop();
         xmlRpcKojiService.stop();
+        oToolService.stop();
     }
 
     public static void main(String[] args) throws Exception {
@@ -102,10 +119,12 @@ public class JavaServer {
         final int xmlRpcPort;
         final int sshPort;
         final int fileDownloadPort;
+        final int webappPort;
 
         xmlRpcPort = getPort(props, Property.XML_RPC_PORT, DEFAULT_XML_RPC_PORT);
         fileDownloadPort = getPort(props, Property.FILE_DOWNLOAD_PORT, xmlRpcPort + 1);
         sshPort = getPort(props, Property.SSH_PORT, xmlRpcPort - 26);
+        webappPort = getPort(props, Property.WEBAPP_PORT, DEFAULT_WEBAPP_PORT);
 
         final AccessibleSettings settings = new AccessibleSettings(
                 getRoot(props, Property.BUILD_DB_ROOT),
@@ -117,7 +136,8 @@ public class JavaServer {
                 xmlRpcPort,
                 fileDownloadPort,
                 sshPort,
-                getPort(props, Property.JENKINS_PORT, DEFAULT_JENKINS_PORT)
+                getPort(props, Property.JENKINS_PORT, DEFAULT_JENKINS_PORT),
+                webappPort
         );
 
         new JavaServer(settings).start();
@@ -128,6 +148,7 @@ public class JavaServer {
         FILE_DOWNLOAD_PORT("port.file.download"),
         SSH_PORT("port.ssh"),
         JENKINS_PORT("port.jenkins"),
+        WEBAPP_PORT("port.webapp"),
         REPOS_ROOT("root.repos"),
         BUILD_DB_ROOT("root.build.db"),
         JENKINS_JOBS_ROOT("root.jenkins.jobs"),

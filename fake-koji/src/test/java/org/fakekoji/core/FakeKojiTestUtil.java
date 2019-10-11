@@ -159,7 +159,7 @@ public class FakeKojiTestUtil {
     public static JavaServer createDefaultFakeKojiServer(File localBuilds, File upstreamRepos) throws UnknownHostException, MalformedURLException {
 
         AccessibleSettings settings = new AccessibleSettings(localBuilds, upstreamRepos, null, null, null, null,
-                9848, 9849, 9843, 8080);
+                9848, 9849, 9843, 8080, 0);
         return new JavaServer(settings);
     }
 
