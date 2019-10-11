@@ -91,11 +91,11 @@ public class JavaServer {
 
     public static void main(String[] args) throws Exception {
 
-        if (args.length != 2) {
+        if (args.length != 1) {
             throw new RuntimeException("Expected path to properties file"); // TODO: add description of each property
         }
 
-        final String propertyFilePath = args[1];
+        final String propertyFilePath = args[0];
         final Properties props = new Properties();
         props.load(new FileInputStream(new File(propertyFilePath)));
 
