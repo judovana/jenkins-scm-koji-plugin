@@ -1,7 +1,6 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.Javalin;
-import io.javalin.core.JavalinConfig;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
@@ -46,7 +45,9 @@ public class OToolService {
             final File scriptsRoot
             ) {
         this.port = port;
-        app = Javalin.create(JavalinConfig::enableCorsForAllOrigins);
+        app = Javalin.create(config -> config
+                .addStaticFiles("/webapp")
+        );
         jenkinsJobUpdater = new JenkinsJobUpdater(jenkinsJobsRoot, jenkinsJobArchiveRoot);
         app.routes(() -> {
 
