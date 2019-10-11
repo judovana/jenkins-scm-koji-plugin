@@ -10,14 +10,17 @@
 # webapp
 # dependencies
 webapp/node_modules
-webapp//.pnp
+webapp/.pnp
 webapp/.pnp.js
 
 # testing
-webapp//coverage
+webapp/coverage
 
 # production
-webapp//build
+webapp/build
+
+# maven
+webapp/node
 
 # misc
 webapp/.DS_Store
