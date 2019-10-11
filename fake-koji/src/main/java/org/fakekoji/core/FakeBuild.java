@@ -239,21 +239,20 @@ public class FakeBuild {
                 if (file.getName().toLowerCase().contains("win") && file.getParentFile().getName().toLowerCase().contains("win")) {
                     return prefixIfNecessary(TagsProvider.getWinTags());
                 }
-            }
+            } else
             //oracle and ibm are far from being done. But at least start is sumarised there
             if (name.endsWith("oracle")) {
                 //currently we have static only for linux
                 if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {
                     return prefixIfNecessary(connect(TagsProvider.getOracleTags()));
                 }
-            }
+            } else 
             if (name.endsWith("ibm")) {
                 //currently we have static only for linux
                 if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {
                     return prefixIfNecessary(connect(TagsProvider.getSuplementaryRhel5LikeTag(), TagsProvider.getSuplementaryRhel6LikeTag(), TagsProvider.getSuplementaryRhel7LikeTag()));
                 }
-            }
-            if (name.startsWith("thermostat-ng")) {
+            } else {
                 if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {
                     return prefixIfNecessary(connect(TagsProvider.getFedoraTags(), TagsProvider.getRHELtags(), TagsProvider.getRhelTags(), TagsProvider.getWinTags()));
                 }
