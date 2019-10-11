@@ -86,10 +86,10 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
         const configStore = this.props.configStore!
         switch (this.taskState) {
             case "create":
-                configStore.postConfig(this.task!)
+                configStore.createConfig(this.task!)
                 break
             case "update":
-                configStore.putConfig(this.task!)
+                configStore.updateConfig(this.task!)
                 break;
         }
     }

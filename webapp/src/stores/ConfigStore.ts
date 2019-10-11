@@ -2,6 +2,7 @@ import { observable, runInAction, action } from "mobx";
 
 import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, ConfigGroup } from "./model";
 import { defaultTask, defaultJDKProject } from "./defaults";
+import ConfigService from "./services/ConfigService";
 
 export const CONFIG_STORE = "configStore";
 
@@ -19,7 +20,7 @@ export class ConfigStore {
     @observable
     private _configState: ConfigState = "create"
 
-    constructor() {
+    constructor(private readonly service: ConfigService) {
         this._configGroups = {}
     }
 
@@ -72,38 +73,32 @@ export class ConfigStore {
         return this._selectedConfig;
     }
 
-    postConfig = async (config: Item) => {
+    createConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
         if (!groupId) {
             return
         }
-        try {
-            await fetch(`http://localhost:8081/${groupId}`, {
-                body: JSON.stringify(config),
-                method: "POST"
-            })
-            this._configGroups[groupId][config.id] = { ...config }
-            this._selectedConfig = this._configGroups[groupId][config.id]
-            this._configState = "update"
-        } catch (error) {
-            console.log(error)
-        }
 
+        const result = await this.service.postConfig(groupId, config)
+        if (result) {
+            runInAction(() => {
+                this._configGroups[groupId][config.id] = { ...config }
+                this._selectedConfig = this._configGroups[groupId][config.id]
+                this._configState = "update"
+            })
+        }
     }
 
-    putConfig = async (config: Item) => {
+    updateConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
         if (!groupId) {
             return
         }
-        try {
-            await fetch(`http://localhost:8081/${groupId}/${config.id}`, {
-                body: JSON.stringify(config),
-                method: "PUT"
+        const result = await this.service.putConfig(groupId, config)
+        if (result) {
+            runInAction(() => {
+                this._configGroups[groupId][config.id] = { ...config }
             })
-            this._configGroups[groupId][config.id] = { ...config }
-        } catch (error) {
-            console.log(error)
         }
     }
 
@@ -112,35 +107,22 @@ export class ConfigStore {
         if (!groupId) {
             return
         }
-        try {
-            await fetch(`http://localhost:8081/${groupId}/${id}`, {
-                method: "DELETE"
+        const response = await this.service.deleteConfig(groupId, id)
+        if (response) {
+            runInAction(() => {
+                delete this._configGroups[groupId][id]
+                const selectedConfig = this._selectedConfig
+                if (selectedConfig && id === selectedConfig.id) {
+                    this._selectedConfig = undefined
+                }
             })
-            delete this._configGroups[groupId][id]
-            const selectedConfig = this._selectedConfig
-            if (selectedConfig && id === selectedConfig.id) {
-                this._selectedConfig = undefined
-            }
-        } catch (error) {
-            console.log(error)
         }
     }
 
-    async fetchConfigs() {
-        this.configGroups.forEach(configGroup => {
-            this.fetchConfig(configGroup.id)
-        })
-    }
-
-    async fetchConfig(id: string) {
-        const response = await fetch(`http://localhost:8081/${id}`)
-        const buildProviders: Item[] = await response.json()
-        const buildProvidersMap: ConfigGroup = {}
-        buildProviders.forEach(buildProvider =>
-            buildProvidersMap[buildProvider.id] = buildProvider
-        )
+    fetchConfigs = async () => {
+        const configGroups = await this.service.fetchConfigs(this.configGroups.map(configGroup => configGroup.id))
         runInAction(() => {
-            this._configGroups[id] = buildProvidersMap
+            this._configGroups = configGroups
         })
     }
 
@@ -188,7 +170,3 @@ export class ConfigStore {
         return this._configGroups["jdkProjects"][id] as JDKProject | undefined
     }
 }
-
-const store = new ConfigStore();
-
-export default store;

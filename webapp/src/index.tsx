@@ -6,7 +6,13 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
-import configStore from "./stores/ConfigStore";
+import { ConfigStore } from "./stores/ConfigStore";
+import ConfigService from './stores/services/ConfigService';
+
+const url = window.location.origin
+
+const configService = new ConfigService(url)
+const configStore = new ConfigStore(configService)
 
 ReactDOM.render(
     <Provider

@@ -67,10 +67,10 @@ class JDKProjectForm extends React.PureComponent<Props> {
         const configStore = this.props.configStore!
         switch (this.jdkProjectState) {
             case "create":
-                configStore.postConfig(this.jdkProject!)
+                configStore.createConfig(this.jdkProject!)
                 break
             case "update":
-                configStore.putConfig(this.jdkProject!)
+                configStore.updateConfig(this.jdkProject!)
                 break;
         }
     }
