@@ -67,14 +67,18 @@ public class JavaServer {
         xmlRpcKojiService = new XmlRpcKojiService(settings);
         fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getFileDownloadPort());
         scpService = new ScpService(settings.getDbFileRoot(), settings.getSshPort());
-        oToolService = new OToolService(
-                settings.getWebappPort(),
-                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                settings.getJenkinsJobsRoot(),
-                settings.getJenkinsJobArchiveRoot(),
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
+        if (settings.getConfigRoot() != null) {
+            oToolService = new OToolService(
+                    settings.getWebappPort(),
+                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                    settings.getJenkinsJobsRoot(),
+                    settings.getJenkinsJobArchiveRoot(),
+                    settings.getLocalReposRoot(),
+                    settings.getScriptsRoot()
+            );
+        } else {
+            oToolService = null;
+        }
     }
 
     public void start() throws Exception {
@@ -90,9 +94,11 @@ public class JavaServer {
         LOGGER.info("Starting sshd server to accept files.");
         scpService.start();
         LOGGER.info("Sshd server started successfully on " + scpService.getPort());
-        LOGGER.info("Starting Rest API service");
-        oToolService.start();
-        LOGGER.info("Rest API service started successfully on " + oToolService.getPort());
+        if (oToolService != null) {
+            LOGGER.info("Starting Rest API service");
+            oToolService.start();
+            LOGGER.info("Rest API service started successfully on " + oToolService.getPort());
+        }
     }
 
     public void stop() {
@@ -103,7 +109,9 @@ public class JavaServer {
         }
         fileDownloadService.stop();
         xmlRpcKojiService.stop();
-        oToolService.stop();
+        if (oToolService != null) {
+            oToolService.stop();
+        }
     }
 
     public static void main(String[] args) throws Exception {
