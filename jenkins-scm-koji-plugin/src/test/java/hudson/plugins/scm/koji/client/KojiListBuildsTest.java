@@ -269,6 +269,16 @@ public class KojiListBuildsTest {
         );
     }
 
+    RealKojiXmlRpcApi createConfigWithOpenJ9() {
+        return new RealKojiXmlRpcApi(
+                "java-1.8.0-openj9",
+                "x86_64",
+                "*",
+                "",
+                null
+        );
+    }
+
     RealKojiXmlRpcApi createMultiProductConfig() {
         return new RealKojiXmlRpcApi(
                 "java-1.7.0-openjdk java-1.8.0-openjdk java-9-openjdk",
@@ -602,19 +612,12 @@ public class KojiListBuildsTest {
     @Test
     public void testListMatchingBuildsAnything64_OpenJ9() throws Exception {
         assumeTrue(onRhNet);
-        KojiListBuilds worker = new KojiListBuilds(new KojiScmConfig(
-                "http://hydra.brq.redhat.com:"+ JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://hydra.brq.redhat.com:" + JavaServerConstants.dPortAxiom,
-                "java-1.8.0-openj9",
-                "x86_64",
-                "*",
-                "",
-                null,
-                null,
-                false,
-                false,
+        KojiListBuilds worker = new KojiListBuilds(
+                createHydraOnlyList(),
+                createConfigWithOpenJ9(),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
-        ), new NotProcessedNvrPredicate(new ArrayList<>()));
+        );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         assertNotNull(build);
     }
