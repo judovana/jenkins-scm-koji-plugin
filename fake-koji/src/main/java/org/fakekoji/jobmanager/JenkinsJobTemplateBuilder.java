@@ -64,6 +64,7 @@ public class JenkinsJobTemplateBuilder {
     static final String PLATFORM_NAME = "%{PLATFORM_NAME}";
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
     static final String DESTROY_SCRIPT = "%{DESTROY_SCRIPT}";
+    static final String SCM_POLL_SCHEDULE = "%{SCM_POLL_SCHEDULE}";
 
     static final String XML_NEW_LINE = "&#13;";
     static final String XML_APOS = "&apos;";
@@ -227,6 +228,7 @@ public class JenkinsJobTemplateBuilder {
         }
         template = template
                 .replace(NODES, String.join(" ", nodes))
+                .replace(SCM_POLL_SCHEDULE, task.getScmPollSchedule())
                 .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
                 .replace(TASK_SCRIPT, task.getScript())
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())

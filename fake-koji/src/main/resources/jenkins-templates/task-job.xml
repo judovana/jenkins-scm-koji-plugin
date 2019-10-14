@@ -18,7 +18,7 @@
     <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
     <triggers>
         <hudson.triggers.SCMTrigger>
-            <spec>H/27 * * * *</spec>
+            <spec>%{SCM_POLL_SCHEDULE}</spec>
             <ignorePostCommitHooks>false</ignorePostCommitHooks>
         </hudson.triggers.SCMTrigger>
     </triggers>

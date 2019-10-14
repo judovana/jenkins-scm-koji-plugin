@@ -8,6 +8,7 @@ public class Task {
     private final String id;
     private final String script;
     private final Type type;
+    private final String scmPollSchedule;
     private final MachinePreference machinePreference;
     private final Limitation<String> productLimitation;
     private final Limitation<String> platformLimitation;
@@ -19,6 +20,7 @@ public class Task {
         id = null;
         script = null;
         type = null;
+        scmPollSchedule = null;
         machinePreference = null;
         productLimitation = null;
         platformLimitation = null;
@@ -31,6 +33,7 @@ public class Task {
             String id,
             String script,
             Type type,
+            String scmPollSchedule,
             MachinePreference machinePreference,
             Limitation<String> productLimitation,
             Limitation<String> platformLimitation,
@@ -41,6 +44,7 @@ public class Task {
         this.id = id;
         this.script = script;
         this.type = type;
+        this.scmPollSchedule = scmPollSchedule;
         this.machinePreference = machinePreference;
         this.productLimitation = productLimitation;
         this.platformLimitation = platformLimitation;
@@ -59,6 +63,10 @@ public class Task {
 
     public Type getType() {
         return type;
+    }
+
+    public String getScmPollSchedule() {
+        return scmPollSchedule;
     }
 
     public MachinePreference getMachinePreference() {
@@ -93,6 +101,7 @@ public class Task {
         return Objects.equals(id, task.id) &&
                 Objects.equals(script, task.script) &&
                 Objects.equals(type, task.type) &&
+                Objects.equals(scmPollSchedule, task.scmPollSchedule) &&
                 machinePreference == task.machinePreference &&
                 Objects.equals(productLimitation, task.productLimitation) &&
                 Objects.equals(platformLimitation, task.platformLimitation) &&
@@ -103,7 +112,7 @@ public class Task {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, script, type, machinePreference, productLimitation, platformLimitation, fileRequirements, xmlTemplate, rpmLimitation);
+        return Objects.hash(id, script, type, scmPollSchedule, machinePreference, productLimitation, platformLimitation, fileRequirements, xmlTemplate, rpmLimitation);
     }
 
     public static class FileRequirements {

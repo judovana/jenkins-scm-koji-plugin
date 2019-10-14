@@ -46,6 +46,7 @@ export interface VariantsConfig {
 export interface Task extends Item {
     script: string;
     type: TaskType;
+    scmPollSchedule: string;
     machinePreference: MachinePreference;
     productLimitation: Limitation;
     platformLimitation: Limitation;

@@ -54,6 +54,10 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
         this.task!.type = value as TaskType
     }
 
+    onSCMPollScheduleChange = (value: string) => {
+        this.task!.scmPollSchedule = value
+    }
+
     onMachinePreferenceChange = (value: string) => {
         this.task!.machinePreference = value as MachinePreference
     }
@@ -173,6 +177,11 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
                     onChange={this.onMachinePreferenceChange}
                     options={["VM", "VM_ONLY", "HW", "HW_ONLY"]}
                     value={this.task.machinePreference} />
+                <TextInput
+                    label={"SCM poll schedule"}
+                    onChange={this.onSCMPollScheduleChange}
+                    value={this.task.scmPollSchedule}>
+                </TextInput>
                 <TextInput
                     label={"script"}
                     value={this.task.script}

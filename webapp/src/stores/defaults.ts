@@ -4,6 +4,7 @@ const defaultTask: Task = {
     id: "",
     script: "",
     type: "TEST",
+    scmPollSchedule: "",
     machinePreference: "VM",
     productLimitation: {
         flag: "NONE",
