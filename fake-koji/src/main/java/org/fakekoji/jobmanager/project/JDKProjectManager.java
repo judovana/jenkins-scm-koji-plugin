@@ -42,10 +42,13 @@ public class JDKProjectManager implements Manager<JDKProject> {
     public void create(JDKProject project) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         final Storage<Product> productStorage = configManager.getProductStorage();
-        final Product product = productStorage.load(project.getProduct(), Product.class);
         if (storage.contains(project.getId())) {
             throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
         }
+        if (!productStorage.contains(project.getProduct())) {
+            throw new ManagementException("Unknown product: " + project.getProduct());
+        }
+        final Product product = productStorage.load(project.getProduct(), Product.class);
         final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(project);
         storage.store(project.getId(), setProjectRepoStatus(project, JDKProject.RepoState.CLONING));
         final JDKProject.RepoState repoState = cloneProject(
