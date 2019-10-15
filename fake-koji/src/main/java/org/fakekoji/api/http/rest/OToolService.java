@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
+import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.BuildProviderManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.manager.PlatformManager;
@@ -12,6 +13,7 @@ import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.model.Task;
+import org.fakekoji.storage.StorageException;
 
 import java.io.File;
 
@@ -62,19 +64,39 @@ public class OToolService {
 
             final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
             app.post(TASKS, context -> {
-                final Task task = context.bodyValidator(Task.class).get();
-                taskManager.create(task);
-                context.status(201);
+                try {
+                    final Task task = context.bodyValidator(Task.class).get();
+                    taskManager.create(task);
+                    context.status(200);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
             });
             app.get(TASKS, context -> context.json(taskManager.readAll()));
             app.put(TASK, context -> {
-                final String id = context.pathParam(ID);
-                final Task task = context.bodyValidator(Task.class).get();
-                taskManager.update(id, task);
+                try {
+                    final String id = context.pathParam(ID);
+                    final Task task = context.bodyValidator(Task.class).get();
+                    taskManager.update(id, task);
+                    context.status(200);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
             });
             app.delete(TASK, context -> {
-                final String id = context.pathParam(ID);
-                taskManager.delete(id);
+                try {
+                    final String id = context.pathParam(ID);
+                    taskManager.delete(id);
+                    context.status(200);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
             });
 
             final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
@@ -87,19 +109,39 @@ public class OToolService {
                     scriptsRoot
             );
             app.post(JDK_PROJECTS, context -> {
-                final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
-                System.out.println(jdkProject);
-                jdkProjectManager.create(jdkProject);
+                try {
+                    final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
+                    jdkProjectManager.create(jdkProject);
+                    context.status(200);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
             });
             app.get(JDK_PROJECTS, context -> context.json(jdkProjectManager.readAll()));
             app.put(JDK_PROJECT, context -> {
-                final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
-                final String id = context.pathParam(ID);
-                jdkProjectManager.update(id, jdkProject);
+                try {
+                    final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
+                    final String id = context.pathParam(ID);
+                    jdkProjectManager.update(id, jdkProject);
+                    context.status(200);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
             });
             app.delete(JDK_PROJECT, context -> {
-                final String id = context.pathParam(ID);
-                jdkProjectManager.delete(id);
+                try {
+                    final String id = context.pathParam(ID);
+                    jdkProjectManager.delete(id);
+                    context.status(200);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
             });
         });
     }
