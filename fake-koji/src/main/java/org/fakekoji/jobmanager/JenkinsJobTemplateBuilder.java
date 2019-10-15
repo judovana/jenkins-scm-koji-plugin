@@ -287,7 +287,7 @@ public class JenkinsJobTemplateBuilder {
     }
 
     public static String loadTemplate(JenkinsTemplate jenkinsTemplate) throws IOException {
-        return Utils.readResource(jenkinsTemplate.getPath());
+        return Utils.readResource(jenkinsTemplate.getValue());
     }
 
     public enum JenkinsTemplate {
@@ -295,19 +295,19 @@ public class JenkinsJobTemplateBuilder {
         SHELL_SCRIPT_TEMPLATE("shell-script"),
         FAKEKOJI_XML_RPC_API_TEMPLATE("fakekoji-xml-rpc-api"),
         BUILD_PROVIDER_TEMPLATE("provider"),
-        BUILD_PROVIDERS_TEMPLATE("providers"),
+        BUILD_PROVIDERS_TEMPLATE("/providers"),
         TASK_JOB_TEMPLATE("task-job"),
         PULL_JOB_TEMPLATE("pull-job"),
         VM_POST_BUILD_TASK_TEMPLATE("vm-post-build-task");
 
-        private final Path path;
+        private final String value;
 
         JenkinsTemplate(final String template) {
-            this.path = Paths.get(JENKINS_TEMPLATES, template + ".xml");
+            this.value = Paths.get(JENKINS_TEMPLATES, template + ".xml").toString();
         }
 
-        public Path getPath() {
-            return path;
+        public String getValue() {
+            return value;
         }
     }
 }

@@ -1,39 +1,54 @@
 package org.fakekoji;
 
+import jdk.nashorn.api.scripting.URLReader;
+
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class Utils {
 
-    private static final ClassLoader classLoader = Utils.class.getClassLoader();
-
-    public static String readResource(Path path) throws IOException {
-        return readFile(classLoader.getResource(path.toString()));
-    }
-
-    public static String readFile(File file) throws IOException {
-        final StringBuilder content = new StringBuilder();
-        final FileReader fileReader = new FileReader(file);
-        final BufferedReader bufferedReader = new BufferedReader(fileReader);
-        String line;
-        while ((line = bufferedReader.readLine()) != null) {
-            content.append(line);
+    public static String readResource(String resourcePath) throws IOException {
+        try (
+                final InputStreamReader inputStream = new InputStreamReader(
+                        Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath)))
+        ) {
+            return readStream(inputStream);
         }
-        bufferedReader.close();
-        fileReader.close();
-        return content.toString();
     }
 
     public static String readFile(URL url) throws IOException {
-        return readFile(new File(url.getFile()));
+        try (
+                final URLReader urlReader = new URLReader(url);
+                final BufferedReader bufferedReader = new BufferedReader(urlReader)
+        ) {
+            return readStream(bufferedReader);
+        }
+
+    }
+
+    public static String readFile(File file) throws IOException {
+        return readFile(file.toURI().toURL());
+    }
+
+    public static String readStream(Reader in) throws IOException {
+        try (final BufferedReader bufferedReader = new BufferedReader(in)) {
+            final StringBuilder content = new StringBuilder();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                content.append(line);
+            }
+            return content.toString();
+        }
     }
 
     public static void writeToFile(Path path, String content) throws IOException {
