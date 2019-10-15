@@ -20,8 +20,16 @@ export class ConfigStore {
     @observable
     private _configState: ConfigState = "create"
 
+    @observable
+    private _configError: string | null = null;
+
     constructor(private readonly service: ConfigService) {
         this._configGroups = {}
+    }
+
+    @action
+    discardError = () => {
+        this._configError = null
     }
 
     @action
@@ -52,6 +60,10 @@ export class ConfigStore {
         this._configState = "create"
     }
 
+    get errorMessage(): string | null {
+        return this._configError
+    }
+
     get configState(): ConfigState {
         return this._configState
     }
@@ -73,19 +85,24 @@ export class ConfigStore {
         return this._selectedConfig;
     }
 
+    onError = (error: Error) => {
+        this._configError = error.message
+    }
+
     createConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
         if (!groupId) {
             return
         }
-
-        const result = await this.service.postConfig(groupId, config)
-        if (result) {
+        try {
+            await this.service.postConfig(groupId, config)
             runInAction(() => {
                 this._configGroups[groupId][config.id] = { ...config }
                 this._selectedConfig = this._configGroups[groupId][config.id]
                 this._configState = "update"
             })
+        } catch (error) {
+            this.onError(error)
         }
     }
 
@@ -94,11 +111,13 @@ export class ConfigStore {
         if (!groupId) {
             return
         }
-        const result = await this.service.putConfig(groupId, config)
-        if (result) {
+        try {
+            await this.service.putConfig(groupId, config)
             runInAction(() => {
                 this._configGroups[groupId][config.id] = { ...config }
             })
+        } catch (error) {
+            this.onError(error)
         }
     }
 
@@ -107,8 +126,8 @@ export class ConfigStore {
         if (!groupId) {
             return
         }
-        const response = await this.service.deleteConfig(groupId, id)
-        if (response) {
+        try {
+            await this.service.deleteConfig(groupId, id)
             runInAction(() => {
                 delete this._configGroups[groupId][id]
                 const selectedConfig = this._selectedConfig
@@ -116,14 +135,21 @@ export class ConfigStore {
                     this._selectedConfig = undefined
                 }
             })
+        } catch (error) {
+            this.onError(error)
         }
     }
 
     fetchConfigs = async () => {
-        const configGroups = await this.service.fetchConfigs(this.configGroups.map(configGroup => configGroup.id))
-        runInAction(() => {
-            this._configGroups = configGroups
-        })
+        try {
+            const configGroups = await this.service.fetchConfigs(this.configGroups.map(configGroup => configGroup.id))
+            runInAction(() => {
+                this._configGroups = configGroups
+            })
+        } catch (error) {
+            this.onError(error)
+        }
+
     }
 
     get buildProviders(): BuildProvider[] {
