@@ -11,23 +11,20 @@ public class FakeKojiXmlRpcApi extends KojiXmlRpcApi {
     private static final long serialVersionUID = 1869109064394368024L;
 
     private final String projectName;
-    private final String jvm;
-    private final String buildVariant;
+    private final String buildVariants;
     private final String buildPlatform;
     private final boolean isBuilt;
 
     @DataBoundConstructor
     public FakeKojiXmlRpcApi(
             String projectName,
-            String jvm,
-            String buildVariant,
+            String buildVariants,
             String buildPlatform,
             boolean isBuilt
     ) {
         super(KojiXmlRpcApiType.FAKE_KOJI);
         this.projectName = projectName;
-        this.jvm = jvm;
-        this.buildVariant = buildVariant;
+        this.buildVariants = buildVariants;
         this.buildPlatform = buildPlatform;
         this.isBuilt = isBuilt;
     }
@@ -46,13 +43,8 @@ public class FakeKojiXmlRpcApi extends KojiXmlRpcApi {
     }
 
     @Exported
-    public String getJvm() {
-        return jvm;
-    }
-
-    @Exported
-    public String getBuildVariant() {
-        return buildVariant;
+    public String getBuildVariants() {
+        return buildVariants;
     }
 
     @Exported
@@ -72,13 +64,12 @@ public class FakeKojiXmlRpcApi extends KojiXmlRpcApi {
         FakeKojiXmlRpcApi that = (FakeKojiXmlRpcApi) o;
         return isBuilt == that.isBuilt &&
                 Objects.equals(projectName, that.projectName) &&
-                Objects.equals(jvm, that.jvm) &&
-                Objects.equals(buildVariant, that.buildVariant) &&
+                Objects.equals(buildVariants, that.buildVariants) &&
                 Objects.equals(buildPlatform, that.buildPlatform);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(projectName, jvm, buildVariant, buildPlatform, isBuilt);
+        return Objects.hash(projectName, buildVariants, buildPlatform, isBuilt);
     }
 }

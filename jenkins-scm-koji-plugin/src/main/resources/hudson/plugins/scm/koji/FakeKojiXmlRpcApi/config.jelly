@@ -11,11 +11,7 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="JVM" field="jvm">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="Build variant" field="buildVariant">
+    <f:entry title="Build variants" field="buildVariants">
         <f:textbox/>
     </f:entry>
 
