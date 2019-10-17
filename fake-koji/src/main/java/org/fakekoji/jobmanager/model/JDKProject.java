@@ -107,7 +107,7 @@ public class JDKProject extends Project {
     public enum RepoState {
         NOT_CLONED("NOT_CLONED"),
         CLONED("CLONED"),
-        CLONE_ERROR("CLOENE_ERROR"),
+        CLONE_ERROR("CLONE_ERROR"),
         CLONING("CLONING");
 
         private final String value;
