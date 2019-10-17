@@ -9,6 +9,7 @@ import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.model.Product;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -18,8 +19,11 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class JDKProjectManager implements Manager<JDKProject> {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final ConfigManager configManager;
     private final JobUpdater jobUpdater;
@@ -50,6 +54,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
         }
         final Product product = productStorage.load(project.getProduct(), Product.class);
         final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(project);
+        LOGGER.info("Storing JDK project " + project.getId() + " before cloning its repository");
         storage.store(project.getId(), setProjectRepoStatus(project, JDKProject.RepoState.CLONING));
         final JDKProject.RepoState repoState = cloneProject(
                 project.getId(),
@@ -57,7 +62,12 @@ public class JDKProjectManager implements Manager<JDKProject> {
                 repositoriesRoot,
                 product
         );
+        LOGGER.info("Storing JDK project " + project.getId() + " after cloning its repository");
         storage.store(project.getId(), setProjectRepoStatus(project, repoState));
+        if (repoState == JDKProject.RepoState.CLONE_ERROR) {
+            throw new StorageException("Cloning failed. Skipping creating jobs");
+        }
+        LOGGER.info("Creating project's jobs");
         try {
             jobUpdater.update(Collections.emptySet(), jobs);
         } catch (IOException e) {
@@ -84,17 +94,20 @@ public class JDKProjectManager implements Manager<JDKProject> {
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
         }
+        LOGGER.info("Updating JDK project " + jdkProject.getId());
         final JDKProject oldProject = storage.load(id, JDKProject.class);
         if (!oldProject.getUrl().equals(jdkProject.getUrl())) {
             updateProjectUrl();
         }
         final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
         final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(oldProject);
+        LOGGER.info("Updating the project's jobs");
         try {
             jobUpdater.update(oldJobs, newJobs);
         } catch (IOException e) {
             throw new StorageException(e.getMessage());
         }
+        LOGGER.info("Storing the project");
         storage.store(id, jdkProject);
     }
 
@@ -105,7 +118,9 @@ public class JDKProjectManager implements Manager<JDKProject> {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
         }
         final JDKProject jdkProject = storage.load(id, JDKProject.class);
+        LOGGER.info("Deleting JDK project " + jdkProject.getId());
         final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
+        LOGGER.info("Archiving the project's jobs");
         try {
             jobUpdater.update(jobs, Collections.emptySet());
         } catch (IOException e) {
@@ -120,6 +135,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
             final File repositoriesRoot,
             final Product product
     ) {
+        LOGGER.info("Starting cloning project's repository");
         final ProcessBuilder processBuilder = new ProcessBuilder(
                 "bash",
                 Paths.get(scriptsRoot.getAbsolutePath(), "otool", "clone_repo.sh").toString(),
@@ -128,6 +144,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
                 Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString()
         );
         processBuilder.directory(repositoriesRoot);
+        LOGGER.info("Executing command: " + String.join(" ", processBuilder.command()));
         try {
             final Process cloningProcess = processBuilder.start();
             final int exitCode = cloningProcess.waitFor();
@@ -142,7 +159,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
             }
             return exitCode == 0 ? JDKProject.RepoState.CLONED : JDKProject.RepoState.CLONE_ERROR;
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            LOGGER.severe("Exception occurred during cloning: " + e.getMessage());
             return JDKProject.RepoState.CLONE_ERROR;
         }
     }

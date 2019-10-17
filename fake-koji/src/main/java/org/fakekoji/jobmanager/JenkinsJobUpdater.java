@@ -2,6 +2,7 @@ package org.fakekoji.jobmanager;
 
 import org.fakekoji.Utils;
 import org.fakekoji.jobmanager.model.Job;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,9 +11,11 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class JenkinsJobUpdater implements JobUpdater {
 
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
     static final String JENKINS_JOB_CONFIG_FILE = "config.xml";
 
     private final File jobsRoot;
@@ -51,35 +54,45 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     private void create(Job job) throws IOException {
-        final File jobDir = Paths.get(jobsRoot.getAbsolutePath(), job.toString()).toFile();
+        final String jobName = job.toString();
+        LOGGER.info("Creating job " + jobName);
+        final String jobsRootPath = jobsRoot.getAbsolutePath();
+        LOGGER.info("Creating directory " + jobName + " in " + jobsRootPath);
+        final File jobDir = Paths.get(jobsRootPath, jobName).toFile();
         if (!jobDir.mkdir()) {
             throw new IOException("Could't create file: " + jobDir.getAbsolutePath());
         }
+        final String jobDirPath = jobDir.getAbsolutePath();
+        LOGGER.info("Creating file " + JENKINS_JOB_CONFIG_FILE + " in " + jobDirPath);
         Utils.writeToFile(
-                Paths.get(jobDir.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
+                Paths.get(jobDirPath, JENKINS_JOB_CONFIG_FILE),
                 job.generateTemplate()
         );
-
     }
 
     private void revive(Job job) throws IOException {
-        Utils.moveFile(
-                Paths.get(jobArchiveRoot.getAbsolutePath(), job.toString()).toFile(),
-                Paths.get(jobsRoot.getAbsolutePath(), job.toString()).toFile()
-        );
+        final String jobName = job.toString();
+        final File src = Paths.get(jobArchiveRoot.getAbsolutePath(), job.toString()).toFile();
+        final File dst = Paths.get(jobsRoot.getAbsolutePath(), job.toString()).toFile();
+        LOGGER.info("Reviving job " + jobName);
+        LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
+        Utils.moveFile(src, dst);
     }
 
     private void archive(Job job) throws IOException {
-        Utils.moveFile(
-                Paths.get(jobsRoot.getAbsolutePath(), job.toString()).toFile(),
-                Paths.get(jobArchiveRoot.getAbsolutePath(), job.toString()).toFile()
-        );
+        final String jobName = job.toString();
+        final File src = Paths.get(jobsRoot.getAbsolutePath(), job.toString()).toFile();
+        final File dst = Paths.get(jobArchiveRoot.getAbsolutePath(), job.toString()).toFile();
+        LOGGER.info("Archiving job " + jobName);
+        LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
+        Utils.moveFile(src, dst);
     }
 
     private void update(Job job) throws IOException {
-        Utils.writeToFile(
-                Paths.get(jobsRoot.getAbsolutePath(), job.toString()),
-                job.generateTemplate()
-        );
+        final String jobName = job.toString();
+        final File jobConfig = Paths.get(jobsRoot.getAbsolutePath(), jobName, JENKINS_JOB_CONFIG_FILE).toFile();
+        LOGGER.info("Updating job " + jobName);
+        LOGGER.info("Writing to file " + jobConfig.getAbsolutePath());
+        Utils.writeToFile(jobConfig, job.generateTemplate());
     }
 }
