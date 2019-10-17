@@ -2,7 +2,7 @@ import React from "react";
 
 import { observer, inject } from "mobx-react";
 
-import { JDKProject, ConfigState } from "../stores/model";
+import { JDKProject, ConfigState, RepoState } from "../stores/model";
 import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
 import { observable, runInAction } from "mobx";
 import JobConfigComponent from "./JobConfigComponent";
@@ -83,7 +83,7 @@ class JDKProjectForm extends React.PureComponent<Props> {
                 onChange={this.onBuildProvidersChange}
                 options={buildProviders.map(buildProvider => buildProvider.id)}
                 values={this.jdkProject!.buildProviders}
-                />
+            />
         )
     }
 
@@ -105,6 +105,7 @@ class JDKProjectForm extends React.PureComponent<Props> {
                     label={"url"}
                     value={jdkProject!.url}
                     onChange={this.onUrlChange} />
+                {renderRepoState(jdkProject.repoState)}
                 {this.renderBuildProvidersForm()}
                 <Select
                     label={"Product"}
@@ -120,6 +121,38 @@ class JDKProjectForm extends React.PureComponent<Props> {
             </fieldset>
         )
     }
+}
+
+const repoStateStyles: {[state in RepoState]: React.CSSProperties} = {
+    "CLONED": {
+        backgroundColor: "blue",
+    },
+    "NOT_CLONED": {
+        backgroundColor: "gray",
+    },
+    "CLONING": {
+        backgroundColor: "blue",
+    },
+    "CLONE_ERROR": {
+        backgroundColor: "red",
+    }
+}
+
+const renderRepoState = (repoState?: RepoState) => {
+    if (!repoState) {
+        return null
+    }
+    const style: React.CSSProperties = {
+        color: "white",
+        padding: 10,
+        width: "100%",
+        ...repoStateStyles[repoState]
+    }
+    return (
+        <div style={style}>
+            {repoState}
+        </div>
+    )
 }
 
 export default inject(CONFIG_STORE)(observer(JDKProjectForm));

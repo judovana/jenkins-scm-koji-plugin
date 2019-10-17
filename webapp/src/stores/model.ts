@@ -12,6 +12,7 @@ export interface ProjectCategory {
 
 export interface JDKProject extends Project {
     url: string;
+    repoState?: RepoState;
     product: string;
     buildProviders: string[];
     jobConfiguration: JobConfig;
@@ -99,3 +100,5 @@ export type ConfigState = "create" | "update"
 export type ConfigGroup = {[id: string]: Item}
 
 export type ConfigGroups = {[id: string]: ConfigGroup}
+
+export type RepoState = "CLONED" | "NOT_CLONED" | "CLONE_ERROR" | "CLONING"
