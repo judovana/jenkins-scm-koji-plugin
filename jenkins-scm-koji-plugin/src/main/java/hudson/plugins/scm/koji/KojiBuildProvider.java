@@ -34,6 +34,14 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
         return buildProvider;
     }
 
+    public String getTopUrl() {
+        return buildProvider.getTopUrl();
+    }
+
+    public String getDownloadUrl() {
+        return buildProvider.getDownloadUrl();
+    }
+
     private static String replaceDPORT(String url) {
         return url.replace(
                 ":" + JavaServerConstants.dPortAxiom,
