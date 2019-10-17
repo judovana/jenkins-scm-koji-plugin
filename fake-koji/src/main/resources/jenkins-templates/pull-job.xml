@@ -26,11 +26,14 @@
       <caseSensitive>true</caseSensitive>
     </hudson.tasks.ArtifactArchiver>
     <hudson.plugins.textfinder.TextFinderPublisher plugin="text-finder@1.10.3">
-      <regexp>### CHANGES DETECTED ###</regexp>
-      <succeedIfFound>false</succeedIfFound>
-      <unstableIfFound>true</unstableIfFound>
-      <notBuiltIfFound>false</notBuiltIfFound>
-      <alsoCheckConsoleOutput>true</alsoCheckConsoleOutput>
+      <primaryTextFinder>
+        <regexp>### CHANGES DETECTED ###</regexp>
+        <succeedIfFound>false</succeedIfFound>
+        <unstableIfFound>true</unstableIfFound>
+        <notBuiltIfFound>false</notBuiltIfFound>
+        <alsoCheckConsoleOutput>true</alsoCheckConsoleOutput>
+      </primaryTextFinder>
+      <additionalTextFinders/>
     </hudson.plugins.textfinder.TextFinderPublisher>
   </publishers>
   <buildWrappers/>
