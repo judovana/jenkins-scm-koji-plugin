@@ -9,7 +9,6 @@ import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildList;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -31,17 +30,9 @@ class FakeKojiBuildMatcher extends BuildMatcher {
 
     @Override
     List<Build> getBuilds(BuildProvider buildProvider) {
-        final String[] buildVariants = xmlRpcApi.getBuildVariants().split(" ");
-        final Optional<String> jvm = Arrays.stream(buildVariants)
-                .filter((String variant) -> variant.startsWith("jvm"))
-                .findFirst();
-        final Optional<String> debugMode = Arrays.stream(buildVariants)
-                .filter((String variant) -> variant.startsWith("debugMode"))
-                .findFirst();
         final GetBuildList getBuildListParams = new GetBuildList(
                 xmlRpcApi.getProjectName(),
-                jvm.orElse(""),
-                debugMode.orElse(""),
+                xmlRpcApi.getBuildVariants(),
                 xmlRpcApi.isBuilt()
         );
         final FakeBuildList buildList = FakeBuildList.create(execute(buildProvider.getTopUrl(), getBuildListParams));

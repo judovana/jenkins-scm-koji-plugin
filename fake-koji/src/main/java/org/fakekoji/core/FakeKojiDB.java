@@ -24,7 +24,6 @@
 package org.fakekoji.core;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -238,13 +237,27 @@ public class FakeKojiDB {
     //n,v,r,
     //*.tarxz else oldApi
     public List<Build> getBuildList(GetBuildList params) {
+        final String[] buildVariants = params.getBuildVariants().split(" ");
+        final Optional<String> jvmOptional = Arrays.stream(buildVariants)
+                .filter(variant -> variant.startsWith("jvm"))
+                .map(jvmVariant -> jvmVariant.replace("jvm=", ""))
+                .findFirst();
+        final Optional<String> debugModeOptional = Arrays.stream(buildVariants)
+                .filter(variant -> variant.startsWith("debugMode"))
+                .map(debugModeVariant -> debugModeVariant.replace("debugMode=", ""))
+                .findFirst();
+        if (!jvmOptional.isPresent() || !debugModeOptional.isPresent()) {
+            return Collections.emptyList();
+        }
+        final String jvm = jvmOptional.get();
+        final String debugMode = debugModeOptional.get();
         List<Build> r = new ArrayList<>();
         for (FakeBuild b : builds) {
             if (!isOkForNewApi(b)) {
                 continue;
             }
-            if (FakeBuild.isValidVm(params.getJvm()) && b.getJvm().equals(params.getJvm())) {
-                if (FakeBuild.isValidBuildVariant(params.getBuildVariant()) && b.getBuildVariant().equals(params.getBuildVariant())) {
+            if (FakeBuild.isValidVm(jvm) && b.getJvm().equals(jvm)) {
+                if (FakeBuild.isValidBuildVariant(debugMode) && b.getDebugMode().equals(debugMode)) {
                     if (new IsFailedBuild(b.getDir()).reCheck().getLastResult()) {
                         continue;
                     }

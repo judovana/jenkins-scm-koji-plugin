@@ -580,7 +580,7 @@ public class FakeBuild {
         return (s.equals(RELEASE) || s.equals(FASTDEBUG) || s.equals(SLOWDEBUG));
     }
 
-    public String getBuildVariant() {
+    public String getDebugMode() {
         if (nvr.contains(RELEASE)) {
             return RELEASE;
         } else if (nvr.contains(FASTDEBUG)) {
