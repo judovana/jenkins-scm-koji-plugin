@@ -2,7 +2,13 @@ package org.fakekoji.xmlrpc.server.xmlrpcresponse;
 
 import hudson.plugins.scm.koji.model.Build;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FakeBuildList implements XmlRpcResponse<List<Build>> {
 
@@ -14,7 +20,7 @@ public class FakeBuildList implements XmlRpcResponse<List<Build>> {
 
     @Override
     public Object toObject() {
-        return this;
+        return buildList;
     }
 
     @Override
@@ -22,7 +28,13 @@ public class FakeBuildList implements XmlRpcResponse<List<Build>> {
         return buildList;
     }
 
+    @SuppressWarnings("unchecked")
     public static FakeBuildList create(Object object) {
-        return (FakeBuildList) object;
+        final Object[] array = (Object[]) object;
+        final List<Build> builds = Stream.of(array)
+                .filter(obj -> obj instanceof Build)
+                .map(obj -> (Build) obj)
+                .collect(Collectors.toList());
+        return new FakeBuildList(builds);
     }
 }

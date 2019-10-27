@@ -6,15 +6,18 @@ public class GetBuildList implements XmlRpcRequestParams {
 
     private final String projectName;
     private final String buildVariants;
+    private final String platforms;
     private final boolean isBuilt;
 
     public GetBuildList(
             String projectName,
             String buildVariants,
+            String platforms,
             boolean isBuilt
     ) {
         this.projectName = projectName;
         this.buildVariants = buildVariants;
+        this.platforms = platforms;
         this.isBuilt = isBuilt;
     }
 
@@ -39,6 +42,10 @@ public class GetBuildList implements XmlRpcRequestParams {
 
     public String getBuildVariants() {
         return buildVariants;
+    }
+
+    public String getPlatforms() {
+        return platforms;
     }
 
     /**
