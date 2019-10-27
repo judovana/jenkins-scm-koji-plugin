@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -45,6 +46,16 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.fakekoji.DataGenerator.FASTDEBUG;
+import static org.fakekoji.DataGenerator.HOTSPOT;
+import static org.fakekoji.DataGenerator.JDK_8_PACKAGE_NAME;
+import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
+import static org.fakekoji.DataGenerator.RELEASE_1;
+import static org.fakekoji.DataGenerator.RHEL_7_X64;
+import static org.fakekoji.DataGenerator.SOURCES;
+import static org.fakekoji.DataGenerator.SUFFIX;
+import static org.fakekoji.DataGenerator.VERSION_1;
 
 /**
  * Warning - reaming check have missing check on content!
@@ -2193,33 +2204,117 @@ public class TestSshApi {
         tests for otool
     */
 
-    @Test
-    public void uploadSrcTarball() throws IOException, InterruptedException {
-        title(2);
-        final String nvra = "java-11-openjdk-jdk.11.28-0.jdk11u.hotspot.fastdebug.f28.aarch64.tarxz";
-        final File localFile = new File(sources, nvra);
-        createFile(localFile, nvra);
-        checkFileExists(localFile);
-        int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
-        final File remoteFile = new File(kojiDb, "java-11-openjdk/jdk.11.28/0.jdk11u/hotspot.fastdebug.f28.aarch64/" + nvra);
-        remoteFile.getParentFile().mkdirs();
-        createFile(remoteFile, nvra);
-        checkFileExists(remoteFile);
-    }
+    final private static String RELEASE = RELEASE_1 + '.' + PROJECT_NAME_U;
+    final private static String NVR = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE;
+    final private static String ARCHIVE = HOTSPOT + '.' + FASTDEBUG + '.' + RHEL_7_X64;
 
     @Test
     public void uploadBinaryTarball() throws IOException, InterruptedException {
         title(2);
-        final String nvra = "java-11-openjdk-jdk.11.28-0.jdk11u.src.tarxz";
+        final String nvra = NVR + '.' + ARCHIVE + SUFFIX;
         final File localFile = new File(sources, nvra);
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
         Assert.assertEquals(returnCode, 0);
-        final File remoteFile = new File(kojiDb, "java-11-openjdk/jdk.11.28/0.jdk11u/src/" + nvra);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, ARCHIVE, nvra).toFile();
+        checkFileExists(remoteFile);
+    }
+
+    @Test
+    public void uploadSrcTarball() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR + '.' + SOURCES + SUFFIX;
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, SOURCES, nvra).toFile();
+        checkFileExists(remoteFile);
+    }
+
+    @Test
+    public void uploadSrcLog() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, "data", "logs", SOURCES, logName).toFile();
+        checkFileExists(remoteLogFile);
+    }
+
+    @Test
+    public void uploadBinaryLog() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, "data", "logs", ARCHIVE, logName).toFile();
+        checkFileExists(remoteLogFile);
+    }
+
+    @Test
+    public void downloadBinaryTarball() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, SOURCES, nvra).toFile();
         remoteFile.getParentFile().mkdirs();
         createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localFile);
+    }
+
+    @Test
+    public void downloadSrcTarball() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, SOURCES, nvra).toFile();
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
+        checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localFile);
+    }
+
+    @Test
+    public void downloadSrcLog() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, "data", "logs", SOURCES, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localLogFile);
+    }
+
+    @Test
+    public void downloadBinaryLog() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, "data", "logs", ARCHIVE, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localLogFile);
     }
 }
