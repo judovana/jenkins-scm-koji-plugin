@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.fakekoji.core.FakeKojiTestUtil;
 import org.fakekoji.server.JavaServer;
@@ -27,8 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assume.assumeTrue;
 
 public class KojiListBuildsTest {
@@ -390,11 +389,11 @@ public class KojiListBuildsTest {
                 = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
         try {
             javaServer.start();
-            Build build = worker.invoke(temporaryFolder.newFolder(), null);
+            Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
             if (invertAssert){
-                assertNull(build);
+                Assert.assertFalse(build.isPresent());
             } else {
-                assertNotNull(build);
+                Assert.assertTrue(build.isPresent());
             }
         } finally {
             javaServer.stop();
@@ -423,8 +422,8 @@ public class KojiListBuildsTest {
         );
         File tmpDir = temporaryFolder.newFolder();
         tmpDir.mkdir();
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -469,10 +468,10 @@ public class KojiListBuildsTest {
                 NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1, null),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
         //KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigMultipleValidUrls(), new NotProcessedNvrPredicate(new HashSet<>()));
         //dwldr.downloadRPMs(new File("/tmp"), build);
-        assertNotNull(build);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -483,8 +482,8 @@ public class KojiListBuildsTest {
                 NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(f1, null),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -496,8 +495,8 @@ public class KojiListBuildsTest {
                 NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71, null),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -509,25 +508,25 @@ public class KojiListBuildsTest {
                 NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, null),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
     public void testListMatchingBuildsR6WithGlobal() throws Exception {
         assumeTrue(onRhNet);
         KojiListBuilds worker1 = new KojiListBuilds(createBrewOnlyList(), createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, null), 10);
-        Build build1 = worker1.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build1);
+        Optional<Build> build1 = worker1.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build1.isPresent());
         File gf = File.createTempFile("globalTest", "koji.scm");
         KojiListBuilds worker3 = new KojiListBuilds(createBrewOnlyList(),createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, gf), 10);
-        Build build3 = worker3.invoke(temporaryFolder.newFolder(), null);
-        int a = build1.compareTo(build3);
+        Optional<Build> build3 = worker3.invoke(temporaryFolder.newFolder(), null);
+        int a = build1.get().compareTo(build3.get());
         Assert.assertTrue(0 == a);
-        Files.write(gf.toPath(), build1.getNvr().getBytes("utf-8"));
+        Files.write(gf.toPath(), build1.get().getNvr().getBytes("utf-8"));
         KojiListBuilds worker2 = new KojiListBuilds(createBrewOnlyList(),createConfigR6(), NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e61, gf), 10);
-        Build build2 = worker2.invoke(temporaryFolder.newFolder(), null);
-        int b = build1.compareTo(build2);
+        Optional<Build> build2 = worker2.invoke(temporaryFolder.newFolder(), null);
+        int b = build1.get().compareTo(build2.get());
         Assert.assertTrue(0 != b);
     }
 
@@ -540,8 +539,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -553,8 +552,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -566,8 +565,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -579,8 +578,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -592,8 +591,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -605,8 +604,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
     
     @Test
@@ -618,8 +617,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -631,8 +630,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -644,8 +643,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNotNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build.isPresent());
     }
 
     @Test
@@ -664,8 +663,8 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        assertNull(build);
+        Optional<Build> build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertFalse(build.isPresent());
     }
 }
 
