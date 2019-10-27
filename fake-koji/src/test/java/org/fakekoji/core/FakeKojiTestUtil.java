@@ -32,6 +32,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+
+import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.server.JavaServer;
 
@@ -156,18 +158,23 @@ public class FakeKojiTestUtil {
         createFile(new File(upstreamRepos + "/java-1.8.0-openjdk-dev", "arches-expected"), a2 + " " + a3 + " " + a4 + "\n");
     }
 
-    public static JavaServer createDefaultFakeKojiServer(File localBuilds, File upstreamRepos) throws UnknownHostException, MalformedURLException {
-
-        AccessibleSettings settings = new AccessibleSettings(localBuilds, upstreamRepos, null, null, null, null,
-                9848, 9849, 9843, 8080, 0);
-        return new JavaServer(settings);
-    }
-
     public static JavaServer createDefaultFakeKojiServerWithData(File tmpDir) throws Exception {
-        File localBuilds = new File(tmpDir, "local-builds");
-        File upstreamRepos = new File(tmpDir, "upstream-repos");
-        generateFakeKojiData(localBuilds, upstreamRepos);
-        return createDefaultFakeKojiServer(localBuilds, upstreamRepos);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(tmpDir);
+        generateFakeKojiData(folderHolder.buildsRoot, folderHolder.reposRoot);
+        final AccessibleSettings settings = new AccessibleSettings(
+                folderHolder.buildsRoot,
+                folderHolder.reposRoot,
+                folderHolder.configsRoot,
+                folderHolder.jenkinsJobsRoot,
+                folderHolder.jenkinsJobArchiveRoot,
+                folderHolder.scriptsRoot,
+                9848,
+                9849,
+                9843,
+                8080,
+                0
+        );
+        return new JavaServer(settings);
     }
 
     public static int doHttpRequest(String urlString, String requestMethod) throws Exception {
