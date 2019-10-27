@@ -1,10 +1,10 @@
 import React from "react";
-import { JobConfig, PlatformConfig } from "../stores/model";
+import { JobConfig, PlatformConfig } from "../../stores/model";
 import PlatformComponent from "./PlatformComponent";
-import AddComponent from "./formComponents/AddComponent";
-import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore";
+import AddComponent from "./AddComponent";
+import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore";
 import { inject, observer } from "mobx-react";
-import TreeNode from "./TreeNode";
+import TreeNode from "../TreeNode";
 
 interface Props {
     jobConfig: JobConfig;

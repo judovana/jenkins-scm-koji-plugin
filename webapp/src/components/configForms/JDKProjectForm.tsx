@@ -5,7 +5,7 @@ import { observer, inject } from "mobx-react";
 import { JDKProject, ConfigState, RepoState } from "../../stores/model";
 import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
 import { observable, runInAction } from "mobx";
-import JobConfigComponent from "../JobConfigComponent";
+import JobConfigComponent from "../formComponents/JobConfigComponent";
 import TextInput from "../formComponents/TextInput";
 import Select from "../formComponents/Select";
 import Button from "../Button";
