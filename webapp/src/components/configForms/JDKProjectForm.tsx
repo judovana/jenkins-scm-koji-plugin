@@ -2,14 +2,14 @@ import React from "react";
 
 import { observer, inject } from "mobx-react";
 
-import { JDKProject, ConfigState, RepoState } from "../stores/model";
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
+import { JDKProject, ConfigState, RepoState } from "../../stores/model";
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
 import { observable, runInAction } from "mobx";
-import JobConfigComponent from "./JobConfigComponent";
-import TextInput from "./formComponents/TextInput";
-import Select from "./formComponents/Select";
-import Button from "./Button";
-import MultiSelect from "./formComponents/MultiSelect";
+import JobConfigComponent from "../JobConfigComponent";
+import TextInput from "../formComponents/TextInput";
+import Select from "../formComponents/Select";
+import Button from "../Button";
+import MultiSelect from "../formComponents/MultiSelect";
 
 interface Props {
     project: JDKProject;
