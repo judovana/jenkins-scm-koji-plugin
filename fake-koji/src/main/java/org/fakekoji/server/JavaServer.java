@@ -64,21 +64,14 @@ public class JavaServer {
     private final OToolService oToolService;
 
     public JavaServer(AccessibleSettings settings) {
+        this(settings, null);
+    }
+
+    public JavaServer(AccessibleSettings settings, OToolService oToolService) {
         xmlRpcKojiService = new XmlRpcKojiService(settings);
         fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getFileDownloadPort());
         scpService = new ScpService(settings.getDbFileRoot(), settings.getSshPort());
-        if (settings.getConfigRoot() != null) {
-            oToolService = new OToolService(
-                    settings.getWebappPort(),
-                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                    settings.getJenkinsJobsRoot(),
-                    settings.getJenkinsJobArchiveRoot(),
-                    settings.getLocalReposRoot(),
-                    settings.getScriptsRoot()
-            );
-        } else {
-            oToolService = null;
-        }
+        this.oToolService = oToolService;
     }
 
     public void start() throws Exception {
@@ -148,7 +141,16 @@ public class JavaServer {
                 webappPort
         );
 
-        new JavaServer(settings).start();
+        final OToolService oToolService = new OToolService(
+                settings.getWebappPort(),
+                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                settings.getJenkinsJobsRoot(),
+                settings.getJenkinsJobArchiveRoot(),
+                settings.getLocalReposRoot(),
+                settings.getScriptsRoot()
+        );
+
+        new JavaServer(settings, oToolService).start();
     }
 
     private enum Property {
