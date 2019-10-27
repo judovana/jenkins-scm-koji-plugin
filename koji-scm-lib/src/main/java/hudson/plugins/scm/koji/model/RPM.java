@@ -33,6 +33,19 @@ public class RPM implements java.io.Serializable {
         this.filename = filename;
     }
 
+    public RPM(
+            String name,
+            String version,
+            String release,
+            String nvr,
+            String arch,
+            String filename,
+            String url
+    ) {
+        this(name, version, release, nvr, arch, filename);
+        this.url = url;
+    }
+
     public RPM() {
         this.name = null;
         this.version = null;
