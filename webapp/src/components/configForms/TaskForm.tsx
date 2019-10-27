@@ -1,14 +1,14 @@
 import React from "react";
 import { observable, runInAction } from "mobx";
 import { observer, inject } from "mobx-react";
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements, ConfigState } from "../stores/model";
-import LimitationForm from "./formComponents/LimitationForm";
-import TextInput from "./formComponents/TextInput";
-import TextArea from "./formComponents/TextArea";
-import Checkbox from "./formComponents/Checkbox";
-import Select from "./formComponents/Select";
-import Button from "./Button";
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
+import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements, ConfigState } from "../../stores/model";
+import LimitationForm from "../formComponents/LimitationForm";
+import TextInput from "../formComponents/TextInput";
+import TextArea from "../formComponents/TextArea";
+import Checkbox from "../formComponents/Checkbox";
+import Select from "../formComponents/Select";
+import Button from "../Button";
 
 type TaskFormProps = {
     task: Task

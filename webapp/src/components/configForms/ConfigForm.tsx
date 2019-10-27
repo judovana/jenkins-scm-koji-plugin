@@ -1,13 +1,13 @@
 import React from "react";
 import { inject, observer } from "mobx-react"
 
-import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore"
-import { JDKProject, Task } from "../stores/model"
+import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
+import { JDKProject, Task } from "../../stores/model"
 import JDKProjectForm from "./JDKProjectForm";
 import TaskForm from "./TaskForm";
 
 import "../styles/Forms.css";
-import Button from "./Button";
+import Button from "../Button";
 
 interface Props {
     configStore?: ConfigStore
