@@ -23,17 +23,28 @@
  */
 package org.fakekoji.core;
 
-import java.io.File;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import hudson.plugins.scm.koji.model.Build;
+import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
+import org.fakekoji.core.utils.BuildHelper;
 import org.fakekoji.core.utils.DirFilter;
+import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
+
+import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Hart beat of fake koji. This class works over directory, with similar
@@ -237,46 +248,37 @@ public class FakeKojiDB {
     //n,v,r,
     //*.tarxz else oldApi
     public List<Build> getBuildList(GetBuildList params) {
-        final String[] buildVariants = params.getBuildVariants().split(" ");
-        final Optional<String> jvmOptional = Arrays.stream(buildVariants)
-                .filter(variant -> variant.startsWith("jvm"))
-                .map(jvmVariant -> jvmVariant.replace("jvm=", ""))
-                .findFirst();
-        final Optional<String> debugModeOptional = Arrays.stream(buildVariants)
-                .filter(variant -> variant.startsWith("debugMode"))
-                .map(debugModeVariant -> debugModeVariant.replace("debugMode=", ""))
-                .findFirst();
-        if (!jvmOptional.isPresent() || !debugModeOptional.isPresent()) {
+
+        final BuildHelper buildHelper;
+        try {
+            final String hostname = InetAddress.getLocalHost().getHostName();
+            final BuildProvider thisBuildProvider = new BuildProvider(
+                    hostname + ':' + settings.getXmlRpcPort(),
+                    hostname + ':' + settings.getFileDownloadPort()
+            );
+            buildHelper = BuildHelper.create(
+                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                    params,
+                    settings.getDbFileRoot(),
+                    thisBuildProvider
+            );
+        } catch (StorageException | UnknownHostException e) {
+            LOGGER.severe(e.getMessage());
             return Collections.emptyList();
         }
-        final String jvm = jvmOptional.get();
-        final String debugMode = debugModeOptional.get();
-        List<Build> r = new ArrayList<>();
-        for (FakeBuild b : builds) {
-            if (!isOkForNewApi(b)) {
-                continue;
-            }
-            if (FakeBuild.isValidVm(jvm) && b.getJvm().equals(jvm)) {
-                if (FakeBuild.isValidBuildVariant(debugMode) && b.getDebugMode().equals(debugMode)) {
-                    if (new IsFailedBuild(b.getDir()).reCheck().getLastResult()) {
-                        continue;
-                    }
-                    try {
-                        if (b.getRepoOfOriginProject().equals(params.getProjectName())) {
-                            if (params.isBuilt() && b.isBuilt()) {
-                                add(r, b);
-                            }
-                            if (params.isSupposedToGetBuild() && b.haveSrcs() && !b.isBuilt()) {
-                                add(r, b);
-                            }
-                        }
-                    } catch (ProjectMappingExceptions.ProjectMappingException ex) {
-                        LOGGER.log(Level.INFO, ex.getMessage(), ex);
-                    }
-                }
-            }
-        }
-        return r;
+
+        return builds.stream()
+                .map(FakeBuild::getNVR)
+                .map(buildHelper.getOToolBuildParser())
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(buildHelper.getPackageNamePredicate())
+                .filter(buildHelper.getProjectNamePredicate())
+                .filter(buildHelper.getBuildPlatformPredicate())
+                .map(buildHelper.getBuildParser())
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     public static boolean isOkForNewApi(String name) {
@@ -289,16 +291,6 @@ public class FakeKojiDB {
                 name.endsWith(".zip");
     }
 
-    private boolean isOkForNewApi(FakeBuild b) {
-        List<File> files = b.getNonLogs();
-        for (File file : files) {
-            if (isOkForNewApi(file.getName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean isOkForOldApi(FakeBuild b) {
         List<File> files = b.getNonLogs();
         for (File file : files) {
@@ -307,11 +299,6 @@ public class FakeKojiDB {
             }
         }
         return false;
-    }
-
-    private void add(List<Build> r, FakeBuild b) {
-        Build bb = b.toBuild(new HashSet<>());
-        r.add(bb);
     }
 
     public Build getBuildDetail(GetBuildDetail i) {
