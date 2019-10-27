@@ -23,11 +23,9 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 class KojiBuildMatcher extends BuildMatcher {
 
@@ -74,29 +72,23 @@ class KojiBuildMatcher extends BuildMatcher {
         return builds;
     }
 
-    Build getBuild(Stream<Build> buildStream) {
-        final Optional<Build> buildOptional = buildStream.findFirst();
-        if (buildOptional.isPresent()) {
-            final Build build = buildOptional.get();
-            LOG.info("Oldest not processed build: " + build.getNvr());
-            final List<RPM> rpms = new ArrayList<>();
-            rpms.addAll(retrieveRPMs(build));
-            rpms.addAll(retrieveArchives(build));
-            return
-                new Build(
-                        build.getId(),
-                        build.getName(),
-                        build.getVersion(),
-                        build.getRelease(),
-                        build.getNvr(),
-                        build.getCompletionTime(),
-                        rpms,
-                        build.getTags(),
-                        build.getProvider(),
-                        null
-            );
-        }
-        return null;
+    Build getBuild(Build build) {
+        LOG.info("Oldest not processed build: " + build.getNvr());
+        final List<RPM> rpms = new ArrayList<>();
+        rpms.addAll(retrieveRPMs(build));
+        rpms.addAll(retrieveArchives(build));
+        return new Build(
+                build.getId(),
+                build.getName(),
+                build.getVersion(),
+                build.getRelease(),
+                build.getNvr(),
+                build.getCompletionTime(),
+                rpms,
+                build.getTags(),
+                build.getProvider(),
+                null
+        );
     }
 
     private Integer getPackageId(String url, String packageName) {

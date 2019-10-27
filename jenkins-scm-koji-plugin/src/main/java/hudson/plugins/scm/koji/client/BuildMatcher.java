@@ -34,9 +34,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 abstract class BuildMatcher {
@@ -61,21 +61,21 @@ abstract class BuildMatcher {
         this.maxBuilds = maxBuilds;
     }
 
-    public Build getBuild() {
-       return getBuild(
-               StreamSupport.stream(buildProviders.spliterator(), false)
-                       .map(KojiBuildProvider::getBuildProvider)
-                       .map(this::getBuilds)
-                       .flatMap(Collection::stream)
-                       .filter(build -> notProcessedNvrPredicate.test(build.getNvr()))
-                       .sorted(this::compare)
-                       .limit(maxBuilds)
-       );
+    public Optional<Build> getBuild() {
+        final Optional<Build> buildOptional = StreamSupport.stream(buildProviders.spliterator(), false)
+                .map(KojiBuildProvider::getBuildProvider)
+                .map(this::getBuilds)
+                .flatMap(Collection::stream)
+                .filter(build -> notProcessedNvrPredicate.test(build.getNvr()))
+                .sorted(this::compare)
+                .limit(maxBuilds)
+                .findFirst();
+        return buildOptional.map(this::getBuild);
     }
 
     abstract List<Build> getBuilds(BuildProvider buildProvider);
 
-    abstract Build getBuild(Stream<Build> buildStream);
+    abstract Build getBuild(Build build);
 
     int compare(Build b1, Build b2) {
         switch (orderBy) {

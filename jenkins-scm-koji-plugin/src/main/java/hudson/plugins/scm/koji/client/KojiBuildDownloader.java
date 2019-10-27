@@ -2,6 +2,7 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
 import hudson.model.TaskListener;
+import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.KojiXmlRpcApi;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
@@ -29,6 +30,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.Date;
@@ -79,16 +81,17 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         if (build == null) {
-            build = new KojiListBuilds(
+            final Optional<Build> buildOptional = new KojiListBuilds(
                     kojiBuildProviders,
                     kojiXmlRpcApi,
                     notProcessedNvrPredicate,
                     maxPreviousBuilds
             ).invoke(workspace, channel);
-            if (build == null) {
+            if (!buildOptional.isPresent()) {
                 // if we are here - no remote changes on first build, exiting:
                 return null;
             }
+            build = buildOptional.get();
         }
         // we got the build info in workspace, downloading:
         File targetDir = workspace;
@@ -154,7 +157,40 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             }
             return new KojiBuildDownloadResult(build, targetDir.getAbsolutePath(), rpmFiles);
         }
+        if (kojiXmlRpcApi instanceof FakeKojiXmlRpcApi) {
+            final File target = targetDir;
+            List<String> rpmPaths = build.getRpms()
+                    .stream()
+                    .map(rpm -> downloadArchive(target, rpm))
+                    .filter(Optional::isPresent)
+                    .map(optionalFile -> optionalFile.get().getAbsolutePath())
+                    .collect(Collectors.toList());
+            log("Downloaded " + rpmPaths.size() + " out of " + build.getRpms().size() + " archives");
+            return new KojiBuildDownloadResult(build, target.getAbsolutePath(), rpmPaths);
+        }
         return null;
+    }
+
+    private Optional<File> downloadArchive(File targetDir, RPM rpm) {
+        if (!isUrlReachable(rpm.getUrl())) {
+            log("Not accessible, trying another suffix in: ", rpm.getFilename(""));
+            return Optional.empty();
+        }
+        File targetFile = new File(targetDir, rpm.getFilename(""));
+        try (
+                final OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
+                final InputStream in = httpDownloadStream(rpm.getUrl())
+        ) {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+        } catch (IOException e) {
+            log("Exception while downloading " + rpm.getFilename("") + ": ", e);
+        }
+        rpm.setHashSum(hashSum(targetFile));
+        return Optional.of(targetFile);
     }
 
     private void cleanDirRecursively(File file) {

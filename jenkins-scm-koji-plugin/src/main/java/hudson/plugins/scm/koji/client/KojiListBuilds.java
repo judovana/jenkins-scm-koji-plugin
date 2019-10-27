@@ -10,9 +10,10 @@ import hudson.remoting.VirtualChannel;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.File;
+import java.util.Optional;
 import java.util.function.Predicate;
 
-public class KojiListBuilds implements FilePath.FileCallable<Build> {
+public class KojiListBuilds implements FilePath.FileCallable<Optional<Build>> {
 
     private final Iterable<KojiBuildProvider> kojiBuildProviders;
     private final KojiXmlRpcApi kojiXmlRpcApi;
@@ -32,7 +33,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     }
 
     @Override
-    public Build invoke(File workspace, VirtualChannel channel) {
+    public Optional<Build> invoke(File workspace, VirtualChannel channel) {
         final BuildMatcher buildMatcher;
 
         if (kojiXmlRpcApi instanceof RealKojiXmlRpcApi) {

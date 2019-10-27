@@ -4,15 +4,11 @@ import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
-import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
-import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcresponse.FakeBuildList;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 class FakeKojiBuildMatcher extends BuildMatcher {
 
@@ -33,6 +29,7 @@ class FakeKojiBuildMatcher extends BuildMatcher {
         final GetBuildList getBuildListParams = new GetBuildList(
                 xmlRpcApi.getProjectName(),
                 xmlRpcApi.getBuildVariants(),
+                xmlRpcApi.getBuildPlatform(),
                 xmlRpcApi.isBuilt()
         );
         final FakeBuildList buildList = FakeBuildList.create(execute(buildProvider.getTopUrl(), getBuildListParams));
@@ -40,17 +37,7 @@ class FakeKojiBuildMatcher extends BuildMatcher {
     }
 
     @Override
-    Build getBuild(Stream<Build> buildStream) {
-        final Optional<Build> buildOptional = buildStream.findFirst();
-        if (buildOptional.isPresent()) {
-            final Build build = buildOptional.get();
-            final GetBuildDetail getBuildDetailParams = new GetBuildDetail(build.getName(), build.getVersion(), build.getRelease());
-            final FakeBuildDetail fakeBuildDetailResponse = FakeBuildDetail.create(execute(
-                    build.getProvider().getTopUrl(),
-                    getBuildDetailParams
-            ));
-            return fakeBuildDetailResponse.getValue();
-        }
-        return null;
+    Build getBuild(Build build) {
+        return build;
     }
 }
