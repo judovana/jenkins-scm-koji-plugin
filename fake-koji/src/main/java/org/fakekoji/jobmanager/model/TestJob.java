@@ -76,7 +76,7 @@ public class TestJob extends TaskJob {
                         fillBuildPlatform(getBuildPlatform(), getTask().getFileRequirements()),
                         true
                 )
-                .buildScriptTemplate(getProduct(), getTask(), getPlatform(), variants, getScriptsRoot())
+                .buildScriptTemplate(getProjectName(), getProduct(), getTask(), getPlatform(), variants, getScriptsRoot())
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }

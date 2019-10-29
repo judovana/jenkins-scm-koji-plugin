@@ -84,6 +84,7 @@ public class JenkinsJobTemplateBuilder {
     static final String BASH = "bash";
     static final String SHEBANG = "#!/bin/sh";
 
+    static final String RELEASE_SUFFIX_VAR = "RELEASE_SUFFIX";
     static final String PROJECT_NAME_VAR = "PROJECT_NAME";
     static final String PACKAGE_NAME_VAR = "PACKAGE_NAME";
 
@@ -163,11 +164,15 @@ public class JenkinsJobTemplateBuilder {
     String fillExportedVariablesForBuildTask(
             String arch,
             String jdkVersion,
-            String jdkLabel
+            String jdkLabel,
+            String projectName,
+            String releaseSuffix
     ) {
         return EXPORT + ' ' + JDK_MAJOR + '=' + jdkVersion + XML_NEW_LINE
                 + EXPORT + ' ' + OJDK_VERSION + '=' + jdkLabel+ XML_NEW_LINE
-                +EXPORT + ' ' + ARCH_PARAM + '=' + arch + XML_NEW_LINE;
+                + EXPORT + ' ' + PROJECT_NAME_VAR + '=' + projectName + XML_NEW_LINE
+                + EXPORT + ' ' + RELEASE_SUFFIX_VAR + '=' + releaseSuffix + XML_NEW_LINE
+                + EXPORT + ' ' + ARCH_PARAM + '=' + arch + XML_NEW_LINE;
     }
 
     String fillExportedVariables(
@@ -201,6 +206,7 @@ public class JenkinsJobTemplateBuilder {
     }
 
     public JenkinsJobTemplateBuilder buildScriptTemplate(
+            String projectName,
             Product product,
             Task task,
             Platform platform,
@@ -246,7 +252,14 @@ public class JenkinsJobTemplateBuilder {
         ) + fillExportedVariablesForBuildTask(
                 platform.getArchitecture(),
                 product.getVersion(),
-                'o' + product.getId()
+                'o' + product.getId(),
+                projectName,
+                variants.entrySet()
+                        .stream()
+                        .filter(e -> e.getKey().getType() == Task.Type.BUILD)
+                        .sorted(Comparator.comparing(Map.Entry::getKey))
+                        .map(e -> e.getValue().getId())
+                        .collect(Collectors.joining(".")) + '.' + platform.getOs() + platform.getVersion()
         );
         template = template
                 .replace(NODES, String.join(" ", nodes))

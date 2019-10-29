@@ -43,7 +43,7 @@ public class BuildJob extends TaskJob {
                         JenkinsJobTemplateBuilder.fillBuildPlatform(getPlatform(), getTask().getFileRequirements()),
                         false
                 )
-                .buildScriptTemplate(getProduct(), getTask(), getPlatform(), getVariants(), getScriptsRoot())
+                .buildScriptTemplate(getProjectName(), getProduct(), getTask(), getPlatform(), getVariants(), getScriptsRoot())
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }
