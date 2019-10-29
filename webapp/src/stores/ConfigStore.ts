@@ -157,11 +157,11 @@ export class ConfigStore {
     }
 
     get platforms(): Platform[] {
-        return Object.values(this._configGroups["platforms"])
+        return Object.values(this._configGroups["platforms"]) as Platform[]
     }
 
     getPlatform(id: string): Platform | undefined {
-        return this._configGroups["platforms"][id] as Task | undefined
+        return this._configGroups["platforms"][id] as Platform | undefined
     }
 
     get products(): Product[] {

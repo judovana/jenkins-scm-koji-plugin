@@ -80,6 +80,14 @@ export interface RPMLimitation {
 }
 
 export interface Platform extends Item {
+    os: string
+    version: string
+    architecture: string
+    provider: string
+    vmName: string
+    vmNodes: string[]
+    hwNodes: string[]
+    tags: string[]
 }
 
 export interface BuildProvider extends Item {
