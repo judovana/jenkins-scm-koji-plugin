@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -71,6 +70,9 @@ public class JenkinsJobTemplateBuilder {
     static final String LOCAL = "local";
     static final String EXPORT = "export";
     static final String VM_NAME_OR_LOCAL = "VM_NAME_OR_LOCAL";
+    static final String ARCH_PARAM = "ARCH";
+    static final String JDK_MAJOR = "JDK_MAJOR";
+    static final String OJDK_VERSION = "OJDK_VERSION";
     static final String PLATFORM_PROVIDER = "PLATFORM_PROVIDER";
     static final String PROJECT_PATH = "PROJECT_PATH";
     static final String JAVA_VERSION = "JAVA_VERSION";
@@ -158,6 +160,16 @@ public class JenkinsJobTemplateBuilder {
         return this;
     }
 
+    String fillExportedVariablesForBuildTask(
+            String arch,
+            String jdkVersion,
+            String jdkLabel
+    ) {
+        return EXPORT + ' ' + JDK_MAJOR + '=' + jdkVersion + XML_NEW_LINE
+                + EXPORT + ' ' + OJDK_VERSION + '=' + jdkLabel+ XML_NEW_LINE
+                +EXPORT + ' ' + ARCH_PARAM + '=' + arch + XML_NEW_LINE;
+    }
+
     String fillExportedVariables(
             Map<TaskVariant, TaskVariantValue> variants,
             String platformName,
@@ -189,6 +201,7 @@ public class JenkinsJobTemplateBuilder {
     }
 
     public JenkinsJobTemplateBuilder buildScriptTemplate(
+            Product product,
             Task task,
             Platform platform,
             Map<TaskVariant, TaskVariantValue> variants,
@@ -226,13 +239,22 @@ public class JenkinsJobTemplateBuilder {
             default:
                 throw new RuntimeException("Unknown machine preference");
         }
+        final String exportedVariables = fillExportedVariables(
+                variants,
+                vmName,
+                platform.getProvider()
+        ) + fillExportedVariablesForBuildTask(
+                platform.getArchitecture(),
+                product.getVersion(),
+                'o' + product.getId()
+        );
         template = template
                 .replace(NODES, String.join(" ", nodes))
                 .replace(SCM_POLL_SCHEDULE, task.getScmPollSchedule())
                 .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
                 .replace(TASK_SCRIPT, task.getScript())
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
-                .replace(EXPORTED_VARIABLES, fillExportedVariables(variants, vmName, platform.getProvider()));
+                .replace(EXPORTED_VARIABLES, exportedVariables);
         if (!vmName.equals(LOCAL)) {
             return buildVmPostBuildTaskTemplate(vmName, scriptsRoot);
         }
