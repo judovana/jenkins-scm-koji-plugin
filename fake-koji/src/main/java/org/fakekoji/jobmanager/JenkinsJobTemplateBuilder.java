@@ -82,7 +82,7 @@ public class JenkinsJobTemplateBuilder {
     static final String PROJECT_PATH_VAR = OTOOL_BASH_VAR_PREFIX + "PROJECT_PATH=";
     static final String ARCH_VAR = OTOOL_BASH_VAR_PREFIX + "ARCH=";
     static final String JDK_MAJOR_VAR = OTOOL_BASH_VAR_PREFIX + "JDK_MAJOR=";
-    static final String OJDK_VERSION_VAR = OTOOL_BASH_VAR_PREFIX + "OJDK_VERSION=";
+    static final String JDK_VERSION_VAR = OTOOL_BASH_VAR_PREFIX + "JDK_VERSION=";
     static final String PLATFORM_PROVIDER_VAR = OTOOL_BASH_VAR_PREFIX + "PLATFORM_PROVIDER=";
     static final String RELEASE_SUFFIX_VAR = OTOOL_BASH_VAR_PREFIX + "RELEASE_SUFFIX=";
     static final String PROJECT_NAME_VAR = OTOOL_BASH_VAR_PREFIX + "PROJECT_NAME=";
@@ -104,7 +104,7 @@ public class JenkinsJobTemplateBuilder {
         final String pullScript = SHEBANG + XML_NEW_LINE +
                 EXPORT + " " + PROJECT_NAME_VAR + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + PROJECT_PATH_VAR + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + OJDK_VERSION_VAR + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + JDK_VERSION_VAR + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + PACKAGE_NAME_VAR + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
                 BASH +  " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'";
 
@@ -170,7 +170,7 @@ public class JenkinsJobTemplateBuilder {
             String releaseSuffix
     ) {
         return EXPORT + ' ' + JDK_MAJOR_VAR + jdkVersion + XML_NEW_LINE
-                + EXPORT + ' ' + OJDK_VERSION_VAR + jdkLabel+ XML_NEW_LINE
+                + EXPORT + ' ' + JDK_VERSION_VAR + jdkLabel+ XML_NEW_LINE
                 + EXPORT + ' ' + PROJECT_NAME_VAR + projectName + XML_NEW_LINE
                 + EXPORT + ' ' + RELEASE_SUFFIX_VAR + releaseSuffix + XML_NEW_LINE
                 + EXPORT + ' ' + ARCH_VAR + platform.getArchitecture() + XML_NEW_LINE
