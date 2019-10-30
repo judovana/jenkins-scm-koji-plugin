@@ -261,7 +261,7 @@ public class JenkinsJobTemplateBuilder {
                         .filter(e -> e.getKey().getType() == Task.Type.BUILD)
                         .sorted(Comparator.comparing(Map.Entry::getKey))
                         .map(e -> e.getValue().getId())
-                        .collect(Collectors.joining(".")) + '.' + platform.getOs() + platform.getVersion()
+                        .collect(Collectors.joining(".")) + '.' + platform.getString()
         );
         template = template
                 .replace(NODES, String.join(" ", nodes))
