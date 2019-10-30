@@ -69,13 +69,6 @@ public class JenkinsJobTemplateBuilder {
     static final String XML_APOS = "&apos;";
     static final String LOCAL = "local";
     static final String EXPORT = "export";
-    static final String VM_NAME_OR_LOCAL = "VM_NAME_OR_LOCAL";
-    static final String ARCH_PARAM = "ARCH";
-    static final String JDK_MAJOR = "JDK_MAJOR";
-    static final String OJDK_VERSION = "OJDK_VERSION";
-    static final String PLATFORM_PROVIDER = "PLATFORM_PROVIDER";
-    static final String PROJECT_PATH = "PROJECT_PATH";
-    static final String JAVA_VERSION = "JAVA_VERSION";
     static final String O_TOOL = "otool";
     static final String VAGRANT = "vagrant";
     static final String PULL_SCRIPT_NAME = "pull.sh";
@@ -84,9 +77,17 @@ public class JenkinsJobTemplateBuilder {
     static final String BASH = "bash";
     static final String SHEBANG = "#!/bin/sh";
 
-    static final String RELEASE_SUFFIX_VAR = "RELEASE_SUFFIX";
-    static final String PROJECT_NAME_VAR = "PROJECT_NAME";
-    static final String PACKAGE_NAME_VAR = "PACKAGE_NAME";
+    static final String OTOOL_BASH_VAR_PREFIX = "OTOOL_";
+    static final String VM_NAME_OR_LOCAL_VAR = OTOOL_BASH_VAR_PREFIX + "VM_NAME_OR_LOCAL=";
+    static final String PROJECT_PATH_VAR = OTOOL_BASH_VAR_PREFIX + "PROJECT_PATH=";
+    static final String ARCH_VAR = OTOOL_BASH_VAR_PREFIX + "ARCH=";
+    static final String JDK_MAJOR_VAR = OTOOL_BASH_VAR_PREFIX + "JDK_MAJOR=";
+    static final String OJDK_VERSION_VAR = OTOOL_BASH_VAR_PREFIX + "OJDK_VERSION=";
+    static final String PLATFORM_PROVIDER_VAR = OTOOL_BASH_VAR_PREFIX + "PLATFORM_PROVIDER=";
+    static final String RELEASE_SUFFIX_VAR = OTOOL_BASH_VAR_PREFIX + "RELEASE_SUFFIX=";
+    static final String PROJECT_NAME_VAR = OTOOL_BASH_VAR_PREFIX + "PROJECT_NAME=";
+    static final String PACKAGE_NAME_VAR = OTOOL_BASH_VAR_PREFIX + "PACKAGE_NAME=";
+    static final String OS_VAR = OTOOL_BASH_VAR_PREFIX + "OS=";
 
     private String template;
 
@@ -101,10 +102,10 @@ public class JenkinsJobTemplateBuilder {
             File scriptsRoot
     ) {
         final String pullScript = SHEBANG + XML_NEW_LINE +
-                EXPORT + " " + PROJECT_NAME_VAR + "=" + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + PROJECT_PATH + "=" + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + JAVA_VERSION + "=" + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + PACKAGE_NAME_VAR + "=" + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + PROJECT_NAME_VAR + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + PROJECT_PATH_VAR + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + OJDK_VERSION_VAR + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
+                EXPORT + " " + PACKAGE_NAME_VAR + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
                 BASH +  " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'";
 
         template = template.replace(PULL_SCRIPT, pullScript);
@@ -162,17 +163,18 @@ public class JenkinsJobTemplateBuilder {
     }
 
     String fillExportedVariablesForBuildTask(
-            String arch,
+            Platform platform,
             String jdkVersion,
             String jdkLabel,
             String projectName,
             String releaseSuffix
     ) {
-        return EXPORT + ' ' + JDK_MAJOR + '=' + jdkVersion + XML_NEW_LINE
-                + EXPORT + ' ' + OJDK_VERSION + '=' + jdkLabel+ XML_NEW_LINE
-                + EXPORT + ' ' + PROJECT_NAME_VAR + '=' + projectName + XML_NEW_LINE
-                + EXPORT + ' ' + RELEASE_SUFFIX_VAR + '=' + releaseSuffix + XML_NEW_LINE
-                + EXPORT + ' ' + ARCH_PARAM + '=' + arch + XML_NEW_LINE;
+        return EXPORT + ' ' + JDK_MAJOR_VAR + jdkVersion + XML_NEW_LINE
+                + EXPORT + ' ' + OJDK_VERSION_VAR + jdkLabel+ XML_NEW_LINE
+                + EXPORT + ' ' + PROJECT_NAME_VAR + projectName + XML_NEW_LINE
+                + EXPORT + ' ' + RELEASE_SUFFIX_VAR + releaseSuffix + XML_NEW_LINE
+                + EXPORT + ' ' + ARCH_VAR + platform.getArchitecture() + XML_NEW_LINE
+                + EXPORT + ' ' + OS_VAR + platform.getOs() + '.' + platform.getVersion() + XML_NEW_LINE;
     }
 
     String fillExportedVariables(
@@ -182,10 +184,10 @@ public class JenkinsJobTemplateBuilder {
     ) {
         return variants.entrySet().stream()
                 .sorted(Comparator.comparing(entry -> entry.getKey().getId()))
-                .map(entry -> EXPORT + ' ' + entry.getKey().getId() + '=' + entry.getValue().getId())
+                .map(entry -> EXPORT + ' ' + OTOOL_BASH_VAR_PREFIX + entry.getKey().getId() + '=' + entry.getValue().getId())
                 .collect(Collectors.joining(XML_NEW_LINE)) +
-                XML_NEW_LINE + EXPORT + ' ' + VM_NAME_OR_LOCAL + '=' + platformName +
-                XML_NEW_LINE + EXPORT + ' ' + PLATFORM_PROVIDER + '=' + platformProvider + XML_NEW_LINE;
+                XML_NEW_LINE + EXPORT + ' ' + VM_NAME_OR_LOCAL_VAR + platformName +
+                XML_NEW_LINE + EXPORT + ' ' + PLATFORM_PROVIDER_VAR + platformProvider + XML_NEW_LINE;
     }
 
     public static String fillBuildPlatform(Platform platform, Task.FileRequirements fileRequirements) {
@@ -250,7 +252,7 @@ public class JenkinsJobTemplateBuilder {
                 vmName,
                 platform.getProvider()
         ) + fillExportedVariablesForBuildTask(
-                platform.getArchitecture(),
+                platform,
                 product.getVersion(),
                 'o' + product.getId(),
                 projectName,
