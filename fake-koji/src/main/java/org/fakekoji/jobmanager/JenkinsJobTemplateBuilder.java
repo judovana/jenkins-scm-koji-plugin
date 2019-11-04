@@ -77,6 +77,8 @@ public class JenkinsJobTemplateBuilder {
     static final String BASH = "bash";
     static final String SHEBANG = "#!/bin/sh";
 
+    static final String JENKINS = "jenkins";
+
     static final String OTOOL_BASH_VAR_PREFIX = "OTOOL_";
     static final String VM_NAME_OR_LOCAL_VAR = OTOOL_BASH_VAR_PREFIX + "VM_NAME_OR_LOCAL=";
     static final String PROJECT_PATH_VAR = OTOOL_BASH_VAR_PREFIX + "PROJECT_PATH=";
@@ -271,17 +273,17 @@ public class JenkinsJobTemplateBuilder {
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
                 .replace(EXPORTED_VARIABLES, exportedVariables);
         if (!vmName.equals(LOCAL)) {
-            return buildVmPostBuildTaskTemplate(vmName, scriptsRoot);
+            return buildVmPostBuildTaskTemplate(platform, scriptsRoot);
         }
         template = template.replace(VM_POST_BUILD_TASK, "");
         return this;
     }
 
-    JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(String platformVmName, File scriptsRoot) throws IOException {
+    JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(Platform platform, File scriptsRoot) throws IOException {
         template = template
                 .replace(VM_POST_BUILD_TASK, loadTemplate(JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE))
-                .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), VAGRANT, DESTROY_SCRIPT_NAME).toString())
-                .replace(PLATFORM_NAME, platformVmName);
+                .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, platform.getProvider(), DESTROY_SCRIPT_NAME).toString())
+                .replace(PLATFORM_NAME, platform.getVmName());
         return this;
     }
 
