@@ -8,14 +8,14 @@ class ConfigService {
     fetch = async (input: RequestInfo, init?: RequestInit): Promise<Response> => {
         try {
             const response = await fetch(`${this.url}/${input}`, init)
-            if (response.status == 200) {
+            if (response.status === 200) {
                 return response
             }
             const errorMessage = await response.text()
-            if (response.status == 400) {
+            if (response.status === 400) {
                 throw new Error("Bad Request:\n" + errorMessage)
             }
-            if (response.status == 500) {
+            if (response.status === 500) {
                 throw new Error("Internal Error:\n" + errorMessage)
             }
             throw new Error("Unexpected response status: " + response.status)

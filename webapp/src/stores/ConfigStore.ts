@@ -1,6 +1,6 @@
 import { observable, runInAction, action } from "mobx";
 
-import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, ConfigGroup } from "./model";
+import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups } from "./model";
 import { defaultTask, defaultJDKProject } from "./defaults";
 import ConfigService from "./services/ConfigService";
 
