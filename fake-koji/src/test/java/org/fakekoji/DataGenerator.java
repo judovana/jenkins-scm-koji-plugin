@@ -815,7 +815,15 @@ public class DataGenerator {
             "java-1.8.0-openjdk-version1-release1.uName.slowdebug.hotspot.f29.x86_64.tarxz",
             "java-1.8.0-openjdk-version1-release2.uName.slowdebug.hotspot.f29.x86_64.tarxz",
             "java-1.8.0-openjdk-version2-release1.uName.slowdebug.hotspot.f29.x86_64.tarxz",
-            "java-1.8.0-openjdk-version2-release2.uName.slowdebug.hotspot.f29.x86_64.tarxz"
+            "java-1.8.0-openjdk-version2-release2.uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            
+            "java-1.8.0-openjdk-version2-0.ch.a.release1.uName.fastdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version2-0.ch.a.release2.uName.fastdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version1-0.ch.a.release1.uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version1-0.ch.a.release2.uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version2-0.ch.a.release1.uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version2-0.ch.a.release2.uName.slowdebug.hotspot.f29.x86_64.tarxz"
+       
     );
 
     public static final String VERSION_1 = "version1";
@@ -826,7 +834,7 @@ public class DataGenerator {
 
     public static final String[] versions = new String[] { VERSION_1, VERSION_2 };
 
-    public static final String[] releases = new String[] { RELEASE_1, RELEASE_2 };
+    public static final String[] releases = new String[] { RELEASE_1, RELEASE_2, "0.ch.a."+RELEASE_2};
 
     public static void initBuildsRoot(final File buildsRoot) throws IOException {
         final Set<Platform> platforms = DataGenerator.getPlatforms();
