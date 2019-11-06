@@ -9,6 +9,8 @@ import TextArea from "../formComponents/TextArea";
 import Checkbox from "../formComponents/Checkbox";
 import Select from "../formComponents/Select";
 import Button from "../Button";
+import RPMLimitationForm from "../formComponents/RPMLimitationForm";
+import FileRequirementsForm from "../formComponents/FileRequirementsForm";
 
 type TaskFormProps = {
     task: Task
@@ -160,7 +162,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
             return null
         }
         const configState = configStore.configState
-        const { id, fileRequirements, platformLimitation, productLimitation } = this.task;
+        const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = this.task;
         return (
             <fieldset>
                 <TextInput
@@ -195,13 +197,19 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
                     label={"product limitations"}
                     limitation={productLimitation}
                     items={configStore.products} />
-                {this.renderFileRequirementsForm(fileRequirements)}
+                <FileRequirementsForm
+                    fileRequirements={fileRequirements}
+                    onBinaryChange={this.onBinaryChange}
+                    onSourcesChange={this.onSourcesChange}/>
                 <TextArea
                     label={"xml template"}
                     onChange={this.onXmlTemplateChange}
                     placeholder={"Enter xml template for post build tasks"}
                     value={this.task.xmlTemplate} />
-                {this.renderRPMLimitaion(this.task.rpmLimitation)}
+                <RPMLimitationForm
+                    rpmLimitation={rpmLimitation}
+                    onFlagChange={this.onRPMLimitationFlagChange}
+                    onGlobChange={this.onRPMLimitationGlobChange}/>
                 <Button onClick={this.onSubmit}>{configState}</Button>
                 <br />
                 <br />
