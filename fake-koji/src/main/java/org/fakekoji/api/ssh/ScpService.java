@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -66,6 +67,11 @@ import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.session.ServerSession;
 
 import org.fakekoji.core.FakeKojiDB;
+import org.fakekoji.core.utils.OToolArchiveParser;
+import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.model.OToolArchive;
+import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 /**
@@ -191,18 +197,19 @@ public class ScpService {
 
     private File dbRoot;
     private int port;
+    final File configsRoot;
     private String[] keys;
 
     private SshServer sshServer;
 
-    public ScpService(File dbRoot, int port) {
+    public ScpService(File dbRoot, int port, File configsRoot) {
+        this.configsRoot = configsRoot;
         this.dbRoot = dbRoot;
         this.port = port;
     }
 
-    public ScpService(File dbRoot, int port, String... keys) {
-        this.dbRoot = dbRoot;
-        this.port = port;
+    public ScpService(File dbRoot, int port, File configsRoot, String... keys) {
+        this(dbRoot, port, configsRoot);
         this.keys = keys;
     }
 
@@ -548,7 +555,7 @@ public class ScpService {
 
     }
 
-    public static String deductPathName(String name) {
+    public String deductPathName(String name) {
         //blah/blah/nvra/logs/logName
         //blah/blah/nvra/data/fileName
         //blah/blah/nvra
@@ -575,7 +582,7 @@ public class ScpService {
                 nvraName = type;
                 fileName = "";
             }
-            final NVRA nvra = NVRA.create(nvraName);
+            final NVRA nvra = parseNVRA(nvraName);
             if (name.contains("/logs")) {
                 return nvra.getBasePath() + "/data/logs/" + nvra.arch + "/" + fileName;
             } else if (name.contains("data/")) {
@@ -590,7 +597,7 @@ public class ScpService {
                 i = parts.length - 1;
             }
             String nvraName = parts[i];
-            NVRA nvra = NVRA.create(nvraName);
+            NVRA nvra = parseNVRA(nvraName);
             if (i == parts.length - 1) {
                 return nvra.getArchedPath() + tail(i, parts);
             } else {
@@ -600,11 +607,57 @@ public class ScpService {
 
     }
 
-    private static int findTopMostParsableNvra(String[] parts) {
+    private NVRA parseNVRA(String fileName) {
+        final List<JDKProject> jdkProjects;
+        try {
+            jdkProjects = ConfigManager.create(configsRoot.getAbsolutePath())
+                .getJdkProjectStorage()
+                .loadAll(JDKProject.class);
+        } catch (StorageException e) {
+                LOGGER.severe(e.getMessage());
+                throw new NvraParsingException(fileName, e);
+        }
+        try {
+            final String name;
+            final String version;
+            final String release;
+            final String arch;
+            final String suffix;
+
+            final String[] split = fileName.split("-");
+            final String[] releaseArchSuffix = split[split.length - 1].split("\\.");
+
+            name = Arrays.stream(split).limit(3).collect(Collectors.joining("-"));
+            version = split[split.length - 2];
+            suffix = releaseArchSuffix[releaseArchSuffix.length - 1];
+            final Optional<OToolArchive> archiveOptional = new OToolArchiveParser(jdkProjects).parse(fileName);
+            if (FakeKojiDB.isOkForOldApi(fileName)) {
+                arch = releaseArchSuffix[releaseArchSuffix.length - 2];
+                release = split[split.length - 1].replace("." + arch + "." + suffix, "");
+            } else if (archiveOptional.isPresent()) {
+                final OToolArchive archive = archiveOptional.get();
+                arch = archive.getArchive();
+                release = archive.getRelease();
+            } else {
+                throw new NvraParsingException(fileName);
+            }
+            return new NVRA(
+                    name,
+                    version,
+                    release,
+                    arch,
+                    suffix
+            );
+        } catch (Exception ex) {
+            throw new NvraParsingException(fileName, ex);
+        }
+    }
+
+    private int findTopMostParsableNvra(String[] parts) {
         for (int i = parts.length - 1; i >= 0; i--) {
             String part = parts[i];
             try {
-                NVRA.create(part);
+                parseNVRA(part);
                 return i;
             } catch (Exception ex) {
             }
@@ -659,48 +712,13 @@ public class ScpService {
             this.suffix = suffix;
         }
 
-        public static NVRA create(String fileName) {
-            try {
-                final String name;
-                final String version;
-                final String release;
-                final String arch;
-                final String suffix;
-
-                final String[] split = fileName.split("-");
-                final String[] releaseArchSuffix = split[split.length - 1].split("\\.");
-                name = Arrays.stream(split).limit(3).collect(Collectors.joining("-"));
-                version = split[split.length - 2];
-                suffix = releaseArchSuffix[releaseArchSuffix.length - 1];
-                if (FakeKojiDB.isOkForOldApi(fileName)) {
-                    arch = releaseArchSuffix[releaseArchSuffix.length - 2];
-                    release = split[split.length - 1].replace("." + arch + "." + suffix, "");
-                } else if (FakeKojiDB.isOkForNewApi(fileName)) {
-                    release = releaseArchSuffix[0] + '.' + releaseArchSuffix[1];
-                    arch = split[split.length - 1]
-                            .replace(release + ".", "")
-                            .replace("." + suffix, "");
-                } else {
-                    throw new NvraParsingException(fileName);
-                }
-                return new NVRA(
-                        name,
-                        version,
-                        release,
-                        arch,
-                        suffix
-                );
-            } catch (Exception ex) {
-                throw new NvraParsingException(fileName, ex);
-            }
-        }
-
         public String getArchedPath() {
             return getBasePath() + "/" + arch;
         }
 
         public String getBasePath() {
-            return name + "/" + version + "/" + release.replace("static", "upstream");
+            // upstream/static deprecated since new API
+            return name + "/" + version + "/" + release/*.replace("static", "upstream")*/;
         }
     }
 

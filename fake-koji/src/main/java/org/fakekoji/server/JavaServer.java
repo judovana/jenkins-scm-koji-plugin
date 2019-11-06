@@ -70,7 +70,7 @@ public class JavaServer {
     public JavaServer(AccessibleSettings settings, OToolService oToolService) {
         xmlRpcKojiService = new XmlRpcKojiService(settings);
         fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getFileDownloadPort());
-        scpService = new ScpService(settings.getDbFileRoot(), settings.getSshPort());
+        scpService = new ScpService(settings.getDbFileRoot(), settings.getSshPort(), settings.getConfigRoot());
         this.oToolService = oToolService;
     }
 
