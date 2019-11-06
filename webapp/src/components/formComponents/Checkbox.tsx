@@ -1,4 +1,5 @@
 import React from "react"
+import { FormControl, FormControlLabel, Checkbox as CheckboxMaterial } from "@material-ui/core";
 
 type CheckboxPropsRequired = {
     label: string
@@ -25,17 +26,14 @@ class Checkbox extends React.PureComponent<CheckboxProps> {
     render() {
         const { label, value } = this.props
         return (
-            <div className="field-container">
-                <div className="label-container">
-                    {label}
-                </div>
-                <div className="value-container">
-                    <input
+            <FormControl margin="normal">
+                <FormControlLabel
+                    control={<CheckboxMaterial
                         checked={value}
                         onChange={this.onChange}
-                        type="checkbox" />
-                </div>
-            </div>
+                    />}
+                    label={label} />
+            </FormControl>
         )
     }
 }

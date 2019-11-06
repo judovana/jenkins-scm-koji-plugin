@@ -1,5 +1,6 @@
 import React from "react"
 import { observer } from "mobx-react"
+import { TextField } from "@material-ui/core";
 
 type TextInputPropsRequired = {
     label: string
@@ -26,20 +27,14 @@ class TextInput extends React.PureComponent<TextInputProps> {
     }
 
     render() {
-        const { label, placeholder, value } = this.props
+        const { label, value } = this.props
         return (
-            <div className="field-container">
-                <div className="label-container">
-                    <label>{label}</label>
-                </div>
-                <div className="value-container">
-                    <input
-                        placeholder={placeholder}
-                        type="text"
-                        value={value}
-                        onChange={this.onChange} />
-                </div>
-            </div>
+            <TextField
+                fullWidth
+                label={label}
+                margin={"normal"}
+                value={value}
+                onChange={this.onChange} />
         )
     }
 }

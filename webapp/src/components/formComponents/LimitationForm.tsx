@@ -4,6 +4,7 @@ import { observer } from "mobx-react";
 import { Limitation, Item, LimitFlag } from "../../stores/model";
 import Select from "./Select";
 import MultiSelect from "./MultiSelect";
+import { FormControl, FormLabel, FormGroup } from "@material-ui/core";
 
 interface LimitationProps {
     label: string;
@@ -33,11 +34,11 @@ class LimitationForm extends React.PureComponent<LimitationProps> {
         const { label, limitation, items } = this.props;
         const flag = limitation && (limitation.flag || "NONE")
         return (
-            <div className="field-container">
-                <div className="label-container">
+            <FormControl fullWidth margin="normal">
+                <FormLabel>
                     {label}
-                </div>
-                <div className="value-container">
+                </FormLabel>
+                <FormGroup>
                     <Select
                         onChange={this.onFlagChange}
                         options={["NONE", "WHITELIST", "BLACKLIST"]}
@@ -50,8 +51,8 @@ class LimitationForm extends React.PureComponent<LimitationProps> {
                             options={items.map(item => item.id)}
                             values={limitation.list} />
                     }
-                </div>
-            </div>
+                </FormGroup>
+            </FormControl>
         );
     }
 }
