@@ -19,6 +19,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.fakekoji.DataGenerator.RELEASE_1;
+import static org.fakekoji.DataGenerator.RELEASE_2;
 import static org.fakekoji.DataGenerator.SUFFIX;
 
 public class NewApiTests {
@@ -73,8 +75,8 @@ public class NewApiTests {
     public void getSourcesOfPartiallyNotBuilt() {
         final int expectedNumberOfBuilds = 2;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version2-release1.uName.src" + SUFFIX,
-                "java-1.8.0-openjdk-version2-release2.uName.src" + SUFFIX
+                "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.src" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.src" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(
@@ -100,10 +102,10 @@ public class NewApiTests {
     public void getSourcesOfNotBuiltAtAll() {
         final int expectedNumberOfBuilds = 4;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version1-release1.uName.src" + SUFFIX,
-                "java-1.8.0-openjdk-version1-release2.uName.src" + SUFFIX,
-                "java-1.8.0-openjdk-version2-release1.uName.src" + SUFFIX,
-                "java-1.8.0-openjdk-version2-release2.uName.src" + SUFFIX
+                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.src" + SUFFIX,
+                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.src" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.src" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.src" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(
@@ -129,10 +131,10 @@ public class NewApiTests {
     public void getArchiveOfBuilt() {
         final int expectedNumberOfBuilds = 4;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version1-release1.uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version1-release2.uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version2-release1.uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version2-release2.uName.release.hotspot.f29.x86_64" + SUFFIX
+                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.release.hotspot.f29.x86_64" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(
@@ -158,8 +160,8 @@ public class NewApiTests {
     public void getArchiveOfPartiallyNotBuilt() {
         final int expectedNumberOfBuilds = 2;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version1-release1.uName.fastdebug.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version1-release2.uName.fastdebug.hotspot.f29.x86_64" + SUFFIX
+                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.fastdebug.hotspot.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.fastdebug.hotspot.f29.x86_64" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(

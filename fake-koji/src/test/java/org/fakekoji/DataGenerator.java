@@ -809,20 +809,20 @@ public class DataGenerator {
 
     public static final String SUFFIX = ".tarxz";
 
-    public static final List<String> notBuilt = Arrays.asList(
-            "java-1.8.0-openjdk-version2-release1.uName.fastdebug.hotspot.f29.x86_64.tarxz",
-            "java-1.8.0-openjdk-version2-release2.uName.fastdebug.hotspot.f29.x86_64.tarxz",
-            "java-1.8.0-openjdk-version1-release1.uName.slowdebug.hotspot.f29.x86_64.tarxz",
-            "java-1.8.0-openjdk-version1-release2.uName.slowdebug.hotspot.f29.x86_64.tarxz",
-            "java-1.8.0-openjdk-version2-release1.uName.slowdebug.hotspot.f29.x86_64.tarxz",
-            "java-1.8.0-openjdk-version2-release2.uName.slowdebug.hotspot.f29.x86_64.tarxz"
-    );
-
     public static final String VERSION_1 = "version1";
     public static final String VERSION_2 = "version2";
     public static final String RELEASE_1 = "release1";
-    public static final String RELEASE_2 = "release2";
+    public static final String RELEASE_2 = "re.l.ease.2";
     public static final String SOURCES = "src";
+
+    public static final List<String> notBuilt = Arrays.asList(
+            "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.fastdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.fastdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz"
+    );
 
     public static final String[] versions = new String[] { VERSION_1, VERSION_2 };
 

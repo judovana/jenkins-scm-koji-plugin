@@ -41,11 +41,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.fakekoji.DataGenerator;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.fakekoji.DataGenerator.FASTDEBUG;
 import static org.fakekoji.DataGenerator.HOTSPOT;
@@ -175,6 +178,9 @@ public class TestSshApi {
     private static ScpService server;
     private static final boolean debug = true;
 
+    @ClassRule
+    public final static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
     @BeforeClass
     public static void startSshdServer() throws IOException, GeneralSecurityException {
         ServerSocket s = new ServerSocket(0);
@@ -206,7 +212,9 @@ public class TestSshApi {
         kojiDb.delete();
         kojiDb.mkdir();
         kojiDb.deleteOnExit();
-        server = new ScpService(kojiDb, port, "tester=" + pub.getAbsolutePath());
+        final File configsRoot = temporaryFolder.newFolder("configs");
+        DataGenerator.initConfigsRoot(configsRoot);
+        server = new ScpService(kojiDb, port, configsRoot, "tester=" + pub.getAbsolutePath());
         server.start();
         sources = File.createTempFile("ssh-fake-koji.", ".sources");
         sources.delete();
@@ -1985,7 +1993,7 @@ public class TestSshApi {
     //java-1.8.0-openjdk/jdk8u172.b00/44.upstream/src/
     //this behavior is hardcoded and shoudl be cursed
     @Test
-    public void testSingleStaticGotMappedToUsptramTo() throws IOException, InterruptedException {
+    public void testSingleStaticDidNotGetMappedToUsptramTo() throws IOException, InterruptedException {
         title(2);
         File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
         File x64Dir = new File(sharedTopDir, "x86_64");
@@ -1999,16 +2007,16 @@ public class TestSshApi {
         createFile(srcFileLocal, srcFileLocal.getName());
         checkFileExists(srcFileLocal);
         int r1 = scpTo("", srcFileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
+        Assert.assertTrue(r1 == 1);
         int r2 = scpTo("", x64FileLocal.getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
-        checkFileExists(srcFile);
-        checkFileExists(x64File);
+        Assert.assertTrue(r2 == 1);
+        checkFileNotExists(srcFile);
+        checkFileNotExists(x64File);
 
     }
 
     @Test
-    public void testSingleStaticGotMappedToUsptramFrom() throws IOException, InterruptedException {
+    public void testSingleStaticDidNotGetMappedToUsptramFrom() throws IOException, InterruptedException {
         title(2);
         File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
         File x64Dir = new File(sharedTopDir, "x86_64");
@@ -2024,16 +2032,16 @@ public class TestSshApi {
         createFile(srcFile, srcFile.getName());
         checkFileExists(srcFile);
         int r1 = scpFrom(sources.getAbsolutePath(), srcFile.getName());
-        Assert.assertTrue(r1 == 0);
+        Assert.assertTrue(r1 == 1);
         int r2 = scpFrom(sources.getAbsolutePath(), x64File.getName());
-        Assert.assertTrue(r2 == 0);
-        checkFileExists(srcFileLocal);
-        checkFileExists(x64FileLocal);
+        Assert.assertTrue(r2 == 1);
+        checkFileNotExists(srcFileLocal);
+        checkFileNotExists(x64FileLocal);
 
     }
 
     @Test
-    public void testMultipleStaticGotMappedToUsptramTo() throws IOException, InterruptedException {
+    public void testMultipleStaticDidNotGetMappedToUsptramTo() throws IOException, InterruptedException {
         title(2);
         File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
         File x64Dir = new File(sharedTopDir, "x86_64");
@@ -2047,14 +2055,14 @@ public class TestSshApi {
         createFile(srcFileLocal, srcFileLocal.getName());
         checkFileExists(srcFileLocal);
         int r1 = scpTo("", srcFileLocal.getAbsolutePath(), x64FileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
-        checkFileExists(srcFile);
-        checkFileExists(x64File);
+        Assert.assertTrue(r1 == 1);
+        checkFileNotExists(srcFile);
+        checkFileNotExists(x64File);
 
     }
 
     @Test
-    public void testMultipleStaticGotMappedToUsptramFrom2() throws IOException, InterruptedException {
+    public void testMultipleStaticDidNotGetMappedToUsptramFrom2() throws IOException, InterruptedException {
         title(2);
         File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
         File x64Dir = new File(sharedTopDir, "x86_64");
@@ -2070,14 +2078,14 @@ public class TestSshApi {
         createFile(srcFile, srcFile.getName());
         checkFileExists(srcFile);
         int r2 = scpFrom(sources.getAbsolutePath(), srcFile.getName(), x64File.getName());
-        Assert.assertTrue(r2 == 0);
-        checkFileExists(srcFileLocal);
-        checkFileExists(x64FileLocal);
+        Assert.assertTrue(r2 == 1);
+        checkFileNotExists(srcFileLocal);
+        checkFileNotExists(x64FileLocal);
 
     }
 
     @Test
-    public void testSingleStaticGotMappedToUsptramToRenamed() throws IOException, InterruptedException {
+    public void testSingleStaticDidNotGetMappedToUsptramToRenamed() throws IOException, InterruptedException {
         title(2);
         File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/");
         File x64Dir = new File(sharedTopDir, "x86_64");
@@ -2091,16 +2099,16 @@ public class TestSshApi {
         createFile(srcFileLocal, srcFileLocal.getName());
         checkFileExists(srcFileLocal);
         int r1 = scpTo(x64File.getName(), srcFileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
-        checkFileExists(x64File);
+        Assert.assertTrue(r1 == 1);
+        checkFileNotExists(x64File);
         int r2 = scpTo(srcFile.getName(), x64FileLocal.getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
-        checkFileExists(srcFile);
+        Assert.assertTrue(r2 == 1);
+        checkFileNotExists(srcFile);
 
     }
 
     @Test
-    public void testSingleStaticGotMappedToUsptramToLog() throws IOException, InterruptedException {
+    public void testSingleStaticDidNotGetMappedToUsptramToLog() throws IOException, InterruptedException {
         title(2);
         for (String log : LOGS) {
             File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172." + trasnformToLogId(log) + ".b00/44.upstream/data/logs");
@@ -2117,17 +2125,17 @@ public class TestSshApi {
             createFile(srcLogFileLocal, srcNvra);
             checkFileExists(srcLogFileLocal);
             int r1 = scpTo(srcNvra + "/" + log, srcLogFileLocal.getAbsolutePath());
-            Assert.assertTrue(r1 == 0);
+            Assert.assertTrue(r1 == 1);
             int r2 = scpTo(x64Nvra + "/" + log, x64LogFileLocal.getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
-            checkFileExists(srcLogFile);
-            checkFileExists(x64LogFile);
+            Assert.assertTrue(r2 == 1);
+            checkFileNotExists(srcLogFile);
+            checkFileNotExists(x64LogFile);
         }
 
     }
 
     @Test
-    public void testSingleStaticGotMappedToUsptramToData() throws IOException, InterruptedException {
+    public void testSingleStaticDidNotGetMappedToUsptramToData() throws IOException, InterruptedException {
         title(2);
         File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/data/");
         String x64Nvra = "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz";
@@ -2141,15 +2149,15 @@ public class TestSshApi {
         createFile(srcLogFileLocal, srcNvra);
         checkFileExists(srcLogFileLocal);
         int r1 = scpTo(srcNvra + "/data", srcLogFileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
+        Assert.assertTrue(r1 == 1);
         int r2 = scpTo(x64Nvra + "/data", x64LogFileLocal.getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
-        checkFileExists(srcLogFile);
-        checkFileExists(x64LogFile);
+        Assert.assertTrue(r2 == 1);
+        checkFileNotExists(srcLogFile);
+        checkFileNotExists(x64LogFile);
     }
 
     @Test
-    public void testSingleStaticGotMappedToUsptramFromLog() throws IOException, InterruptedException {
+    public void testSingleStaticDidNotGetMappedToUsptramFromLog() throws IOException, InterruptedException {
         title(2);
         for (String log : LOGS) {
             File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172." + trasnformToLogId(log) + ".b00/44.upstream/data/logs");
@@ -2168,17 +2176,17 @@ public class TestSshApi {
             createFile(srcLogFile, srcNvra);
             checkFileExists(srcLogFile);
             int r1 = scpFrom(sources.getAbsolutePath(), x64Nvra + "/" + log + "/" + x64LogFile.getName());
-            Assert.assertTrue(r1 == 0);
+            Assert.assertTrue(r1 == 1);
             int r2 = scpFrom(sources.getAbsolutePath(), srcNvra + "/" + log + "/" + srcLogFile.getName());
-            Assert.assertTrue(r2 == 0);
-            checkFileExists(srcLogFileLocal);
-            checkFileExists(x64LogFileLocal);
+            Assert.assertTrue(r2 == 1);
+            checkFileNotExists(srcLogFileLocal);
+            checkFileNotExists(x64LogFileLocal);
         }
 
     }
 
     @Test
-    public void testSingleStaticGotMappedToUsptramFromData() throws IOException, InterruptedException {
+    public void testSingleStaticDidNotGetMappedToUsptramFromData() throws IOException, InterruptedException {
         title(2);
         File sharedTopDir = new File(kojiDb.getAbsolutePath() + "/java-1.8.0-openjdk/jdk8u172.b00/44.upstream/data/");
         String x64Nvra = "java-1.8.0-openjdk-jdk8u172.b00-44.static.x86_64.tarxz";
@@ -2193,11 +2201,11 @@ public class TestSshApi {
         createFile(srcLogFile, srcNvra);
         checkFileExists(srcLogFile);
         int r1 = scpFrom(sources.getAbsolutePath(), srcNvra + "/data/" + srcLogFile.getName());
-        Assert.assertTrue(r1 == 0);
+        Assert.assertTrue(r1 == 1);
         int r2 = scpFrom(sources.getAbsolutePath(), x64Nvra + "/data/" + x64LogFile.getName());
-        Assert.assertTrue(r2 == 0);
-        checkFileExists(srcLogFileLocal);
-        checkFileExists(x64LogFileLocal);
+        Assert.assertTrue(r2 == 1);
+        checkFileNotExists(srcLogFileLocal);
+        checkFileNotExists(x64LogFileLocal);
     }
 
     /*
@@ -2207,6 +2215,8 @@ public class TestSshApi {
     final private static String RELEASE = RELEASE_1 + '.' + PROJECT_NAME_U;
     final private static String NVR = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE;
     final private static String ARCHIVE = HOTSPOT + '.' + FASTDEBUG + '.' + RHEL_7_X64;
+    final private static String RELEASE_CHAOS = RELEASE_1 + ".C.H.A.O.S." + PROJECT_NAME_U;
+    final private static String NVR_CHAOS = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_CHAOS;
 
     @Test
     public void uploadBinaryTarball() throws IOException, InterruptedException {
@@ -2222,6 +2232,19 @@ public class TestSshApi {
     }
 
     @Test
+    public void uploadBinaryTarballWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + ARCHIVE + SUFFIX;
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, ARCHIVE, nvra).toFile();
+        checkFileExists(remoteFile);
+    }
+
+    @Test
     public void uploadSrcTarball() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR + '.' + SOURCES + SUFFIX;
@@ -2231,6 +2254,19 @@ public class TestSshApi {
         int returnCode = scpTo("", localFile.getAbsolutePath());
         Assert.assertEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, SOURCES, nvra).toFile();
+        checkFileExists(remoteFile);
+    }
+
+    @Test
+    public void uploadSourceTarballWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + SOURCES + SUFFIX;
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, SOURCES, nvra).toFile();
         checkFileExists(remoteFile);
     }
 
@@ -2249,6 +2285,20 @@ public class TestSshApi {
     }
 
     @Test
+    public void uploadSrcLogWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", SOURCES, logName).toFile();
+        checkFileExists(remoteLogFile);
+    }
+
+    @Test
     public void uploadBinaryLog() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR + '.' + ARCHIVE;
@@ -2263,10 +2313,38 @@ public class TestSshApi {
     }
 
     @Test
+    public void uploadBinaryLogWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", ARCHIVE, logName).toFile();
+        checkFileExists(remoteLogFile);
+    }
+
+    @Test
     public void downloadBinaryTarball() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR + '.' + SOURCES + SUFFIX;
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, SOURCES, nvra).toFile();
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
+        checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localFile);
+    }
+
+    @Test
+    public void downloadBinaryTarballWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, SOURCES, nvra).toFile();
         remoteFile.getParentFile().mkdirs();
         createFile(remoteFile, nvra);
         final File localFile = new File(sources, nvra);
@@ -2291,6 +2369,20 @@ public class TestSshApi {
     }
 
     @Test
+    public void downloadSrcTarballWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, SOURCES, nvra).toFile();
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
+        checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localFile);
+    }
+
+    @Test
     public void downloadSrcLog() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR + '.' + SOURCES;
@@ -2305,11 +2397,39 @@ public class TestSshApi {
     }
 
     @Test
+    public void downloadSrcLogWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", SOURCES, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localLogFile);
+    }
+
+    @Test
     public void downloadBinaryLog() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR + '.' + ARCHIVE;
         final String logName = nvra + ".log";
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, "data", "logs", ARCHIVE, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertEquals(returnCode, 0);
+        checkFileExists(localLogFile);
+    }
+
+    @Test
+    public void downloadBinaryLogWithChaos() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", ARCHIVE, logName).toFile();
         remoteLogFile.getParentFile().mkdirs();
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
