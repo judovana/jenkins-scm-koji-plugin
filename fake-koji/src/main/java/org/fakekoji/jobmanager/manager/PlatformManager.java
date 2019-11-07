@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager.manager;
 
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.model.Platform;
 import org.fakekoji.storage.Storage;
@@ -17,11 +18,12 @@ public class PlatformManager implements Manager<Platform> {
     }
 
     @Override
-    public void create(Platform platform) throws StorageException, ManagementException {
+    public ManagementResult create(Platform platform) throws StorageException, ManagementException {
         if (storage.contains(platform.getId())) {
             throw new ManagementException("Platform with id " + platform.getId() + " already exists");
         }
         storage.store(platform.getId(), platform);
+        return null;
     }
 
     @Override
@@ -38,12 +40,12 @@ public class PlatformManager implements Manager<Platform> {
     }
 
     @Override
-    public void update(String id, Platform platform) throws StorageException, ManagementException {
-
+    public ManagementResult update(String id, Platform platform) throws StorageException, ManagementException {
+        return null;
     }
 
     @Override
-    public void delete(String id) throws StorageException, ManagementException {
-
+    public ManagementResult delete(String id) throws StorageException, ManagementException {
+        return null;
     }
 }

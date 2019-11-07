@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager.manager;
 
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.Storage;
@@ -17,11 +18,12 @@ public class TaskManager implements Manager<Task> {
     }
 
     @Override
-    public void create(Task task) throws StorageException, ManagementException {
+    public ManagementResult create(Task task) throws StorageException, ManagementException {
         if (taskStorage.contains(task.getId())) {
             throw new ManagementException("Task with id " + task.getId() + " already exists");
         }
         taskStorage.store(task.getId(), task);
+        return null;
     }
 
     @Override
@@ -38,20 +40,22 @@ public class TaskManager implements Manager<Task> {
     }
 
     @Override
-    public void update(String id, Task task) throws StorageException, ManagementException {
+    public ManagementResult update(String id, Task task) throws StorageException, ManagementException {
         if (!taskStorage.contains(id)) {
             throw new ManagementException("No task with id: " + id);
         }
         taskStorage.store(id, task);
         // TODO: update jobs that use this task
+        return null;
     }
 
     @Override
-    public void delete(String id) throws StorageException, ManagementException {
+    public ManagementResult delete(String id) throws StorageException, ManagementException {
         if (!taskStorage.contains(id)) {
             throw new ManagementException("No task with id: " + id);
         }
         taskStorage.delete(id);
         // TODO: archive jobs that use this task
+        return null;
     }
 }

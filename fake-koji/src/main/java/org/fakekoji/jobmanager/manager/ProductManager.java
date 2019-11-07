@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager.manager;
 
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.model.Product;
 import org.fakekoji.storage.Storage;
@@ -17,11 +18,12 @@ public class ProductManager implements Manager<Product> {
     }
 
     @Override
-    public void create(Product product) throws StorageException, ManagementException {
+    public ManagementResult create(Product product) throws StorageException, ManagementException {
         if (storage.contains(product.getId())) {
             throw new ManagementException("Product with id " + product.getId() + " already exists");
         }
         storage.store(product.getId(), product);
+        return null;
     }
 
     @Override
@@ -38,12 +40,12 @@ public class ProductManager implements Manager<Product> {
     }
 
     @Override
-    public void update(String id, Product product) throws StorageException, ManagementException {
-        return;
+    public ManagementResult update(String id, Product product) throws StorageException, ManagementException {
+        return null;
     }
 
     @Override
-    public void delete(String id) throws StorageException, ManagementException {
-        return;
+    public ManagementResult delete(String id) throws StorageException, ManagementException {
+        return null;
     }
 }

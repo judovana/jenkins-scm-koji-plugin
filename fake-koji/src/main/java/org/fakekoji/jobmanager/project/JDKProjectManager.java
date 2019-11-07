@@ -3,9 +3,11 @@ package org.fakekoji.jobmanager.project;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.Job;
+import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.model.Product;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
@@ -43,7 +45,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
     }
 
     @Override
-    public void create(JDKProject project) throws StorageException, ManagementException {
+    public ManagementResult create(JDKProject project) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         final Storage<Product> productStorage = configManager.getProductStorage();
         if (storage.contains(project.getId())) {
@@ -68,11 +70,11 @@ public class JDKProjectManager implements Manager<JDKProject> {
             throw new StorageException("Cloning failed. Skipping creating jobs");
         }
         LOGGER.info("Creating project's jobs");
-        try {
-            jobUpdater.update(Collections.emptySet(), jobs);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
+        final JobUpdateResults results = jobUpdater.update(Collections.emptySet(), jobs);
+        return new ManagementResult(
+                project,
+                results
+        );
     }
 
     @Override
@@ -89,7 +91,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
     }
 
     @Override
-    public void update(String id, JDKProject jdkProject) throws StorageException, ManagementException {
+    public ManagementResult update(String id, JDKProject jdkProject) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
@@ -102,17 +104,17 @@ public class JDKProjectManager implements Manager<JDKProject> {
         final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
         final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(oldProject);
         LOGGER.info("Updating the project's jobs");
-        try {
-            jobUpdater.update(oldJobs, newJobs);
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
         LOGGER.info("Storing the project");
         storage.store(id, jdkProject);
+        final JobUpdateResults results = jobUpdater.update(oldJobs, newJobs);
+        return new ManagementResult(
+                jdkProject,
+                results
+        );
     }
 
     @Override
-    public void delete(String id) throws StorageException, ManagementException {
+    public ManagementResult delete(String id) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
@@ -121,12 +123,12 @@ public class JDKProjectManager implements Manager<JDKProject> {
         LOGGER.info("Deleting JDK project " + jdkProject.getId());
         final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
         LOGGER.info("Archiving the project's jobs");
-        try {
-            jobUpdater.update(jobs, Collections.emptySet());
-        } catch (IOException e) {
-            throw new StorageException(e.getMessage());
-        }
         storage.delete(id);
+        final JobUpdateResults results = jobUpdater.update(jobs, Collections.emptySet());
+        return new ManagementResult(
+                null,
+                results
+        );
     }
 
     JDKProject.RepoState cloneProject(
