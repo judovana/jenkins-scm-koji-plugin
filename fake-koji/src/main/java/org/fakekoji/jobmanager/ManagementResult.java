@@ -4,12 +4,12 @@ import org.fakekoji.jobmanager.model.JobUpdateResults;
 
 import java.util.Objects;
 
-public class ManagementResult {
+public class ManagementResult <C> {
 
-    public final Object config;
+    public final C config;
     public final JobUpdateResults jobUpdateResults;
 
-    public ManagementResult(Object config, JobUpdateResults jobUpdateResults) {
+    public ManagementResult(C config, JobUpdateResults jobUpdateResults) {
         this.config = config;
         this.jobUpdateResults = jobUpdateResults;
     }
