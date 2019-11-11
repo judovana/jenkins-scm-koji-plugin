@@ -6,7 +6,6 @@ import { JDKProject, Task } from "../../stores/model"
 import JDKProjectForm from "./JDKProjectForm";
 import TaskForm from "./TaskForm";
 
-import "../styles/Forms.css";
 import Button from "../Button";
 
 interface Props {
