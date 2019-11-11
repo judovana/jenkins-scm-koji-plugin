@@ -141,14 +141,7 @@ public class JavaServer {
                 webappPort
         );
 
-        final OToolService oToolService = new OToolService(
-                settings.getWebappPort(),
-                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                settings.getJenkinsJobsRoot(),
-                settings.getJenkinsJobArchiveRoot(),
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
+        final OToolService oToolService = new OToolService(settings);
 
         new JavaServer(settings, oToolService).start();
     }

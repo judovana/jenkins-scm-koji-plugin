@@ -31,24 +31,24 @@ import java.util.stream.Collectors;
 
 public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
 
-    private final JobBuilder jobBuilder;
+    private JobBuilder jobBuilder;
     private final ConfigManager configManager;
     private final File repositoriesRoot;
     private final File scriptsRoot;
 
-    JDKProjectParser(
+    public JDKProjectParser(
             final ConfigManager configManager,
             File repositoriesRoot,
             File scriptsRoot
-    ) throws StorageException {
+    ) {
         this.configManager = configManager;
         this.repositoriesRoot = repositoriesRoot;
         this.scriptsRoot = scriptsRoot;
-        jobBuilder = new JobBuilder(configManager);
     }
 
     @Override
     public Set<Job> parse(JDKProject project) throws ManagementException, StorageException {
+        jobBuilder = new JobBuilder(configManager);
         if (!configManager.getProductStorage().contains(project.getProduct())) {
             throw new ManagementException("Unknown product: " + project.getProduct());
         }

@@ -1,6 +1,7 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.Javalin;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
@@ -12,6 +13,7 @@ import org.fakekoji.jobmanager.manager.ProductManager;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
+import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 
@@ -38,19 +40,13 @@ public class OToolService {
     private final Javalin app;
     private final JobUpdater jenkinsJobUpdater;
 
-    public OToolService(
-            final int port,
-            final ConfigManager configManager,
-            final File jenkinsJobsRoot,
-            final File jenkinsJobArchiveRoot,
-            final File reposRoot,
-            final File scriptsRoot
-            ) {
-        this.port = port;
+    public OToolService(AccessibleSettings settings) {
+        this.port = settings.getWebappPort();
         app = Javalin.create(config -> config
                 .addStaticFiles("/webapp")
         );
-        jenkinsJobUpdater = new JenkinsJobUpdater(jenkinsJobsRoot, jenkinsJobArchiveRoot);
+        jenkinsJobUpdater = new JenkinsJobUpdater(settings);
+        final ConfigManager configManager = ConfigManager.create(settings.getConfigRoot().getAbsolutePath());
         app.routes(() -> {
 
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
@@ -62,7 +58,7 @@ public class OToolService {
             final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
             app.get(PLATFORMS, context -> context.json(platformManager.readAll()));
 
-            final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
+            final TaskManager taskManager = new TaskManager(configManager, jenkinsJobUpdater);
             app.post(TASKS, context -> {
                 try {
                     final Task task = context.bodyValidator(Task.class).get();
@@ -105,8 +101,8 @@ public class OToolService {
             final JDKProjectManager jdkProjectManager = new JDKProjectManager(
                     configManager,
                     jenkinsJobUpdater,
-                    reposRoot,
-                    scriptsRoot
+                    settings.getLocalReposRoot(),
+                    settings.getScriptsRoot()
             );
             app.post(JDK_PROJECTS, context -> {
                 try {

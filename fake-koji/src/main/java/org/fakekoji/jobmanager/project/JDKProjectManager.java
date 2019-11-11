@@ -6,7 +6,6 @@ import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKProject;
-import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.model.Product;
 import org.fakekoji.storage.Storage;
@@ -18,9 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 public class JDKProjectManager implements Manager<JDKProject> {
@@ -52,12 +49,11 @@ public class JDKProjectManager implements Manager<JDKProject> {
         if (storage.contains(project.getId())) {
             throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
         }
-        final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(project);
         LOGGER.info("Storing JDK project " + project.getId() + " before cloning its repository");
         storage.store(project.getId(), setProjectRepoStatus(project, JDKProject.RepoState.CLONING));
         final JDKProject createdJDKProject = cloneProject(project).config;
         LOGGER.info("Creating project's jobs");
-        final JobUpdateResults results = jobUpdater.update(Collections.emptySet(), jobs);
+        final JobUpdateResults results = jobUpdater.update(null, project);
         return new ManagementResult<>(
                 createdJDKProject,
                 results
@@ -88,12 +84,10 @@ public class JDKProjectManager implements Manager<JDKProject> {
         if (!oldProject.getUrl().equals(jdkProject.getUrl())) {
             updateProjectUrl();
         }
-        final Set<Job> newJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
-        final Set<Job> oldJobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(oldProject);
-        LOGGER.info("Updating the project's jobs");
         LOGGER.info("Storing the project");
         storage.store(id, jdkProject);
-        final JobUpdateResults results = jobUpdater.update(oldJobs, newJobs);
+        LOGGER.info("Updating the project's jobs");
+        final JobUpdateResults results = jobUpdater.update(oldProject, jdkProject);
         return new ManagementResult<>(
                 jdkProject,
                 results
@@ -108,10 +102,9 @@ public class JDKProjectManager implements Manager<JDKProject> {
         }
         final JDKProject jdkProject = storage.load(id, JDKProject.class);
         LOGGER.info("Deleting JDK project " + jdkProject.getId());
-        final Set<Job> jobs = new JDKProjectParser(configManager, repositoriesRoot, scriptsRoot).parse(jdkProject);
-        LOGGER.info("Archiving the project's jobs");
         storage.delete(id);
-        final JobUpdateResults results = jobUpdater.update(jobs, Collections.emptySet());
+        LOGGER.info("Archiving the project's jobs");
+        final JobUpdateResults results = jobUpdater.update(jdkProject, null);
         return new ManagementResult<>(
                 null,
                 results
