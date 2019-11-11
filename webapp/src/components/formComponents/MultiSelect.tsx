@@ -36,6 +36,7 @@ class MultiSelect extends React.PureComponent<MultiSelectProps> {
                 {
                     options.map((option, index) =>
                         <FormControlLabel
+                            key={index.toString()}
                             control={
                                 <Checkbox
                                     checked={values.indexOf(option) >= 0}
