@@ -116,7 +116,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
                 <div className="value-container">
                     <Select
                         onChange={this.onRPMLimitationFlagChange}
-                        options={["NONE", "WHITELIST", "BLACKLIST"]}
+                        options={["WHITELIST", "BLACKLIST"]}
                         value={flag} />
                     {
                         flag !== "NONE" &&

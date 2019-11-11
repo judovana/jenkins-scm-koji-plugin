@@ -24,14 +24,14 @@ const RPMLimitationForm: React.FunctionComponent<Props> = (props) => {
                 <Select
                     onChange={onFlagChange}
                     options={["WHITELIST", "BLACKLIST"]}
-                    value={rpmLimitation.flag} />
+                    value={rpmLimitation.flag || "NONE"} />
                 {
-                    rpmLimitation.flag !== "" &&
+                    rpmLimitation.flag && rpmLimitation.flag !== "NONE" &&
                     <TextInput
                         label={"glob"}
                         onChange={onGlobChange}
                         placeholder={"Enter glob"}
-                        value={rpmLimitation.glob} />
+                        value={rpmLimitation.glob || ""} />
                 }
             </FormGroup>
         </FormControl>

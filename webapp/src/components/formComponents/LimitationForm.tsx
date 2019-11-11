@@ -41,7 +41,7 @@ class LimitationForm extends React.PureComponent<LimitationProps> {
                 <FormGroup>
                     <Select
                         onChange={this.onFlagChange}
-                        options={["NONE", "WHITELIST", "BLACKLIST"]}
+                        options={["WHITELIST", "BLACKLIST"]}
                         value={flag}
                     />
                     {

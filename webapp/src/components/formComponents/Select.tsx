@@ -28,10 +28,10 @@ class Select extends React.PureComponent<SelectProps> {
         const { value, options } = this.props
         return (
             <MaterialSelect
-                defaultValue={""}
+                defaultValue={"NONE"}
                 value={value}
                 onChange={this.onChange}>
-                    <MenuItem value="">
+                    <MenuItem value="NONE">
                         None
                     </MenuItem>
                 {
