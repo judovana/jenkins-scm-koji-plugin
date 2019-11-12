@@ -1,5 +1,4 @@
-export interface Project {
-    id: string;
+export interface Project extends Item {
     type: ProjectType;
 }
 
@@ -99,6 +98,29 @@ export interface Product extends Item {
 export interface TaskVariant extends Item {
     type: TaskType;
     variants: Item[];
+}
+
+export interface FetchResult<T> {
+    value?: T
+    error?: string
+}
+
+export interface JobUpdateResult {
+    jobName: string
+    success: boolean
+    message?: string
+}
+
+export interface JobUpdateResults {
+    jobsCreated: JobUpdateResult[]
+    jobsArchived: JobUpdateResult[]
+    jobsRewritten: JobUpdateResult[]
+    jobsRevived: JobUpdateResult[]
+}
+
+export interface OToolResponse {
+    config?: Item
+    jobUpdateResults: JobUpdateResults
 }
 
 export type ProjectCategories = { [id: string]: ProjectCategory };
