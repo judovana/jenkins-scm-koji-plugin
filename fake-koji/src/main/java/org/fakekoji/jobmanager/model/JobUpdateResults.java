@@ -1,7 +1,6 @@
 package org.fakekoji.jobmanager.model;
 
-import org.fakekoji.jobmanager.ManagementResult;
-
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -11,6 +10,13 @@ public class JobUpdateResults {
     public final List<JobUpdateResult> jobsArchived;
     public final List<JobUpdateResult> jobsRewritten;
     public final List<JobUpdateResult> jobsRevived;
+
+    public JobUpdateResults() {
+        jobsCreated = Collections.emptyList();
+        jobsArchived = Collections.emptyList();
+        jobsRewritten = Collections.emptyList();
+        jobsRevived = Collections.emptyList();
+    }
 
     public JobUpdateResults(
             List<JobUpdateResult> jobsCreated,
