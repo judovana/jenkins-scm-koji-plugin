@@ -45,7 +45,7 @@ public class Utils {
             final StringBuilder content = new StringBuilder();
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                content.append(line);
+                content.append(line).append('\n');
             }
             return content.toString();
         }
