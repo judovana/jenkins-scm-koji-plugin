@@ -3,7 +3,7 @@ import Select from "../formComponents/Select"
 import { inject, observer } from "mobx-react"
 
 import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
-import { Platform, ConfigState } from "../../stores/model";
+import { Platform, ConfigState, Item } from "../../stores/model";
 import { observable, runInAction } from "mobx";
 import TextInput from "../formComponents/TextInput";
 import Button from "../Button";
@@ -11,7 +11,7 @@ import Button from "../Button";
 interface Props {
     platform: Platform
     configStore?: ConfigStore
-}
+    onSubmit: (item: Item, state: ConfigState) => void}
 
 class PlatformForm extends React.Component<Props> {
 
@@ -77,20 +77,12 @@ class PlatformForm extends React.Component<Props> {
     }
 
     onSubmit = () => {
-        const configStore = this.props.configStore!
         const platform = this.platform!
         const filter = (value: string) => value.trim() !== ""
         platform.vmNodes = platform.vmNodes.filter(filter)
         platform.hwNodes = platform.hwNodes.filter(filter)
         platform.tags = platform.tags.filter(filter)
-        switch (this.platformState) {
-            case "create":
-                configStore.createConfig(this.platform!)
-                break
-            case "update":
-                configStore.updateConfig(this.platform!)
-                break;
-        }
+        this.props.onSubmit(this.platform!, this.platformState!)
     }
 
     render() {
