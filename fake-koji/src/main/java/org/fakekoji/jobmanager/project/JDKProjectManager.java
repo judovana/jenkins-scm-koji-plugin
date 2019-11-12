@@ -49,9 +49,9 @@ public class JDKProjectManager implements Manager<JDKProject> {
         if (storage.contains(project.getId())) {
             throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
         }
-        LOGGER.info("Storing JDK project " + project.getId() + " before cloning its repository");
-        storage.store(project.getId(), setProjectRepoStatus(project, JDKProject.RepoState.CLONING));
         final JDKProject createdJDKProject = cloneProject(project).config;
+        LOGGER.info("Storing JDK project " + project.getId());
+        storage.store(project.getId(), setProjectRepoStatus(project, JDKProject.RepoState.CLONING));
         LOGGER.info("Creating project's jobs");
         final JobUpdateResults results = jobUpdater.update(null, project);
         return new ManagementResult<>(
@@ -106,7 +106,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
         LOGGER.info("Archiving the project's jobs");
         final JobUpdateResults results = jobUpdater.update(jdkProject, null);
         return new ManagementResult<>(
-                null,
+                jdkProject,
                 results
         );
     }

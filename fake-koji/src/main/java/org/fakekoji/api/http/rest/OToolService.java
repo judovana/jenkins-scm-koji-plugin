@@ -6,18 +6,17 @@ import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.manager.BuildProviderManager;
-import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.ProductManager;
-import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
-import org.fakekoji.jobmanager.project.JDKProjectParser;
+import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.project.JDKProjectManager;
+import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
-
-import java.io.File;
 
 public class OToolService {
 
@@ -55,15 +54,49 @@ public class OToolService {
             final ProductManager productManager = new ProductManager(configManager.getProductStorage());
             app.get(PRODUCTS, context -> context.json(productManager.readAll()));
 
-            final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
+            final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
             app.get(PLATFORMS, context -> context.json(platformManager.readAll()));
+            app.post(PLATFORMS, context -> {
+                try {
+                    final Platform platform = context.bodyValidator(Platform.class).get();
+                    final ManagementResult<Platform> result = platformManager.create(platform);
+                    context.status(200).json(result);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
+            });
+            app.put(PLATFORM, context -> {
+                try {
+                    final String id = context.pathParam(ID);
+                    final Platform platform = context.bodyValidator(Platform.class).get();
+                    final ManagementResult<Platform> result = platformManager.update(id, platform);
+                    context.status(200).json(result);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
+            });
+            app.delete(PLATFORM, context -> {
+                try {
+                    final String id = context.pathParam(ID);
+                    final ManagementResult<Platform> result = platformManager.delete(id);
+                    context.status(200).json(result);
+                } catch (ManagementException e) {
+                    context.status(400).result(e.toString());
+                } catch (StorageException e) {
+                    context.status(500).result(e.toString());
+                }
+            });
 
-            final TaskManager taskManager = new TaskManager(configManager, jenkinsJobUpdater);
+            final TaskManager taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
             app.post(TASKS, context -> {
                 try {
                     final Task task = context.bodyValidator(Task.class).get();
-                    taskManager.create(task);
-                    context.status(200);
+                    final ManagementResult<Task> result = taskManager.create(task);
+                    context.status(200).json(result);
                 } catch (ManagementException e) {
                     context.status(400).result(e.toString());
                 } catch (StorageException e) {
@@ -75,8 +108,8 @@ public class OToolService {
                 try {
                     final String id = context.pathParam(ID);
                     final Task task = context.bodyValidator(Task.class).get();
-                    taskManager.update(id, task);
-                    context.status(200);
+                    final ManagementResult<Task> result = taskManager.update(id, task);
+                    context.json(result).status(200);
                 } catch (ManagementException e) {
                     context.status(400).result(e.toString());
                 } catch (StorageException e) {
@@ -86,8 +119,8 @@ public class OToolService {
             app.delete(TASK, context -> {
                 try {
                     final String id = context.pathParam(ID);
-                    taskManager.delete(id);
-                    context.status(200);
+                    final ManagementResult<Task> result = taskManager.delete(id);
+                    context.status(200).json(result);
                 } catch (ManagementException e) {
                     context.status(400).result(e.toString());
                 } catch (StorageException e) {
@@ -107,8 +140,8 @@ public class OToolService {
             app.post(JDK_PROJECTS, context -> {
                 try {
                     final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
-                    jdkProjectManager.create(jdkProject);
-                    context.status(200);
+                    final ManagementResult<JDKProject> result = jdkProjectManager.create(jdkProject);
+                    context.status(200).json(result);
                 } catch (ManagementException e) {
                     context.status(400).result(e.toString());
                 } catch (StorageException e) {
@@ -120,8 +153,8 @@ public class OToolService {
                 try {
                     final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
                     final String id = context.pathParam(ID);
-                    jdkProjectManager.update(id, jdkProject);
-                    context.status(200);
+                    final ManagementResult<JDKProject> result = jdkProjectManager.update(id, jdkProject);
+                    context.status(200).json(result);
                 } catch (ManagementException e) {
                     context.status(400).result(e.toString());
                 } catch (StorageException e) {
@@ -131,8 +164,8 @@ public class OToolService {
             app.delete(JDK_PROJECT, context -> {
                 try {
                     final String id = context.pathParam(ID);
-                    jdkProjectManager.delete(id);
-                    context.status(200);
+                    final ManagementResult<JDKProject> result = jdkProjectManager.delete(id);
+                    context.status(200).json(result);
                 } catch (ManagementException e) {
                     context.status(400).result(e.toString());
                 } catch (StorageException e) {
