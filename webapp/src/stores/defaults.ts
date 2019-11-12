@@ -1,4 +1,4 @@
-import { Task, JDKProject, ProjectType, PlatformConfig } from "./model";
+import { Task, JDKProject, ProjectType, PlatformConfig, Platform } from "./model";
 
 const defaultTask: Task = {
     id: "",
@@ -36,4 +36,16 @@ const defaultJDKProject: JDKProject = {
     }
 }
 
-export { defaultTask, defaultJDKProject }
+const defaultPlatform: Platform = {
+    architecture: "",
+    hwNodes: [],
+    id: "",
+    os: "",
+    provider: "vagrant",
+    tags: [],
+    version: "",
+    vmName: "",
+    vmNodes: []
+}
+
+export { defaultTask, defaultJDKProject, defaultPlatform }

@@ -1,9 +1,12 @@
 import React from "react"
+import Select from "../formComponents/Select"
+import { inject, observer } from "mobx-react"
 
-import { ConfigStore } from "../../stores/ConfigStore";
+import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
 import { Platform, ConfigState } from "../../stores/model";
 import { observable, runInAction } from "mobx";
 import TextInput from "../formComponents/TextInput";
+import Button from "../Button";
 
 interface Props {
     platform: Platform
@@ -45,6 +48,10 @@ class PlatformForm extends React.Component<Props> {
         this.platform!.os = value
     }
 
+    onVersionChange = (value: string) => {
+        this.platform!.version = value
+    }
+
     onArchitectureChange = (value: string) => {
         this.platform!.architecture = value
     }
@@ -53,13 +60,55 @@ class PlatformForm extends React.Component<Props> {
         this.platform!.provider = value
     }
 
+    onVMNameChange = (value: string) => {
+        this.platform!.vmName = value
+    }
+
+    onVMNodesChange = (value: string) => {
+        this.platform!.vmNodes = value.split(" ")
+    }
+
+    onHWNodesChange = (value: string) => {
+        this.platform!.hwNodes = value.split(" ")
+    }
+
+    onTagsChange = (value: string) => {
+        this.platform!.tags = value.split(" ")
+    }
+
+    onSubmit = () => {
+        const configStore = this.props.configStore!
+        const platform = this.platform!
+        const filter = (value: string) => value.trim() !== ""
+        platform.vmNodes = platform.vmNodes.filter(filter)
+        platform.hwNodes = platform.hwNodes.filter(filter)
+        platform.tags = platform.tags.filter(filter)
+        switch (this.platformState) {
+            case "create":
+                configStore.createConfig(this.platform!)
+                break
+            case "update":
+                configStore.updateConfig(this.platform!)
+                break;
+        }
+    }
+
     render() {
         const configStore = this.props.configStore!
         if (!this.platform) {
             return null
         }
         const configState = configStore.configState
-        const { architecture, os, provider, tags, version, vmName, vmNodes } = this.platform;
+        const {
+            architecture,
+            os,
+            provider,
+            tags,
+            version,
+            vmName,
+            vmNodes,
+            hwNodes
+        } = this.platform
         return (
             <fieldset>
                 <TextInput
@@ -67,10 +116,40 @@ class PlatformForm extends React.Component<Props> {
                     onChange={this.onOSChange}
                     value={os} />
                 <TextInput
+                    label={"version"}
+                    onChange={this.onVersionChange}
+                    value={version} />
+                <TextInput
                     label={"architecture"}
                     onChange={this.onArchitectureChange}
                     value={architecture} />
+                <Select
+                    label={"provider"}
+                    onChange={this.onProviderChange}
+                    options={["vagrant", "beaker"]}
+                    value={provider} />
+                <TextInput
+                    label={"vm name"}
+                    onChange={this.onVMNameChange}
+                    value={vmName} />
+                <TextInput
+                    label={"vm nodes"}
+                    onChange={this.onVMNodesChange}
+                    value={vmNodes.join(" ")} />
+                <TextInput
+                    label={"hw nodes"}
+                    onChange={this.onHWNodesChange}
+                    value={hwNodes.join(" ")} />
+                <TextInput
+                    label={"tags"}
+                    onChange={this.onTagsChange}
+                    value={tags.join(" ")} />
+                <Button onClick={this.onSubmit}>{configState}</Button>
+
+                {JSON.stringify(this.platform)}
             </fieldset>
         )
     }
 }
+
+export default inject(CONFIG_STORE)(observer(PlatformForm))

@@ -2,9 +2,10 @@ import React from "react";
 import { inject, observer } from "mobx-react"
 
 import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
-import { JDKProject, Task } from "../../stores/model"
+import { JDKProject, Task, Platform } from "../../stores/model"
 import JDKProjectForm from "./JDKProjectForm";
 import TaskForm from "./TaskForm";
+import PlatformForm from "./PlatformForm";
 
 import Button from "../Button";
 
@@ -39,6 +40,10 @@ class ConfigForm extends React.PureComponent<Props> {
                 return (
                     <TaskForm task={selectedConfig as Task} />
                 );
+            case "platforms":
+                return (
+                    <PlatformForm platform={selectedConfig as Platform} />
+                )
             default:
                 return null;
         }
