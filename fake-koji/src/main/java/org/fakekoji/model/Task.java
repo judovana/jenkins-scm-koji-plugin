@@ -233,7 +233,7 @@ public class Task {
     }
 
     public enum LimitFlag {
-        NONE("NONE"),
+        NONE(""),
         WHITELIST("WHITELIST"),
         BLACKLIST("BLACKLIST");
 
@@ -266,7 +266,7 @@ public class Task {
     }
 
     public enum BinaryRequirements {
-        NONE("NONE"),
+        NONE(""),
         BINARY("BINARY"),
         BINARIES("BINARIES");
 

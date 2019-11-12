@@ -199,7 +199,7 @@ public class JenkinsJobTemplateBuilder {
         }
         switch (fileRequirements.getBinary()) {
             case BINARY:
-                platforms.add(platform.getString());
+                platforms.add(platform.assembleString());
                 break;
             case BINARIES:
                 return "";
@@ -263,7 +263,7 @@ public class JenkinsJobTemplateBuilder {
                         .filter(e -> e.getKey().getType() == Task.Type.BUILD)
                         .sorted(Comparator.comparing(Map.Entry::getKey))
                         .map(e -> e.getValue().getId())
-                        .collect(Collectors.joining(".")) + '.' + platform.getString()
+                        .collect(Collectors.joining(".")) + '.' + platform.assembleString()
         );
         template = template
                 .replace(NODES, String.join(" ", nodes))

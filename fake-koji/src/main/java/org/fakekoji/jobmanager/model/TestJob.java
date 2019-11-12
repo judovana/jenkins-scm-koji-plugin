@@ -97,7 +97,7 @@ public class TestJob extends TaskJob {
                         getTask().getId(),
                         getProduct().getId(),
                         getProjectName(),
-                        buildPlatform.getString(),
+                        buildPlatform.assembleString(),
                         buildVariants.entrySet().stream()
                                 .sorted(Comparator.comparing(Map.Entry::getKey))
                                 .map(entry -> entry.getValue().getId())

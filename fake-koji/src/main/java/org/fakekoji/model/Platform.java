@@ -5,6 +5,7 @@ import java.util.Objects;
 
 public class Platform {
 
+    private final String id;
     private final String os;
     private final String version;
     private final String architecture;
@@ -15,6 +16,7 @@ public class Platform {
     private final List<String> tags;
 
     public Platform() {
+        id = null;
         vmName = null;
         os = null;
         version = null;
@@ -43,13 +45,40 @@ public class Platform {
         this.vmNodes = vmNodes;
         this.hwNodes = hwNodes;
         this.tags = tags;
+        id = assembleId();
+    }
+
+    public Platform(
+            String id,
+            String os,
+            String version,
+            String architecture,
+            String provider,
+            String vmName,
+            List<String> vmNodes,
+            List<String> hwNodes,
+            List<String> tags
+    ) {
+        this.id = id;
+        this.os = os;
+        this.version = version;
+        this.architecture = architecture;
+        this.provider = provider;
+        this.vmName = vmName;
+        this.vmNodes = vmNodes;
+        this.hwNodes = hwNodes;
+        this.tags = tags;
+    }
+
+    private String assembleId() {
+        return assembleString() + '.' + getProvider();
     }
 
     public String getId() {
-        return getString() + '.' + getProvider();
+        return id;
     }
 
-    public String getString() {
+    public String assembleString() {
         return getOs() + getVersion() + '.' + getArchitecture();
     }
 
