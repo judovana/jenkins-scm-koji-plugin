@@ -1,11 +1,11 @@
 import React from "react";
-import { PlatformConfig, TaskType, Item } from "../stores/model";
-import AddComponent from "./formComponents/AddComponent";
+import { PlatformConfig, TaskType, Item } from "../../stores/model";
+import AddComponent from "./AddComponent";
 import { inject, observer } from "mobx-react";
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import TreeNode from "./TreeNode";
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
+import TreeNode from "../TreeNode";
 import TaskComponent from "./TaskComponent";
-import Button from "./Button";
+import Button from "../Button";
 
 interface Props {
     config: PlatformConfig;

@@ -1,4 +1,5 @@
 import React from "react"
+import { FormControl, FormLabel, TextareaAutosize } from "@material-ui/core";
 
 type TextAreaPropsOptional = {
     onChange: (value: string) => void
@@ -15,7 +16,7 @@ type TextAreaProps = TextAreaPropsRequired & TextAreaPropsOptional
 class TextArea extends React.PureComponent<TextAreaProps> {
 
     static defaultProps: TextAreaPropsOptional = {
-        onChange: _ => {},
+        onChange: _ => { },
         placeholder: "",
         value: ""
     }
@@ -27,17 +28,15 @@ class TextArea extends React.PureComponent<TextAreaProps> {
     render() {
         const { label, placeholder, value } = this.props
         return (
-            <div className="field-container">
-                <div className="label-container">
+            <FormControl margin="normal" fullWidth>
+                <FormLabel>
                     <label>{label}</label>
-                </div>
-                <div className="value-container">
-                    <textarea
-                        placeholder={placeholder}
-                        value={value}
-                        onChange={this.onChange} />
-                </div>
-            </div>
+                </FormLabel>
+                <TextareaAutosize
+                    placeholder={placeholder}
+                    value={value}
+                    onChange={this.onChange} />
+            </FormControl>
         )
     }
 }

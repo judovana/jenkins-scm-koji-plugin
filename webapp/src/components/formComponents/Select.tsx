@@ -1,4 +1,5 @@
 import React from "react"
+import { FormControl, InputLabel, Select as MaterialSelect, MenuItem } from "@material-ui/core";
 
 type SelectPropsRequired = {
     options: string[]
@@ -19,26 +20,30 @@ class Select extends React.PureComponent<SelectProps> {
         value: ""
     }
 
-    onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-        this.props.onChange(event.target.value)
+    onChange = (event: React.ChangeEvent<{ name?: string | undefined; value: unknown; }>) => {
+        this.props.onChange(event.target.value as string)
     }
 
     renderSelect = () => {
         const { value, options } = this.props
         return (
-            <select
-                defaultValue={value}
+            <MaterialSelect
+                defaultValue={"NONE"}
+                value={value}
                 onChange={this.onChange}>
+                    <MenuItem value="NONE">
+                        None
+                    </MenuItem>
                 {
                     options.map(option =>
-                        <option
+                        <MenuItem
                             key={option}
                             value={option}>
                             {option}
-                        </option>
+                        </MenuItem>
                     )
                 }
-            </select>
+            </MaterialSelect>
         )
     }
 
@@ -52,12 +57,10 @@ class Select extends React.PureComponent<SelectProps> {
             )
         }
         return (
-            <div className="field-container">
-                <div className="label-container">
-                    <label>{label}</label>
-                </div>
+            <FormControl margin={"normal"} fullWidth>
+                <InputLabel>{label}</InputLabel>
                 {this.renderSelect()}
-            </div>
+            </FormControl>
         )
     }
 }

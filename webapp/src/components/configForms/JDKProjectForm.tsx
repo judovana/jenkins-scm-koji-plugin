@@ -2,18 +2,19 @@ import React from "react";
 
 import { observer, inject } from "mobx-react";
 
-import { JDKProject, ConfigState, RepoState } from "../stores/model";
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
+import { JDKProject, ConfigState, RepoState, Item } from "../../stores/model";
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
 import { observable, runInAction } from "mobx";
-import JobConfigComponent from "./JobConfigComponent";
-import TextInput from "./formComponents/TextInput";
-import Select from "./formComponents/Select";
-import Button from "./Button";
-import MultiSelect from "./formComponents/MultiSelect";
+import JobConfigComponent from "../formComponents/JobConfigComponent";
+import TextInput from "../formComponents/TextInput";
+import Select from "../formComponents/Select";
+import Button from "../Button";
+import MultiSelect from "../formComponents/MultiSelect";
 
 interface Props {
     project: JDKProject;
     configStore?: ConfigStore;
+    onSubmit: (item: Item, state: ConfigState) => void
 }
 
 class JDKProjectForm extends React.PureComponent<Props> {
@@ -64,15 +65,7 @@ class JDKProjectForm extends React.PureComponent<Props> {
     }
 
     onSubmit = () => {
-        const configStore = this.props.configStore!
-        switch (this.jdkProjectState) {
-            case "create":
-                configStore.createConfig(this.jdkProject!)
-                break
-            case "update":
-                configStore.updateConfig(this.jdkProject!)
-                break;
-        }
+        this.props.onSubmit(this.jdkProject!, this.jdkProjectState!)
     }
 
     renderBuildProvidersForm = () => {

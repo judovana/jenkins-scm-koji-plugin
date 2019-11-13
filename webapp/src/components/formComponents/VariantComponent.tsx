@@ -2,13 +2,13 @@ import React from "react";
 
 import PlatformComponent from "./PlatformComponent";
 
-import { VariantsConfig, TaskType } from "../stores/model";
-import Select from "./formComponents/Select";
-import AddComponent from "./formComponents/AddComponent";
+import { VariantsConfig, TaskType } from "../../stores/model";
+import Select from "./Select";
+import AddComponent from "./AddComponent";
 import { inject, observer } from "mobx-react";
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import TreeNode from "./TreeNode";
-import Button from "./Button";
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
+import TreeNode from "../TreeNode";
+import Button from "../Button";
 
 interface Props {
     type: TaskType;

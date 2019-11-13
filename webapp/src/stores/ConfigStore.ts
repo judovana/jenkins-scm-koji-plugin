@@ -1,7 +1,7 @@
 import { observable, runInAction, action } from "mobx";
 
-import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups } from "./model";
-import { defaultTask, defaultJDKProject } from "./defaults";
+import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, JobUpdateResults, ConfigGroup } from "./model";
+import { defaultTask, defaultJDKProject, defaultPlatform } from "./defaults";
 import ConfigService from "./services/ConfigService";
 
 export const CONFIG_STORE = "configStore";
@@ -21,15 +21,47 @@ export class ConfigStore {
     private _configState: ConfigState = "create"
 
     @observable
-    private _configError: string | null = null;
+    private _configError?: string
+
+    @observable
+    private _jobUpdateResults?: JobUpdateResults
 
     constructor(private readonly service: ConfigService) {
         this._configGroups = {}
     }
 
     @action
-    discardError = () => {
-        this._configError = null
+    discardOToolResponse = () => {
+        this._jobUpdateResults = undefined
+        this._configError = undefined
+    }
+
+    @action
+    setJobUpdateResults = (results: JobUpdateResults) => {
+        this._jobUpdateResults = results
+        let result = ""
+        result += "\nJobs created:\n"
+        results.jobsCreated.forEach(res => {
+            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+        })
+        result += "\nJobs rewritten:\n"
+        results.jobsRewritten.forEach(res => {
+            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+        })
+        result += "\nJobs revived:\n"
+        results.jobsRevived.forEach(res => {
+            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+        })
+        result += "\nJobs archived:\n"
+        results.jobsArchived.forEach(res => {
+            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+        })
+        console.log(result)
+    }
+
+    @action
+    setError = (error?: string) => {
+        this._configError = error
     }
 
     @action
@@ -54,13 +86,20 @@ export class ConfigStore {
             case "tasks":
                 this._selectedConfig = defaultTask
                 break
+            case "platforms":
+                this._selectedConfig = defaultPlatform
+                break
             default:
                 return
         }
         this._configState = "create"
     }
 
-    get errorMessage(): string | null {
+    get jobUpdateResults(): JobUpdateResults | undefined {
+        return this._jobUpdateResults
+    }
+
+    get configError(): string | undefined {
         return this._configError
     }
 
@@ -85,71 +124,86 @@ export class ConfigStore {
         return this._selectedConfig;
     }
 
-    onError = (error: Error) => {
-        this._configError = error.message
-    }
-
     createConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
         if (!groupId) {
+            this.setError("No group is selected!")
             return
         }
-        try {
-            await this.service.postConfig(groupId, config)
+        const response = await this.service.postConfig(groupId, config)
+        if (response.value) {
+            const oToolResponse = response.value
             runInAction(() => {
-                this._configGroups[groupId][config.id] = { ...config }
+                this._configGroups[groupId][config.id] = { ...oToolResponse.config! }
                 this._selectedConfig = this._configGroups[groupId][config.id]
                 this._configState = "update"
             })
-        } catch (error) {
-            this.onError(error)
+            if (oToolResponse.jobUpdateResults) {
+                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
+            }
+        } else {
+            this.setError(response.error!)
         }
     }
 
     updateConfig = async (config: Item) => {
         const groupId = this._selectedGroupId
         if (!groupId) {
+            this.setError("No group is selected!")
             return
         }
-        try {
-            await this.service.putConfig(groupId, config)
+        const response = await this.service.putConfig(groupId, config)
+        if (response.value) {
+            const oToolResponse = response.value
             runInAction(() => {
-                this._configGroups[groupId][config.id] = { ...config }
+                this._configGroups[groupId][config.id] = { ...oToolResponse.config! }
             })
-        } catch (error) {
-            this.onError(error)
+            if (oToolResponse.jobUpdateResults) {
+                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
+            }
+        } else {
+            this.setError(response.error!)
         }
     }
 
     deleteConfig = async (id: string) => {
         const groupId = this._selectedGroupId
         if (!groupId) {
+            this.setError("No group is selected!")
             return
         }
-        try {
-            await this.service.deleteConfig(groupId, id)
+        const response = await this.service.deleteConfig(groupId, id)
+        if (response.value) {
+            const oToolResponse = response.value
             runInAction(() => {
-                delete this._configGroups[groupId][id]
+                delete this._configGroups[groupId][oToolResponse.config!.id]
                 const selectedConfig = this._selectedConfig
                 if (selectedConfig && id === selectedConfig.id) {
                     this._selectedConfig = undefined
                 }
             })
-        } catch (error) {
-            this.onError(error)
+            if (oToolResponse.jobUpdateResults) {
+                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
+            }
+        } else {
+            this.setError(response.error!)
         }
     }
 
     fetchConfigs = async () => {
-        try {
-            const configGroups = await this.service.fetchConfigs(this.configGroups.map(configGroup => configGroup.id))
-            runInAction(() => {
-                this._configGroups = configGroups
-            })
-        } catch (error) {
-            this.onError(error)
-        }
 
+        for (const group of this.configGroups) {
+            const result = await this.service.fetchConfig(group.id)
+            if (result.value) {
+                const configMap: ConfigGroup = {}
+                result.value.forEach(config =>
+                    configMap[config.id] = config
+                )
+                runInAction(() => {
+                    this._configGroups[group.id] = configMap
+                })
+            }
+        }
     }
 
     get buildProviders(): BuildProvider[] {
@@ -157,11 +211,11 @@ export class ConfigStore {
     }
 
     get platforms(): Platform[] {
-        return Object.values(this._configGroups["platforms"])
+        return Object.values(this._configGroups["platforms"]) as Platform[]
     }
 
     getPlatform(id: string): Platform | undefined {
-        return this._configGroups["platforms"][id] as Task | undefined
+        return this._configGroups["platforms"][id] as Platform | undefined
     }
 
     get products(): Product[] {

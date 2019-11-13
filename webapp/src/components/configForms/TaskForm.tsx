@@ -1,19 +1,21 @@
 import React from "react";
 import { observable, runInAction } from "mobx";
 import { observer, inject } from "mobx-react";
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements, ConfigState } from "../stores/model";
-import LimitationForm from "./formComponents/LimitationForm";
-import TextInput from "./formComponents/TextInput";
-import TextArea from "./formComponents/TextArea";
-import Checkbox from "./formComponents/Checkbox";
-import Select from "./formComponents/Select";
-import Button from "./Button";
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
+import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements, ConfigState, Item } from "../../stores/model";
+import LimitationForm from "../formComponents/LimitationForm";
+import TextInput from "../formComponents/TextInput";
+import TextArea from "../formComponents/TextArea";
+import Checkbox from "../formComponents/Checkbox";
+import Select from "../formComponents/Select";
+import Button from "../Button";
+import RPMLimitationForm from "../formComponents/RPMLimitationForm";
+import FileRequirementsForm from "../formComponents/FileRequirementsForm";
 
 type TaskFormProps = {
     task: Task
     configStore?: ConfigStore;
-}
+    onSubmit: (item: Item, state: ConfigState) => void}
 
 class TaskForm extends React.PureComponent<TaskFormProps> {
 
@@ -87,15 +89,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
     }
 
     onSubmit = () => {
-        const configStore = this.props.configStore!
-        switch (this.taskState) {
-            case "create":
-                configStore.createConfig(this.task!)
-                break
-            case "update":
-                configStore.updateConfig(this.task!)
-                break;
-        }
+        this.props.onSubmit(this.task!, this.taskState!)
     }
 
     renderRPMLimitaion = (rpmLimitation: RPMLimitation) => {
@@ -114,7 +108,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
                 <div className="value-container">
                     <Select
                         onChange={this.onRPMLimitationFlagChange}
-                        options={["NONE", "WHITELIST", "BLACKLIST"]}
+                        options={["WHITELIST", "BLACKLIST"]}
                         value={flag} />
                     {
                         flag !== "NONE" &&
@@ -160,7 +154,7 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
             return null
         }
         const configState = configStore.configState
-        const { id, fileRequirements, platformLimitation, productLimitation } = this.task;
+        const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = this.task;
         return (
             <fieldset>
                 <TextInput
@@ -195,13 +189,19 @@ class TaskForm extends React.PureComponent<TaskFormProps> {
                     label={"product limitations"}
                     limitation={productLimitation}
                     items={configStore.products} />
-                {this.renderFileRequirementsForm(fileRequirements)}
+                <FileRequirementsForm
+                    fileRequirements={fileRequirements}
+                    onBinaryChange={this.onBinaryChange}
+                    onSourcesChange={this.onSourcesChange}/>
                 <TextArea
                     label={"xml template"}
                     onChange={this.onXmlTemplateChange}
                     placeholder={"Enter xml template for post build tasks"}
                     value={this.task.xmlTemplate} />
-                {this.renderRPMLimitaion(this.task.rpmLimitation)}
+                <RPMLimitationForm
+                    rpmLimitation={rpmLimitation}
+                    onFlagChange={this.onRPMLimitationFlagChange}
+                    onGlobChange={this.onRPMLimitationGlobChange}/>
                 <Button onClick={this.onSubmit}>{configState}</Button>
                 <br />
                 <br />

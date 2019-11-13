@@ -1,83 +1,75 @@
-import { Item, ConfigGroup, ConfigGroups } from "../model";
+import { Item, OToolResponse, FetchResult } from "../model";
 
 class ConfigService {
 
     constructor(private readonly url: string) {
     }
 
-    fetch = async (input: RequestInfo, init?: RequestInit): Promise<Response> => {
-        try {
-            const response = await fetch(`${this.url}/${input}`, init)
-            if (response.status === 200) {
-                return response
+    fetch = async <T>(input: RequestInfo, init?: RequestInit): Promise<FetchResult<T>> => {
+
+        const handleError = (
+            error: any,
+            resolve: (value: FetchResult<T> | PromiseLike<FetchResult<T>>) => void
+        ) => {
+            console.log("handling error: " + error)
+            switch (error.constructor) {
+                case Error:
+                    resolve({ error: (error as Error).message })
+                    break
+                default:
+                    resolve({ error: "Unknown error" })
             }
-            const errorMessage = await response.text()
-            if (response.status === 400) {
-                throw new Error("Bad Request:\n" + errorMessage)
-            }
-            if (response.status === 500) {
-                throw new Error("Internal Error:\n" + errorMessage)
-            }
-            throw new Error("Unexpected response status: " + response.status)
-        } catch (error) {
-            throw error
-        }
-    }
-
-    postConfig = async (groupId: string, config: Item): Promise<boolean> => {
-        try {
-            await this.fetch(`${groupId}`, {
-                body: JSON.stringify(config),
-                method: "POST"
-            })
-            return true
-        } catch (error) {
-            throw error
         }
 
+        return new Promise<FetchResult<T>>(resolve => {
+            fetch(`${this.url}/${input}`, init)
+                .then(response => {
+                    if (response.status === 200) {
+                        response.json()
+                            .then(value => {
+                                resolve({ value: value as T })
+                            })
+                            .catch(error => {
+                                handleError(error, resolve)
+                            })
+                    }
+                    if (response.status === 400 || response.status === 500) {
+                        response.text().then(text => {
+                            resolve({ error: text })
+                        }).catch(error => {
+                            handleError(error, resolve)
+                        })
+                    }
+                })
+                .catch(error => {
+                    handleError(error, resolve)
+                })
+        })
     }
 
-    putConfig = async (groupId: string, config: Item): Promise<boolean> => {
-        try {
-            await this.fetch(`${groupId}/${config.id}`, {
-                body: JSON.stringify(config),
-                method: "PUT"
-            })
-            return true
-        } catch (error) {
-            throw error
-        }
+    postConfig = async (groupId: string, config: Item): Promise<FetchResult<OToolResponse>> => {
+        return await this.fetch<OToolResponse>(`${groupId}`, {
+            body: JSON.stringify(config),
+            method: "POST"
+        })
+
     }
 
-    deleteConfig = async (groupId: string, id: string): Promise<boolean> => {
-        try {
-            await this.fetch(`${groupId}/${id}`, {
-                method: "DELETE"
-            })
-            return true
-        } catch (error) {
-            throw error
-        }
+    putConfig = async (groupId: string, config: Item): Promise<FetchResult<OToolResponse>> => {
+        return await this.fetch(`${groupId}/${config.id}`, {
+            body: JSON.stringify(config),
+            method: "PUT"
+        })
     }
 
-    fetchConfigs = async (groupIds: string[]): Promise<ConfigGroups> => {
-        const groups: ConfigGroups = {}
-        for (const id of groupIds) {
-            const group = await this.fetchConfig(id)
-            groups[id] = group
-        }
-        return groups
+    deleteConfig = async (groupId: string, id: string): Promise<FetchResult<OToolResponse>> => {
+        return await this.fetch(`${groupId}/${id}`, {
+            method: "DELETE"
+        })
     }
 
-    fetchConfig = async (id: string): Promise<ConfigGroup> => {
-        const response = await this.fetch(`${id}`)
-        const configs: Item[] = await response.json()
-        const configMap: ConfigGroup = {}
-        configs.forEach(config =>
-            configMap[config.id] = config
-        )
-        return configMap
-
+    fetchConfig = async (id: string): Promise<FetchResult<Item[]>> => {
+        return await this.fetch<Item[]>(`${id}`)
     }
 }
 

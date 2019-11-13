@@ -1,10 +1,10 @@
 import React from "react";
-import { TaskConfig } from "../stores/model";
+import { TaskConfig } from "../../stores/model";
 import VariantComponent from "./VariantComponent";
 import { inject, observer } from "mobx-react";
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import TreeNode from "./TreeNode";
-import Button from "./Button";
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
+import TreeNode from "../TreeNode";
+import Button from "../Button";
 
 interface Props {
     id: string;

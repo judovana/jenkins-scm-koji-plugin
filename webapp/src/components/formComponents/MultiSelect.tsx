@@ -1,5 +1,5 @@
 import React from "react"
-import Checkbox from "./Checkbox";
+import { FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox } from "@material-ui/core";
 
 type MultiSelectPropsRequired = {
     options: string[]
@@ -32,17 +32,23 @@ class MultiSelect extends React.PureComponent<MultiSelectProps> {
     renderMultiSelect = () => {
         const { options, values } = this.props
         return (
-            <div className="value-container">
+            <FormGroup>
                 {
                     options.map((option, index) =>
-                        <Checkbox
-                            key={index}
-                            label={option}
-                            onChange={value => this.onChange(option, value, index)}
-                            value={values.indexOf(option) >= 0} />
+                        <FormControlLabel
+                            key={index.toString()}
+                            control={
+                                <Checkbox
+                                    checked={values.indexOf(option) >= 0}
+                                    onChange={(_, checked) => {
+                                        this.onChange(option, checked, index)
+                                    }}
+                                    value={index} />
+                            }
+                            label={option} />
                     )
                 }
-            </div>
+            </FormGroup>
         )
     }
 
@@ -52,12 +58,10 @@ class MultiSelect extends React.PureComponent<MultiSelectProps> {
             return this.renderMultiSelect()
         }
         return (
-            <div className="field-container">
-                <div className="label-container">
-                    <label>{label}</label>
-                </div>
+            <FormControl margin="normal">
+                <FormLabel>{label}</FormLabel>
                 {this.renderMultiSelect()}
-            </div>
+            </FormControl>
         )
     }
 }
