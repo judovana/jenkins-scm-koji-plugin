@@ -2,6 +2,7 @@ package org.fakekoji;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.Job;
@@ -22,6 +23,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -37,6 +40,7 @@ import java.util.stream.Collectors;
 
 public class DataGenerator {
 
+    public static final String NEW_PROJECT_NAME = "new_project_name";
     public static final String PROJECT_NAME = "projectName";
     public static final String PROJECT_NAME_U = "uName";
     public static final String PROJECT_URL = "https://gitlab.com/fake_jdk/fake_jdk_repo";
@@ -519,12 +523,24 @@ public class DataGenerator {
         return getJDKProject(JDKProject.RepoState.NOT_CLONED);
     }
 
+    public static JDKProject getJDKProject(boolean urlValid) {
+        return getJDKProject(urlValid, JDKProject.RepoState.NOT_CLONED);
+    }
+
     public static JDKProject getJDKProject(final JDKProject.RepoState repoState) {
+        return getJDKProject(PROJECT_NAME, true, repoState);
+    }
+
+    public static JDKProject getJDKProject(boolean urlValid, JDKProject.RepoState repoState) {
+        return getJDKProject(PROJECT_NAME, urlValid, repoState);
+    }
+
+    public static JDKProject getJDKProject(String projectName, boolean urlValid, JDKProject.RepoState repoState) {
         return new JDKProject(
-                PROJECT_NAME,
+                projectName,
                 Project.ProjectType.JDK_PROJECT,
                 repoState,
-                PROJECT_URL,
+                urlValid ? PROJECT_URL : INVALID_PROJECT_URL,
                 DataGenerator.getBuildProvidersIds(),
                 JDK_8,
                 new JobConfiguration(
@@ -863,7 +879,7 @@ public class DataGenerator {
                                         .sorted(Comparator.comparing(Map.Entry::getKey))
                                         .map(Map.Entry::getValue)
                                         .collect(Collectors.joining("."))
-                                        + '.' + platform.getString();
+                                        + '.' + platform.assembleString();
                                 final File platformDir = new File(releaseDir, archName);
                                 final String archiveFileName = baseName + archName + SUFFIX;
                                 if (!notBuilt.contains(archiveFileName)) {
@@ -958,6 +974,7 @@ public class DataGenerator {
                 "JDK_VERSION=$1\n" +
                 "SRC_URL=$2\n" +
                 "DEST_PATH=$3\n" +
+                "sleep 5s\n" +
                 "[ \"$SRC_URL\" == \"" + INVALID_PROJECT_URL + "\" ] && exit 1\n" +
                 "echo \"$JDK_VERSION\n$SRC_URL\n\" > $DEST_PATH\n";
         Utils.writeToFile(
@@ -1039,5 +1056,21 @@ public class DataGenerator {
             this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
             this.configsRoot = configsRoot;
         }
+    }
+
+    public static AccessibleSettings getSettings(FolderHolder folderHolder) throws MalformedURLException, UnknownHostException {
+        return new AccessibleSettings(
+                folderHolder.buildsRoot,
+                folderHolder.reposRoot,
+                folderHolder.configsRoot,
+                folderHolder.jenkinsJobsRoot,
+                folderHolder.jenkinsJobArchiveRoot,
+                folderHolder.scriptsRoot,
+                9848,
+                9849,
+                9826,
+                8080,
+                8888
+        );
     }
 }
