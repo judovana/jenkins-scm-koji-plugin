@@ -1,39 +1,61 @@
-import React from "react";
-import { Item } from "../../stores/model";
-import Button from "../Button"
+import React from "react"
+
+import { Tooltip, IconButton, Dialog, Button, DialogContent, DialogActions } from "@material-ui/core"
+import { Add } from "@material-ui/icons"
+
+import { Item } from "../../stores/model"
 
 interface Props {
-    items: Item[];
-    label: string;
-    onAdd: (id: string) => void;
+    items: Item[]
+    label: string
+    onAdd: (id: string) => void
 }
 
-class AddComponent extends React.PureComponent<Props> {
+const AddComponent: React.FC<Props> = ({ items, label, onAdd }) => {
 
-    onClick = (value: string): void => {
-        this.props.onAdd(value);
+    const [open, setOpen] = React.useState(false)
+
+    const closeDialog = () => {
+        setOpen(false)
     }
 
-    render() {
-        const { label, items } = this.props;
-        return (
-            <div
-                className="dropdown"
-                defaultValue="Add">
-                <Button>{label}</Button>
-                <div className="dropdown-content">
-                    {
-                        items.map(item =>
-                            <span
-                                key={item.id}
-                                onClick={() => this.onClick(item.id)}>
-                                {item.id}</span>
-                        )
-                    }
-                </div>
-            </div>
-        );
-    }
+    const dialog = (
+        <Dialog
+            open={open}
+            disableEscapeKeyDown
+            onEscapeKeyDown={closeDialog}
+            onBackdropClick={closeDialog}
+        >
+            <DialogContent dividers>
+                {
+                    items.map(item => (
+                        <Button
+                            key={item.id}
+                            onClick={() => {
+                                onAdd(item.id)
+                                closeDialog()
+                                }}>
+                            {item.id}
+                        </Button>
+                    ))
+                }
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={closeDialog}>cancel</Button>
+            </DialogActions>
+        </Dialog>
+    )
+
+    return (
+        <span>
+            <Tooltip title={label}>
+                <IconButton onClick={() => { setOpen(true) }}>
+                    <Add />
+                </IconButton>
+            </Tooltip>
+            {dialog}
+        </span>
+    )
 }
 
-export default AddComponent;
+export default AddComponent
