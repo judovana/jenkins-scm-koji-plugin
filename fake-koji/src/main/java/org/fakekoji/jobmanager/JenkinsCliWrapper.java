@@ -1,6 +1,8 @@
 package org.fakekoji.jobmanager;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -8,6 +10,7 @@ import java.util.Set;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannelEvent;
+import org.apache.sshd.client.config.hosts.HostConfigEntry;
 import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.client.session.ClientSession;
@@ -20,6 +23,7 @@ public class JenkinsCliWrapper {
     private final int port;
 
     private enum Singleton {
+
         INSTANCE;
 
         private final JenkinsCliWrapper client;
@@ -67,7 +71,8 @@ public class JenkinsCliWrapper {
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
             //todo enable remote, customize-able server from config
-            ConnectFuture cu = client.connect("unused_now", host, port);
+            HostConfigEntry hce = new HostConfigEntry(".*", host, port, "unused_now");
+            ConnectFuture cu = client.connect(hce);
             cu.await();
             try (ClientSession session = cu.getSession()) {
                 //althoughg our jenkins is now insecure, veriy is necessary part
@@ -140,6 +145,21 @@ public class JenkinsCliWrapper {
             ClientResponse r = syncSshExec("create-job " + name, config);
             return r;
         } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex);
+        }
+    }
+
+    /**
+     * Signature of this method ensures job is really refreshed by itself
+     * @param dirWithJobs
+     * @param name
+     * @return 
+     */
+    public ClientResponse reloadOrRegisterManuallyUploadedJob(File dirWithJobs, String name) {
+        try {
+            ClientResponse r = createJob(name, new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE)));
+            return r;
+        } catch (IOException  ex) {
             return new ClientResponse(-1, "", "", ex);
         }
     }

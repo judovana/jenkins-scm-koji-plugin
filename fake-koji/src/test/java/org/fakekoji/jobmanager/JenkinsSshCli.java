@@ -64,6 +64,9 @@ public class JenkinsSshCli {
         try {
             JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().help();
             haveJenkinsWithSsh = (r.res == 0 && r.ex == null);
+            if (r.ex != null) {
+                r.ex.printStackTrace();
+            }
         } catch (Exception e) {
             haveJenkinsWithSsh = false;
         }
@@ -131,6 +134,7 @@ public class JenkinsSshCli {
         String[] jobs = JenkinsCliWrapper.getCli().listJobsToArray();
         Assert.assertNotNull(jobs);
         Assert.assertNotNull(jobs.length >= 1);//at least our sure_job is here
+        Arrays.sort(jobs);
         int i = Arrays.binarySearch(jobs, sure_job);
         Assert.assertTrue(i >= 0);
     }
@@ -212,12 +216,14 @@ public class JenkinsSshCli {
         Assume.assumeTrue(workdir.exists());
         final String manualJobName = "manual_java_test_auto_job";
         try {
+            //manually reate config.xml
             File manualJob = new File(workdir, manualJobName);
+            manualJob.deleteOnExit();
             manualJob.mkdir();
             File config = new File(manualJob, "config.xml");
             Utils.writeToFile(config, inputStreamToString(getInternalTestJobConfig()));
-            
-            //verify it do not exists
+
+            //verify it do not exists in jenkin
             JenkinsCliWrapper.ClientResponse r1 = JenkinsCliWrapper.getCli().getJob(manualJobName);
             Assert.assertNotEquals(0, r1.res);
             Assert.assertTrue(r1.so.isEmpty());
@@ -225,14 +231,15 @@ public class JenkinsSshCli {
             Assert.assertTrue(r1.se.contains("No such job"));
             Assert.assertNull(r1.ex);
             String[] jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            Arrays.sort(jobs);
             int i = Arrays.binarySearch(jobs, manualJobName);
             Assert.assertTrue(i < 0);
-            
-            //notify jenkins, by fetching it its own file
-            JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().createJob(manualJobName, new FileInputStream(config));
+
+            //notify jenkins
+            JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(workdir, manualJobName);
             Assert.assertEquals(0, r2.res);
             Assert.assertNull(r2.ex);
-            
+
             //verify it do exists
             JenkinsCliWrapper.ClientResponse r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
             Assert.assertEquals(0, r3.res);
@@ -240,18 +247,96 @@ public class JenkinsSshCli {
             Assert.assertTrue(r3.se.isEmpty());
             Assert.assertNull(r3.ex);
             jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            Arrays.sort(jobs);
             i = Arrays.binarySearch(jobs, manualJobName);
             Assert.assertTrue(i >= 0);
-            
+
             //build it few times
-            //mv it out
+            for (int x = 1; x <= 3; x++) {
+                JenkinsCliWrapper.ClientResponse r4 = JenkinsCliWrapper.getCli().buildAndWait(manualJobName);
+                Assert.assertEquals(0, r4.res);
+                Assert.assertNull(r4.ex);
+            }
+            File archive = new File(manualJob, "builds");
+            String[] builds = archive.list();
+            Arrays.sort(builds);
+            for (int x = 1; x <= 3; x++) {
+                i = Arrays.binarySearch(builds, "" + x);
+                Assert.assertTrue(i >= 0);
+            }
+            //mv it out, can not to temp, as it is different volume, Files.move would fail
+            File trash = new File(workdir.getParent(), "trash");
+            trash.deleteOnExit();
+            Utils.moveFile(manualJob, trash);
+            //although the fille is not here
+            Assert.assertFalse(manualJob.exists());
+            //and is not readable
+            r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
+            Assert.assertNotEquals(0, r3.res);
+            Assert.assertTrue(r3.so.isEmpty());
+            Assert.assertFalse(r3.se.isEmpty());
+            Assert.assertNull(r3.ex);
             //highlight it is still registered
+            jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            Arrays.sort(jobs);
+            i = Arrays.binarySearch(jobs, manualJobName);
+            Assert.assertTrue(i >= 0);
+
             //deregister it
+            JenkinsCliWrapper.ClientResponse r4 = JenkinsCliWrapper.getCli().deleteJobs(manualJobName);
+            Assert.assertEquals(0, r4.res);
+            Assert.assertNull(r4.ex);
             //ensure it is gone
+            r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
+            Assert.assertNotEquals(0, r3.res);
+            Assert.assertTrue(r3.so.isEmpty());
+            Assert.assertFalse(r3.se.isEmpty());
+            Assert.assertNull(r3.ex);
+            jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            Arrays.sort(jobs);
+            i = Arrays.binarySearch(jobs, manualJobName);
+            Assert.assertTrue(i < 0);
             //mv it back
+            Utils.moveFile(trash, manualJob);
+            //ensure it is not here
+            r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
+            Assert.assertNotEquals(0, r3.res);
+            Assert.assertTrue(r3.so.isEmpty());
+            Assert.assertFalse(r3.se.isEmpty());
+            Assert.assertNull(r3.ex);
+            jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            Arrays.sort(jobs);
+            i = Arrays.binarySearch(jobs, manualJobName);
+            Assert.assertTrue(i < 0);
             //register it
-            //verify jobs persisted
-            
+            r2 = JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(workdir, manualJobName);
+            Assert.assertEquals(0, r2.res);
+            Assert.assertNull(r2.ex);
+            //ensure it is really here
+            r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
+            Assert.assertEquals(0, r3.res);
+            Assert.assertFalse(r3.so.isEmpty());
+            Assert.assertTrue(r3.se.isEmpty());
+            Assert.assertNull(r3.ex);
+            jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            Arrays.sort(jobs);
+            i = Arrays.binarySearch(jobs, manualJobName);
+            Assert.assertTrue(i >= 0);
+
+            //build it few times
+            for (int x = 1; x <= 3; x++) {
+                r4 = JenkinsCliWrapper.getCli().buildAndWait(manualJobName);
+                Assert.assertEquals(0, r4.res);
+                Assert.assertNull(r4.ex);
+            }
+            //verify also previous jobs persisted
+            archive = new File(manualJob, "builds");
+            builds = archive.list();
+            Arrays.sort(builds);
+            for (int x = 1; x <= 6; x++) {
+                i = Arrays.binarySearch(builds, "" + x);
+                Assert.assertTrue(i >= 0);
+            }
         } finally {
             JenkinsCliWrapper.getCli().deleteJobs(manualJobName);
             //not nesurring sucess, hard to tell when we failed
