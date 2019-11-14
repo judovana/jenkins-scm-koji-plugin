@@ -181,4 +181,22 @@ public class JenkinsCliWrapper {
             return new ClientResponse(-1, "", "", ex);
         }
     }
+
+    public ClientResponse buildAndWait(String name) {
+        try {
+            ClientResponse r = syncSshExec("build -s " + name);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex);
+        }
+    }
+
+    public ClientResponse scheduleBuild(String name) {
+        try {
+            ClientResponse r = syncSshExec("build " + name);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex);
+        }
+    }
 }

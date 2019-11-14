@@ -26,10 +26,13 @@ package org.fakekoji.jobmanager;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
+import org.fakekoji.Utils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -66,7 +69,7 @@ public class JenkinsSshCli {
         }
         if (haveJenkinsWithSsh) {
             //ensure jenkins have at least one job
-            JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().createJob(sure_job, ClassLoader.getSystemClassLoader().getResourceAsStream("org/fakekoji/jobmanager/simple_job"));
+            JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().createJob(sure_job, getInternalTestJobConfig());
             Assert.assertEquals(0, r.res);
             Assert.assertNull(r.ex);
         }
@@ -93,7 +96,7 @@ public class JenkinsSshCli {
 
     }
 
-    private static InputStream StringToInputStream(String s) {
+    private static InputStream stringToInputStream(String s) {
         byte[] b = s.getBytes(StandardCharsets.UTF_8);
         return new ByteArrayInputStream(b);
     }
@@ -135,16 +138,16 @@ public class JenkinsSshCli {
     @Test
     public void testcreateDeleteJob() throws IOException, InterruptedException {
         Assume.assumeTrue(haveJenkinsWithSsh);
-        JenkinsCliWrapper.ClientResponse r1 = JenkinsCliWrapper.getCli().createJob("first_test_java_job1", ClassLoader.getSystemClassLoader().getResourceAsStream("org/fakekoji/jobmanager/simple_job"));
+        JenkinsCliWrapper.ClientResponse r1 = JenkinsCliWrapper.getCli().createJob("first_test_java_job1", getInternalTestJobConfig());
         Assert.assertEquals(0, r1.res);
         Assert.assertNull(r1.ex);
-        JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().createJob("first_test_java_job2", ClassLoader.getSystemClassLoader().getResourceAsStream("org/fakekoji/jobmanager/simple_job"));
+        JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().createJob("first_test_java_job2", getInternalTestJobConfig());
         Assert.assertEquals(0, r2.res);
         Assert.assertNull(r2.ex);
-        JenkinsCliWrapper.ClientResponse r3 = JenkinsCliWrapper.getCli().createJob("first_test_java_job3", ClassLoader.getSystemClassLoader().getResourceAsStream("org/fakekoji/jobmanager/simple_job"));
+        JenkinsCliWrapper.ClientResponse r3 = JenkinsCliWrapper.getCli().createJob("first_test_java_job3", getInternalTestJobConfig());
         Assert.assertEquals(0, r3.res);
         Assert.assertNull(r3.ex);
-        JenkinsCliWrapper.ClientResponse r33 = JenkinsCliWrapper.getCli().createJob("first_test_java_job3", ClassLoader.getSystemClassLoader().getResourceAsStream("org/fakekoji/jobmanager/simple_job"));
+        JenkinsCliWrapper.ClientResponse r33 = JenkinsCliWrapper.getCli().createJob("first_test_java_job3", getInternalTestJobConfig());
         Assert.assertEquals(4, r33.res); //can not override like this, have separate method
         Assert.assertNull(r33.ex);
         JenkinsCliWrapper.ClientResponse r4 = JenkinsCliWrapper.getCli().deleteJobs("first_test_java_job1");
@@ -153,6 +156,12 @@ public class JenkinsSshCli {
         JenkinsCliWrapper.ClientResponse r5 = JenkinsCliWrapper.getCli().deleteJobs("first_test_java_job2", "first_test_java_job3");
         Assert.assertEquals(0, r5.res);
         Assert.assertNull(r5.ex);
+    }
+
+    private static final String TESTING_JOB_SRC = "org/fakekoji/jobmanager/simple_job";
+
+    private static InputStream getInternalTestJobConfig() {
+        return ClassLoader.getSystemClassLoader().getResourceAsStream(TESTING_JOB_SRC);
     }
 
     @Test
@@ -183,7 +192,7 @@ public class JenkinsSshCli {
         Assert.assertFalse(r1.so.isEmpty());
         Assert.assertTrue(r1.se.isEmpty());
         Assert.assertNull(r1.ex);
-        JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().updateJob(sure_job, StringToInputStream(r1.so.replace("by java test", "by test java")));
+        JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().updateJob(sure_job, stringToInputStream(r1.so.replace("by java test", "by test java")));
         Assert.assertEquals(0, r2.res);
         Assert.assertTrue(r2.so.isEmpty());
         Assert.assertTrue(r2.se.isEmpty());
@@ -196,4 +205,58 @@ public class JenkinsSshCli {
         Assert.assertNull(r3.ex);
         Assert.assertNotEquals(r1.so, r3.so);
     }
+
+    @Test
+    public void manuallyOperateConfigXml() throws Throwable {
+        Assume.assumeTrue(haveJenkinsWithSsh);
+        Assume.assumeTrue(workdir.exists());
+        final String manualJobName = "manual_java_test_auto_job";
+        try {
+            File manualJob = new File(workdir, manualJobName);
+            manualJob.mkdir();
+            File config = new File(manualJob, "config.xml");
+            Utils.writeToFile(config, inputStreamToString(getInternalTestJobConfig()));
+            
+            //verify it do not exists
+            JenkinsCliWrapper.ClientResponse r1 = JenkinsCliWrapper.getCli().getJob(manualJobName);
+            Assert.assertNotEquals(0, r1.res);
+            Assert.assertTrue(r1.so.isEmpty());
+            Assert.assertFalse(r1.se.isEmpty());
+            Assert.assertTrue(r1.se.contains("No such job"));
+            Assert.assertNull(r1.ex);
+            String[] jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            int i = Arrays.binarySearch(jobs, manualJobName);
+            Assert.assertTrue(i < 0);
+            
+            //notify jenkins, by fetching it its own file
+            JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().createJob(manualJobName, new FileInputStream(config));
+            Assert.assertEquals(0, r2.res);
+            Assert.assertNull(r2.ex);
+            
+            //verify it do exists
+            JenkinsCliWrapper.ClientResponse r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
+            Assert.assertEquals(0, r3.res);
+            Assert.assertFalse(r3.so.isEmpty());
+            Assert.assertTrue(r3.se.isEmpty());
+            Assert.assertNull(r3.ex);
+            jobs = JenkinsCliWrapper.getCli().listJobsToArray();
+            i = Arrays.binarySearch(jobs, manualJobName);
+            Assert.assertTrue(i >= 0);
+            
+            //build it few times
+            //mv it out
+            //highlight it is still registered
+            //deregister it
+            //ensure it is gone
+            //mv it back
+            //register it
+            //verify jobs persisted
+            
+        } finally {
+            JenkinsCliWrapper.getCli().deleteJobs(manualJobName);
+            //not nesurring sucess, hard to tell when we failed
+        }
+
+    }
+
 }
