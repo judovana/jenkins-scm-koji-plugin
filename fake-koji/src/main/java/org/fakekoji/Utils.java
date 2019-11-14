@@ -3,6 +3,7 @@ package org.fakekoji;
 import jdk.nashorn.api.scripting.URLReader;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,7 +59,7 @@ public class Utils {
     }
 
     public static void writeToFile(OutputStream os, String content) throws IOException {
-        try (OutputStreamWriter writer = new OutputStreamWriter(os, "utf-8")) {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "utf-8"))) {
             writer.write(content);
             writer.flush();
         }
