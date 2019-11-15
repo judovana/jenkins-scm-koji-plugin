@@ -53,19 +53,34 @@ public class FakeKojiXmlRpcApi extends KojiXmlRpcApi {
     }
 
     @Exported
+    //not recognized by jenkins
     public boolean isBuilt() {
         return isBuilt;
     }
 
+    @Exported
+    public boolean getIsBuilt() {
+        return isBuilt();
+    }
+
+    @Exported
+    public boolean isIsBuilt() {
+        return isBuilt();
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof FakeKojiXmlRpcApi)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof FakeKojiXmlRpcApi)) {
+            return false;
+        }
         FakeKojiXmlRpcApi that = (FakeKojiXmlRpcApi) o;
-        return isBuilt == that.isBuilt &&
-                Objects.equals(projectName, that.projectName) &&
-                Objects.equals(buildVariants, that.buildVariants) &&
-                Objects.equals(buildPlatform, that.buildPlatform);
+        return isBuilt == that.isBuilt
+                && Objects.equals(projectName, that.projectName)
+                && Objects.equals(buildVariants, that.buildVariants)
+                && Objects.equals(buildPlatform, that.buildPlatform);
     }
 
     @Override
