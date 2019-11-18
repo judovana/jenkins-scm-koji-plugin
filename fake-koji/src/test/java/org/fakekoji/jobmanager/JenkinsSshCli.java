@@ -63,9 +63,9 @@ public class JenkinsSshCli {
     public static void beforeClass() throws Exception {
         try {
             JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().help();
-            haveJenkinsWithSsh = (r.res == 0 && r.ex == null);
-            if (r.ex != null) {
-                r.ex.printStackTrace();
+            haveJenkinsWithSsh = (r.remoteCommandreturnValue == 0 && r.sshEngineExeption == null);
+            if (r.sshEngineExeption != null) {
+                r.sshEngineExeption.printStackTrace();
             }
         } catch (Exception e) {
             haveJenkinsWithSsh = false;
@@ -73,8 +73,8 @@ public class JenkinsSshCli {
         if (haveJenkinsWithSsh) {
             //ensure jenkins have at least one job
             JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().createJob(sure_job, getInternalTestJobConfig());
-            Assert.assertEquals(0, r.res);
-            Assert.assertNull(r.ex);
+            Assert.assertEquals(0, r.remoteCommandreturnValue);
+            Assert.assertNull(r.sshEngineExeption);
         }
 
     }
@@ -83,8 +83,8 @@ public class JenkinsSshCli {
     public static void afterClass() {
         if (haveJenkinsWithSsh) {
             JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().deleteJobs(sure_job);
-            Assert.assertEquals(0, r.res);
-            Assert.assertNull(r.ex);
+            Assert.assertEquals(0, r.remoteCommandreturnValue);
+            Assert.assertNull(r.sshEngineExeption);
         }
     }
 
@@ -115,11 +115,11 @@ public class JenkinsSshCli {
         Assume.assumeTrue(haveJenkinsWithSsh);
         for (int x = 1; x <= 100; x++) {
             JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().help();
-            Assert.assertEquals(0, r.res);
-            Assert.assertTrue(r.so.isEmpty());
-            Assert.assertFalse(r.se.isEmpty());
-            Assert.assertTrue(r.se.length() > 100);
-            Assert.assertNull(r.ex);
+            Assert.assertEquals(0, r.remoteCommandreturnValue);
+            Assert.assertTrue(r.sout.isEmpty());
+            Assert.assertFalse(r.serr.isEmpty());
+            Assert.assertTrue(r.serr.length() > 100);
+            Assert.assertNull(r.sshEngineExeption);
         }
     }
 
@@ -127,10 +127,10 @@ public class JenkinsSshCli {
     public void testListJobs() throws Throwable {
         Assume.assumeTrue(haveJenkinsWithSsh);
         JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().listJobs();
-        Assert.assertEquals(0, r.res);
-        Assert.assertFalse(r.so.isEmpty());
-        Assert.assertTrue(r.se.isEmpty());
-        Assert.assertNull(r.ex);
+        Assert.assertEquals(0, r.remoteCommandreturnValue);
+        Assert.assertFalse(r.sout.isEmpty());
+        Assert.assertTrue(r.serr.isEmpty());
+        Assert.assertNull(r.sshEngineExeption);
         String[] jobs = JenkinsCliWrapper.getCli().listJobsToArray();
         Assert.assertNotNull(jobs);
         Assert.assertNotNull(jobs.length >= 1);//at least our sure_job is here
@@ -143,23 +143,23 @@ public class JenkinsSshCli {
     public void testcreateDeleteJob() throws IOException, InterruptedException {
         Assume.assumeTrue(haveJenkinsWithSsh);
         JenkinsCliWrapper.ClientResponse r1 = JenkinsCliWrapper.getCli().createJob("first_test_java_job1", getInternalTestJobConfig());
-        Assert.assertEquals(0, r1.res);
-        Assert.assertNull(r1.ex);
+        Assert.assertEquals(0, r1.remoteCommandreturnValue);
+        Assert.assertNull(r1.sshEngineExeption);
         JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().createJob("first_test_java_job2", getInternalTestJobConfig());
-        Assert.assertEquals(0, r2.res);
-        Assert.assertNull(r2.ex);
+        Assert.assertEquals(0, r2.remoteCommandreturnValue);
+        Assert.assertNull(r2.sshEngineExeption);
         JenkinsCliWrapper.ClientResponse r3 = JenkinsCliWrapper.getCli().createJob("first_test_java_job3", getInternalTestJobConfig());
-        Assert.assertEquals(0, r3.res);
-        Assert.assertNull(r3.ex);
+        Assert.assertEquals(0, r3.remoteCommandreturnValue);
+        Assert.assertNull(r3.sshEngineExeption);
         JenkinsCliWrapper.ClientResponse r33 = JenkinsCliWrapper.getCli().createJob("first_test_java_job3", getInternalTestJobConfig());
-        Assert.assertEquals(4, r33.res); //can not override like this, have separate method
-        Assert.assertNull(r33.ex);
+        Assert.assertEquals(4, r33.remoteCommandreturnValue); //can not override like this, have separate method
+        Assert.assertNull(r33.sshEngineExeption);
         JenkinsCliWrapper.ClientResponse r4 = JenkinsCliWrapper.getCli().deleteJobs("first_test_java_job1");
-        Assert.assertEquals(0, r4.res);
-        Assert.assertNull(r4.ex);
+        Assert.assertEquals(0, r4.remoteCommandreturnValue);
+        Assert.assertNull(r4.sshEngineExeption);
         JenkinsCliWrapper.ClientResponse r5 = JenkinsCliWrapper.getCli().deleteJobs("first_test_java_job2", "first_test_java_job3");
-        Assert.assertEquals(0, r5.res);
-        Assert.assertNull(r5.ex);
+        Assert.assertEquals(0, r5.remoteCommandreturnValue);
+        Assert.assertNull(r5.sshEngineExeption);
     }
 
     private static final String TESTING_JOB_SRC = "org/fakekoji/jobmanager/simple_job";
@@ -172,42 +172,42 @@ public class JenkinsSshCli {
     public void testReloadAll() throws Throwable {
         Assume.assumeTrue(haveJenkinsWithSsh);
         JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().relaodAll();
-        Assert.assertEquals(0, r.res);
-        Assert.assertTrue(r.so.isEmpty());
-        Assert.assertTrue(r.se.isEmpty());
-        Assert.assertNull(r.ex);
+        Assert.assertEquals(0, r.remoteCommandreturnValue);
+        Assert.assertTrue(r.sout.isEmpty());
+        Assert.assertTrue(r.serr.isEmpty());
+        Assert.assertNull(r.sshEngineExeption);
     }
 
     @Test
     public void testUpdateNotExistingJob() throws Throwable {
         Assume.assumeTrue(haveJenkinsWithSsh);
         JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().updateJob("definitly_not_existing_job", null /*ok while it really do not exists*/);
-        Assert.assertNotEquals(0, r.res);
-        Assert.assertTrue(r.so.isEmpty());
-        Assert.assertFalse(r.se.isEmpty());
-        Assert.assertNull(r.ex);
+        Assert.assertNotEquals(0, r.remoteCommandreturnValue);
+        Assert.assertTrue(r.sout.isEmpty());
+        Assert.assertFalse(r.serr.isEmpty());
+        Assert.assertNull(r.sshEngineExeption);
     }
 
     @Test
     public void testUpdateExistingJob() throws Throwable {
         Assume.assumeTrue(haveJenkinsWithSsh);
         JenkinsCliWrapper.ClientResponse r1 = JenkinsCliWrapper.getCli().getJob(sure_job);
-        Assert.assertEquals(0, r1.res);
-        Assert.assertFalse(r1.so.isEmpty());
-        Assert.assertTrue(r1.se.isEmpty());
-        Assert.assertNull(r1.ex);
-        JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().updateJob(sure_job, stringToInputStream(r1.so.replace("by java test", "by test java")));
-        Assert.assertEquals(0, r2.res);
-        Assert.assertTrue(r2.so.isEmpty());
-        Assert.assertTrue(r2.se.isEmpty());
-        Assert.assertNull(r2.ex);
+        Assert.assertEquals(0, r1.remoteCommandreturnValue);
+        Assert.assertFalse(r1.sout.isEmpty());
+        Assert.assertTrue(r1.serr.isEmpty());
+        Assert.assertNull(r1.sshEngineExeption);
+        JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().updateJob(sure_job, stringToInputStream(r1.sout.replace("by java test", "by test java")));
+        Assert.assertEquals(0, r2.remoteCommandreturnValue);
+        Assert.assertTrue(r2.sout.isEmpty());
+        Assert.assertTrue(r2.serr.isEmpty());
+        Assert.assertNull(r2.sshEngineExeption);
         Assume.assumeTrue(haveJenkinsWithSsh);
         JenkinsCliWrapper.ClientResponse r3 = JenkinsCliWrapper.getCli().getJob(sure_job);
-        Assert.assertEquals(0, r3.res);
-        Assert.assertFalse(r3.so.isEmpty());
-        Assert.assertTrue(r3.se.isEmpty());
-        Assert.assertNull(r3.ex);
-        Assert.assertNotEquals(r1.so, r3.so);
+        Assert.assertEquals(0, r3.remoteCommandreturnValue);
+        Assert.assertFalse(r3.sout.isEmpty());
+        Assert.assertTrue(r3.serr.isEmpty());
+        Assert.assertNull(r3.sshEngineExeption);
+        Assert.assertNotEquals(r1.sout, r3.sout);
     }
 
     @Test
@@ -225,11 +225,11 @@ public class JenkinsSshCli {
 
             //verify it do not exists in jenkin
             JenkinsCliWrapper.ClientResponse r1 = JenkinsCliWrapper.getCli().getJob(manualJobName);
-            Assert.assertNotEquals(0, r1.res);
-            Assert.assertTrue(r1.so.isEmpty());
-            Assert.assertFalse(r1.se.isEmpty());
-            Assert.assertTrue(r1.se.contains("No such job"));
-            Assert.assertNull(r1.ex);
+            Assert.assertNotEquals(0, r1.remoteCommandreturnValue);
+            Assert.assertTrue(r1.sout.isEmpty());
+            Assert.assertFalse(r1.serr.isEmpty());
+            Assert.assertTrue(r1.serr.contains("No such job"));
+            Assert.assertNull(r1.sshEngineExeption);
             String[] jobs = JenkinsCliWrapper.getCli().listJobsToArray();
             Arrays.sort(jobs);
             int i = Arrays.binarySearch(jobs, manualJobName);
@@ -237,15 +237,15 @@ public class JenkinsSshCli {
 
             //notify jenkins
             JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(workdir, manualJobName);
-            Assert.assertEquals(0, r2.res);
-            Assert.assertNull(r2.ex);
+            Assert.assertEquals(0, r2.remoteCommandreturnValue);
+            Assert.assertNull(r2.sshEngineExeption);
 
             //verify it do exists
             JenkinsCliWrapper.ClientResponse r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
-            Assert.assertEquals(0, r3.res);
-            Assert.assertFalse(r3.so.isEmpty());
-            Assert.assertTrue(r3.se.isEmpty());
-            Assert.assertNull(r3.ex);
+            Assert.assertEquals(0, r3.remoteCommandreturnValue);
+            Assert.assertFalse(r3.sout.isEmpty());
+            Assert.assertTrue(r3.serr.isEmpty());
+            Assert.assertNull(r3.sshEngineExeption);
             jobs = JenkinsCliWrapper.getCli().listJobsToArray();
             Arrays.sort(jobs);
             i = Arrays.binarySearch(jobs, manualJobName);
@@ -254,8 +254,8 @@ public class JenkinsSshCli {
             //build it few times
             for (int x = 1; x <= 3; x++) {
                 JenkinsCliWrapper.ClientResponse r4 = JenkinsCliWrapper.getCli().buildAndWait(manualJobName);
-                Assert.assertEquals(0, r4.res);
-                Assert.assertNull(r4.ex);
+                Assert.assertEquals(0, r4.remoteCommandreturnValue);
+                Assert.assertNull(r4.sshEngineExeption);
             }
             File archive = new File(manualJob, "builds");
             String[] builds = archive.list();
@@ -272,10 +272,10 @@ public class JenkinsSshCli {
             Assert.assertFalse(manualJob.exists());
             //and is not readable
             r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
-            Assert.assertNotEquals(0, r3.res);
-            Assert.assertTrue(r3.so.isEmpty());
-            Assert.assertFalse(r3.se.isEmpty());
-            Assert.assertNull(r3.ex);
+            Assert.assertNotEquals(0, r3.remoteCommandreturnValue);
+            Assert.assertTrue(r3.sout.isEmpty());
+            Assert.assertFalse(r3.serr.isEmpty());
+            Assert.assertNull(r3.sshEngineExeption);
             //highlight it is still registered
             jobs = JenkinsCliWrapper.getCli().listJobsToArray();
             Arrays.sort(jobs);
@@ -284,14 +284,14 @@ public class JenkinsSshCli {
 
             //deregister it
             JenkinsCliWrapper.ClientResponse r4 = JenkinsCliWrapper.getCli().deleteJobs(manualJobName);
-            Assert.assertEquals(0, r4.res);
-            Assert.assertNull(r4.ex);
+            Assert.assertEquals(0, r4.remoteCommandreturnValue);
+            Assert.assertNull(r4.sshEngineExeption);
             //ensure it is gone
             r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
-            Assert.assertNotEquals(0, r3.res);
-            Assert.assertTrue(r3.so.isEmpty());
-            Assert.assertFalse(r3.se.isEmpty());
-            Assert.assertNull(r3.ex);
+            Assert.assertNotEquals(0, r3.remoteCommandreturnValue);
+            Assert.assertTrue(r3.sout.isEmpty());
+            Assert.assertFalse(r3.serr.isEmpty());
+            Assert.assertNull(r3.sshEngineExeption);
             jobs = JenkinsCliWrapper.getCli().listJobsToArray();
             Arrays.sort(jobs);
             i = Arrays.binarySearch(jobs, manualJobName);
@@ -300,24 +300,24 @@ public class JenkinsSshCli {
             Utils.moveFile(trash, manualJob);
             //ensure it is not here
             r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
-            Assert.assertNotEquals(0, r3.res);
-            Assert.assertTrue(r3.so.isEmpty());
-            Assert.assertFalse(r3.se.isEmpty());
-            Assert.assertNull(r3.ex);
+            Assert.assertNotEquals(0, r3.remoteCommandreturnValue);
+            Assert.assertTrue(r3.sout.isEmpty());
+            Assert.assertFalse(r3.serr.isEmpty());
+            Assert.assertNull(r3.sshEngineExeption);
             jobs = JenkinsCliWrapper.getCli().listJobsToArray();
             Arrays.sort(jobs);
             i = Arrays.binarySearch(jobs, manualJobName);
             Assert.assertTrue(i < 0);
             //register it
             r2 = JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(workdir, manualJobName);
-            Assert.assertEquals(0, r2.res);
-            Assert.assertNull(r2.ex);
+            Assert.assertEquals(0, r2.remoteCommandreturnValue);
+            Assert.assertNull(r2.sshEngineExeption);
             //ensure it is really here
             r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
-            Assert.assertEquals(0, r3.res);
-            Assert.assertFalse(r3.so.isEmpty());
-            Assert.assertTrue(r3.se.isEmpty());
-            Assert.assertNull(r3.ex);
+            Assert.assertEquals(0, r3.remoteCommandreturnValue);
+            Assert.assertFalse(r3.sout.isEmpty());
+            Assert.assertTrue(r3.serr.isEmpty());
+            Assert.assertNull(r3.sshEngineExeption);
             jobs = JenkinsCliWrapper.getCli().listJobsToArray();
             Arrays.sort(jobs);
             i = Arrays.binarySearch(jobs, manualJobName);
@@ -326,8 +326,8 @@ public class JenkinsSshCli {
             //build it few times
             for (int x = 1; x <= 3; x++) {
                 r4 = JenkinsCliWrapper.getCli().buildAndWait(manualJobName);
-                Assert.assertEquals(0, r4.res);
-                Assert.assertNull(r4.ex);
+                Assert.assertEquals(0, r4.remoteCommandreturnValue);
+                Assert.assertNull(r4.sshEngineExeption);
             }
             //verify also previous jobs persisted
             archive = new File(manualJob, "builds");

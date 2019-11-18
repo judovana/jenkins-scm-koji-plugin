@@ -38,42 +38,42 @@ public class JenkinsCliWrapper {
 
     public class ClientResponse {
 
-        public final int res;
-        public final String so;
-        public final String se;
-        public final Throwable ex;
-        private final String cmd;
-        private final String origCmd;
+        public final int remoteCommandreturnValue;
+        public final String sout;
+        public final String serr;
+        public final Throwable sshEngineExeption;
+        public final String cmd;
+        public final String plainCmd;
 
         ClientResponse(Integer res, String so, String se, Throwable ex, String origCommand) {
             this.cmd = "ssh -P " + port + " " + user + "@" + host + " " + origCommand;
-            this.origCmd = origCommand;
-            this.ex = ex;
-            this.so = so;
-            this.se = se;
+            this.plainCmd = origCommand;
+            this.sshEngineExeption = ex;
+            this.sout = so;
+            this.serr = se;
             if (res == null) {
-                this.res = -1;
+                this.remoteCommandreturnValue = -1;
             } else {
-                this.res = res;
+                this.remoteCommandreturnValue = res;
             }
         }
 
         @Override
         public String toString() {
-            if (ex != null) {
-                return "`" + cmd + "` failed, because " + ex.toString();
+            if (sshEngineExeption != null) {
+                return "`" + cmd + "` failed, because " + sshEngineExeption.toString();
             }
-            if (res != 0) {
-                if (se != null) {
-                    return "`" + cmd + "` returned non zero: " + res + " serr = `" + se + "`";
+            if (remoteCommandreturnValue != 0) {
+                if (serr != null) {
+                    return "`" + cmd + "` returned non zero: " + remoteCommandreturnValue + " serr = `" + serr + "`";
                 } else {
-                    return "`" + cmd + "` returned non zero: " + res + " and serr is null";
+                    return "`" + cmd + "` returned non zero: " + remoteCommandreturnValue + " and serr is null";
                 }
             }
-            if (se != null) {
-                return "`" + cmd + "` seems ok: " + res + " serr = `" + se + "`";
+            if (serr != null) {
+                return "`" + cmd + "` seems ok: " + remoteCommandreturnValue + " serr = `" + serr + "`";
             } else {
-                return "`" + cmd + "` seems ok: " + res + " and serr is null";
+                return "`" + cmd + "` seems ok: " + remoteCommandreturnValue + " and serr is null";
             }
         }
 
@@ -154,13 +154,13 @@ public class JenkinsCliWrapper {
 
     public String[] listJobsToArray() throws Throwable {
         ClientResponse r = syncSshExec("list-jobs");
-        if (r.ex != null) {
-            throw r.ex;
+        if (r.sshEngineExeption != null) {
+            throw r.sshEngineExeption;
         }
-        if (r.res != 0) {
-            throw new IOException("ssh returned " + r.res);
+        if (r.remoteCommandreturnValue != 0) {
+            throw new IOException("ssh returned " + r.remoteCommandreturnValue);
         }
-        String[] s = r.so.split("\\s+");
+        String[] s = r.sout.split("\\s+");
         for (int i = 0; i < s.length; i++) {
             s[i] = s[i].trim();
         }
