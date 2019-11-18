@@ -3,10 +3,13 @@ package org.fakekoji;
 import jdk.nashorn.api.scripting.URLReader;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.file.Files;
@@ -18,19 +21,15 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 public class Utils {
 
     public static String readResource(String resourcePath) throws IOException {
-        try (
-                final InputStreamReader inputStream = new InputStreamReader(
-                        Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath)))
-        ) {
+        try (final InputStreamReader inputStream = new InputStreamReader(
+                Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResourceAsStream(resourcePath)))) {
             return readStream(inputStream);
         }
     }
 
     public static String readFile(URL url) throws IOException {
-        try (
-                final URLReader urlReader = new URLReader(url);
-                final BufferedReader bufferedReader = new BufferedReader(urlReader)
-        ) {
+        try (final URLReader urlReader = new URLReader(url);
+                final BufferedReader bufferedReader = new BufferedReader(urlReader)) {
             return readStream(bufferedReader);
         }
 
@@ -56,10 +55,14 @@ public class Utils {
     }
 
     public static void writeToFile(File file, String content) throws IOException {
-        final PrintWriter writer = new PrintWriter(file.getAbsolutePath());
-        writer.write(content);
-        writer.flush();
-        writer.close();
+        writeToFile(new FileOutputStream(file), content);
+    }
+
+    public static void writeToFile(OutputStream os, String content) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, "utf-8"))) {
+            writer.write(content);
+            writer.flush();
+        }
     }
 
     public static void moveFile(File source, File target) throws IOException {
