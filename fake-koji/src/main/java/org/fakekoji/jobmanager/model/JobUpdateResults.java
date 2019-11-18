@@ -1,6 +1,5 @@
 package org.fakekoji.jobmanager.model;
 
-import org.fakekoji.jobmanager.ManagementResult;
 
 import java.util.List;
 import java.util.Objects;
