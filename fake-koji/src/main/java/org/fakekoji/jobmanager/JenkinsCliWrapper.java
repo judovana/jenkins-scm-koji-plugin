@@ -21,6 +21,7 @@ public class JenkinsCliWrapper {
 
     private final String host;
     private final int port;
+    private final String user = "unused_now";
 
     private enum Singleton {
 
@@ -35,16 +36,18 @@ public class JenkinsCliWrapper {
 
     }
 
-    public static class ClientResponse {
+    public class ClientResponse {
 
         public final int res;
         public final String so;
         public final String se;
         public final Throwable ex;
         private final String cmd;
+        private final String origCmd;
 
         ClientResponse(Integer res, String so, String se, Throwable ex, String origCommand) {
-            this.cmd = origCommand;
+            this.cmd = "ssh -P " + port + " " + user + "@" + host + " " + origCommand;
+            this.origCmd = origCommand;
             this.ex = ex;
             this.so = so;
             this.se = se;
@@ -54,6 +57,26 @@ public class JenkinsCliWrapper {
                 this.res = res;
             }
         }
+
+        @Override
+        public String toString() {
+            if (ex != null) {
+                return "`" + cmd + "` failed, because " + ex.toString();
+            }
+            if (res != 0) {
+                if (se != null) {
+                    return "`" + cmd + "` returned non zero: " + res + " serr = `" + se + "`";
+                } else {
+                    return "`" + cmd + "` returned non zero: " + res + " and serr is null";
+                }
+            }
+            if (se != null) {
+                return "`" + cmd + "` seems ok: " + res + " serr = `" + se + "`";
+            } else {
+                return "`" + cmd + "` seems ok: " + res + " and serr is null";
+            }
+        }
+
     }
 
     public static JenkinsCliWrapper getCli() {
@@ -73,7 +96,7 @@ public class JenkinsCliWrapper {
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
             //todo enable remote, customize-able server from config
-            HostConfigEntry hce = new HostConfigEntry(".*", host, port, "unused_now");
+            HostConfigEntry hce = new HostConfigEntry(".*", host, port, user);
             ConnectFuture cu = client.connect(hce);
             cu.await();
             try (ClientSession session = cu.getSession()) {
