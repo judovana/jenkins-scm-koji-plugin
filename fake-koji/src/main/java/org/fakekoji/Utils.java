@@ -12,11 +12,10 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import org.apache.commons.io.FileUtils;
 
 public class Utils {
 
@@ -65,7 +64,12 @@ public class Utils {
         }
     }
 
-    public static void moveFile(File source, File target) throws IOException {
-        Files.move(source.toPath(), target.toPath(), REPLACE_EXISTING);
+    public static void moveDir(File source, File target) throws IOException {
+        // we cannot simply move, because archive can, and likely is, diffferent mount point
+        // Files.move(source.toPath(), target.toPath(), REPLACE_EXISTING);
+        // we can not use appache commons either, because they are unable to handle broken ysmlinks like lastBuild or so
+        //FileUtils.moveDirectory(source, target);
+        //so we have to go on our own or delete or broken symlinks before the FileUtils.moveDirectory execution
+        //anyway, appache commons can be dangeorus as they seems to be exiting with first failure
     }
 }

@@ -26,11 +26,9 @@ package org.fakekoji.jobmanager;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
 import org.fakekoji.Utils;
 import org.junit.AfterClass;
@@ -267,7 +265,7 @@ public class JenkinsSshCli {
             //mv it out, can not to temp, as it is different volume, Files.move would fail
             File trash = new File(workdir.getParent(), "trash");
             trash.deleteOnExit();
-            Utils.moveFile(manualJob, trash);
+            Utils.moveDir(manualJob, trash);
             //although the fille is not here
             Assert.assertFalse(manualJob.exists());
             //and is not readable
@@ -297,7 +295,7 @@ public class JenkinsSshCli {
             i = Arrays.binarySearch(jobs, manualJobName);
             Assert.assertTrue(i < 0);
             //mv it back
-            Utils.moveFile(trash, manualJob);
+            Utils.moveDir(trash, manualJob);
             //ensure it is not here
             r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
             Assert.assertNotEquals(0, r3.remoteCommandreturnValue);
