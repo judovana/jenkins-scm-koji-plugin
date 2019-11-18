@@ -41,8 +41,10 @@ public class JenkinsCliWrapper {
         public final String so;
         public final String se;
         public final Throwable ex;
+        private final String cmd;
 
-        ClientResponse(Integer res, String so, String se, Throwable ex) {
+        ClientResponse(Integer res, String so, String se, Throwable ex, String origCommand) {
+            this.cmd = origCommand;
             this.ex = ex;
             this.so = so;
             this.se = se;
@@ -96,7 +98,7 @@ public class JenkinsCliWrapper {
                     String so = new String(boos.toByteArray(), "utf8");
                     String se = new String(boes.toByteArray(), "utf8");
                     Integer res = channel.getExitStatus();
-                    return new ClientResponse(res, so, se, ex);
+                    return new ClientResponse(res, so, se, ex, cmd);
                 } finally {
                     CloseFuture fc = session.close(false);
                     fc.await();
@@ -108,20 +110,22 @@ public class JenkinsCliWrapper {
     }
 
     public ClientResponse help() {
+        String cmd = "help";
         try {
-            ClientResponse r = syncSshExec("help");
+            ClientResponse r = syncSshExec(cmd);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
     public ClientResponse listJobs() {
+        String cmd = "list-jobs";
         try {
-            ClientResponse r = syncSshExec("list-jobs");
+            ClientResponse r = syncSshExec(cmd);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
@@ -141,82 +145,90 @@ public class JenkinsCliWrapper {
     }
 
     public ClientResponse createJob(String name, InputStream config) {
+        String cmd = "create-job " + name;
         try {
-            ClientResponse r = syncSshExec("create-job " + name, config);
+            ClientResponse r = syncSshExec(cmd, config);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
     /**
      * Signature of this method ensures job is really refreshed by itself
+     *
      * @param dirWithJobs
      * @param name
-     * @return 
+     * @return
      */
     public ClientResponse reloadOrRegisterManuallyUploadedJob(File dirWithJobs, String name) {
         try {
             ClientResponse r = createJob(name, new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE)));
             return r;
-        } catch (IOException  ex) {
-            return new ClientResponse(-1, "", "", ex);
+        } catch (IOException ex) {
+            return new ClientResponse(-1, "", "", ex, /*copypasted*/ "create-job " + name);
         }
     }
 
     public ClientResponse deleteJobs(String... name) {
+        String names = String.join(" ", name);
+        String cmd = "delete-job " + names;
         try {
-            String names = String.join(" ", name);
-            ClientResponse r = syncSshExec("delete-job " + names);
+            ClientResponse r = syncSshExec(cmd);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
     public ClientResponse relaodAll() {
+        String cmd = "reload-configuration";
         try {
-            ClientResponse r = syncSshExec("reload-configuration");
+            ClientResponse r = syncSshExec(cmd);
             //this seems to block while it relaods (good!)
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
     public ClientResponse updateJob(String name, InputStream config) {
+        String cmd = "update-job " + name;
         try {
-            ClientResponse r = syncSshExec("update-job " + name, config);
+            ClientResponse r = syncSshExec(cmd, config);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
     public ClientResponse getJob(String name) {
+        String cmd = "get-job " + name;
         try {
-            ClientResponse r = syncSshExec("get-job " + name);
+            ClientResponse r = syncSshExec(cmd);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
     public ClientResponse buildAndWait(String name) {
+        String cmd = "build -s " + name;
         try {
-            ClientResponse r = syncSshExec("build -s " + name);
+            ClientResponse r = syncSshExec(cmd);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 
     public ClientResponse scheduleBuild(String name) {
+        String cmd = "build " + name;
         try {
-            ClientResponse r = syncSshExec("build " + name);
+            ClientResponse r = syncSshExec(cmd);
             return r;
         } catch (IOException | InterruptedException ex) {
-            return new ClientResponse(-1, "", "", ex);
+            return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
 }
