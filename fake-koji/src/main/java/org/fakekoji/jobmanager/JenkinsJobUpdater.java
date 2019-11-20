@@ -124,7 +124,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         final List<JobUpdateResult> jobsCreated = new LinkedList<>();
         final List<JobUpdateResult> jobsArchived = new LinkedList<>();
         final List<JobUpdateResult> jobsRewritten = new LinkedList<>();
-        final List<JobUpdateResult> jobsRevived= new LinkedList<>();
+        final List<JobUpdateResult> jobsRevived = new LinkedList<>();
 
         final Set<String> archivedJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobArchiveRoot().list())));
 
@@ -196,7 +196,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File dst = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Reviving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
-            Utils.moveFile(src, dst);
+            Utils.moveDir(src, dst);
             //regenerate conig
             LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
             Utils.writeToFile(
@@ -213,7 +213,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File dst = Paths.get(settings.getJenkinsJobArchiveRoot().getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Archiving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
-            Utils.moveFile(src, dst);
+            Utils.moveDir(src, dst);
             return new JobUpdateResult(jobName, true);
         };
     }
