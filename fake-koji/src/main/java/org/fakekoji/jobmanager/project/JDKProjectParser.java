@@ -264,11 +264,11 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
                 variants.forEach((String key, String value) -> {
                     final TaskVariant variant = buildVariantsMap.get(key);
                     if (variant == null) {
-                        throw new RuntimeException("Unknown variant");
+                        throw new RuntimeException("Unknown variant type " + key + " from " + String.join(";", buildVariantsMap.keySet().toArray(new String[0])));
                     }
                     final TaskVariantValue variantValue = variant.getVariants().get(value);
                     if (variantValue == null) {
-                        throw new RuntimeException("Unknown variant");
+                        throw new RuntimeException("Unknown variant value " + value + " from " + String.join(";", variant.getVariants().keySet().toArray(new String[0])));
                     }
                     buildVariants.put(variant, variantValue);
                 });
@@ -280,11 +280,11 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
                 variants.forEach((String key, String value) -> {
                     final TaskVariant variant = testVariantsMap.get(key);
                     if (variant == null) {
-                        throw new RuntimeException("Unknown variant");
+                        throw new RuntimeException("Unknown variant type " + key + " from " + String.join(";", testVariantsMap.keySet().toArray(new String[0])));
                     }
                     final TaskVariantValue variantValue = variant.getVariants().get(value);
                     if (variantValue == null) {
-                        throw new RuntimeException("Unknown variant");
+                        throw new RuntimeException("Unknown variant value " + value + " from " + String.join(";", variant.getVariants().keySet().toArray(new String[0])));
                     }
                     testVariants.put(variant, variantValue);
                 });
