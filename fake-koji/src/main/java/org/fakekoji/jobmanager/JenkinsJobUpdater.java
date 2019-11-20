@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -162,7 +163,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             try {
                 return updateFunction.apply(job);
             } catch (IOException e) {
-                LOGGER.warning(e.getMessage());
+                LOGGER.log(Level.SEVERE, e.getMessage(), e);
                 return new JobUpdateResult(job.toString(), false, e.getMessage());
             }
         };
@@ -196,6 +197,11 @@ public class JenkinsJobUpdater implements JobUpdater {
             LOGGER.info("Reviving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             Utils.moveFile(src, dst);
+            //regenerate conig
+            LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
+            Utils.writeToFile(
+                    Paths.get(dst.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
+                    job.generateTemplate());
             return new JobUpdateResult(jobName, true);
         };
     }
