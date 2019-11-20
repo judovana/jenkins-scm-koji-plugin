@@ -202,6 +202,11 @@ public class JenkinsJobUpdater implements JobUpdater {
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             try {
                 Utils.moveDir(src, dst);
+                //regenerate conig
+                LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
+                Utils.writeToFile(
+                        Paths.get(dst.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
+                        job.generateTemplate());
                 return new JobUpdateResult(jobName, true);
             } finally {
                 throwFromJenkinsResult(JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName));
@@ -249,6 +254,7 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     interface JobUpdateFunction {
+
         JobUpdateResult apply(Job job) throws IOException;
     }
 }
