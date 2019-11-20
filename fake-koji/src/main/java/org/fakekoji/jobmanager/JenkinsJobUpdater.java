@@ -181,11 +181,15 @@ public class JenkinsJobUpdater implements JobUpdater {
             }
             final String jobDirPath = jobDir.getAbsolutePath();
             LOGGER.info("Creating file " + JENKINS_JOB_CONFIG_FILE + " in " + jobDirPath);
-            Utils.writeToFile(
-                    Paths.get(jobDirPath, JENKINS_JOB_CONFIG_FILE),
-                    job.generateTemplate()
-            );
-            return new JobUpdateResult(jobName, true);
+            try {
+                Utils.writeToFile(
+                        Paths.get(jobDirPath, JENKINS_JOB_CONFIG_FILE),
+                        job.generateTemplate()
+                );
+                return new JobUpdateResult(jobName, true);
+            } finally {
+                throwFromJenkinsResult(JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName));
+            }
         };
     }
 
@@ -196,13 +200,17 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File dst = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Reviving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
-            Utils.moveDir(src, dst);
-            //regenerate conig
-            LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
-            Utils.writeToFile(
+            try {
+                Utils.moveDir(src, dst);
+                //regenerate conig
+                LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
+                Utils.writeToFile(
                     Paths.get(dst.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
                     job.generateTemplate());
-            return new JobUpdateResult(jobName, true);
+                return new JobUpdateResult(jobName, true);
+            } finally {
+                throwFromJenkinsResult(JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName));
+            }
         };
     }
 
@@ -214,6 +222,8 @@ public class JenkinsJobUpdater implements JobUpdater {
             LOGGER.info("Archiving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             Utils.moveDir(src, dst);
+            //we delte only if archivatrion suceed
+            throwFromJenkinsResult(JenkinsCliWrapper.getCli().deleteJobs(jobName));
             return new JobUpdateResult(jobName, true);
         };
     }
@@ -224,9 +234,23 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File jobConfig = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), jobName, JENKINS_JOB_CONFIG_FILE).toFile();
             LOGGER.info("Rewriting job " + jobName);
             LOGGER.info("Writing to file " + jobConfig.getAbsolutePath());
-            Utils.writeToFile(jobConfig, job.generateTemplate());
-            return new JobUpdateResult(jobName, true);
+            try {
+                Utils.writeToFile(jobConfig, job.generateTemplate());
+                return new JobUpdateResult(jobName, true);
+            } finally {
+                throwFromJenkinsResult(JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName));
+            }
         };
+    }
+
+    private void throwFromJenkinsResult(JenkinsCliWrapper.ClientResponse r) throws IOException {
+        if (r.sshEngineExeption != null) {
+            throw new IOException("Probable ssh engine fail in `" + r.cmd + "`", r.sshEngineExeption);
+        } else {
+            if (r.remoteCommandreturnValue != 0) {
+                throw new IOException("ssh command `" + r.cmd + "` returned non zero: " + r.remoteCommandreturnValue);
+            }
+        }
     }
 
     interface JobUpdateFunction {
