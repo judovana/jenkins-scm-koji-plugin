@@ -82,7 +82,7 @@ public class DataGenerator {
 
     public static final String DISPLAY_PROTOCOL = "displayProtocol";
 
-    public static final String X_SERVER = "xServer";
+    public static final String X_SERVER = "x11";
     public static final String WAYLAND = "wayland";
 
     public static final String SCP_POLL_SCHEDULE = "H/24 * * * *";
