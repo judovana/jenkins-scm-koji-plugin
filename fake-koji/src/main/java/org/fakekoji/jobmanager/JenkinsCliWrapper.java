@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannelEvent;
@@ -16,8 +18,11 @@ import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.future.CloseFuture;
 import org.apache.sshd.common.util.io.NoCloseInputStream;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class JenkinsCliWrapper {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final String host;
     private final int port;
@@ -46,7 +51,7 @@ public class JenkinsCliWrapper {
         public final String plainCmd;
 
         ClientResponse(Integer res, String so, String se, Throwable ex, String origCommand) {
-            this.cmd = "ssh -P " + port + " " + user + "@" + host + " " + origCommand;
+            this.cmd = "ssh -p " + port + " " + user + "@" + host + " " + origCommand;
             this.plainCmd = origCommand;
             this.sshEngineExeption = ex;
             this.sout = so;
@@ -93,6 +98,7 @@ public class JenkinsCliWrapper {
     }
 
     private ClientResponse syncSshExec(String cmd, InputStream is) throws IOException, InterruptedException {
+        LOGGER.log(Level.INFO, "Executing: ssh -p {0} " + user + "@{1} {2}", new Object[]{port, host, cmd});
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
             //todo enable remote, customize-able server from config
