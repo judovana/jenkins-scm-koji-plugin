@@ -63,6 +63,16 @@ public class JenkinsCliWrapper {
             }
         }
 
+        public void throwIfNecessary() throws IOException {
+            if (sshEngineExeption != null) {
+                throw new IOException("Probable ssh engine fail in `" + cmd + "`", sshEngineExeption);
+            } else {
+                if (remoteCommandreturnValue != 0) {
+                    throw new IOException("ssh command `" + cmd + "` returned non zero: " + remoteCommandreturnValue);
+                }
+            }
+        }
+
         @Override
         public String toString() {
             if (sshEngineExeption != null) {

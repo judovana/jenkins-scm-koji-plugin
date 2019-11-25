@@ -162,7 +162,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         return job -> {
             try {
                 return updateFunction.apply(job);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
                 return new JobUpdateResult(job.toString(), false, e.getMessage());
             }
@@ -181,15 +181,15 @@ public class JenkinsJobUpdater implements JobUpdater {
             }
             final String jobDirPath = jobDir.getAbsolutePath();
             LOGGER.info("Creating file " + JENKINS_JOB_CONFIG_FILE + " in " + jobDirPath);
-            try {
-                Utils.writeToFile(
-                        Paths.get(jobDirPath, JENKINS_JOB_CONFIG_FILE),
-                        job.generateTemplate()
-                );
-                return new JobUpdateResult(jobName, true);
-            } finally {
-                throwFromJenkinsResult(JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName));
-            }
+            return new PrimaryExceptionThrower<JobUpdateResult>(
+                    () -> {
+                        Utils.writeToFile(
+                                Paths.get(jobDirPath, JENKINS_JOB_CONFIG_FILE),
+                                job.generateTemplate()
+                        );
+                    }, () -> {
+                        reloadOrRegisterManuallyUploadedJob(jobName);
+                    }, new JobUpdateResult(jobName, true)).call();
         };
     }
 
@@ -200,17 +200,17 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File dst = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Reviving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
-            try {
-                Utils.moveDir(src, dst);
-                //regenerate conig
-                LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
-                Utils.writeToFile(
-                    Paths.get(dst.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
-                    job.generateTemplate());
-                return new JobUpdateResult(jobName, true);
-            } finally {
-                throwFromJenkinsResult(JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName));
-            }
+            return new PrimaryExceptionThrower<JobUpdateResult>(
+                    () -> {
+                        Utils.moveDir(src, dst);
+                        //regenerate conig
+                        LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
+                        Utils.writeToFile(
+                                Paths.get(dst.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
+                                job.generateTemplate());
+                    }, () -> {
+                        reloadOrRegisterManuallyUploadedJob(jobName);
+                    }, new JobUpdateResult(jobName, true)).call();
         };
     }
 
@@ -222,8 +222,8 @@ public class JenkinsJobUpdater implements JobUpdater {
             LOGGER.info("Archiving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             Utils.moveDir(src, dst);
-            //we delte only if archivatrion suceed
-            throwFromJenkinsResult(JenkinsCliWrapper.getCli().deleteJobs(jobName));
+            //we delte only if archivation suceed
+            JenkinsCliWrapper.getCli().deleteJobs(jobName).throwIfNecessary();
             return new JobUpdateResult(jobName, true);
         };
     }
@@ -234,26 +234,63 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File jobConfig = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), jobName, JENKINS_JOB_CONFIG_FILE).toFile();
             LOGGER.info("Rewriting job " + jobName);
             LOGGER.info("Writing to file " + jobConfig.getAbsolutePath());
-            try {
-                Utils.writeToFile(jobConfig, job.generateTemplate());
-                return new JobUpdateResult(jobName, true);
-            } finally {
-                throwFromJenkinsResult(JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName));
-            }
+            return new PrimaryExceptionThrower<JobUpdateResult>(
+                    () -> {
+                        Utils.writeToFile(jobConfig, job.generateTemplate());
+                    }, () -> {
+                        reloadOrRegisterManuallyUploadedJob(jobName);
+                    }, new JobUpdateResult(jobName, true)).call();
         };
     }
 
-    private void throwFromJenkinsResult(JenkinsCliWrapper.ClientResponse r) throws IOException {
-        if (r.sshEngineExeption != null) {
-            throw new IOException("Probable ssh engine fail in `" + r.cmd + "`", r.sshEngineExeption);
-        } else {
-            if (r.remoteCommandreturnValue != 0) {
-                throw new IOException("ssh command `" + r.cmd + "` returned non zero: " + r.remoteCommandreturnValue);
-            }
-        }
+    private void reloadOrRegisterManuallyUploadedJob(final String jobName) throws Exception {
+        JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();;
     }
 
-    interface JobUpdateFunction {
-        JobUpdateResult apply(Job job) throws IOException;
+    private static interface JobUpdateFunction {
+
+        JobUpdateResult apply(Job job) throws Exception;
+    }
+
+    static interface Rummable {
+
+        public void rum() throws Exception;
+    }
+
+    static class PrimaryExceptionThrower<T> {
+
+        private final Rummable mainCall;
+        private final Rummable finalCall;
+        private final T result;
+
+        public PrimaryExceptionThrower(Rummable mainCall, Rummable finalCall, T result) {
+            this.mainCall = mainCall;
+            this.finalCall = finalCall;
+            this.result = result;
+        }
+
+        public synchronized T call() throws Exception {
+            Exception saved = null;
+            try {
+                mainCall.rum();
+            } catch (Exception mainEx) {
+                saved = mainEx;
+            } finally {
+                try {
+                    finalCall.rum();
+                } catch (Exception secondary) {
+                    if (saved != null) {
+                        LOGGER.log(Level.SEVERE, secondary.getMessage(), secondary);
+                        throw saved;
+                    } else {
+                        throw secondary;
+                    }
+                }
+            }
+            if (saved != null) {
+                throw saved;
+            }
+            return result;
+        }
     }
 }
