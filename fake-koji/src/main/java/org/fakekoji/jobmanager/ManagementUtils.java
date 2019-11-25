@@ -1,9 +1,23 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.storage.Storage;
+
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class ManagementUtils {
+
+    public static void checkID(String id, Storage storage) throws ManagementException {
+        checkID(id, storage, true);
+    }
+
+    public static void checkID(String id, Storage storage, boolean shouldExist) throws ManagementException {
+        if (storage.contains(id) != shouldExist) {
+            throw new ManagementException("Resource with ID " + id +
+                    (shouldExist ? " does not exist" : " already exists") + '!'
+            );
+        }
+    }
 
     public static <T, U> BiConsumer<T, U> managementBiConsumerWrapper(ManagementBiConsumer<T, U> consumer) {
         return (key, value) -> {
