@@ -74,7 +74,7 @@ public class OToolJenkinsTest {
 
     @Test
     public void testBuildJobSuccess() throws Exception {
-        final String expectedFile = "java-1.8.0-openjdk-version2-release2.uName.src.tarxz";
+        final String expectedFile = "java-1.8.0-openjdk-version2-re.l.ease.2.uName.src.tarxz";
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
@@ -106,7 +106,7 @@ public class OToolJenkinsTest {
 
     @Test
     public void testTestJobSuccess() throws Exception {
-        final String expectedFile = "java-1.8.0-openjdk-version1-release2.uName.fastdebug.hotspot.f29.x86_64.tarxz";
+        final String expectedFile = "java-1.8.0-openjdk-version1-release1.uName.fastdebug.hotspot.f29.x86_64.tarxz";
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
@@ -122,8 +122,8 @@ public class OToolJenkinsTest {
 
     @Test
     public void testTestJobWithSourcesSuccess() throws Exception {
-        final String expectedFile = "java-1.8.0-openjdk-version1-release2.uName.fastdebug.hotspot.f29.x86_64.tarxz";
-        final String expectedSourceFile = "java-1.8.0-openjdk-version1-release2.uName.src.tarxz";
+        final String expectedFile = "java-1.8.0-openjdk-version1-re.l.ease.2.uName.fastdebug.hotspot.f29.x86_64.tarxz";
+        final String expectedSourceFile = "java-1.8.0-openjdk-version1-re.l.ease.2.uName.src.tarxz";
         String shellString = "find . | grep \"" + expectedFile + "\"\nfind . | grep \"" + expectedSourceFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
