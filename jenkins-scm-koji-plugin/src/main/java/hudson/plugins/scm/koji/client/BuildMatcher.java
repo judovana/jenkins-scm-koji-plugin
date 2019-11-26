@@ -66,10 +66,10 @@ abstract class BuildMatcher {
                 .map(KojiBuildProvider::getBuildProvider)
                 .map(this::getBuilds)
                 .flatMap(Collection::stream)
-                .filter(build -> notProcessedNvrPredicate.test(build.getNvr()))
                 .sorted(this::compare)
                 .limit(maxBuilds)
-                .findFirst();
+                .filter(build -> notProcessedNvrPredicate.test(build.getNvr()))
+                .max(this::compare);
         return buildOptional.map(this::getBuild);
     }
 
