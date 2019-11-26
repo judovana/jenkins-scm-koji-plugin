@@ -173,10 +173,11 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     private Optional<File> downloadArchive(File targetDir, RPM rpm) {
         if (!isUrlReachable(rpm.getUrl())) {
-            log("Not accessible, trying another suffix in: ", rpm.getFilename(""));
+            log("URL " + rpm.getUrl() + " not accessible");
             return Optional.empty();
         }
         File targetFile = new File(targetDir, rpm.getFilename(""));
+        log("Starting downloading " + rpm.getUrl());
         try (
                 final OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
                 final InputStream in = httpDownloadStream(rpm.getUrl())
@@ -189,6 +190,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         } catch (IOException e) {
             log("Exception while downloading " + rpm.getFilename("") + ": ", e);
         }
+        log("Download successful");
         rpm.setHashSum(hashSum(targetFile));
         return Optional.of(targetFile);
     }
