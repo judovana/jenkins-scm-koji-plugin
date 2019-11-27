@@ -28,16 +28,9 @@ public class JenkinsCliWrapper {
     private final int port;
     private final String user = "unused_now";
 
-    private enum Singleton {
+    private static class Singleton {
 
-        INSTANCE;
-
-        private final JenkinsCliWrapper client;
-
-        private Singleton() {
-            //we currently run fake-koji on same machine as jenkins, so localhsot is safe-ground
-            client = new JenkinsCliWrapper("localhost", 9999);
-        }
+        private static JenkinsCliWrapper client = new JenkinsCliWrapper("localhost", 9999);
 
     }
 
@@ -95,7 +88,19 @@ public class JenkinsCliWrapper {
     }
 
     public static JenkinsCliWrapper getCli() {
-        return Singleton.INSTANCE.client;
+        return Singleton.client;
+    }
+
+    public static void setCli(JenkinsCliWrapper c) {
+        Singleton.client = c;
+    }
+
+    public static void killCli() {
+        Singleton.client = new NoOpWrapper();
+    }
+
+    public static void reinitCli() {
+        Singleton.client = new JenkinsCliWrapper("localhost", 9999);
     }
 
     private ClientResponse syncSshExec(String cmd) throws IOException, InterruptedException {
@@ -107,7 +112,21 @@ public class JenkinsCliWrapper {
         this.port = port;
     }
 
-    private ClientResponse syncSshExec(String cmd, InputStream is) throws IOException, InterruptedException {
+    public static class NoOpWrapper extends JenkinsCliWrapper {
+
+        public NoOpWrapper() {
+            super("nothing", 666);
+
+        }
+
+        @Override
+        ClientResponse syncSshExec(String cmd, InputStream is) throws IOException, InterruptedException {
+            return new ClientResponse(0, "noop", "nobody", null, "noop'");
+        }
+
+    }
+
+    ClientResponse syncSshExec(String cmd, InputStream is) throws IOException, InterruptedException {
         LOGGER.log(Level.INFO, "Executing: ssh -p {0} " + user + "@{1} {2}", new Object[]{port, host, cmd});
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
