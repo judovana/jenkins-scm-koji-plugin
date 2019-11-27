@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -845,6 +846,7 @@ public class DataGenerator {
     public static final String[] releases = new String[] { RELEASE_1, RELEASE_2 };
 
     public static void initBuildsRoot(final File buildsRoot) throws IOException {
+        long timeStamp = new Date().getTime();
         final Set<Platform> platforms = DataGenerator.getPlatforms();
         final Set<Product> products = DataGenerator.getProducts();
         for (final JDKProject jdkProject : DataGenerator.getJDKProjects()) {
@@ -868,6 +870,9 @@ public class DataGenerator {
                     final String srcName = baseName + SOURCES + SUFFIX;
                     final File srcFile = new File(srcDir, srcName);
                     Files.write(srcFile.toPath(), srcName.getBytes());
+                    if (!srcFile.setLastModified(timeStamp += 60000)) {
+                        throw new RuntimeException("Failed to set lastModified of file " + srcFile.getAbsolutePath());
+                    }
                     for (final Map.Entry<String, PlatformConfig> platformConfig: jdkProject.getJobConfiguration().getPlatforms().entrySet()) {
                         for (final  Map.Entry<String, TaskConfig> buildTaskConfig : platformConfig.getValue().getTasks().entrySet()) {
                             for (final VariantsConfig variantsConfig : buildTaskConfig.getValue().getVariants()) {
@@ -886,8 +891,8 @@ public class DataGenerator {
                                     final File archiveFile = new File(platformDir, archiveFileName);
                                     platformDir.mkdirs();
                                     Files.write(archiveFile.toPath(), archiveFileName.getBytes());
-                                    if (!archiveFile.setLastModified(((versionIndex + 1) * 10000) * ((releaseIndex + 1) * 1000))) {
-                                        throw new RuntimeException("Failed to set lastModified of file " + releaseDir.getAbsolutePath());
+                                    if (!archiveFile.setLastModified(timeStamp += 60000)) {
+                                        throw new RuntimeException("Failed to set lastModified of file " + archiveFile.getAbsolutePath());
                                     }
                                 }
                             }
