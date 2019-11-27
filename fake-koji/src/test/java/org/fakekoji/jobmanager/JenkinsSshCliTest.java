@@ -42,7 +42,7 @@ import org.junit.Test;
  *
  * @author jvanek
  */
-public class JenkinsSshCli {
+public class JenkinsSshCliTest {
 
     /**
      * To run this test, you have to have instance of jenkins running, and have
