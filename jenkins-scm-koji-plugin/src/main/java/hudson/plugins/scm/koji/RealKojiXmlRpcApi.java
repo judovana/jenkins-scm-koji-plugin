@@ -81,4 +81,15 @@ public class RealKojiXmlRpcApi extends KojiXmlRpcApi {
     public int hashCode() {
         return Objects.hash(packageName, arch, tag, subpackageBlacklist, subpackageWhitelist);
     }
+
+    @Override
+    public String toString() {
+        return
+                "Koji xml-rpc api:\n" +
+                "  packageName: " + packageName + '\n' +
+                "  arch: " + arch + '\n' +
+                "  tag: " + tag + '\n' +
+                "  subpackageBlacklist: " + subpackageBlacklist + '\n' +
+                "  subpackageWhitelist: " + subpackageWhitelist + '\n';
+    }
 }

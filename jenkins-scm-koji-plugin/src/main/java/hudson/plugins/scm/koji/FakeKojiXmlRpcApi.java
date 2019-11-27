@@ -87,4 +87,14 @@ public class FakeKojiXmlRpcApi extends KojiXmlRpcApi {
     public int hashCode() {
         return Objects.hash(projectName, buildVariants, buildPlatform, isBuilt);
     }
+
+    @Override
+    public String toString() {
+        return
+                "OTool xml-rpc API:\n" +
+                "  projectName: " + projectName + '\n' +
+                "  buildVariants: " + buildVariants + '\n' +
+                "  buildPlatform: " + buildPlatform + '\n' +
+                "  isBuilt: " + isBuilt + '\n';
+    }
 }

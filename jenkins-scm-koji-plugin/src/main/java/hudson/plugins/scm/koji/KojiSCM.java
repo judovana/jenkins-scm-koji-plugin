@@ -38,6 +38,7 @@ import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
@@ -141,6 +142,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     @Override
     public void checkout(Run<?, ?> run, Launcher launcher, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException {
         currentListener = listener;
+        log("{}", this);
         log("Checking out remote revision");
         if (baseline != null && !(baseline instanceof KojiRevisionState)) {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
@@ -319,4 +321,17 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         this.maxPreviousBuilds = maxPreviousBuilds;
     }
 
+    @Override
+    public String toString() {
+        return
+                "Koji SCM: \n\n" +
+                "Build Providers:\n" + kojiBuildProviders.stream()
+                        .map(KojiBuildProvider::toString)
+                        .collect(Collectors.joining("----------\n")) + '\n' +
+                kojiXmlRpcApi + '\n' +
+                "downloadDir: " + downloadDir + '\n' +
+                "cleanDownloadDir: " + cleanDownloadDir + '\n'+
+                "dirPerNvr: " + dirPerNvr + '\n' +
+                "maxPreviousBuilds: " + maxPreviousBuilds + '\n';
+    }
 }

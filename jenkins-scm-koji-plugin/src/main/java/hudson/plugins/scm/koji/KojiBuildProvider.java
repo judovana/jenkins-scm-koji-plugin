@@ -90,4 +90,11 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
             return FormValidation.ok();
         }
     }
+
+    @Override
+    public String toString() {
+        return
+                "topUrl: " + getTopUrl() + '\n' +
+                "downloadUrl: " + getDownloadUrl() + '\n';
+    }
 }
