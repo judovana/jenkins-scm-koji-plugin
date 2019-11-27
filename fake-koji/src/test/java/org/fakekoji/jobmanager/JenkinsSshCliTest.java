@@ -234,7 +234,7 @@ public class JenkinsSshCliTest {
             Assert.assertTrue(i < 0);
 
             //notify jenkins
-            JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(workdir, manualJobName);
+            JenkinsCliWrapper.ClientResponse r2 = JenkinsCliWrapper.getCli().createManuallyUploadedJob(workdir, manualJobName);
             Assert.assertEquals(0, r2.remoteCommandreturnValue);
             Assert.assertNull(r2.sshEngineExeption);
 
@@ -307,7 +307,7 @@ public class JenkinsSshCliTest {
             i = Arrays.binarySearch(jobs, manualJobName);
             Assert.assertTrue(i < 0);
             //register it
-            r2 = JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(workdir, manualJobName);
+            r2 = JenkinsCliWrapper.getCli().createManuallyUploadedJob(workdir, manualJobName);
             Assert.assertEquals(0, r2.remoteCommandreturnValue);
             Assert.assertNull(r2.sshEngineExeption);
             //ensure it is really here

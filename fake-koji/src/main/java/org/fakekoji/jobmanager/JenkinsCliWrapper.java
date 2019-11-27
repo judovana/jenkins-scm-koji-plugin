@@ -219,12 +219,28 @@ public class JenkinsCliWrapper {
      * @param name
      * @return
      */
-    public ClientResponse reloadOrRegisterManuallyUploadedJob(File dirWithJobs, String name) {
+    public ClientResponse createManuallyUploadedJob(File dirWithJobs, String name) {
         try {
             ClientResponse r = createJob(name, new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE)));
             return r;
         } catch (IOException ex) {
             return new ClientResponse(-1, "", "", ex, /*copypasted*/ "create-job " + name);
+        }
+    }
+    
+    /**
+     * Signature of this method ensures job is really refreshed by itself
+     *
+     * @param dirWithJobs
+     * @param name
+     * @return
+     */
+    public ClientResponse updateManuallyUpdatedJob(File dirWithJobs, String name) {
+        try {
+            ClientResponse r = updateJob(name, new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE)));
+            return r;
+        } catch (IOException ex) {
+            return new ClientResponse(-1, "", "", ex, /*copypasted*/ "update-job " + name);
         }
     }
 

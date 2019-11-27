@@ -188,7 +188,7 @@ public class JenkinsJobUpdater implements JobUpdater {
                                 job.generateTemplate()
                         );
                     }, () -> {
-                        reloadOrRegisterManuallyUploadedJob(jobName);
+                        createManuallyUploadedJob(jobName);
                     }, new JobUpdateResult(jobName, true)).call();
         };
     }
@@ -209,7 +209,7 @@ public class JenkinsJobUpdater implements JobUpdater {
                                 Paths.get(dst.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
                                 job.generateTemplate());
                     }, () -> {
-                        reloadOrRegisterManuallyUploadedJob(jobName);
+                        createManuallyUploadedJob(jobName);
                     }, new JobUpdateResult(jobName, true)).call();
         };
     }
@@ -238,13 +238,16 @@ public class JenkinsJobUpdater implements JobUpdater {
                     () -> {
                         Utils.writeToFile(jobConfig, job.generateTemplate());
                     }, () -> {
-                        reloadOrRegisterManuallyUploadedJob(jobName);
+                        updateManuallyUpdatedJob(jobName);
                     }, new JobUpdateResult(jobName, true)).call();
         };
     }
 
-    private void reloadOrRegisterManuallyUploadedJob(final String jobName) throws Exception {
-        JenkinsCliWrapper.getCli().reloadOrRegisterManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();;
+    private void createManuallyUploadedJob(final String jobName) throws Exception {
+        JenkinsCliWrapper.getCli().createManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();;
+    }
+      private void updateManuallyUpdatedJob(final String jobName) throws Exception {
+        JenkinsCliWrapper.getCli().updateManuallyUpdatedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();;
     }
 
     private static interface JobUpdateFunction {
