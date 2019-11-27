@@ -2,35 +2,49 @@ import React from "react";
 import { observer, inject } from "mobx-react";
 
 import { ConfigStore, CONFIG_STORE } from "../stores/ConfigStore";
+import { useHistory, Link } from "react-router-dom"
+import { AppBar, Tabs, Tab, Toolbar } from "@material-ui/core"
 
 interface Props {
     configStore?: ConfigStore;
 }
 
-class Header extends React.PureComponent<Props> {
+const Header: React.FC<Props> = props => {
 
-    componentDidMount() {
-        const configStore = this.props.configStore!;
+    const configStore = props.configStore!
+    const history = useHistory()
+
+    React.useEffect(() => {
         configStore.fetchConfigs()
+    })
+
+    const onTabClick = (_: React.ChangeEvent<{}>, id: string) => {
+        history.push(`/${id}`)
+        configStore.selectGroup(id)
     }
 
-    render() {
-        const configStore = this.props.configStore!;
-        return (
-            <div className="header-container">
-                {
-                    configStore.configGroups.map(group =>
-                        <div
-                            className="header-item"
-                            key={group.id}
-                            onClick={() => configStore.selectGroup(group.id)}>
-                            <div>{group.id}</div>
-                        </div>
-                    )
-                }
-            </div>
-        );
-    }
+    return (
+        <React.Fragment>
+            <AppBar position="fixed">
+                <Tabs
+                    onChange={onTabClick}
+                    value={configStore.selectedGroupId}>
+                    {
+                        configStore.configGroups.map(({ id }) =>
+                            <Tab
+                                component={Link}
+                                key={id}
+                                label={id}
+                                to={id}
+                                value={id} />
+
+                        )
+                    }
+                </Tabs>
+            </AppBar>
+            <Toolbar />
+        </React.Fragment>
+    )
 }
 
 export default inject(CONFIG_STORE)(observer(Header));

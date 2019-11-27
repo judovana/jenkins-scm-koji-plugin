@@ -1,52 +1,79 @@
 import React from "react"
-import { inject, observer } from "mobx-react"
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore";
-import Button from "./Button";
-import { Item } from "../stores/model";
+import { inject, observer, useObserver } from "mobx-react"
+import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore"
+import { Item } from "../stores/model"
+import { IconButton, Grid, Paper, Typography, Table, TableRow, TableCell, TableBody, TableHead } from "@material-ui/core"
+import { Delete, Add } from "@material-ui/icons"
+import { useHistory } from "react-router-dom"
 
 interface Props {
     configStore?: ConfigStore
 }
 
-class List extends React.PureComponent<Props> {
+const List: React.FC<Props> = props => {
 
-    onCreate = () => {
-        const configStore = this.props.configStore!
+    const history = useHistory()
+
+    const configStore = props.configStore!
+
+    const onCreate = () => {
         configStore.selectNewConfig(configStore.selectedGroupId!)
     }
 
-    onDelete = (config: Item) => {
-        const configStore = this.props.configStore!
+    const onDelete = (config: Item) => (event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
+        event.stopPropagation()
         configStore.deleteConfig(config.id)
     }
 
-    render() {
-        const { selectedGroup, selectConfig, selectedGroupId } = this.props.configStore!
-        return (
-            <div className="list-container">
-                <div className="header">
-                    <span>{selectedGroupId}</span>
-                    <Button onClick={this.onCreate}>new</Button>
-                </div>
-                <div className="body">
-                    {
-                        selectedGroup.map((config, index) =>
-                            <div
-                                className="list-item"
-                                onClick={() => selectConfig(config)}
-                                key={config.id}
-                                style={{marginBottom: index < selectedGroup.length ? 2 : 0}}>
-                                {config.id}
-                                <Button
-                                    color="red"
-                                    onClick={() => this.onDelete(config)}>delete</Button>
-                            </div>
-                        )
-                    }
-                </div>
-            </div>
-        )
+    const onSelect = (config: Item) => (_: React.MouseEvent<HTMLTableRowElement, MouseEvent>): void => {
+        history.push(`/form/${configStore.selectedGroupId}/${config.id}`)
+        configStore.selectConfig(config)
     }
+
+    return useObserver(() => {
+        const { selectedGroup, selectedGroupId } = configStore
+
+        return (
+            <React.Fragment>
+                <Grid alignItems="center" container item justify="center" xs={12}>
+                    <Paper style={{ padding: 20, width: "100%" }}>
+                        <Grid alignItems="center" container direction="row" justify="space-between">
+                            <Typography variant="h4">{selectedGroupId}</Typography>
+                            <IconButton onClick={onCreate}>
+                                <Add />
+                            </IconButton>
+                        </Grid>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell></TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {
+                                    selectedGroup.map((config, index) =>
+                                        <TableRow
+                                            key={index}
+                                            onClick={onSelect(config)}>
+                                            <TableCell>
+                                                {config.id}
+                                            </TableCell>
+                                            <TableCell align="right">
+                                                <IconButton onClick={onDelete(config)}>
+                                                    <Delete />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                }
+                            </TableBody>
+                        </Table>
+                    </Paper>
+                </Grid>
+            </React.Fragment>
+        )
+    })
 }
 
 export default inject(CONFIG_STORE)(observer(List))
