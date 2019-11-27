@@ -205,6 +205,7 @@ public class DataGenerator {
                 JVM,
                 "JVM",
                 Task.Type.BUILD,
+                HOTSPOT,
                 1,
                 Collections.unmodifiableMap(
                         new HashMap<String, TaskVariantValue>() {{
@@ -222,6 +223,7 @@ public class DataGenerator {
                 DEBUG_MODE,
                 "Debug mode",
                 Task.Type.BUILD,
+                RELEASE,
                 0,
                 Collections.unmodifiableMap(
                         new HashMap<String, TaskVariantValue>() {{
@@ -241,6 +243,7 @@ public class DataGenerator {
                 GARBAGE_COLLECTOR,
                 "Garbage Collector",
                 Task.Type.TEST,
+                SHENANDOAH,
                 0,
                 Collections.unmodifiableMap(
                         new HashMap<String, TaskVariantValue>() {{
@@ -258,6 +261,7 @@ public class DataGenerator {
                 DISPLAY_PROTOCOL,
                 "Display protocol",
                 Task.Type.TEST,
+                X_SERVER,
                 1,
                 Collections.unmodifiableMap(
                         new HashMap<String, TaskVariantValue>() {{

@@ -8,6 +8,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
     private final String id;
     private final String label;
     private final Task.Type type;
+    private final String defaultValue;
     private final int order;
     private final Map<String, TaskVariantValue> variants;
 
@@ -15,6 +16,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
         id = null;
         label = null;
         type = null;
+        defaultValue = null;
         order = -1;
         variants = null;
     }
@@ -23,12 +25,14 @@ public class TaskVariant implements Comparable<TaskVariant> {
             String id,
             String label,
             Task.Type type,
+            String defaultValue,
             int order,
             Map<String, TaskVariantValue> variants
     ) {
         this.id = id;
         this.label = label;
         this.type = type;
+        this.defaultValue = defaultValue;
         this.order = order;
         this.variants = variants;
     }
@@ -43,6 +47,10 @@ public class TaskVariant implements Comparable<TaskVariant> {
 
     public Task.Type getType() {
         return type;
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
     }
 
     public int getOrder() {
@@ -62,6 +70,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
                 Objects.equals(id, category.id) &&
                 Objects.equals(label, category.label) &&
                 type == category.type &&
+                Objects.equals(defaultValue, category.defaultValue) &&
                 Objects.equals(variants, category.variants);
     }
 
@@ -76,6 +85,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
                 "id='" + id + '\'' +
                 ", label='" + label + '\'' +
                 ", type=" + type +
+                ", defaultValud=" + defaultValue +
                 ", order=" + order +
                 ", variants=" + variants +
                 '}';

@@ -60,15 +60,28 @@ class JobConfigComponent extends React.PureComponent<Props> {
     }
 
     taskRows = (key: string, taskConfigs: { [id: string]: TaskConfig }, type: TaskType): JSX.Element[] => {
+        const configStore = this.props.configStore!
         return Object.keys(taskConfigs).flatMap(id => {
             const taskConfig = taskConfigs[id]
             const taskVariants = taskConfig.variants
+
+            const onAdd = () => {
+                taskVariants.splice(0, 0, {
+                    map: configStore.taskVariants
+                        .filter(taskVariant => taskVariant.type === type)
+                        .reduce((map, taskVariant) => {
+                            map[taskVariant.id] = taskVariant.defaultValue
+                            return map
+                        }, {} as { [key: string]: string }),
+                    platforms: (type === "BUILD" && {}) || undefined
+                })
+            }
 
             const cell: JSX.Element = (
                 <span>
                     {id}
                     <Tooltip title={`Add ${type.toLowerCase()} variant`}>
-                        <IconButton onClick={() => { taskVariants.splice(0, 0, { map: {}, platforms: (type === "BUILD" && {}) || undefined }) }}>
+                        <IconButton onClick={onAdd}>
                             <Add />
                         </IconButton>
                     </Tooltip>

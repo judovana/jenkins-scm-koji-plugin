@@ -96,6 +96,7 @@ export interface Product extends Item {
 }
 
 export interface TaskVariant extends Item {
+    defaultValue: string
     type: TaskType;
     variants: Item[];
 }
