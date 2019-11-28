@@ -1,7 +1,6 @@
 import { observable, runInAction, action } from "mobx";
 
 import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, JobUpdateResults, ConfigGroup } from "./model";
-import { defaultTask, defaultJDKProject, defaultPlatform } from "./defaults";
 import ConfigService from "./services/ConfigService";
 
 export const CONFIG_STORE = "configStore";
@@ -75,24 +74,6 @@ export class ConfigStore {
     selectConfig = (config: Item) => {
         this._selectedConfig = config;
         this._configState = "update"
-    }
-
-    @action
-    selectNewConfig = (groupId: string) => {
-        switch (groupId) {
-            case "jdkProjects":
-                this._selectedConfig = defaultJDKProject
-                break
-            case "tasks":
-                this._selectedConfig = defaultTask
-                break
-            case "platforms":
-                this._selectedConfig = defaultPlatform
-                break
-            default:
-                return
-        }
-        this._configState = "create"
     }
 
     get jobUpdateResults(): JobUpdateResults | undefined {
