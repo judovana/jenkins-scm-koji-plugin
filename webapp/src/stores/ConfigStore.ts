@@ -26,7 +26,10 @@ export class ConfigStore {
     private _jobUpdateResults?: JobUpdateResults
 
     constructor(private readonly service: ConfigService) {
-        this._configGroups = {}
+        this._configGroups = this.configGroups.reduce((map, group) => {
+            map[group.id] = {}
+            return map
+        }, {} as ConfigGroups)
     }
 
     @action
