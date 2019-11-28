@@ -21,9 +21,7 @@ export interface Item {
     id: string;
 }
 
-export enum ProjectType {
-    JDK_PROJECT = "JDK_PROJECT"
-}
+export type ProjectType = "JDK_PROJECT"
 
 
 export interface JobConfig {
