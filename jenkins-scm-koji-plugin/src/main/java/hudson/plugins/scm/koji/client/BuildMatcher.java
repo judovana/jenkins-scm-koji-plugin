@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 abstract class BuildMatcher {
@@ -61,23 +62,52 @@ abstract class BuildMatcher {
         this.maxBuilds = maxBuilds;
     }
 
-    public Optional<Build> getBuild() {
-        final Optional<Build> buildOptional = StreamSupport.stream(buildProviders.spliterator(), false)
+    /**
+     * This sorts and filter in following way:
+     * 
+     * exlude list si one item  `2`, max bnuilds is 3
+     * 2 1 4 3
+     * get sorted
+     * 1 2 3 4
+     * get cut
+     * 1 2 3
+     * get filtered
+     * 1 3
+     * 
+     * you must filter after limit, otherwise strange builds will go in. The tests are covering this
+     * 
+     * @param bm
+     * @return 
+     */
+    public static Stream<Build> listBuilds(BuildMatcher bm) {
+        return StreamSupport.stream(bm.buildProviders.spliterator(), false)
                 .map(KojiBuildProvider::getBuildProvider)
-                .map(this::getBuilds)
+                .map(bm::getBuilds)
                 .flatMap(Collection::stream)
-                .sorted(this::compare)
-                .limit(maxBuilds)
-                .filter(build -> notProcessedNvrPredicate.test(build.getNvr()))
-                .max(this::compare);
-        return buildOptional.map(this::getBuild);
+                .sorted(BuildMatcher::compare)
+                .limit(bm.maxBuilds)
+                .filter(build -> bm.notProcessedNvrPredicate.test(build.getNvr()));
+    }
+
+    /**
+     * From previous javadoc, returns 3
+     * @param bm
+     * @return 
+     */
+    public static Optional<Build> getLatestOfNewestBuilds(BuildMatcher bm) {
+        final Optional<Build> buildOptional = listBuilds(bm).max(BuildMatcher::compare);
+        return buildOptional.map(bm::getBuild);
+    }
+
+    public Optional<Build> getBuild() {
+        return getLatestOfNewestBuilds(this);
     }
 
     abstract List<Build> getBuilds(BuildProvider buildProvider);
 
     abstract Build getBuild(Build build);
 
-    int compare(Build b1, Build b2) {
+    public static int compare(Build b1, Build b2) {
         switch (orderBy) {
             case DATE:
                 return compareBuildsByCompletionTime(b1, b2);

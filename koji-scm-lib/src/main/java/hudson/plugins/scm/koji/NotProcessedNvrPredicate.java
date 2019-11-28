@@ -68,7 +68,7 @@ public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Seri
         return stream.collect(Collectors.toList());
     }
     
-    public static Predicate<String> createNotProcessedNvrPredicate(List<String> stream) throws IOException {
+    public static Predicate<String> createNotProcessedNvrPredicate(List<String> stream) {
         return new NotProcessedNvrPredicate(stream);
     }
 
