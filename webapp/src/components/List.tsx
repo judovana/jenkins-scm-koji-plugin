@@ -17,7 +17,7 @@ const List: React.FC<Props> = props => {
     const configStore = props.configStore!
 
     const onCreate = () => {
-        configStore.selectNewConfig(configStore.selectedGroupId!)
+        history.push(`/form/${configStore.selectedGroupId}/`)
     }
 
     const onDelete = (config: Item) => (event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
