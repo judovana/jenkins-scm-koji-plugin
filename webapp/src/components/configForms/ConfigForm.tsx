@@ -49,9 +49,9 @@ const ConfigForm: React.FC<Props> = props => {
 
     const onSubmit = async (config: Item) => {
         if (id !== undefined) {
-            createConfig(config)
-        } else {
             updateConfig(config)
+        } else {
+            createConfig(config)
         }
     }
 
