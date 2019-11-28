@@ -1,215 +1,169 @@
 import React from "react";
-import { observable, runInAction } from "mobx";
-import { observer, inject } from "mobx-react";
+import { observer, inject, useLocalStore } from "mobx-react"
 import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
-import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, RPMLimitation, FileRequirements, ConfigState, Item } from "../../stores/model";
-import LimitationForm from "../formComponents/LimitationForm";
-import TextInput from "../formComponents/TextInput";
-import TextArea from "../formComponents/TextArea";
-import Checkbox from "../formComponents/Checkbox";
-import Select from "../formComponents/Select";
-import Button from "../Button";
-import RPMLimitationForm from "../formComponents/RPMLimitationForm";
-import FileRequirementsForm from "../formComponents/FileRequirementsForm";
+import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, Item } from "../../stores/model"
+import LimitationForm from "../formComponents/LimitationForm"
+import TextInput from "../formComponents/TextInput"
+import TextArea from "../formComponents/TextArea"
+import Select from "../formComponents/Select"
+import RPMLimitationForm from "../formComponents/RPMLimitationForm"
+import FileRequirementsForm from "../formComponents/FileRequirementsForm"
+import { Button } from "@material-ui/core"
 
 type TaskFormProps = {
-    task: Task
+    taskID?: string,
     configStore?: ConfigStore;
-    onSubmit: (item: Item, state: ConfigState) => void}
+    onSubmit: (item: Item) => void
+}
 
-class TaskForm extends React.PureComponent<TaskFormProps> {
+const TaskForm: React.FC<TaskFormProps> = props => {
 
-    @observable
-    task?: Task;
+    const configStore = props.configStore!
 
-    @observable
-    taskState?: ConfigState
+    const { taskID, onSubmit } = props
 
-    componentDidMount() {
-        const task = this.props.task
-        this.taskState = task.id === "" ? "create" : "update"
-        this.task = { ...task }
-    }
+    const task = useLocalStore<Task>(() => ({
+        fileRequirements: {
+            binary: "NONE",
+            source: false
+        },
+        id: "",
+        machinePreference: "VM",
+        platformLimitation: {
+            flag: "NONE",
+            list: []
+        },
+        productLimitation: {
+            flag: "NONE",
+            list: []
+        },
+        rpmLimitation: {
+            flag: "NONE",
+            glob: ""
+        },
+        scmPollSchedule: "",
+        script: "",
+        type: "TEST",
+        xmlTemplate: ""
+    }))
 
-    componentDidUpdate() {
-        const task = this.props.task
-        const state = this.props.configStore!.configState
-        if (state !== this.taskState) {
-            runInAction(() => {
-                this.task = { ...task }
-                this.taskState = state
-            })
+    React.useEffect(() => {
+        if (taskID === undefined || taskID === task.id) {
             return
         }
-        if (state === "update" && this.task!.id !== task.id) {
-            runInAction(() => {
-                this.task = { ...task }
-            })
+        const _task = configStore.getTask(taskID)
+        if (!_task) {
+            return
         }
+        task.fileRequirements = _task.fileRequirements
+        task.id = _task.id
+        task.machinePreference = _task.machinePreference
+        task.platformLimitation = _task.platformLimitation
+        task.productLimitation = _task.productLimitation
+        task.rpmLimitation = _task.rpmLimitation
+        task.scmPollSchedule = _task.scmPollSchedule
+        task.script = _task.script
+        task.type = _task.type
+        task.xmlTemplate = _task.xmlTemplate
+    })
+
+    const onIdChange = (value: string) => {
+        task.id = value
     }
 
-    onIdChange = (value: string) => {
-        this.task!.id = value
+    const onTypeChange = (value: string) => {
+        task.type = value as TaskType
     }
 
-    onTypeChange = (value: string) => {
-        this.task!.type = value as TaskType
+    const onSCMPollScheduleChange = (value: string) => {
+        task.scmPollSchedule = value
     }
 
-    onSCMPollScheduleChange = (value: string) => {
-        this.task!.scmPollSchedule = value
+    const onMachinePreferenceChange = (value: string) => {
+        task.machinePreference = value as MachinePreference
     }
 
-    onMachinePreferenceChange = (value: string) => {
-        this.task!.machinePreference = value as MachinePreference
+    const onSourcesChange = (value: boolean) => {
+        task.fileRequirements.source = value
     }
 
-    onSourcesChange = (value: boolean) => {
-        this.task!.fileRequirements.source = value
+    const onScriptChange = (value: string) => {
+        task.script = value
     }
 
-    onScriptChange = (value: string) => {
-        this.task!.script = value
+    const onBinaryChange = (value: string) => {
+        task.fileRequirements.binary = value as BinaryRequirement
     }
 
-    onBinaryChange = (value: string) => {
-        this.task!.fileRequirements.binary = value as BinaryRequirement
+    const onXmlTemplateChange = (value: string) => {
+        task.xmlTemplate = value
     }
 
-    onXmlTemplateChange = (value: string) => {
-        this.task!.xmlTemplate = value
+    const onRPMLimitationFlagChange = (value: string) => {
+        task.rpmLimitation.flag = value as LimitFlag
     }
 
-    onRPMLimitationFlagChange = (value: string) => {
-        this.task!.rpmLimitation.flag = value as LimitFlag
+    const onRPMLimitationGlobChange = (value: string) => {
+        task.rpmLimitation.glob = value
     }
 
-    onRPMLimitationGlobChange = (value: string) => {
-        this.task!.rpmLimitation.glob = value
-    }
+    const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = task
 
-    onSubmit = () => {
-        this.props.onSubmit(this.task!, this.taskState!)
-    }
-
-    renderRPMLimitaion = (rpmLimitation: RPMLimitation) => {
-        let flag: LimitFlag
-        let glob: string
-        if (!rpmLimitation) {
-            flag = "NONE"
-            glob = ""
-        } else {
-            flag = rpmLimitation.flag || "NONE"
-            glob = rpmLimitation.glob || ""
-        }
-        return (
-            <div className="field-container">
-                <div className="label-container">RPM limitation</div>
-                <div className="value-container">
-                    <Select
-                        onChange={this.onRPMLimitationFlagChange}
-                        options={["WHITELIST", "BLACKLIST"]}
-                        value={flag} />
-                    {
-                        flag !== "NONE" &&
-                        <TextInput
-                            label={"glob"}
-                            onChange={this.onRPMLimitationGlobChange}
-                            placeholder={"Enter glob"}
-                            value={glob} />
-                    }
-                </div>
-            </div>
-        )
-    }
-
-    renderFileRequirementsForm = (fileRequirements: FileRequirements) => {
-        let requireSources = false
-        let binaryRequirement: BinaryRequirement = "NONE"
-        if (fileRequirements) {
-            requireSources = fileRequirements.source || false
-            binaryRequirement = fileRequirements.binary || "NONE"
-        }
-        return (
-            <div className="field-container">
-                <div className="label-container">file requirements</div>
-                <div className="value-container">
-                    <Checkbox
-                        label="require sources"
-                        onChange={this.onSourcesChange}
-                        value={requireSources} />
-                    <Select
-                        label={"binary requirements"}
-                        onChange={this.onBinaryChange}
-                        options={["NONE", "BINARY", "BINARIES"]}
-                        value={binaryRequirement} />
-                </div>
-            </div>
-        )
-    }
-
-    render() {
-        const configStore = this.props.configStore!;
-        if (!this.task) {
-            return null
-        }
-        const configState = configStore.configState
-        const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = this.task;
-        return (
-            <fieldset>
-                <TextInput
-                    label={"Task id"}
-                    onChange={this.onIdChange}
-                    value={id} />
-                <Select
-                    label={"type"}
-                    onChange={this.onTypeChange}
-                    options={["BUILD", "TEST"]}
-                    value={this.task.type} />
-                <Select
-                    label={"machine preference"}
-                    onChange={this.onMachinePreferenceChange}
-                    options={["VM", "VM_ONLY", "HW", "HW_ONLY"]}
-                    value={this.task.machinePreference} />
-                <TextInput
-                    label={"SCM poll schedule"}
-                    onChange={this.onSCMPollScheduleChange}
-                    value={this.task.scmPollSchedule}>
-                </TextInput>
-                <TextInput
-                    label={"script"}
-                    value={this.task.script}
-                    onChange={this.onScriptChange}
-                    placeholder={"Enter path to bash script"} />
-                <LimitationForm
-                    label={"platform limitations"}
-                    limitation={platformLimitation}
-                    items={configStore.platforms} />
-                <LimitationForm
-                    label={"product limitations"}
-                    limitation={productLimitation}
-                    items={configStore.products} />
-                <FileRequirementsForm
-                    fileRequirements={fileRequirements}
-                    onBinaryChange={this.onBinaryChange}
-                    onSourcesChange={this.onSourcesChange}/>
-                <TextArea
-                    label={"xml template"}
-                    onChange={this.onXmlTemplateChange}
-                    placeholder={"Enter xml template for post build tasks"}
-                    value={this.task.xmlTemplate} />
-                <RPMLimitationForm
-                    rpmLimitation={rpmLimitation}
-                    onFlagChange={this.onRPMLimitationFlagChange}
-                    onGlobChange={this.onRPMLimitationGlobChange}/>
-                <Button onClick={this.onSubmit}>{configState}</Button>
-                <br />
-                <br />
-                <br />
-                {JSON.stringify(this.task)}
-            </fieldset>
-        );
-    }
+    return (
+        <React.Fragment>
+            <TextInput
+                label={"Task id"}
+                onChange={onIdChange}
+                value={id} />
+            <Select
+                label={"type"}
+                onChange={onTypeChange}
+                options={["BUILD", "TEST"]}
+                value={task.type} />
+            <Select
+                label={"machine preference"}
+                onChange={onMachinePreferenceChange}
+                options={["VM", "VM_ONLY", "HW", "HW_ONLY"]}
+                value={task.machinePreference} />
+            <TextInput
+                label={"SCM poll schedule"}
+                onChange={onSCMPollScheduleChange}
+                value={task.scmPollSchedule}>
+            </TextInput>
+            <TextInput
+                label={"script"}
+                value={task.script}
+                onChange={onScriptChange}
+                placeholder={"Enter path to bash script"} />
+            <LimitationForm
+                label={"platform limitations"}
+                limitation={platformLimitation}
+                items={configStore.platforms} />
+            <LimitationForm
+                label={"product limitations"}
+                limitation={productLimitation}
+                items={configStore.products} />
+            <FileRequirementsForm
+                fileRequirements={fileRequirements}
+                onBinaryChange={onBinaryChange}
+                onSourcesChange={onSourcesChange} />
+            <TextArea
+                label={"xml template"}
+                onChange={onXmlTemplateChange}
+                placeholder={"Enter xml template for post build tasks"}
+                value={task.xmlTemplate} />
+            <RPMLimitationForm
+                rpmLimitation={rpmLimitation}
+                onFlagChange={onRPMLimitationFlagChange}
+                onGlobChange={onRPMLimitationGlobChange} />
+            <Button
+                color="primary"
+                onClick={() => onSubmit(task)}
+                variant="contained">
+                {taskID === undefined ? "Create" : "Update"}
+            </Button>
+        </React.Fragment>
+    )
 }
 
 export default inject(CONFIG_STORE)(observer(TaskForm));
