@@ -1,12 +1,13 @@
 import React from "react";
 import { inject, observer } from "mobx-react"
-import { Button, Snackbar } from "@material-ui/core"
+import { Button, Snackbar, Paper } from "@material-ui/core"
 
 import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
-import { JDKProject, Task, Platform, Item, ConfigState } from "../../stores/model"
-import JDKProjectForm from "./JDKProjectForm";
-import TaskForm from "./TaskForm";
-import PlatformForm from "./PlatformForm";
+import { Item } from "../../stores/model"
+import JDKProjectForm from "./JDKProjectForm"
+import TaskForm from "./TaskForm"
+import PlatformForm from "./PlatformForm"
+import { useParams } from "react-router-dom"
 
 interface Props {
     configStore?: ConfigStore
@@ -21,7 +22,7 @@ interface SnackbarState {
 const ConfigForm: React.FC<Props> = props => {
 
     const { createConfig, configError, jobUpdateResults, updateConfig, discardOToolResponse } = props.configStore!
-
+    const { group, id } = useParams()
     const okButton = (
         <Button
             color="secondary"
@@ -46,44 +47,33 @@ const ConfigForm: React.FC<Props> = props => {
         ]
     })
 
-    const onSubmit = async (config: Item, state: ConfigState) => {
-        let updateFunction: (item: Item) => void
-        switch (state) {
-            case "create":
-                updateFunction = createConfig
-                break
-            case "update":
-                updateFunction = updateConfig
-                break
-            default:
-                return
+    const onSubmit = async (config: Item) => {
+        if (id !== undefined) {
+            createConfig(config)
+        } else {
+            updateConfig(config)
         }
-        updateFunction(config)
     }
 
     const renderForm = () => {
-        const { selectedConfig, selectedGroupId } = props.configStore!;
-        if (!selectedConfig) {
-            return null
-        }
-        switch (selectedGroupId) {
+        switch (group) {
             case "jdkProjects":
                 return (
                     <JDKProjectForm
                         onSubmit={onSubmit}
-                        project={selectedConfig as JDKProject} />
+                        jdkProjectID={id} />
                 );
             case "tasks":
                 return (
                     <TaskForm
                         onSubmit={onSubmit}
-                        task={selectedConfig as Task} />
+                        taskID={id} />
                 );
             case "platforms":
                 return (
                     <PlatformForm
                         onSubmit={onSubmit}
-                        platform={selectedConfig as Platform} />
+                        platformID={id} />
                 )
             default:
                 return null;
@@ -91,12 +81,10 @@ const ConfigForm: React.FC<Props> = props => {
     }
 
     return (
-        <div>
-            <div className="form-container">
-                <form>
-                    {renderForm()}
-                </form>
-            </div>
+        <React.Fragment>
+            <Paper style={{ padding: 20, width: "100%" }}>
+                {renderForm()}
+            </Paper>
             {
                 snackbarState && <Snackbar
                     action={snackbarState.actions}
@@ -108,7 +96,7 @@ const ConfigForm: React.FC<Props> = props => {
                     message={<span>{(snackbarState.message || "").toString()}</span>}
                     open={snackbarState.open} />
             }
-        </div>
+        </React.Fragment>
     )
 }
 

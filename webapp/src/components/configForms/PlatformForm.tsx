@@ -1,147 +1,148 @@
 import React from "react"
 import Select from "../formComponents/Select"
-import { inject, observer } from "mobx-react"
+import { inject, observer, useLocalStore } from "mobx-react"
 
 import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
-import { Platform, ConfigState, Item } from "../../stores/model";
-import { observable, runInAction } from "mobx";
-import TextInput from "../formComponents/TextInput";
-import Button from "../Button";
+import { Platform, Item } from "../../stores/model"
+import TextInput from "../formComponents/TextInput"
+import { Button } from "@material-ui/core"
 
 interface Props {
-    platform: Platform
+    platformID?: string
     configStore?: ConfigStore
-    onSubmit: (item: Item, state: ConfigState) => void}
+    onSubmit: (item: Item) => void
+}
 
-class PlatformForm extends React.Component<Props> {
+const PlatformForm: React.FC<Props> = props => {
 
-    @observable
-    platform?: Platform
+    const configStore = props.configStore!
 
-    @observable
-    platformState?: ConfigState
+    const { platformID } = props
 
-    componentDidMount() {
-        const platform = this.props.platform
-        this.platformState = platform.id === "" ? "create" : "update"
-        this.platform = { ...platform }
-    }
+    const platform = useLocalStore<Platform>(() => ({
+        architecture: "",
+        hwNodes: [],
+        id: "",
+        os: "",
+        provider: "",
+        tags: [],
+        version: "",
+        vmName: "",
+        vmNodes: []
+    }))
 
-    componentDidUpdate() {
-        const platform = this.props.platform
-        const state = this.props.configStore!.configState
-        if (state !== this.platformState) {
-            runInAction(() => {
-                this.platform = { ...platform }
-                this.platformState = state
-            })
+    React.useEffect(() => {
+        if (platformID === undefined || platformID === platform.id) {
             return
         }
-        if (state === "update" && this.platform!.id !== platform.id) {
-            runInAction(() => {
-                this.platform = { ...platform }
-            })
+        const _platform = configStore.getPlatform(platformID)
+        if (!_platform) {
+            return
         }
+        platform.architecture = _platform.architecture || ""
+        platform.hwNodes = _platform.hwNodes || []
+        platform.id = _platform.id || ""
+        platform.os = _platform.os || ""
+        platform.provider = _platform.provider || ""
+        platform.tags = _platform.tags || []
+        platform.version = _platform.version || ""
+        platform.vmName = _platform.vmName || ""
+        platform.vmNodes = _platform.vmNodes || []
+    })
+
+    const onOSChange = (value: string) => {
+        platform!.os = value
     }
 
-    onOSChange = (value: string) => {
-        this.platform!.os = value
+    const onVersionChange = (value: string) => {
+        platform!.version = value
     }
 
-    onVersionChange = (value: string) => {
-        this.platform!.version = value
+    const onArchitectureChange = (value: string) => {
+        platform!.architecture = value
     }
 
-    onArchitectureChange = (value: string) => {
-        this.platform!.architecture = value
+    const onProviderChange = (value: string) => {
+        platform!.provider = value
     }
 
-    onProviderChange = (value: string) => {
-        this.platform!.provider = value
+    const onVMNameChange = (value: string) => {
+        platform!.vmName = value
     }
 
-    onVMNameChange = (value: string) => {
-        this.platform!.vmName = value
+    const onVMNodesChange = (value: string) => {
+        platform!.vmNodes = value.split(" ")
     }
 
-    onVMNodesChange = (value: string) => {
-        this.platform!.vmNodes = value.split(" ")
+    const onHWNodesChange = (value: string) => {
+        platform!.hwNodes = value.split(" ")
     }
 
-    onHWNodesChange = (value: string) => {
-        this.platform!.hwNodes = value.split(" ")
+    const onTagsChange = (value: string) => {
+        platform!.tags = value.split(" ")
     }
 
-    onTagsChange = (value: string) => {
-        this.platform!.tags = value.split(" ")
-    }
-
-    onSubmit = () => {
-        const platform = this.platform!
+    const onSubmit = () => {
         const filter = (value: string) => value.trim() !== ""
         platform.vmNodes = platform.vmNodes.filter(filter)
         platform.hwNodes = platform.hwNodes.filter(filter)
         platform.tags = platform.tags.filter(filter)
-        this.props.onSubmit(this.platform!, this.platformState!)
+        props.onSubmit(platform)
     }
 
-    render() {
-        const configStore = this.props.configStore!
-        if (!this.platform) {
-            return null
-        }
-        const configState = configStore.configState
-        const {
-            architecture,
-            os,
-            provider,
-            tags,
-            version,
-            vmName,
-            vmNodes,
-            hwNodes
-        } = this.platform
-        return (
-            <fieldset>
-                <TextInput
-                    label={"os"}
-                    onChange={this.onOSChange}
-                    value={os} />
-                <TextInput
-                    label={"version"}
-                    onChange={this.onVersionChange}
-                    value={version} />
-                <TextInput
-                    label={"architecture"}
-                    onChange={this.onArchitectureChange}
-                    value={architecture} />
-                <Select
-                    label={"provider"}
-                    onChange={this.onProviderChange}
-                    options={["vagrant", "beaker"]}
-                    value={provider} />
-                <TextInput
-                    label={"vm name"}
-                    onChange={this.onVMNameChange}
-                    value={vmName} />
-                <TextInput
-                    label={"vm nodes"}
-                    onChange={this.onVMNodesChange}
-                    value={vmNodes.join(" ")} />
-                <TextInput
-                    label={"hw nodes"}
-                    onChange={this.onHWNodesChange}
-                    value={hwNodes.join(" ")} />
-                <TextInput
-                    label={"tags"}
-                    onChange={this.onTagsChange}
-                    value={tags.join(" ")} />
-                <Button onClick={this.onSubmit}>{configState}</Button>
+    const {
+        architecture,
+        os,
+        provider,
+        tags,
+        version,
+        vmName,
+        vmNodes,
+        hwNodes
+    } = platform
 
-                {JSON.stringify(this.platform)}
-            </fieldset>
-        )
-    }
+    return (
+        <React.Fragment>
+            <TextInput
+                label={"os"}
+                onChange={onOSChange}
+                value={os} />
+            <TextInput
+                label={"version"}
+                onChange={onVersionChange}
+                value={version} />
+            <TextInput
+                label={"architecture"}
+                onChange={onArchitectureChange}
+                value={architecture} />
+            <Select
+                label={"provider"}
+                onChange={onProviderChange}
+                options={["vagrant", "beaker"]}
+                value={provider} />
+            <TextInput
+                label={"vm name"}
+                onChange={onVMNameChange}
+                value={vmName} />
+            <TextInput
+                label={"vm nodes"}
+                onChange={onVMNodesChange}
+                value={vmNodes.join(" ")} />
+            <TextInput
+                label={"hw nodes"}
+                onChange={onHWNodesChange}
+                value={hwNodes.join(" ")} />
+            <TextInput
+                label={"tags"}
+                onChange={onTagsChange}
+                value={tags.join(" ")} />
+            <Button
+                onClick={onSubmit}
+                variant="contained">
+                {platformID === undefined ? "Create" : "Update"}
+            </Button>
+        </React.Fragment>
+    )
 }
 
 export default inject(CONFIG_STORE)(observer(PlatformForm))
