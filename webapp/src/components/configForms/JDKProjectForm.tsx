@@ -1,151 +1,109 @@
-import React from "react";
+import React from "react"
+import { observer, inject, useLocalStore } from "mobx-react"
 
-import { observer, inject } from "mobx-react";
-
-import { JDKProject, ConfigState, RepoState, Item } from "../../stores/model";
-import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
-import { observable, runInAction } from "mobx";
-import JobConfigComponent from "../formComponents/JobConfigComponent";
-import TextInput from "../formComponents/TextInput";
-import Select from "../formComponents/Select";
-import Button from "../Button";
-import MultiSelect from "../formComponents/MultiSelect";
+import { JDKProject, Item } from "../../stores/model"
+import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore"
+import JobConfigComponent from "../formComponents/JobConfigComponent"
+import TextInput from "../formComponents/TextInput"
+import Select from "../formComponents/Select"
+import { Button, Chip, Box } from "@material-ui/core"
+import MultiSelect from "../formComponents/MultiSelect"
 
 interface Props {
-    project: JDKProject;
-    configStore?: ConfigStore;
-    onSubmit: (item: Item, state: ConfigState) => void
+    jdkProjectID?: string
+    configStore?: ConfigStore
+    onSubmit: (item: Item) => void
 }
 
-class JDKProjectForm extends React.PureComponent<Props> {
+const JDKProjectForm: React.FC<Props> = props => {
 
-    @observable
-    private jdkProject?: JDKProject;
+    const configStore = props.configStore!
 
-    @observable
-    private jdkProjectState?: ConfigState
+    const { jdkProjectID } = props
 
-    componentDidMount() {
-        const jdkProject = this.props.project
-        this.jdkProjectState = jdkProject.id === "" ? "create" : "update"
-        this.jdkProject = { ...jdkProject }
-    }
+    const jdkProject = useLocalStore<JDKProject>(() => ({
+        buildProviders: [],
+        id: "",
+        jobConfiguration: { platforms: {} },
+        product: "",
+        type: "JDK_PROJECT",
+        url: ""
+    }))
 
-    componentDidUpdate() {
-        const task = this.props.project
-        const state = this.props.configStore!.configState
-        if (state !== this.jdkProjectState) {
-            runInAction(() => {
-                this.jdkProject = { ...task }
-                this.jdkProjectState = state
-            })
+    React.useEffect(() => {
+        if (jdkProjectID === undefined || jdkProjectID === jdkProject.id) {
             return
         }
-        if (state === "update" && this.jdkProject!.id !== task.id) {
-            runInAction(() => {
-                this.jdkProject = { ...task }
-            })
+        const _jdkProject = configStore.getJDKProject(jdkProjectID)
+        if (!_jdkProject) {
+            return
         }
+        jdkProject.buildProviders = _jdkProject.buildProviders || []
+        jdkProject.id = _jdkProject.id || ""
+        jdkProject.jobConfiguration = _jdkProject.jobConfiguration || { platforms: {} }
+        jdkProject.product = _jdkProject.product || ""
+        jdkProject.repoState = _jdkProject.repoState
+        jdkProject.type = _jdkProject.type || "JDK_PROJECT"
+        jdkProject.url = _jdkProject.url || ""
+    })
+
+    const onIdChange = (value: string) => {
+        jdkProject!.id = value
     }
 
-    onIdChange = (value: string) => {
-        this.jdkProject!.id = value
+    const onBuildProvidersChange = (values: string[]) => {
+        jdkProject!.buildProviders = values
     }
 
-    onBuildProvidersChange = (values: string[]) => {
-        this.jdkProject!.buildProviders = values
+    const onUrlChange = (value: string) => {
+        jdkProject!.url = value
     }
 
-    onUrlChange = (value: string) => {
-        this.jdkProject!.url = value
+    const onProductChange = (value: string) => {
+        jdkProject!.product = value
     }
 
-    onProductChange = (value: string) => {
-        this.jdkProject!.product = value
+    const onSubmit = () => {
+        props.onSubmit(jdkProject)
     }
 
-    onSubmit = () => {
-        this.props.onSubmit(this.jdkProject!, this.jdkProjectState!)
-    }
+    const { buildProviders, products } = configStore
 
-    renderBuildProvidersForm = () => {
-        const buildProviders = this.props.configStore!.buildProviders
-        return (
+    return (
+        <React.Fragment>
+            <TextInput
+                label={"id"}
+                value={jdkProject.id}
+                onChange={onIdChange} />
+            <TextInput
+                label={"url"}
+                value={jdkProject.url}
+                onChange={onUrlChange} />
+            {
+                jdkProject.repoState && <Box>
+                    <Chip
+                        label={jdkProject.repoState} />
+                </Box>
+            }
             <MultiSelect
                 label={"build providers"}
-                onChange={this.onBuildProvidersChange}
+                onChange={onBuildProvidersChange}
                 options={buildProviders.map(buildProvider => buildProvider.id)}
-                values={this.jdkProject!.buildProviders}
+                values={jdkProject.buildProviders}
             />
-        )
-    }
-
-    render() {
-        const configStore = this.props.configStore!
-        const jdkProject = this.jdkProject
-        if (!jdkProject) {
-            return null
-        }
-        const configState = configStore.configState
-        const products = configStore.products
-        return (
-            <fieldset>
-                <TextInput
-                    label={"id"}
-                    value={jdkProject!.id}
-                    onChange={this.onIdChange} />
-                <TextInput
-                    label={"url"}
-                    value={jdkProject!.url}
-                    onChange={this.onUrlChange} />
-                {renderRepoState(jdkProject.repoState)}
-                {this.renderBuildProvidersForm()}
-                <Select
-                    label={"Product"}
-                    options={products.map(product => product.id)}
-                    value={jdkProject!.product}
-                    onChange={this.onProductChange} />
-                <JobConfigComponent jobConfig={jdkProject!.jobConfiguration} />
-                <Button onClick={this.onSubmit}>{configState}</Button>
-                <br />
-                <br />
-                <br />
-                <p>{JSON.stringify(jdkProject)}</p>
-            </fieldset>
-        )
-    }
-}
-
-const repoStateStyles: {[state in RepoState]: React.CSSProperties} = {
-    "CLONED": {
-        backgroundColor: "blue",
-    },
-    "NOT_CLONED": {
-        backgroundColor: "gray",
-    },
-    "CLONING": {
-        backgroundColor: "blue",
-    },
-    "CLONE_ERROR": {
-        backgroundColor: "red",
-    }
-}
-
-const renderRepoState = (repoState?: RepoState) => {
-    if (!repoState) {
-        return null
-    }
-    const style: React.CSSProperties = {
-        color: "white",
-        padding: 10,
-        width: "100%",
-        ...repoStateStyles[repoState]
-    }
-    return (
-        <div style={style}>
-            {repoState}
-        </div>
+            <Select
+                label={"Product"}
+                options={products.map(product => product.id)}
+                value={jdkProject.product}
+                onChange={onProductChange} />
+            <JobConfigComponent jobConfig={jdkProject.jobConfiguration} />
+            <Button
+                onClick={onSubmit}
+                variant="contained">
+                {jdkProjectID === undefined ? "Create" : "Update"}
+            </Button>
+        </React.Fragment>
     )
 }
 
-export default inject(CONFIG_STORE)(observer(JDKProjectForm));
+export default inject(CONFIG_STORE)(observer(JDKProjectForm))
