@@ -1,7 +1,7 @@
 import React from "react";
 import { observer, inject, useLocalStore } from "mobx-react"
 import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
-import { Task, TaskType, MachinePreference, BinaryRequirement, LimitFlag, Item } from "../../stores/model"
+import { Task, TaskType, MachinePreference, BinaryRequirement, Item } from "../../stores/model"
 import LimitationForm from "../formComponents/LimitationForm"
 import TextInput from "../formComponents/TextInput"
 import TextArea from "../formComponents/TextArea"
@@ -20,7 +20,7 @@ const TaskForm: React.FC<TaskFormProps> = props => {
 
     const configStore = props.configStore!
 
-    const { taskID, onSubmit } = props
+    const { taskID } = props
 
     const task = useLocalStore<Task>(() => ({
         fileRequirements: {
@@ -38,8 +38,8 @@ const TaskForm: React.FC<TaskFormProps> = props => {
             list: []
         },
         rpmLimitation: {
-            flag: "NONE",
-            glob: ""
+            blacklist: [],
+            whitelist: []
         },
         scmPollSchedule: "",
         script: "",
@@ -99,12 +99,11 @@ const TaskForm: React.FC<TaskFormProps> = props => {
         task.xmlTemplate = value
     }
 
-    const onRPMLimitationFlagChange = (value: string) => {
-        task.rpmLimitation.flag = value as LimitFlag
-    }
-
-    const onRPMLimitationGlobChange = (value: string) => {
-        task.rpmLimitation.glob = value
+    const onSubmit = () => {
+        const { rpmLimitation } = task
+        rpmLimitation.blacklist = rpmLimitation.blacklist.filter(item => item)
+        rpmLimitation.whitelist = rpmLimitation.whitelist.filter(item => item)
+        props.onSubmit(task)
     }
 
     const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = task
@@ -153,12 +152,10 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                 placeholder={"Enter xml template for post build tasks"}
                 value={task.xmlTemplate} />
             <RPMLimitationForm
-                rpmLimitation={rpmLimitation}
-                onFlagChange={onRPMLimitationFlagChange}
-                onGlobChange={onRPMLimitationGlobChange} />
+                rpmLimitation={rpmLimitation} />
             <Button
                 color="primary"
-                onClick={() => onSubmit(task)}
+                onClick={onSubmit}
                 variant="contained">
                 {taskID === undefined ? "Create" : "Update"}
             </Button>

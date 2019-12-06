@@ -196,39 +196,47 @@ public class Task {
 
     public static class RpmLimitation {
 
-        private final String glob;
-        private final LimitFlag flag;
+        private final List<String> blacklist;
+        private final List<String> whitelist;
 
         public RpmLimitation() {
-            glob = null;
-            flag = null;
+            blacklist = null;
+            whitelist = null;
         }
 
-        public RpmLimitation(String glob, LimitFlag flag) {
-            this.glob = glob;
-            this.flag = flag;
+        public RpmLimitation(List<String> blacklist, List<String> whitelist) {
+            this.blacklist = blacklist;
+            this.whitelist = whitelist;
         }
 
-        public String getGlob() {
-            return glob;
+        public List<String> getBlacklist() {
+            return blacklist;
         }
 
-        public LimitFlag getFlag() {
-            return flag;
+        public List<String> getWhitelist() {
+            return whitelist;
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (!(o instanceof RpmLimitation)) return false;
-            RpmLimitation rpmLimitation = (RpmLimitation) o;
-            return Objects.equals(glob, rpmLimitation.glob) &&
-                    flag == rpmLimitation.flag;
+            RpmLimitation that = (RpmLimitation) o;
+            return Objects.equals(blacklist, that.blacklist) &&
+                    Objects.equals(whitelist, that.whitelist);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(glob, flag);
+            return Objects.hash(blacklist, whitelist);
+        }
+
+        @Override
+        public String toString() {
+            return "RpmLimitation{" +
+                    "subpackageBlacklist=" + blacklist +
+                    ", subpackageWhitelist=" + whitelist +
+                    '}';
         }
     }
 

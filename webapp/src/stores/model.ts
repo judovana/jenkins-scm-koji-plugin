@@ -72,8 +72,8 @@ export interface Limitation {
 }
 
 export interface RPMLimitation {
-    glob: string;
-    flag: LimitFlag;
+    whitelist: string[]
+    blacklist: string[]
 }
 
 export interface Platform extends Item {

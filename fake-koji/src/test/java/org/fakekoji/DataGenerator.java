@@ -368,8 +368,8 @@ public class DataGenerator {
                 ),
                 BUILD_POST_BUILD_TASK,
                 new Task.RpmLimitation(
-                        "",
-                        null
+                        Collections.emptyList(),
+                        Collections.emptyList()
                 )
         );
     }
@@ -389,8 +389,8 @@ public class DataGenerator {
                 ),
                 TEST_POST_BUILD_TASK,
                 new Task.RpmLimitation(
-                        "",
-                        null
+                        Collections.emptyList(),
+                        Collections.emptyList()
                 )
         );
     }
@@ -410,8 +410,8 @@ public class DataGenerator {
                 ),
                 TEST_POST_BUILD_TASK,
                 new Task.RpmLimitation(
-                        "",
-                        null
+                        Collections.emptyList(),
+                        Collections.emptyList()
                 )
         );
     }
@@ -431,8 +431,8 @@ public class DataGenerator {
                 ),
                 TEST_POST_BUILD_TASK,
                 new Task.RpmLimitation(
-                        "",
-                        null
+                        Collections.emptyList(),
+                        Collections.emptyList()
                 )
         );
     }
@@ -452,8 +452,8 @@ public class DataGenerator {
                 ),
                 TEST_POST_BUILD_TASK,
                 new Task.RpmLimitation(
-                        "",
-                        null
+                        Collections.emptyList(),
+                        Collections.emptyList()
                 )
         );
     }
