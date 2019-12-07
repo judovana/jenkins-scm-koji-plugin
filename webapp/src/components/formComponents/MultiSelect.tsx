@@ -1,5 +1,6 @@
 import React from "react"
-import { FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox } from "@material-ui/core";
+import { FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox } from "@material-ui/core"
+import { useObserver } from "mobx-react"
 
 type MultiSelectPropsRequired = {
     options: string[]
@@ -13,25 +14,20 @@ type MultiSelectPropsOptional = {
 
 type MultiSelectProps = MultiSelectPropsRequired & MultiSelectPropsOptional
 
-class MultiSelect extends React.PureComponent<MultiSelectProps> {
+const MultiSelect: React.FC<MultiSelectProps> = ({ label, onChange, options, values, }) => {
 
-    static defaultProps: MultiSelectPropsOptional = {
-        onChange: _ => { },
-        values: []
-    }
-
-    onChange = (id: string, value: boolean, index: number) => {
-        const values = this.props.values
-        if (value) {
-            values.splice(index, 0, id)
+    const handleChange = (id: string) => {
+        const index = values.indexOf(id)
+        if (index < 0) {
+            values.splice(0, 0, id)
         } else {
             values.splice(index, 1)
         }
+        onChange(values)
     }
 
-    renderMultiSelect = () => {
-        const { options, values } = this.props
-        return (
+    return useObserver(() => {
+        const multiSelect = (
             <FormGroup>
                 {
                     options.map((option, index) =>
@@ -40,8 +36,8 @@ class MultiSelect extends React.PureComponent<MultiSelectProps> {
                             control={
                                 <Checkbox
                                     checked={values.indexOf(option) >= 0}
-                                    onChange={(_, checked) => {
-                                        this.onChange(option, checked, index)
+                                    onChange={() => {
+                                        handleChange(option)
                                     }}
                                     value={index} />
                             }
@@ -50,20 +46,14 @@ class MultiSelect extends React.PureComponent<MultiSelectProps> {
                 }
             </FormGroup>
         )
-    }
 
-    render() {
-        const { label } = this.props
-        if (!label) {
-            return this.renderMultiSelect()
-        }
         return (
             <FormControl margin="normal">
-                <FormLabel>{label}</FormLabel>
-                {this.renderMultiSelect()}
+                <FormLabel>{label || ""}</FormLabel>
+                {multiSelect}
             </FormControl>
         )
-    }
+    })
 }
 
 export default MultiSelect
