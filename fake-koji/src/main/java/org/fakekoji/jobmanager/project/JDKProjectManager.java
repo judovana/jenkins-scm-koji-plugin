@@ -173,11 +173,10 @@ public class JDKProjectManager implements Manager<JDKProject> {
     JDKProject setProjectRepoStatus(final JDKProject jdkProject, final JDKProject.RepoState repoState) {
         return new JDKProject(
                 jdkProject.getId(),
-                jdkProject.getType(),
+                jdkProject.getProduct(),
                 repoState,
                 jdkProject.getUrl(),
                 jdkProject.getBuildProviders(),
-                jdkProject.getProduct(),
                 jdkProject.getJobConfiguration()
         );
     }

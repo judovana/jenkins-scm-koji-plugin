@@ -10,6 +10,7 @@ import { Add, Delete } from "@material-ui/icons"
 interface Props {
     jobConfig: JobConfig
     configStore?: ConfigStore
+    type?: TaskType
 }
 
 class JobConfigComponent extends React.PureComponent<Props> {
@@ -40,11 +41,15 @@ class JobConfigComponent extends React.PureComponent<Props> {
                 </span>
             )
 
+            const buildCols = this.props.type === "BUILD" && [
+                <TableCell key={0}>{type === "BUILD" && cell}</TableCell>,
+                <TableCell key={1}></TableCell>,
+                <TableCell key={2}></TableCell>
+            ]
+
             return [
                 <TableRow key={key + id}>
-                    <TableCell>{type === "BUILD" && cell}</TableCell>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
+                    {buildCols}
                     <TableCell>{type === "TEST" && cell}</TableCell>
                     <TableCell></TableCell>
                     <TableCell></TableCell>
@@ -88,11 +93,16 @@ class JobConfigComponent extends React.PureComponent<Props> {
                 </span>
             )
 
+            const buildCols = this.props.type === "BUILD" &&
+                [
+                    <TableCell key={0}></TableCell>,
+                    <TableCell key={1}>{type === "BUILD" && cell}</TableCell>,
+                    <TableCell key={2}></TableCell>
+                ]
+
             return [
                 <TableRow key={key + id}>
-                    <TableCell></TableCell>
-                    <TableCell>{type === "BUILD" && cell}</TableCell>
-                    <TableCell></TableCell>
+                    {buildCols}
                     <TableCell></TableCell>
                     <TableCell>{type === "TEST" && cell}</TableCell>
                     <TableCell></TableCell>
@@ -143,11 +153,15 @@ class JobConfigComponent extends React.PureComponent<Props> {
 
             const platformRows = (type === "BUILD" && variant.platforms && this.platformRows(key + index, variant.platforms, "TEST")) || []
 
+            const buildCols = this.props.type === "BUILD" && [
+                <TableCell key={0}></TableCell>,
+                <TableCell key={1}></TableCell>,
+                <TableCell key={2}>{type === "BUILD" && cell}</TableCell>
+            ]
+
             const testVariantRow: JSX.Element[] = [
                 <TableRow key={key + index}>
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
-                    <TableCell>{type === "BUILD" && cell}</TableCell>
+                    {buildCols}
                     <TableCell></TableCell>
                     <TableCell></TableCell>
                     <TableCell>{type === "TEST" && cell}</TableCell>
@@ -168,11 +182,13 @@ class JobConfigComponent extends React.PureComponent<Props> {
     render() {
 
         const { configStore, jobConfig } = this.props
-        const buildPlatformConfigs = jobConfig.platforms
+        const platformConfigs = jobConfig.platforms
 
         const unselectedPlatforms = configStore!.platforms
-            .filter(platform => !buildPlatformConfigs[platform.id])
+            .filter(platform => !platformConfigs[platform.id])
 
+        const type = this.props.type || "BUILD"
+        const typePretty = type.toLowerCase()
         return (
             <div>
                 <Table stickyHeader>
@@ -180,26 +196,30 @@ class JobConfigComponent extends React.PureComponent<Props> {
                         <TableRow>
                             <TableCell>
                                 <span>
-                                    build platform
+                                    {`${typePretty} platform`}
                                     <AddComponent
-                                        label={`Add build platform`}
+                                        label={`Add ${typePretty} platform`}
                                         items={unselectedPlatforms}
                                         onAdd={(platformId) => {
-                                            buildPlatformConfigs[platformId] = { tasks: {} }
+                                            platformConfigs[platformId] = { tasks: {} }
                                         }} />
                                 </span>
                             </TableCell>
-                            <TableCell>build task</TableCell>
-                            <TableCell>build variants</TableCell>
-                            <TableCell>test platform</TableCell>
-                            <TableCell>test task</TableCell>
-                            <TableCell>test variants</TableCell>
+                            <TableCell>{`${typePretty} tasks`}</TableCell>
+                            <TableCell>{`${typePretty} variants`}</TableCell>
+                            {
+                                type === "BUILD" && [
+                                    <TableCell key={0}>test platform</TableCell>,
+                                    <TableCell key={1}>test task</TableCell>,
+                                    <TableCell key={2}>test variants</TableCell>
+                                ]
+                            }
                             <TableCell></TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {
-                            this.platformRows("job", buildPlatformConfigs, "BUILD")
+                            this.platformRows("job", platformConfigs, type)
                         }
                     </TableBody>
                 </Table>

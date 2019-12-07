@@ -12,11 +12,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.TASK_JOB_TEMPLATE;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PACKAGE_NAME_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.RELEASE_SUFFIX_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.XML_DECLARATION;
 
 public class BuildJob extends TaskJob {
@@ -35,6 +41,23 @@ public class BuildJob extends TaskJob {
 
     @Override
     public String generateTemplate() throws IOException {
+        final Product product = getProduct();
+        final Map<String, String> variables = new HashMap<String, String>(){{
+            put(JDK_VERSION_VAR, product.getVersion());
+            put(OJDK_VAR, 'o' + product.getId());
+            put(PACKAGE_NAME_VAR, product.getPackageName());
+            put(PROJECT_NAME_VAR, getProjectName());
+            putAll(getVariants().entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(key -> key.getKey().getId(), value -> value.getValue().getId())));
+            put(RELEASE_SUFFIX_VAR, getVariants().entrySet()
+                    .stream()
+                    .filter(e -> e.getKey().getType() == Task.Type.BUILD)
+                    .sorted(Comparator.comparing(Map.Entry::getKey))
+                    .map(e -> e.getValue().getId())
+                    .collect(Collectors.joining(".")) + '.' + getPlatform().assembleString());
+        }};
+
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(TASK_JOB_TEMPLATE))
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildFakeKojiXmlRpcApiTemplate(
@@ -43,7 +66,7 @@ public class BuildJob extends TaskJob {
                         JenkinsJobTemplateBuilder.fillBuildPlatform(getPlatform(), getTask().getFileRequirements()),
                         false
                 )
-                .buildScriptTemplate(getProjectName(), getProduct(), getTask(), getPlatform(), getVariants(), getScriptsRoot())
+                .buildScriptTemplate(getTask(), getPlatform(), getScriptsRoot(), variables)
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }

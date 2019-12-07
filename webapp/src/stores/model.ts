@@ -1,4 +1,6 @@
 export interface Project extends Item {
+    buildProviders: string[]
+    product: string;
     type: ProjectType;
 }
 
@@ -12,16 +14,23 @@ export interface ProjectCategory {
 export interface JDKProject extends Project {
     url: string;
     repoState?: RepoState;
-    product: string;
-    buildProviders: string[];
     jobConfiguration: JobConfig;
 }
+
+export interface JDKTestProject extends Project {
+    buildPlatform: string
+    subpackageBlacklist: string[]
+    subpackageWhitelist: string[]
+    jobConfiguration: JobConfig
+}
+
+export type JDKTestProjectMap = { [id: string]: JDKTestProject }
 
 export interface Item {
     id: string;
 }
 
-export type ProjectType = "JDK_PROJECT"
+export type ProjectType = "JDK_PROJECT" | "JDK_TEST_PROJECT"
 
 
 export interface JobConfig {
@@ -126,8 +135,8 @@ export type ProjectCategories = { [id: string]: ProjectCategory };
 
 export type ConfigState = "create" | "update"
 
-export type ConfigGroup = {[id: string]: Item}
+export type ConfigGroup = { [id: string]: Item }
 
-export type ConfigGroups = {[id: string]: ConfigGroup}
+export type ConfigGroups = { [id: string]: ConfigGroup }
 
 export type RepoState = "CLONED" | "NOT_CLONED" | "CLONE_ERROR" | "CLONING"

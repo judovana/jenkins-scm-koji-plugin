@@ -7,6 +7,7 @@ import { Item } from "../../stores/model"
 import JDKProjectForm from "./JDKProjectForm"
 import TaskForm from "./TaskForm"
 import PlatformForm from "./PlatformForm"
+import JDKTestProjectForm from "./JDKTestProjectForm"
 import { useParams } from "react-router-dom"
 
 interface Props {
@@ -63,6 +64,12 @@ const ConfigForm: React.FC<Props> = props => {
                         onSubmit={onSubmit}
                         jdkProjectID={id} />
                 );
+            case "jdkTestProjects":
+                return (
+                    <JDKTestProjectForm
+                        onSubmit={onSubmit}
+                        id={id} />
+                )
             case "tasks":
                 return (
                     <TaskForm

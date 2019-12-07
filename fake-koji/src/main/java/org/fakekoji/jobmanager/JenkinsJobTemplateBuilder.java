@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JenkinsJobTemplateBuilder {
 
@@ -80,16 +81,16 @@ public class JenkinsJobTemplateBuilder {
     static final String JENKINS = "jenkins";
 
     static final String OTOOL_BASH_VAR_PREFIX = "OTOOL_";
-    static final String VM_NAME_OR_LOCAL_VAR = OTOOL_BASH_VAR_PREFIX + "VM_NAME_OR_LOCAL=";
-    static final String PROJECT_PATH_VAR = OTOOL_BASH_VAR_PREFIX + "PROJECT_PATH=";
-    static final String ARCH_VAR = OTOOL_BASH_VAR_PREFIX + "ARCH=";
-    static final String JDK_VERSION_VAR = OTOOL_BASH_VAR_PREFIX + "JDK_VERSION=";
-    static final String OJDK_VAR = OTOOL_BASH_VAR_PREFIX + "OJDK=";
-    static final String PLATFORM_PROVIDER_VAR = OTOOL_BASH_VAR_PREFIX + "PLATFORM_PROVIDER=";
-    static final String RELEASE_SUFFIX_VAR = OTOOL_BASH_VAR_PREFIX + "RELEASE_SUFFIX=";
-    static final String PROJECT_NAME_VAR = OTOOL_BASH_VAR_PREFIX + "PROJECT_NAME=";
-    static final String PACKAGE_NAME_VAR = OTOOL_BASH_VAR_PREFIX + "PACKAGE_NAME=";
-    static final String OS_VAR = OTOOL_BASH_VAR_PREFIX + "OS=";
+    static final String VM_NAME_OR_LOCAL_VAR = "VM_NAME_OR_LOCAL";
+    static final String PROJECT_PATH_VAR = "PROJECT_PATH";
+    static final String ARCH_VAR = "ARCH";
+    public static final String JDK_VERSION_VAR = "JDK_VERSION";
+    public static final String OJDK_VAR = "OJDK";
+    static final String PLATFORM_PROVIDER_VAR = "PLATFORM_PROVIDER";
+    public static final String RELEASE_SUFFIX_VAR = "RELEASE_SUFFIX";
+    public static final String PROJECT_NAME_VAR = "PROJECT_NAME";
+    public static final String PACKAGE_NAME_VAR = "PACKAGE_NAME";
+    static final String OS_VAR = "OS";
 
     private String template;
 
@@ -108,7 +109,7 @@ public class JenkinsJobTemplateBuilder {
                 EXPORT + " " + PROJECT_PATH_VAR + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + JDK_VERSION_VAR + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
                 EXPORT + " " + PACKAGE_NAME_VAR + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
-                BASH +  " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'";
+                BASH + " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'";
 
         template = template.replace(PULL_SCRIPT, pullScript);
         return this;
@@ -129,20 +130,20 @@ public class JenkinsJobTemplateBuilder {
         return this;
     }
 
-    JenkinsJobTemplateBuilder buildKojiXmlRpcApiTemplate(
+    public JenkinsJobTemplateBuilder buildKojiXmlRpcApiTemplate(
             String packageName,
             String arch,
             List<String> tags,
-            String subpackageBlacklist,
-            String subpackageWhitelist
+            List<String> subpackageBlacklist,
+            List<String> subpackageWhitelist
     ) throws IOException {
         template = template
                 .replace(XML_RPC_API, loadTemplate(JenkinsTemplate.KOJI_XML_RPC_API_TEMPLATE))
                 .replace(PACKAGE_NAME, packageName)
                 .replace(ARCH, arch)
                 .replace(TAGS, '{' + String.join(",", tags) + '}')
-                .replace(SUBPACKAGE_BLACKLIST, subpackageBlacklist)
-                .replace(SUBPACKAGE_WHITELIST, subpackageWhitelist);
+                .replace(SUBPACKAGE_BLACKLIST, '{' + String.join(",", subpackageBlacklist) + '}')
+                .replace(SUBPACKAGE_WHITELIST, '{' + String.join(",", subpackageWhitelist) + '}');
         return this;
     }
 
@@ -164,34 +165,6 @@ public class JenkinsJobTemplateBuilder {
         return this;
     }
 
-    String fillExportedVariablesForBuildTask(
-            Platform platform,
-            String jdkVersion,
-            String jdkLabel,
-            String projectName,
-            String releaseSuffix
-    ) {
-        return EXPORT + ' ' + OJDK_VAR + jdkLabel+ XML_NEW_LINE
-                + EXPORT + ' ' + JDK_VERSION_VAR + jdkVersion + XML_NEW_LINE
-                + EXPORT + ' ' + PROJECT_NAME_VAR + projectName + XML_NEW_LINE
-                + EXPORT + ' ' + RELEASE_SUFFIX_VAR + releaseSuffix + XML_NEW_LINE
-                + EXPORT + ' ' + ARCH_VAR + platform.getArchitecture() + XML_NEW_LINE
-                + EXPORT + ' ' + OS_VAR + platform.getOs() + '.' + platform.getVersion() + XML_NEW_LINE;
-    }
-
-    String fillExportedVariables(
-            Map<TaskVariant, TaskVariantValue> variants,
-            String platformName,
-            String platformProvider
-    ) {
-        return variants.entrySet().stream()
-                .sorted(Comparator.comparing(entry -> entry.getKey().getId()))
-                .map(entry -> EXPORT + ' ' + OTOOL_BASH_VAR_PREFIX + entry.getKey().getId() + '=' + entry.getValue().getId())
-                .collect(Collectors.joining(XML_NEW_LINE)) +
-                XML_NEW_LINE + EXPORT + ' ' + VM_NAME_OR_LOCAL_VAR + platformName +
-                XML_NEW_LINE + EXPORT + ' ' + PLATFORM_PROVIDER_VAR + platformProvider + XML_NEW_LINE;
-    }
-
     public static String fillBuildPlatform(Platform platform, Task.FileRequirements fileRequirements) {
         final List<String> platforms = new LinkedList<>();
         if (fileRequirements.isSource()) {
@@ -210,12 +183,10 @@ public class JenkinsJobTemplateBuilder {
     }
 
     public JenkinsJobTemplateBuilder buildScriptTemplate(
-            String projectName,
-            Product product,
             Task task,
             Platform platform,
-            Map<TaskVariant, TaskVariantValue> variants,
-            File scriptsRoot
+            File scriptsRoot,
+            Map<String, String> exportedVariables
     ) throws IOException {
         final String vmName;
         final List<String> nodes;
@@ -249,29 +220,22 @@ public class JenkinsJobTemplateBuilder {
             default:
                 throw new RuntimeException("Unknown machine preference");
         }
-        final String exportedVariables = fillExportedVariables(
-                variants,
-                vmName,
-                platform.getProvider()
-        ) + fillExportedVariablesForBuildTask(
-                platform,
-                product.getVersion(),
-                'o' + product.getId(),
-                projectName,
-                variants.entrySet()
-                        .stream()
-                        .filter(e -> e.getKey().getType() == Task.Type.BUILD)
-                        .sorted(Comparator.comparing(Map.Entry::getKey))
-                        .map(e -> e.getValue().getId())
-                        .collect(Collectors.joining(".")) + '.' + platform.assembleString()
-        );
+        exportedVariables.put(PLATFORM_PROVIDER_VAR, platform.getProvider());
+        exportedVariables.put(VM_NAME_OR_LOCAL_VAR, vmName);
+        exportedVariables.put(OS_VAR, platform.getOs() + '.' + platform.getVersion());
+        exportedVariables.put(ARCH_VAR, platform.getArchitecture());
         template = template
                 .replace(NODES, String.join(" ", nodes))
                 .replace(SCM_POLL_SCHEDULE, task.getScmPollSchedule())
                 .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
                 .replace(TASK_SCRIPT, task.getScript())
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
-                .replace(EXPORTED_VARIABLES, exportedVariables);
+                .replace(EXPORTED_VARIABLES, exportedVariables
+                        .entrySet()
+                        .stream()
+                        .map(entry -> EXPORT + ' ' + OTOOL_BASH_VAR_PREFIX + entry.getKey() + '=' + entry.getValue() + XML_NEW_LINE)
+                        .sorted()
+                        .collect(Collectors.joining()));
         if (!vmName.equals(LOCAL)) {
             return buildVmPostBuildTaskTemplate(platform, scriptsRoot);
         }

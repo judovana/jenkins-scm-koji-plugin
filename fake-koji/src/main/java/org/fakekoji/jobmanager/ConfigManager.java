@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Product;
@@ -18,6 +19,7 @@ public class ConfigManager {
     private final static String TASK_VARIANTS = "taskVariants";
     private final static String PLATFORMS = "platforms";
     private final static String PROJECTS = "projects";
+    private final static String JDK_TEST_PROJECTS = "jdkTestProjects";
     private final static String TASKS = "tasks";
 
     private final Storage<BuildProvider> buildProviderStorage;
@@ -25,6 +27,7 @@ public class ConfigManager {
     private final Storage<TaskVariant> taskVariantStorage;
     private final Storage<Platform> platformStorage;
     private final Storage<JDKProject> jdkProjectStorage;
+    private final Storage<JDKTestProject> jdkTestProjectStorage;
     private final Storage<Task> taskStorage;
 
     private ConfigManager(
@@ -33,6 +36,7 @@ public class ConfigManager {
             Storage<TaskVariant> taskVariantStorage,
             Storage<Platform> platformStorage,
             Storage<JDKProject> jdkProjectStorage,
+            Storage<JDKTestProject> jdkTestProjectStorage,
             Storage<Task> taskStorage
     ) {
         this.buildProviderStorage = buildProviderStorage;
@@ -40,6 +44,7 @@ public class ConfigManager {
         this.taskVariantStorage = taskVariantStorage;
         this.platformStorage = platformStorage;
         this.jdkProjectStorage = jdkProjectStorage;
+        this.jdkTestProjectStorage = jdkTestProjectStorage;
         this.taskStorage = taskStorage;
     }
 
@@ -50,6 +55,7 @@ public class ConfigManager {
                 new DirectoryJsonStorage<>(Paths.get(storagePath, TASK_VARIANTS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, PLATFORMS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, PROJECTS).toFile()),
+                new DirectoryJsonStorage<>(Paths.get(storagePath, JDK_TEST_PROJECTS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, TASKS).toFile())
         );
     }
@@ -72,6 +78,10 @@ public class ConfigManager {
 
     public Storage<JDKProject> getJdkProjectStorage() {
         return jdkProjectStorage;
+    }
+
+    public Storage<JDKTestProject> getJdkTestProjectStorage() {
+        return jdkTestProjectStorage;
     }
 
     public Storage<Task> getTaskStorage() {

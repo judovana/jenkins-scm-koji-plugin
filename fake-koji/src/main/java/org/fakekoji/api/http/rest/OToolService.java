@@ -1,6 +1,8 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.Javalin;
+import io.javalin.http.Context;
+import io.javalin.http.Handler;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
@@ -13,7 +15,9 @@ import org.fakekoji.jobmanager.manager.ProductManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
+import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
@@ -34,6 +38,8 @@ public class OToolService {
     private static final String TASK_VARIANT = TASK_VARIANTS + CONFIG_ID;
     private static final String JDK_PROJECTS = "/jdkProjects";
     private static final String JDK_PROJECT = JDK_PROJECTS + CONFIG_ID;
+    private static final String JDK_TEST_PROJECTS = "/jdkTestProjects";
+    private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
 
     private final int port;
     private final Javalin app;
@@ -46,7 +52,40 @@ public class OToolService {
         );
         jenkinsJobUpdater = new JenkinsJobUpdater(settings);
         final ConfigManager configManager = ConfigManager.create(settings.getConfigRoot().getAbsolutePath());
+
+        final OToolHandlerWrapper wrapper = oToolHandler -> context -> {
+            try {
+                oToolHandler.handle(context);
+            } catch (ManagementException e) {
+                context.status(400).result(e.toString());
+            } catch (StorageException e) {
+                context.status(500).result(e.toString());
+            }
+        };
+
         app.routes(() -> {
+
+            final JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
+                    configManager.getJdkTestProjectStorage(),
+                    jenkinsJobUpdater
+            );
+            app.post(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
+                final JDKTestProject jdkTestProject = context.bodyValidator(JDKTestProject.class).get();
+                final ManagementResult result = jdkTestProjectManager.create(jdkTestProject);
+                context.status(200).json(result);
+            }));
+            app.get(JDK_TEST_PROJECTS, wrapper.wrap(context -> context.json(jdkTestProjectManager.readAll())));
+            app.put(JDK_TEST_PROJECT, wrapper.wrap(context -> {
+                final JDKTestProject jdkTestProject = context.bodyValidator(JDKTestProject.class).get();
+                final String id = context.pathParam(ID);
+                final ManagementResult result = jdkTestProjectManager.update(id, jdkTestProject);
+                context.status(200).json(result);
+            }));
+            app.delete(JDK_TEST_PROJECT, wrapper.wrap(context -> {
+                final String id = context.pathParam(ID);
+                final ManagementResult result = jdkTestProjectManager.delete(id);
+                context.status(200).json(result);
+            }));
 
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
             app.get(BUILD_PROVIDERS, context -> context.json(buildProviderManager.readAll()));
@@ -185,5 +224,13 @@ public class OToolService {
 
     public int getPort() {
         return port;
+    }
+
+    interface OToolHandler {
+        void handle(Context context) throws ManagementException, StorageException;
+    }
+
+    interface OToolHandlerWrapper {
+        Handler wrap(OToolHandler oToolHandler);
     }
 }

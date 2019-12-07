@@ -3,9 +3,11 @@ package org.fakekoji.jobmanager;
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.TaskJob;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.model.Platform;
@@ -30,6 +32,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class JenkinsJobUpdater implements JobUpdater {
 
@@ -43,7 +46,7 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     @Override
-    public JobUpdateResults update(JDKProject oldProject, JDKProject newProject) throws StorageException, ManagementException {
+    public JobUpdateResults update(Project oldProject, Project newProject) throws StorageException, ManagementException {
 
         final JDKProjectParser jdkProjectParser = new JDKProjectParser(
                 ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
@@ -93,10 +96,15 @@ public class JenkinsJobUpdater implements JobUpdater {
                 settings.getLocalReposRoot(),
                 settings.getScriptsRoot()
         );
-        final Set<Job> jobs = configManager
-                .getJdkProjectStorage()
-                .loadAll(JDKProject.class)
-                .stream()
+        final Set<Job> jobs = Stream.of(
+                configManager
+                        .getJdkProjectStorage()
+                        .loadAll(JDKProject.class),
+                configManager
+                        .getJdkTestProjectStorage()
+                        .loadAll(JDKTestProject.class)
+        )
+                .flatMap(Collection::stream)
                 .map(jdkProject -> {
                     try {
                         return jdkProjectParser.parse(jdkProject);
@@ -188,8 +196,8 @@ public class JenkinsJobUpdater implements JobUpdater {
                                 job.generateTemplate()
                         );
                     }, () -> {
-                        createManuallyUploadedJob(jobName);
-                    }, new JobUpdateResult(jobName, true)).call();
+                createManuallyUploadedJob(jobName);
+            }, new JobUpdateResult(jobName, true)).call();
         };
     }
 
@@ -209,8 +217,8 @@ public class JenkinsJobUpdater implements JobUpdater {
                                 Paths.get(dst.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE),
                                 job.generateTemplate());
                     }, () -> {
-                        createManuallyUploadedJob(jobName);
-                    }, new JobUpdateResult(jobName, true)).call();
+                createManuallyUploadedJob(jobName);
+            }, new JobUpdateResult(jobName, true)).call();
         };
     }
 
@@ -238,16 +246,19 @@ public class JenkinsJobUpdater implements JobUpdater {
                     () -> {
                         Utils.writeToFile(jobConfig, job.generateTemplate());
                     }, () -> {
-                        updateManuallyUpdatedJob(jobName);
-                    }, new JobUpdateResult(jobName, true)).call();
+                updateManuallyUpdatedJob(jobName);
+            }, new JobUpdateResult(jobName, true)).call();
         };
     }
 
     private void createManuallyUploadedJob(final String jobName) throws Exception {
-        JenkinsCliWrapper.getCli().createManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();;
+        JenkinsCliWrapper.getCli().createManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();
+        ;
     }
-      private void updateManuallyUpdatedJob(final String jobName) throws Exception {
-        JenkinsCliWrapper.getCli().updateManuallyUpdatedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();;
+
+    private void updateManuallyUpdatedJob(final String jobName) throws Exception {
+        JenkinsCliWrapper.getCli().updateManuallyUpdatedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();
+        ;
     }
 
     private static interface JobUpdateFunction {

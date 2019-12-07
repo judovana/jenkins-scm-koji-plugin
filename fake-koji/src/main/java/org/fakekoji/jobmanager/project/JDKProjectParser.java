@@ -4,7 +4,9 @@ import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementUtils;
 import org.fakekoji.jobmanager.Parser;
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TaskConfig;
 import org.fakekoji.jobmanager.model.VariantsConfig;
@@ -21,15 +23,18 @@ import org.fakekoji.storage.StorageException;
 import org.fakekoji.jobmanager.ConfigManager;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
+public class JDKProjectParser implements Parser<Project, Set<Job>> {
 
     private JobBuilder jobBuilder;
     private final ConfigManager configManager;
@@ -47,7 +52,7 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
     }
 
     @Override
-    public Set<Job> parse(JDKProject project) throws ManagementException, StorageException {
+    public Set<Job> parse(Project project) throws ManagementException, StorageException {
         jobBuilder = new JobBuilder(configManager);
         if (!configManager.getProductStorage().contains(project.getProduct())) {
             throw new ManagementException("Unknown product: " + project.getProduct());
@@ -66,9 +71,36 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
         jobBuilder.setProduct(product);
         jobBuilder.setBuildProviders(buildProviders);
 
+        switch (project.getType()) {
+            case JDK_PROJECT:
+                return parse((JDKProject) project);
+            case JDK_TEST_PROJECT:
+                return parse((JDKTestProject) project);
+        }
+        return Collections.emptySet();
+    }
+
+    private Set<Job> parse(JDKProject project) {
         project.getJobConfiguration().getPlatforms().forEach(getPlatformsConsumer());
 
         jobBuilder.buildPullJob();
+        return jobBuilder.getJobs();
+    }
+
+    private Set<Job> parse(JDKTestProject project) throws ManagementException {
+        final Optional<Platform> platformOptional = jobBuilder.platformsMap.values()
+                .stream()
+                .filter(platform -> platform.assembleString().equals(project.getBuildPlatform()))
+                .findFirst();
+        if (!platformOptional.isPresent()) {
+            throw new ManagementException("Unknown build platform: " + project.getBuildPlatform());
+        }
+        jobBuilder.subpackageBlacklist = project.getSubpackageBlacklist();
+        jobBuilder.subpackageWhitelist = project.getSubpackageWhitelist();
+        jobBuilder.buildPlatform = platformOptional.get();
+        jobBuilder.buildVariants = Collections.emptyMap();
+        jobBuilder.buildTask = new Task();
+        project.getJobConfiguration().getPlatforms().forEach(getPlatformsConsumer());
         return jobBuilder.getJobs();
     }
 
@@ -108,6 +140,9 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
         private final Map<String, Task> tasksMap;
         private final Map<String, TaskVariant> testVariantsMap;
         private final Map<String, TaskVariant> buildVariantsMap;
+
+        private List<String> subpackageBlacklist = Collections.emptyList();
+        private List<String> subpackageWhitelist = Collections.emptyList();
 
         private final Set<Job> jobs;
 
@@ -189,12 +224,27 @@ public class JDKProjectParser implements Parser<JDKProject, Set<Job>> {
         }
 
         private void buildTestJob() {
-            final TestJob tj = new TestJob(
-                    buildJob,
-                    testTask,
-                    testPlatform,
-                    testVariants
-            );
+            final TestJob tj = (buildJob == null) ?
+                    new TestJob(
+                            projectName,
+                            Project.ProjectType.JDK_TEST_PROJECT,
+                            product,
+                            buildProviders,
+                            testTask,
+                            testPlatform,
+                            testVariants,
+                            buildPlatform,
+                            buildVariants,
+                            subpackageBlacklist,
+                            subpackageWhitelist,
+                            scriptsRoot
+                    ) :
+                    new TestJob(
+                            buildJob,
+                            testTask,
+                            testPlatform,
+                            testVariants
+                    );
             jobs.add(tj);
         }
 

@@ -1,6 +1,6 @@
 import { observable, runInAction, action } from "mobx";
 
-import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, JobUpdateResults, ConfigGroup } from "./model";
+import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, JobUpdateResults, ConfigGroup, JDKTestProject, JDKTestProjectMap } from "./model";
 import ConfigService from "./services/ConfigService";
 
 export const CONFIG_STORE = "configStore";
@@ -101,7 +101,15 @@ export class ConfigStore {
     }
 
     get configGroups(): Item[] {
-        return [{ id: "buildProviders" }, { id: "platforms" }, { id: "products" }, { id: "taskVariants" }, { id: "tasks" }, { id: "jdkProjects" }];
+        return [
+            { id: "buildProviders" },
+            { id: "platforms" },
+            { id: "products" },
+            { id: "taskVariants" },
+            { id: "tasks" },
+            { id: "jdkProjects" },
+            { id: "jdkTestProjects"}
+        ]
     }
 
     get selectedConfig(): Item | undefined {
@@ -232,5 +240,13 @@ export class ConfigStore {
 
     getJDKProject(id: string): JDKProject | undefined {
         return this._configGroups["jdkProjects"][id] as JDKProject | undefined
+    }
+
+    get jdkTestProjects(): JDKTestProject[] {
+        return Object.values(this._configGroups["jdkTestProjects"]) as JDKTestProject[]
+    }
+
+    get jdkTestProjectMap(): JDKTestProjectMap {
+        return this._configGroups["jdkTestProjects"] as JDKTestProjectMap
     }
 }

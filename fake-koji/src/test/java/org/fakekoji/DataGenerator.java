@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobConfiguration;
 import org.fakekoji.jobmanager.model.PlatformConfig;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 
 public class DataGenerator {
 
+    public static final String TEST_PROJECT_NAME = "testProject";
     public static final String NEW_PROJECT_NAME = "new_project_name";
     public static final String PROJECT_NAME = "projectName";
     public static final String PROJECT_NAME_U = "uName";
@@ -389,8 +391,14 @@ public class DataGenerator {
                 ),
                 TEST_POST_BUILD_TASK,
                 new Task.RpmLimitation(
-                        Collections.emptyList(),
-                        Collections.emptyList()
+                        Arrays.asList(
+                                "subpackageA",
+                                "subpackageB"
+                        ),
+                        Arrays.asList(
+                                "subpackageC",
+                                "subpackageD"
+                        )
                 )
         );
     }
@@ -468,54 +476,54 @@ public class DataGenerator {
 
     public static final String BUILD_POST_BUILD_TASK =
             "        <hudson.tasks.ArtifactArchiver>\n" +
-            "            <artifacts>**.tarxz,**.log, **.html,*.sh,other_logs.tar.gz</artifacts>\n" +
-            "            <allowEmptyArchive>false</allowEmptyArchive>\n" +
-            "            <onlyIfSuccessful>false</onlyIfSuccessful>\n" +
-            "            <fingerprint>false</fingerprint>\n" +
-            "            <defaultExcludes>true</defaultExcludes>\n" +
-            "            <caseSensitive>true</caseSensitive>\n" +
-            "        </hudson.tasks.ArtifactArchiver>\n";
+                    "            <artifacts>**.tarxz,**.log, **.html,*.sh,other_logs.tar.gz</artifacts>\n" +
+                    "            <allowEmptyArchive>false</allowEmptyArchive>\n" +
+                    "            <onlyIfSuccessful>false</onlyIfSuccessful>\n" +
+                    "            <fingerprint>false</fingerprint>\n" +
+                    "            <defaultExcludes>true</defaultExcludes>\n" +
+                    "            <caseSensitive>true</caseSensitive>\n" +
+                    "        </hudson.tasks.ArtifactArchiver>\n";
 
     public static final String TEST_POST_BUILD_TASK =
             "        <hudson.tasks.ArtifactArchiver>\n" +
-            "            <artifacts>tck/*</artifacts>\n" +
-            "            <allowEmptyArchive>false</allowEmptyArchive>\n" +
-            "            <onlyIfSuccessful>false</onlyIfSuccessful>\n" +
-            "            <fingerprint>false</fingerprint>\n" +
-            "            <defaultExcludes>true</defaultExcludes>\n" +
-            "            <caseSensitive>true</caseSensitive>\n" +
-            "        </hudson.tasks.ArtifactArchiver>\n" +
-            "        <hudson.plugins.report.rpms.RpmsReportPublisher plugin=\"jenkins-report-rpms@0.1-SNAPSHOT\">\n" +
-            "            <command>cat tck/rpms.txt</command>\n" +
-            "        </hudson.plugins.report.rpms.RpmsReportPublisher>\n" +
-            "        <hudson.plugins.report.jck.JckReportPublisher plugin=\"jenkins-report-jck@0.1-SNAPSHOT\">\n" +
-            "            <reportFileGlob>report-{runtime,devtools,compiler}.xml.gz</reportFileGlob>\n" +
-            "            <resultsBlackList/>\n" +
-            "            <resultsWhiteList/>\n" +
-            "            <maxBuilds>10</maxBuilds>\n" +
-            "        </hudson.plugins.report.jck.JckReportPublisher>\n" +
-            "        <hudson.plugins.report.genericchart.GenericChartPublisher plugin=\"jenkins-report-generic-chart-column@0.1-SNAPSHOT\">\n" +
-            "            <charts>\n" +
-            "                <hudson.plugins.report.genericchart.ChartModel>\n" +
-            "                    <title>failures rpms</title>\n" +
-            "                    <fileNameGlob>cached-summ-results.properties</fileNameGlob>\n" +
-            "                    <key>jrp.failedAndErrors</key>\n" +
-            "                    <limit>20</limit>\n" +
-            "                    <resultsBlackList>.*upstream.* .*static.*</resultsBlackList>\n" +
-            "                    <resultsWhiteList/>\n" +
-            "                    <chartColor>#DF7401</chartColor>\n" +
-            "                </hudson.plugins.report.genericchart.ChartModel>\n" +
-            "                <hudson.plugins.report.genericchart.ChartModel>\n" +
-            "                    <title>failures upstream</title>\n" +
-            "                    <fileNameGlob>cached-summ-results.properties</fileNameGlob>\n" +
-            "                    <key>jrp.failedAndErrors</key>\n" +
-            "                    <limit>20</limit>\n" +
-            "                    <resultsBlackList>.*el.* .*fc.*</resultsBlackList>\n" +
-            "                    <resultsWhiteList/>\n" +
-            "                    <chartColor>#FE9A2E</chartColor>\n" +
-            "                </hudson.plugins.report.genericchart.ChartModel>\n" +
-            "            </charts>\n" +
-            "        </hudson.plugins.report.genericchart.GenericChartPublisher>\n";
+                    "            <artifacts>tck/*</artifacts>\n" +
+                    "            <allowEmptyArchive>false</allowEmptyArchive>\n" +
+                    "            <onlyIfSuccessful>false</onlyIfSuccessful>\n" +
+                    "            <fingerprint>false</fingerprint>\n" +
+                    "            <defaultExcludes>true</defaultExcludes>\n" +
+                    "            <caseSensitive>true</caseSensitive>\n" +
+                    "        </hudson.tasks.ArtifactArchiver>\n" +
+                    "        <hudson.plugins.report.rpms.RpmsReportPublisher plugin=\"jenkins-report-rpms@0.1-SNAPSHOT\">\n" +
+                    "            <command>cat tck/rpms.txt</command>\n" +
+                    "        </hudson.plugins.report.rpms.RpmsReportPublisher>\n" +
+                    "        <hudson.plugins.report.jck.JckReportPublisher plugin=\"jenkins-report-jck@0.1-SNAPSHOT\">\n" +
+                    "            <reportFileGlob>report-{runtime,devtools,compiler}.xml.gz</reportFileGlob>\n" +
+                    "            <resultsBlackList/>\n" +
+                    "            <resultsWhiteList/>\n" +
+                    "            <maxBuilds>10</maxBuilds>\n" +
+                    "        </hudson.plugins.report.jck.JckReportPublisher>\n" +
+                    "        <hudson.plugins.report.genericchart.GenericChartPublisher plugin=\"jenkins-report-generic-chart-column@0.1-SNAPSHOT\">\n" +
+                    "            <charts>\n" +
+                    "                <hudson.plugins.report.genericchart.ChartModel>\n" +
+                    "                    <title>failures rpms</title>\n" +
+                    "                    <fileNameGlob>cached-summ-results.properties</fileNameGlob>\n" +
+                    "                    <key>jrp.failedAndErrors</key>\n" +
+                    "                    <limit>20</limit>\n" +
+                    "                    <resultsBlackList>.*upstream.* .*static.*</resultsBlackList>\n" +
+                    "                    <resultsWhiteList/>\n" +
+                    "                    <chartColor>#DF7401</chartColor>\n" +
+                    "                </hudson.plugins.report.genericchart.ChartModel>\n" +
+                    "                <hudson.plugins.report.genericchart.ChartModel>\n" +
+                    "                    <title>failures upstream</title>\n" +
+                    "                    <fileNameGlob>cached-summ-results.properties</fileNameGlob>\n" +
+                    "                    <key>jrp.failedAndErrors</key>\n" +
+                    "                    <limit>20</limit>\n" +
+                    "                    <resultsBlackList>.*el.* .*fc.*</resultsBlackList>\n" +
+                    "                    <resultsWhiteList/>\n" +
+                    "                    <chartColor>#FE9A2E</chartColor>\n" +
+                    "                </hudson.plugins.report.genericchart.ChartModel>\n" +
+                    "            </charts>\n" +
+                    "        </hudson.plugins.report.genericchart.GenericChartPublisher>\n";
 
     public static Set<JDKProject> getJDKProjects() {
         return new HashSet<>(Arrays.asList(
@@ -543,11 +551,11 @@ public class DataGenerator {
     public static JDKProject getJDKProject(String projectName, boolean urlValid, JDKProject.RepoState repoState) {
         return new JDKProject(
                 projectName,
-                Project.ProjectType.JDK_PROJECT,
+                JDK_8,
                 repoState,
                 urlValid ? PROJECT_URL : INVALID_PROJECT_URL,
                 DataGenerator.getBuildProvidersIds(),
-                JDK_8,
+
                 new JobConfiguration(
                         Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
                             put(RHEL_7_X64_VAGRANT, new PlatformConfig(
@@ -580,11 +588,10 @@ public class DataGenerator {
     public static JDKProject getJDKProjectU() {
         return new JDKProject(
                 PROJECT_NAME_U,
-                Project.ProjectType.JDK_PROJECT,
+                JDK_8,
                 JDKProject.RepoState.CLONED,
                 PROJECT_URL_U,
                 DataGenerator.getBuildProvidersIds(),
-                JDK_8,
                 new JobConfiguration(
                         Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
                             put(RHEL_7_X64_VAGRANT, new PlatformConfig(
@@ -692,6 +699,60 @@ public class DataGenerator {
         );
     }
 
+    public static List<String> getSubpackageBlacklist() {
+        return Arrays.asList(
+                "subpackage1",
+                "subpackage2"
+        );
+    }
+
+    public static List<String> getSubpackageWhitelist() {
+        return Arrays.asList(
+                "subpackage3",
+                "subpackage4"
+        );
+    }
+
+    public static JDKTestProject getJDKTestProject() {
+        return new JDKTestProject(
+                TEST_PROJECT_NAME,
+                JDK_8,
+                getBuildProvidersIds(),
+                RHEL_7_X64,
+                getSubpackageBlacklist(),
+                getSubpackageWhitelist(),
+                new JobConfiguration(
+                        Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
+                            put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                                    Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
+                                        put(TCK, new TaskConfig(
+                                                Arrays.asList(
+                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER)),
+                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND))
+                                                )
+                                        ));
+                                        put(JTREG, new TaskConfig(
+                                                Collections.singletonList(
+                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
+                                                )
+                                        ));
+                                    }})
+                            ));
+                            put(F_29_X64_VAGRANT, new PlatformConfig(
+                                    Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
+                                        put(TCK, new TaskConfig(
+                                                Arrays.asList(
+                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER)),
+                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND))
+                                                )
+                                        ));
+                                    }})
+                            ));
+                        }})
+                )
+        );
+    }
+
     private static VariantsConfig getBuildVariantConfig(Map<String, String> map, Map<String, PlatformConfig> platforms) {
         return new VariantsConfig(map, platforms);
     }
@@ -748,7 +809,7 @@ public class DataGenerator {
                 getBuildProviders(),
                 getBuildTask(),
                 getRHEL7x64Vagrant(),
-                new HashMap<TaskVariant, TaskVariantValue>(){{
+                new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
@@ -763,7 +824,7 @@ public class DataGenerator {
                 getBuildProviders(),
                 getBuildTask(),
                 getRHEL7x64Vagrant(),
-                new HashMap<TaskVariant, TaskVariantValue>(){{
+                new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getFastdebugVariant());
                 }},
@@ -778,7 +839,7 @@ public class DataGenerator {
                 getBuildProviders(),
                 getBuildTask(),
                 getF29x64Vagrant(),
-                new HashMap<TaskVariant, TaskVariantValue>(){{
+                new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
@@ -790,16 +851,17 @@ public class DataGenerator {
         final Platform platform = getRHEL7x64Vagrant();
         return new TestJob(
                 PROJECT_NAME,
+                Project.ProjectType.JDK_PROJECT,
                 getJDK8Product(),
                 getBuildProviders(),
                 getTCK(),
                 platform,
-                new HashMap<TaskVariant, TaskVariantValue>(){{
+                new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getGarbageCollectorCategory(), getShenandoahVariant());
                     put(getDisplayProtocolCategory(), getXServerVariant());
                 }},
                 platform,
-                new HashMap<TaskVariant, TaskVariantValue>(){{
+                new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
@@ -811,16 +873,17 @@ public class DataGenerator {
         final Platform platform = getRHEL7x64Vagrant();
         return new TestJob(
                 PROJECT_NAME,
+                Project.ProjectType.JDK_PROJECT,
                 getJDK8Product(),
                 getBuildProviders(),
                 getTCK(),
                 platform,
-                new HashMap<TaskVariant, TaskVariantValue>(){{
+                new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getGarbageCollectorCategory(), getZGCVariant());
                     put(getDisplayProtocolCategory(), getXServerVariant());
                 }},
                 platform,
-                new HashMap<TaskVariant, TaskVariantValue>(){{
+                new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
@@ -845,9 +908,9 @@ public class DataGenerator {
             "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz"
     );
 
-    public static final String[] versions = new String[] { VERSION_1, VERSION_2 };
+    public static final String[] versions = new String[]{VERSION_1, VERSION_2};
 
-    public static final String[] releases = new String[] { RELEASE_1, RELEASE_2 };
+    public static final String[] releases = new String[]{RELEASE_1, RELEASE_2};
 
     public static void initBuildsRoot(final File buildsRoot) throws IOException {
         long timeStamp = new Date().getTime();
@@ -877,8 +940,8 @@ public class DataGenerator {
                     if (!srcFile.setLastModified(timeStamp += 60000)) {
                         throw new RuntimeException("Failed to set lastModified of file " + srcFile.getAbsolutePath());
                     }
-                    for (final Map.Entry<String, PlatformConfig> platformConfig: jdkProject.getJobConfiguration().getPlatforms().entrySet()) {
-                        for (final  Map.Entry<String, TaskConfig> buildTaskConfig : platformConfig.getValue().getTasks().entrySet()) {
+                    for (final Map.Entry<String, PlatformConfig> platformConfig : jdkProject.getJobConfiguration().getPlatforms().entrySet()) {
+                        for (final Map.Entry<String, TaskConfig> buildTaskConfig : platformConfig.getValue().getTasks().entrySet()) {
                             for (final VariantsConfig variantsConfig : buildTaskConfig.getValue().getVariants()) {
                                 final String platformId = platformConfig.getKey();
                                 final Platform platform = platforms.stream().filter(p -> p.getId().equals(platformId)).findFirst().get();
@@ -917,9 +980,17 @@ public class DataGenerator {
         final File platformProviders = Paths.get(root, "platformProviders").toFile();
         final File taskVariantCategories = Paths.get(root, "taskVariants").toFile();
         final File jdkProjects = Paths.get(root, "projects").toFile();
+        final File jdkTestProjects = Paths.get(root, "jdkTestProjects").toFile();
 
         final List<File> configFiles = Arrays.asList(
-                products, platforms, tasks, buildProviders, platformProviders, taskVariantCategories, jdkProjects
+                products,
+                platforms,
+                tasks,
+                buildProviders,
+                platformProviders,
+                taskVariantCategories,
+                jdkProjects,
+                jdkTestProjects
         );
 
         for (final File configFile : configFiles) {
@@ -1013,7 +1084,7 @@ public class DataGenerator {
         final String rootPath = root.getAbsolutePath();
         final File buildsRoot = Paths.get(rootPath, "builds").toFile();
         final File configsRoot = Paths.get(rootPath, "configs").toFile();
-        final File scriptsRoot = Paths.get(rootPath,"scripts").toFile();
+        final File scriptsRoot = Paths.get(rootPath, "scripts").toFile();
         final File reposRoot = Paths.get(rootPath, "repos").toFile();
         final File jenkinsJobsRoot = Paths.get(rootPath, "jenkinsJobs").toFile();
         final File jenkinsJobArchiveRoot = Paths.get(rootPath, "jenkinsJobArchive").toFile();
