@@ -102,7 +102,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-11-openjdk",
                 "x86_64,src",
-                "f28*",
+                "f28.*",
                 "",
                 null
         );
@@ -112,7 +112,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
-                "fastdebug-f24*",
+                "fastdebug-f24.*",
                 "",
                 null
         );
@@ -122,7 +122,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "src",
-                "f24*",
+                "f24.*",
                 "",
                 null
         );
@@ -142,7 +142,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
-                "f24*",
+                "f24.*",
                 "",
                 null
         );
@@ -152,7 +152,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64,src",
-                "f24*",
+                "f24.*",
                 "",
                 null
         );
@@ -172,7 +172,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.6.0-ibm",
                 "x86_64",
-                "rhel-6.*-supp*",
+                "rhel-6.*-supp.*",
                 "",
                 null
         );
@@ -182,7 +182,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.6.0-ibm",
                 "i386",
-                "dist-5*-extras*",
+                "dist-5.*-extras.*",
                 "",
                 null
         );
@@ -222,7 +222,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.6.0-sun",
                 "x86_64",
-                "oracle-java-rhel-5*",
+                "oracle-java-rhel-5.*",
                 "",
                 null
         );
@@ -242,7 +242,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "openjdk8-win",
                 "win",
-                "openjdk-win*",
+                "openjdk-win.*",
                 "",
                 null
         );
@@ -252,7 +252,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "openjdk8-win",
                 "win",
-                "openjdk-win*",
+                "openjdk-win.*",
                 "",
                 null
         );
@@ -272,7 +272,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.8.0-openj9",
                 "x86_64",
-                "*",
+                ".*",
                 "",
                 null
         );
@@ -282,7 +282,7 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.7.0-openjdk java-1.8.0-openjdk java-9-openjdk",
                 null,
-                "*",
+                ".*",
                 "",
                 null
         );
@@ -653,7 +653,7 @@ public class KojiListBuildsTest {
         RealKojiXmlRpcApi config = new RealKojiXmlRpcApi(
                 "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
                 null,
-                "*",
+                ".*",
                 null,
                 null
         );
