@@ -5,8 +5,16 @@ import ConfigForm from "./components/configForms/ConfigForm"
 
 import { Switch, Route } from "react-router-dom"
 import { Grid } from "@material-ui/core"
+import useStores from "./hooks/useStores"
 
 const App: React.FC = () => {
+
+    const { configStore } = useStores()
+
+    React.useEffect(() => {
+        configStore.fetchConfigs()
+    }, [configStore])
+
     return (
         <React.Fragment>
             <Header />

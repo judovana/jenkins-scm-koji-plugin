@@ -1,23 +1,22 @@
 import React from "react"
-import { observer, inject, useLocalStore } from "mobx-react"
+import { useLocalStore, useObserver } from "mobx-react"
 
 import { JDKProject, Item } from "../../stores/model"
-import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore"
 import JobConfigComponent from "../formComponents/JobConfigComponent"
 import TextInput from "../formComponents/TextInput"
 import Select from "../formComponents/Select"
 import { Button, Chip, Box } from "@material-ui/core"
 import MultiSelect from "../formComponents/MultiSelect"
+import useStores from "../../hooks/useStores"
 
 interface Props {
     jdkProjectID?: string
-    configStore?: ConfigStore
     onSubmit: (item: Item) => void
 }
 
 const JDKProjectForm: React.FC<Props> = props => {
 
-    const configStore = props.configStore!
+    const { configStore } = useStores()
 
     const { jdkProjectID } = props
 
@@ -67,43 +66,47 @@ const JDKProjectForm: React.FC<Props> = props => {
         props.onSubmit(jdkProject)
     }
 
-    const { buildProviders, products } = configStore
+    return useObserver(() => {
+        const { buildProviders, products } = configStore
 
-    return (
-        <React.Fragment>
-            <TextInput
-                label={"id"}
-                value={jdkProject.id}
-                onChange={onIdChange} />
-            <TextInput
-                label={"url"}
-                value={jdkProject.url}
-                onChange={onUrlChange} />
-            {
-                jdkProject.repoState && <Box>
-                    <Chip
-                        label={jdkProject.repoState} />
-                </Box>
-            }
-            <MultiSelect
-                label={"build providers"}
-                onChange={onBuildProvidersChange}
-                options={buildProviders.map(buildProvider => buildProvider.id)}
-                values={jdkProject.buildProviders}
-            />
-            <Select
-                label={"Product"}
-                options={products.map(product => product.id)}
-                value={jdkProject.product}
-                onChange={onProductChange} />
-            <JobConfigComponent jobConfig={jdkProject.jobConfiguration} />
-            <Button
-                onClick={onSubmit}
-                variant="contained">
-                {jdkProjectID === undefined ? "Create" : "Update"}
-            </Button>
-        </React.Fragment>
-    )
+        return (
+            <React.Fragment>
+                <TextInput
+                    label={"id"}
+                    value={jdkProject.id}
+                    onChange={onIdChange} />
+                <TextInput
+                    label={"url"}
+                    value={jdkProject.url}
+                    onChange={onUrlChange} />
+                {
+                    jdkProject.repoState && <Box>
+                        <Chip
+                            label={jdkProject.repoState} />
+                    </Box>
+                }
+                <MultiSelect
+                    label={"build providers"}
+                    onChange={onBuildProvidersChange}
+                    options={buildProviders.map(buildProvider => buildProvider.id)}
+                    values={jdkProject.buildProviders}
+                />
+                <Select
+                    label={"Product"}
+                    options={products.map(product => product.id)}
+                    value={jdkProject.product}
+                    onChange={onProductChange} />
+                <JobConfigComponent
+                    jobConfig={jdkProject.jobConfiguration}
+                    projectType={jdkProject.type}/>
+                <Button
+                    onClick={onSubmit}
+                    variant="contained">
+                    {jdkProjectID === undefined ? "Create" : "Update"}
+                </Button>
+            </React.Fragment>
+        )
+    })
 }
 
-export default inject(CONFIG_STORE)(observer(JDKProjectForm))
+export default JDKProjectForm

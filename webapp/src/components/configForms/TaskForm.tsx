@@ -1,6 +1,5 @@
 import React from "react";
-import { observer, inject, useLocalStore } from "mobx-react"
-import { CONFIG_STORE, ConfigStore } from "../../stores/ConfigStore";
+import { useObserver, useLocalStore } from "mobx-react"
 import { Task, TaskType, MachinePreference, BinaryRequirement, Item } from "../../stores/model"
 import LimitationForm from "../formComponents/LimitationForm"
 import TextInput from "../formComponents/TextInput"
@@ -9,16 +8,16 @@ import Select from "../formComponents/Select"
 import RPMLimitationForm from "../formComponents/RPMLimitationForm"
 import FileRequirementsForm from "../formComponents/FileRequirementsForm"
 import { Button } from "@material-ui/core"
+import useStores from "../../hooks/useStores"
 
 type TaskFormProps = {
     taskID?: string,
-    configStore?: ConfigStore;
     onSubmit: (item: Item) => void
 }
 
 const TaskForm: React.FC<TaskFormProps> = props => {
 
-    const configStore = props.configStore!
+    const { configStore } = useStores()
 
     const { taskID } = props
 
@@ -106,61 +105,63 @@ const TaskForm: React.FC<TaskFormProps> = props => {
         props.onSubmit(task)
     }
 
-    const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = task
+    return useObserver(() => {
+        const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = task
 
-    return (
-        <React.Fragment>
-            <TextInput
-                label={"Task id"}
-                onChange={onIdChange}
-                value={id} />
-            <Select
-                label={"type"}
-                onChange={onTypeChange}
-                options={["BUILD", "TEST"]}
-                value={task.type} />
-            <Select
-                label={"machine preference"}
-                onChange={onMachinePreferenceChange}
-                options={["VM", "VM_ONLY", "HW", "HW_ONLY"]}
-                value={task.machinePreference} />
-            <TextInput
-                label={"SCM poll schedule"}
-                onChange={onSCMPollScheduleChange}
-                value={task.scmPollSchedule}>
-            </TextInput>
-            <TextInput
-                label={"script"}
-                value={task.script}
-                onChange={onScriptChange}
-                placeholder={"Enter path to bash script"} />
-            <LimitationForm
-                label={"platform limitations"}
-                limitation={platformLimitation}
-                items={configStore.platforms} />
-            <LimitationForm
-                label={"product limitations"}
-                limitation={productLimitation}
-                items={configStore.products} />
-            <FileRequirementsForm
-                fileRequirements={fileRequirements}
-                onBinaryChange={onBinaryChange}
-                onSourcesChange={onSourcesChange} />
-            <TextArea
-                label={"xml template"}
-                onChange={onXmlTemplateChange}
-                placeholder={"Enter xml template for post build tasks"}
-                value={task.xmlTemplate} />
-            <RPMLimitationForm
-                rpmLimitation={rpmLimitation} />
-            <Button
-                color="primary"
-                onClick={onSubmit}
-                variant="contained">
-                {taskID === undefined ? "Create" : "Update"}
-            </Button>
-        </React.Fragment>
-    )
+        return (
+            <React.Fragment>
+                <TextInput
+                    label={"Task id"}
+                    onChange={onIdChange}
+                    value={id} />
+                <Select
+                    label={"type"}
+                    onChange={onTypeChange}
+                    options={["BUILD", "TEST"]}
+                    value={task.type} />
+                <Select
+                    label={"machine preference"}
+                    onChange={onMachinePreferenceChange}
+                    options={["VM", "VM_ONLY", "HW", "HW_ONLY"]}
+                    value={task.machinePreference} />
+                <TextInput
+                    label={"SCM poll schedule"}
+                    onChange={onSCMPollScheduleChange}
+                    value={task.scmPollSchedule}>
+                </TextInput>
+                <TextInput
+                    label={"script"}
+                    value={task.script}
+                    onChange={onScriptChange}
+                    placeholder={"Enter path to bash script"} />
+                <LimitationForm
+                    label={"platform limitations"}
+                    limitation={platformLimitation}
+                    items={configStore.platforms} />
+                <LimitationForm
+                    label={"product limitations"}
+                    limitation={productLimitation}
+                    items={configStore.products} />
+                <FileRequirementsForm
+                    fileRequirements={fileRequirements}
+                    onBinaryChange={onBinaryChange}
+                    onSourcesChange={onSourcesChange} />
+                <TextArea
+                    label={"xml template"}
+                    onChange={onXmlTemplateChange}
+                    placeholder={"Enter xml template for post build tasks"}
+                    value={task.xmlTemplate} />
+                <RPMLimitationForm
+                    rpmLimitation={rpmLimitation} />
+                <Button
+                    color="primary"
+                    onClick={onSubmit}
+                    variant="contained">
+                    {taskID === undefined ? "Create" : "Update"}
+                </Button>
+            </React.Fragment>
+        )
+    })
 }
 
-export default inject(CONFIG_STORE)(observer(TaskForm));
+export default TaskForm

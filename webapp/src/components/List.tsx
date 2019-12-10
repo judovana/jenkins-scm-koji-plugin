@@ -1,20 +1,16 @@
 import React from "react"
-import { inject, observer, useObserver } from "mobx-react"
-import { CONFIG_STORE, ConfigStore } from "../stores/ConfigStore"
+import { useObserver } from "mobx-react"
 import { Item } from "../stores/model"
 import { IconButton, Grid, Paper, Typography, Table, TableRow, TableCell, TableBody, TableHead } from "@material-ui/core"
 import { Delete, Add } from "@material-ui/icons"
 import { useHistory } from "react-router-dom"
+import useStores from "../hooks/useStores"
 
-interface Props {
-    configStore?: ConfigStore
-}
-
-const List: React.FC<Props> = props => {
+const List: React.FC = () => {
 
     const history = useHistory()
 
-    const configStore = props.configStore!
+    const { configStore } = useStores()
 
     const onCreate = () => {
         history.push(`/form/${configStore.selectedGroupId}/`)
@@ -76,4 +72,4 @@ const List: React.FC<Props> = props => {
     })
 }
 
-export default inject(CONFIG_STORE)(observer(List))
+export default List

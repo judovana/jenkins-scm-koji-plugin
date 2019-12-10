@@ -1,21 +1,20 @@
 import React from "react"
 import Select from "../formComponents/Select"
-import { inject, observer, useLocalStore } from "mobx-react"
+import { useLocalStore, useObserver } from "mobx-react"
 
-import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
 import { Platform, Item } from "../../stores/model"
 import TextInput from "../formComponents/TextInput"
 import { Button } from "@material-ui/core"
+import useStores from "../../hooks/useStores"
 
 interface Props {
     platformID?: string
-    configStore?: ConfigStore
     onSubmit: (item: Item) => void
 }
 
 const PlatformForm: React.FC<Props> = props => {
 
-    const configStore = props.configStore!
+    const { configStore } = useStores()
 
     const { platformID } = props
 
@@ -90,59 +89,61 @@ const PlatformForm: React.FC<Props> = props => {
         props.onSubmit(platform)
     }
 
-    const {
-        architecture,
-        os,
-        provider,
-        tags,
-        version,
-        vmName,
-        vmNodes,
-        hwNodes
-    } = platform
+    return useObserver(() => {
+        const {
+            architecture,
+            os,
+            provider,
+            tags,
+            version,
+            vmName,
+            vmNodes,
+            hwNodes
+        } = platform
 
-    return (
-        <React.Fragment>
-            <TextInput
-                label={"os"}
-                onChange={onOSChange}
-                value={os} />
-            <TextInput
-                label={"version"}
-                onChange={onVersionChange}
-                value={version} />
-            <TextInput
-                label={"architecture"}
-                onChange={onArchitectureChange}
-                value={architecture} />
-            <Select
-                label={"provider"}
-                onChange={onProviderChange}
-                options={["vagrant", "beaker"]}
-                value={provider} />
-            <TextInput
-                label={"vm name"}
-                onChange={onVMNameChange}
-                value={vmName} />
-            <TextInput
-                label={"vm nodes"}
-                onChange={onVMNodesChange}
-                value={vmNodes.join(" ")} />
-            <TextInput
-                label={"hw nodes"}
-                onChange={onHWNodesChange}
-                value={hwNodes.join(" ")} />
-            <TextInput
-                label={"tags"}
-                onChange={onTagsChange}
-                value={tags.join(" ")} />
-            <Button
-                onClick={onSubmit}
-                variant="contained">
-                {platformID === undefined ? "Create" : "Update"}
-            </Button>
-        </React.Fragment>
-    )
+        return (
+            <React.Fragment>
+                <TextInput
+                    label={"os"}
+                    onChange={onOSChange}
+                    value={os} />
+                <TextInput
+                    label={"version"}
+                    onChange={onVersionChange}
+                    value={version} />
+                <TextInput
+                    label={"architecture"}
+                    onChange={onArchitectureChange}
+                    value={architecture} />
+                <Select
+                    label={"provider"}
+                    onChange={onProviderChange}
+                    options={["vagrant", "beaker"]}
+                    value={provider} />
+                <TextInput
+                    label={"vm name"}
+                    onChange={onVMNameChange}
+                    value={vmName} />
+                <TextInput
+                    label={"vm nodes"}
+                    onChange={onVMNodesChange}
+                    value={vmNodes.join(" ")} />
+                <TextInput
+                    label={"hw nodes"}
+                    onChange={onHWNodesChange}
+                    value={hwNodes.join(" ")} />
+                <TextInput
+                    label={"tags"}
+                    onChange={onTagsChange}
+                    value={tags.join(" ")} />
+                <Button
+                    onClick={onSubmit}
+                    variant="contained">
+                    {platformID === undefined ? "Create" : "Update"}
+                </Button>
+            </React.Fragment>
+        )
+    })
 }
 
-export default inject(CONFIG_STORE)(observer(PlatformForm))
+export default PlatformForm

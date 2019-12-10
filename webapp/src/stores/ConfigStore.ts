@@ -3,8 +3,6 @@ import { observable, runInAction, action } from "mobx";
 import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, JobUpdateResults, ConfigGroup, JDKTestProject, JDKTestProjectMap } from "./model";
 import ConfigService from "./services/ConfigService";
 
-export const CONFIG_STORE = "configStore";
-
 export class ConfigStore {
 
     @observable

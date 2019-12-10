@@ -1,24 +1,22 @@
 import React from "react"
 import { useLocalStore, useObserver } from "mobx-react-lite"
-import { inject } from "mobx-react"
 import { Button } from "@material-ui/core"
 
 import { JDKTestProject, Item } from "../../stores/model"
-import { ConfigStore, CONFIG_STORE } from "../../stores/ConfigStore"
 import TextInput from "../formComponents/TextInput"
 import MultiSelect from "../formComponents/MultiSelect"
 import JobConfigComponent from "../formComponents/JobConfigComponent";
 import Select from "../formComponents/Select";
+import useStores from "../../hooks/useStores"
 
 type JDKTestProjectFormProps = {
-    configStore?: ConfigStore
     id?: string
     onSubmit: (item: Item) => void
 }
 
 const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
 
-    const configStore = props.configStore!
+    const { configStore } = useStores()
 
     const { buildProviders } = configStore
 
@@ -114,7 +112,8 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                 onChange={onSubpackageWhitelistChange} />
             <JobConfigComponent
                 jobConfig={project.jobConfiguration}
-                type="TEST" />
+                projectType={project.type}
+                 />
             <Button
                 onClick={onSubmit}
                 variant="contained">
@@ -124,4 +123,4 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
     )
 }
 
-export default inject(CONFIG_STORE)(JDKTestProjectForm)
+export default JDKTestProjectForm
