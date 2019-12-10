@@ -33,14 +33,21 @@ public class GlobPredicateTest {
 
     @Test
     public void testSimpleAsterics() {
-        String glob = "f23-updates*";
+        String glob = "f23-updates.*";
         String input = "f23-updates-candidate";
+        assertTrue(new GlobPredicate(glob).test(input));
+    }
+    
+    @Test
+    public void nothingMatchesAll() {
+        String glob = "";
+        String input = "whatever";
         assertTrue(new GlobPredicate(glob).test(input));
     }
 
     @Test
     public void testTwoTags() {
-        String glob = "{no_Build-f23-*,x86_64.Built-f23-*}";
+        String glob = "no_Build-f23-.* x86_64.Built-f23-.*";
         String input1 = "no_Build-f23-tag";
         String input2 = "x86_64.Built-f23-tag";
         String input3 = "i686.Built-f23-tag";
@@ -49,7 +56,7 @@ public class GlobPredicateTest {
         assertFalse(new GlobPredicate(glob).test(input3));
     }
 
-    private final List<String> input = Arrays.asList(
+    private final List<String> inputs = Arrays.asList(
             "java-1.8.0-openjdk-1.8.0.65-3.b17.fc23.x86_64.rpm",
             "java-1.8.0-openjdk-accessibility-1.8.0.65-3.b17.fc23.x86_64.rpm",
             "java-1.8.0-openjdk-accessibility-debug-1.8.0.65-3.b17.fc23.x86_64.rpm",
@@ -68,15 +75,15 @@ public class GlobPredicateTest {
     @Test
     public void testCurlyBrackets() {
         //see difference, debuginfo will be included
-        String glob = "{*debug-*,*accessibility*,*src*,*demo*}";
+        String glob = ".*debug-.*   .*accessibility.*   .*src.*   .*demo.*  ";
         GlobPredicate predicate = new GlobPredicate(glob);
-        assertEquals(9, input.stream().filter(predicate).count());
+        assertEquals(9, inputs.stream().filter(predicate).count());
     }
 
     public void testCurlyBracketsAndNegation() {
-        String glob = "{*debug*,*accessibility*,*src*,*demo*}";
+        String glob = "   .*debug.*   .*accessibility.*   .*src.*   .*demo.* ";
         GlobPredicate predicate = new GlobPredicate(glob);
-        assertEquals(3, input.stream().filter(predicate.negate()).count());
+        assertEquals(3, inputs.stream().filter(predicate.negate()).count());
     }
 
 }
