@@ -22,6 +22,9 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 
+import static io.javalin.apibuilder.ApiBuilder.path;
+import static io.javalin.apibuilder.ApiBuilder.get;
+
 public class OToolService {
 
     private static final String ID = "id";
@@ -40,6 +43,9 @@ public class OToolService {
     private static final String JDK_PROJECT = JDK_PROJECTS + CONFIG_ID;
     private static final String JDK_TEST_PROJECTS = "/jdkTestProjects";
     private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
+
+    private static final String MISC = "misc";
+    private static final String REGENERATE_ALL_JOBS = "regenerateAllJobs";
 
     private final int port;
     private final Javalin app;
@@ -64,6 +70,12 @@ public class OToolService {
         };
 
         app.routes(() -> {
+
+            path(MISC, () -> {
+                path(REGENERATE_ALL_JOBS, () -> get(ctx -> {
+                    // TODO: implement
+                }));
+            });
 
             final JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
                     configManager.getJdkTestProjectStorage(),
