@@ -11,6 +11,9 @@ public class GlobPredicate implements Predicate<CharSequence>, java.io.Serializa
     private final List<Pattern> globPatterns;
 
     public GlobPredicate(String globExpr) {
+        if (globExpr == null) {
+            globExpr = "";
+        }
         String[] origs = globExpr.split("\\s+");
         List<Pattern> tofinal = new ArrayList<>(origs.length);
         for (int i = 0; i < origs.length; i++) {
