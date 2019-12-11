@@ -122,8 +122,8 @@ public class KojiJenkinsTest {
         runTest(
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
-                        "x86_64,src",
-                        "fastdebug-f24*",
+                        "x86_64 src",
+                        "fastdebug-f24.*",
                         "",
                         null
                 ),
@@ -141,7 +141,7 @@ public class KojiJenkinsTest {
                 new RealKojiXmlRpcApi(
                         "non-existing-build",
                         "x86_64,src",
-                        "fastdebug-f24*",
+                        "fastdebug-f24.*",
                         "",
                         null
                 ),
@@ -161,9 +161,9 @@ public class KojiJenkinsTest {
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
                         "all",
-                        "*",
+                        ".*",
                         null,
-                        "*.ojfx.*"
+                        ".*\\.ojfx.*"
                 ),
                 shellString,
                 true
@@ -181,9 +181,9 @@ public class KojiJenkinsTest {
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
                         "all",
-                        "*",
-                        "*ex*",
-                        "*ojdk*"
+                        ".*",
+                        ".*ex.*",
+                        ".*ojdk.*"
                 ),
                 shellString,
                 true
