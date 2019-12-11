@@ -141,9 +141,9 @@ public class JenkinsJobTemplateBuilder {
                 .replace(XML_RPC_API, loadTemplate(JenkinsTemplate.KOJI_XML_RPC_API_TEMPLATE))
                 .replace(PACKAGE_NAME, packageName)
                 .replace(ARCH, arch)
-                .replace(TAGS, '{' + String.join(",", tags) + '}')
-                .replace(SUBPACKAGE_BLACKLIST, '{' + String.join(",", subpackageBlacklist) + '}')
-                .replace(SUBPACKAGE_WHITELIST, '{' + String.join(",", subpackageWhitelist) + '}');
+                .replace(TAGS, String.join(" ", tags))
+                .replace(SUBPACKAGE_BLACKLIST, String.join(" ", subpackageBlacklist))
+                .replace(SUBPACKAGE_WHITELIST, String.join(" ", subpackageWhitelist));
         return this;
     }
 
