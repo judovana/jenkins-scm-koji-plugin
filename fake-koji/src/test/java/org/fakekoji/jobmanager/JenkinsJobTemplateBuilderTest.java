@@ -225,7 +225,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.FakeKojiXmlRpcApi\">\n" +
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
-                "            <buildVariants>" + "debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
+                "            <buildVariants>" + "buildPlatform=" + vmPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
                 "            <buildPlatform>src</buildPlatform>\n" +
                 "            <isBuilt>" + false + "</isBuilt>\n" +
                 "        </kojiXmlRpcApi>\n" +
@@ -324,7 +324,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.FakeKojiXmlRpcApi\">\n" +
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
-                "            <buildVariants>" + "debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
+                "            <buildVariants>buildPlatform=" + hwPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
                 "            <buildPlatform>src</buildPlatform>\n" +
                 "            <isBuilt>" + false + "</isBuilt>\n" +
                 "        </kojiXmlRpcApi>\n" +

@@ -11,6 +11,7 @@ import org.fakekoji.model.TaskVariant;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,11 +59,20 @@ public class BuildJob extends TaskJob {
                     .collect(Collectors.joining(".")) + '.' + getPlatform().assembleString());
         }};
 
+        // TODO: do this better
+        final Map<TaskVariant, TaskVariantValue> variants = new HashMap<TaskVariant, TaskVariantValue>() {{
+            putAll(getVariants());
+            put(
+                    new TaskVariant("buildPlatform", "", Task.Type.BUILD, "", 0, Collections.emptyMap()),
+                    new TaskVariantValue(getPlatform().assembleString(), "")
+            );
+        }};
+
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(TASK_JOB_TEMPLATE))
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildFakeKojiXmlRpcApiTemplate(
                         getProjectName(),
-                        getVariants(),
+                        variants,
                         JenkinsJobTemplateBuilder.fillBuildPlatform(getPlatform(), getTask().getFileRequirements()),
                         false
                 )
