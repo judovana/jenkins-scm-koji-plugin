@@ -18,7 +18,7 @@ public class ConfigManager {
     private final static String PRODUCTS = "products";
     private final static String TASK_VARIANTS = "taskVariants";
     private final static String PLATFORMS = "platforms";
-    private final static String PROJECTS = "projects";
+    private final static String PROJECTS = "jdkProjects";
     private final static String JDK_TEST_PROJECTS = "jdkTestProjects";
     private final static String TASKS = "tasks";
 
