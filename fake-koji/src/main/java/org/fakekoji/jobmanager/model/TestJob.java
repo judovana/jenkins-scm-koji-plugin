@@ -131,6 +131,7 @@ public class TestJob extends TaskJob {
                         getPlatform(),
                         getScriptsRoot(),
                         getExportedVariables())
+                .buildTriggerTemplate(getTask().getScmPollSchedule())
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }
@@ -155,6 +156,7 @@ public class TestJob extends TaskJob {
                         getPlatform(),
                         getScriptsRoot(),
                         getExportedVariables())
+                .buildTriggerTemplate(getTask().getScmPollSchedule())
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }

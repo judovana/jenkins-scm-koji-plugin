@@ -5,10 +5,18 @@ import org.fakekoji.model.Product;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.PULL_JOB_TEMPLATE;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.NO_CHANGE_RETURN_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PACKAGE_NAME_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_PATH_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.XML_DECLARATION;
 
 public class PullJob extends Job {
@@ -34,8 +42,16 @@ public class PullJob extends Job {
 
     @Override
     public String generateTemplate() throws IOException {
+        final Map<String, String> exportedVariables = new HashMap<String, String>() {{
+            put(JDK_VERSION_VAR, product.getVersion());
+            put(PACKAGE_NAME_VAR, product.getPackageName());
+            put(PROJECT_NAME_VAR, projectName);
+            put(PROJECT_PATH_VAR, Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString());
+            put(NO_CHANGE_RETURN_VAR, "-1");
+        }};
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(PULL_JOB_TEMPLATE))
-                .buildPullScriptTemplate(projectName, product, repositoriesRoot.getAbsolutePath(), scriptsRoot)
+                .buildPullScriptTemplate(exportedVariables, scriptsRoot)
+                .buildTriggerTemplate("1 1 1 12 *") // run once a year
                 .prettyPrint();
     }
 

@@ -65,6 +65,7 @@ public class JenkinsJobTemplateBuilder {
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
     static final String DESTROY_SCRIPT = "%{DESTROY_SCRIPT}";
     static final String SCM_POLL_SCHEDULE = "%{SCM_POLL_SCHEDULE}";
+    static final String TRIGGER = "%{TRIGGER}";
 
     static final String XML_NEW_LINE = "&#13;";
     static final String XML_APOS = "&apos;";
@@ -82,7 +83,7 @@ public class JenkinsJobTemplateBuilder {
 
     static final String OTOOL_BASH_VAR_PREFIX = "OTOOL_";
     static final String VM_NAME_OR_LOCAL_VAR = "VM_NAME_OR_LOCAL";
-    static final String PROJECT_PATH_VAR = "PROJECT_PATH";
+    public static final String PROJECT_PATH_VAR = "PROJECT_PATH";
     static final String ARCH_VAR = "ARCH";
     public static final String JDK_VERSION_VAR = "JDK_VERSION";
     public static final String OJDK_VAR = "OJDK";
@@ -90,6 +91,7 @@ public class JenkinsJobTemplateBuilder {
     public static final String RELEASE_SUFFIX_VAR = "RELEASE_SUFFIX";
     public static final String PROJECT_NAME_VAR = "PROJECT_NAME";
     public static final String PACKAGE_NAME_VAR = "PACKAGE_NAME";
+    public static final String NO_CHANGE_RETURN_VAR = "NO_CHANGE_RETURN";
     static final String OS_VAR = "OS";
 
     private String template;
@@ -99,19 +101,14 @@ public class JenkinsJobTemplateBuilder {
     }
 
     public JenkinsJobTemplateBuilder buildPullScriptTemplate(
-            String projectName,
-            Product product,
-            String repositoriesRootPath,
-            File scriptsRoot
+            final Map<String, String> exportedVariables,
+            final File scriptsRoot
     ) {
-        final String pullScript = SHEBANG + XML_NEW_LINE +
-                EXPORT + " " + PROJECT_NAME_VAR + XML_APOS + projectName + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + PROJECT_PATH_VAR + XML_APOS + Paths.get(repositoriesRootPath, projectName) + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + JDK_VERSION_VAR + XML_APOS + product.getVersion() + XML_APOS + XML_NEW_LINE +
-                EXPORT + " " + PACKAGE_NAME_VAR + XML_APOS + product.getPackageName() + XML_APOS + XML_NEW_LINE +
-                BASH + " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'";
-
-        template = template.replace(PULL_SCRIPT, pullScript);
+        template = template.replace(
+                PULL_SCRIPT,
+                SHEBANG + XML_NEW_LINE + getExportedVariablesString(exportedVariables) +
+                        BASH + " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'"
+        );
         return this;
     }
 
@@ -182,6 +179,16 @@ public class JenkinsJobTemplateBuilder {
         return String.join(" ", platforms);
     }
 
+    public JenkinsJobTemplateBuilder buildTriggerTemplate(
+            final String scmPollSchedule
+    ) throws IOException {
+        template = template.replace(
+                TRIGGER,
+                loadTemplate(JenkinsTemplate.TRIGGER).replace(SCM_POLL_SCHEDULE, scmPollSchedule)
+        );
+        return this;
+    }
+
     public JenkinsJobTemplateBuilder buildScriptTemplate(
             Task task,
             Platform platform,
@@ -226,16 +233,10 @@ public class JenkinsJobTemplateBuilder {
         exportedVariables.put(ARCH_VAR, platform.getArchitecture());
         template = template
                 .replace(NODES, String.join(" ", nodes))
-                .replace(SCM_POLL_SCHEDULE, task.getScmPollSchedule())
                 .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
                 .replace(TASK_SCRIPT, task.getScript())
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
-                .replace(EXPORTED_VARIABLES, exportedVariables
-                        .entrySet()
-                        .stream()
-                        .map(entry -> EXPORT + ' ' + OTOOL_BASH_VAR_PREFIX + entry.getKey() + '=' + entry.getValue() + XML_NEW_LINE)
-                        .sorted()
-                        .collect(Collectors.joining()));
+                .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables));
         if (!vmName.equals(LOCAL)) {
             return buildVmPostBuildTaskTemplate(platform, scriptsRoot);
         }
@@ -254,6 +255,15 @@ public class JenkinsJobTemplateBuilder {
     public JenkinsJobTemplateBuilder buildPostBuildTasks(String postBuildTasksTemplate) {
         template = template.replace(POST_BUILD_TASKS, postBuildTasksTemplate);
         return this;
+    }
+
+    private String getExportedVariablesString(final Map<String, String> exportedVariables) {
+        return exportedVariables
+                .entrySet()
+                .stream()
+                .map(entry -> EXPORT + ' ' + OTOOL_BASH_VAR_PREFIX + entry.getKey() + '=' + entry.getValue() + XML_NEW_LINE)
+                .sorted()
+                .collect(Collectors.joining());
     }
 
     String getTemplate() {
@@ -294,13 +304,14 @@ public class JenkinsJobTemplateBuilder {
     }
 
     public enum JenkinsTemplate {
-        KOJI_XML_RPC_API_TEMPLATE("koji-xml-rpc-api"),
-        SHELL_SCRIPT_TEMPLATE("shell-script"),
-        FAKEKOJI_XML_RPC_API_TEMPLATE("fakekoji-xml-rpc-api"),
-        BUILD_PROVIDER_TEMPLATE("provider"),
         BUILD_PROVIDERS_TEMPLATE("/providers"),
-        TASK_JOB_TEMPLATE("task-job"),
+        BUILD_PROVIDER_TEMPLATE("provider"),
+        FAKEKOJI_XML_RPC_API_TEMPLATE("fakekoji-xml-rpc-api"),
+        KOJI_XML_RPC_API_TEMPLATE("koji-xml-rpc-api"),
         PULL_JOB_TEMPLATE("pull-job"),
+        SHELL_SCRIPT_TEMPLATE("shell-script"),
+        TASK_JOB_TEMPLATE("task-job"),
+        TRIGGER("trigger"),
         VM_POST_BUILD_TASK_TEMPLATE("vm-post-build-task");
 
         private final String value;

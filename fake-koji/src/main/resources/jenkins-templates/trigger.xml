@@ -1,0 +1,6 @@
+<triggers>
+    <hudson.triggers.SCMTrigger>
+        <spec>%{SCM_POLL_SCHEDULE}</spec>
+        <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+</triggers>

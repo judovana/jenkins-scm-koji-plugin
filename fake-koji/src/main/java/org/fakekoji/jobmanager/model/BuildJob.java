@@ -66,6 +66,7 @@ public class BuildJob extends TaskJob {
                         JenkinsJobTemplateBuilder.fillBuildPlatform(getPlatform(), getTask().getFileRequirements()),
                         false
                 )
+                .buildTriggerTemplate(getTask().getScmPollSchedule())
                 .buildScriptTemplate(getTask(), getPlatform(), getScriptsRoot(), variables)
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
