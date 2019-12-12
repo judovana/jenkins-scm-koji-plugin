@@ -979,7 +979,7 @@ public class DataGenerator {
         final File buildProviders = Paths.get(root, "buildProviders").toFile();
         final File platformProviders = Paths.get(root, "platformProviders").toFile();
         final File taskVariantCategories = Paths.get(root, "taskVariants").toFile();
-        final File jdkProjects = Paths.get(root, "projects").toFile();
+        final File jdkProjects = Paths.get(root, "jdkProjects").toFile();
         final File jdkTestProjects = Paths.get(root, "jdkTestProjects").toFile();
 
         final List<File> configFiles = Arrays.asList(
