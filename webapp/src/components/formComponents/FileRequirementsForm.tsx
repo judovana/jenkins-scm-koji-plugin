@@ -1,43 +1,48 @@
 import React from "react"
 import { FormControl, FormLabel, FormGroup } from "@material-ui/core"
+import { useObserver } from "mobx-react"
 
 import Checkbox from "./Checkbox"
 import Select from "./Select"
 
-import { FileRequirements } from "../../stores/model"
+import { FileRequirements, BinaryRequirement } from "../../stores/model"
 
 interface Props {
     fileRequirements: FileRequirements
-    onBinaryChange: (value: string) => void
-    onSourcesChange: (value: boolean) => void
 }
 
 const FileRequirementsForm: React.FunctionComponent<Props> = (props) => {
 
-    const {
-        fileRequirements,
-        onBinaryChange,
-        onSourcesChange
-    } = props
+    return useObserver(() => {
+        const { fileRequirements } = props
 
-    return (
-        <FormControl margin="normal">
-            <FormLabel>
-                file requirements
+        const onBinaryChange = (value: string) => {
+            fileRequirements.binary = value as BinaryRequirement
+        }
+
+        const onSourcesChange = (value: boolean) => {
+            fileRequirements.source = value
+        }
+
+        return (
+            <FormControl margin="normal">
+                <FormLabel>
+                    file requirements
             </FormLabel>
-            <FormGroup>
-                <Checkbox
-                    label="require sources"
-                    onChange={onSourcesChange}
-                    value={fileRequirements.source} />
-                <Select
-                    label={"binary requirements"}
-                    onChange={onBinaryChange}
-                    options={["BINARY", "BINARIES"]}
-                    value={fileRequirements.binary} />
-            </FormGroup>
-        </FormControl>
-    )
+                <FormGroup>
+                    <Checkbox
+                        label="require sources"
+                        onChange={onSourcesChange}
+                        value={fileRequirements.source} />
+                    <Select
+                        label={"binary requirements"}
+                        onChange={onBinaryChange}
+                        options={["BINARY", "BINARIES"]}
+                        value={fileRequirements.binary} />
+                </FormGroup>
+            </FormControl>
+        )
+    })
 }
 
 export default FileRequirementsForm

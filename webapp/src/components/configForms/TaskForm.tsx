@@ -143,9 +143,7 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                     limitation={productLimitation}
                     items={configStore.products} />
                 <FileRequirementsForm
-                    fileRequirements={fileRequirements}
-                    onBinaryChange={onBinaryChange}
-                    onSourcesChange={onSourcesChange} />
+                    fileRequirements={fileRequirements} />
                 <TextArea
                     label={"xml template"}
                     onChange={onXmlTemplateChange}
