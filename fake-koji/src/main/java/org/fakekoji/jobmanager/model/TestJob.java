@@ -185,7 +185,7 @@ public class TestJob extends TaskJob {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return String.join(
                 Job.DELIMITER,
                 Arrays.asList(
@@ -204,6 +204,11 @@ public class TestJob extends TaskJob {
                                 .collect(Collectors.joining(Job.DELIMITER))
                 )
         );
+    }
+
+    @Override
+    public String getShortName() {
+        return null;
     }
 
     @Override

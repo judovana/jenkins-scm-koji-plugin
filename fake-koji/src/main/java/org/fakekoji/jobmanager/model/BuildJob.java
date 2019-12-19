@@ -83,7 +83,7 @@ public class BuildJob extends TaskJob {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return String.join(
                 Job.DELIMITER,
                 Arrays.asList(
@@ -97,5 +97,10 @@ public class BuildJob extends TaskJob {
                                 .collect(Collectors.joining(Job.DELIMITER))
                 )
         );
+    }
+
+    @Override
+    public String getShortName() {
+        return null;
     }
 }

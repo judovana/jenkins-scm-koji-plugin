@@ -66,7 +66,7 @@ public class PullJob extends Job {
     }
 
     @Override
-    public String toString() {
+    public String getName() {
         return String.join(
                 Job.DELIMITER,
                 Arrays.asList(
@@ -75,5 +75,10 @@ public class PullJob extends Job {
                         projectName
                 )
         );
+    }
+
+    @Override
+    public String getShortName() {
+        return null;
     }
 }

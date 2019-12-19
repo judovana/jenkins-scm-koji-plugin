@@ -21,6 +21,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -92,6 +93,9 @@ public class JenkinsJobTemplateBuilder {
     public static final String PROJECT_NAME_VAR = "PROJECT_NAME";
     public static final String PACKAGE_NAME_VAR = "PACKAGE_NAME";
     public static final String NO_CHANGE_RETURN_VAR = "NO_CHANGE_RETURN";
+    static final String JOB_NAME = "JOB_NAME";
+    //this name is used to creation of VM name, which vagrant enforces to 60 chars
+    static final String JOB_NAME_SHORTENED = "JOB_NAME_SHORTENED";
     static final String OS_VAR = "OS";
 
     private String template;
@@ -229,6 +233,8 @@ public class JenkinsJobTemplateBuilder {
         }
         exportedVariables.put(PLATFORM_PROVIDER_VAR, platform.getProvider());
         exportedVariables.put(VM_NAME_OR_LOCAL_VAR, vmName);
+//        exportedVariables.put(JOB_NAME, );
+//        exportedVariables.put(JOB_NAME_SHORTENED, shortenName());
         exportedVariables.put(OS_VAR, platform.getOs() + '.' + platform.getVersion());
         exportedVariables.put(ARCH_VAR, platform.getArchitecture());
         template = template
