@@ -1,9 +1,9 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.Utils;
+import org.fakekoji.jobmanager.model.NamesProvider;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class JenkinsJobTemplateBuilder {
 
@@ -99,9 +98,11 @@ public class JenkinsJobTemplateBuilder {
     static final String OS_VAR = "OS";
 
     private String template;
+    private final NamesProvider job;
 
-    public JenkinsJobTemplateBuilder(String template) {
+    public JenkinsJobTemplateBuilder(String template, NamesProvider job) {
         this.template = template;
+        this.job = job;
     }
 
     public JenkinsJobTemplateBuilder buildPullScriptTemplate(
@@ -233,8 +234,14 @@ public class JenkinsJobTemplateBuilder {
         }
         exportedVariables.put(PLATFORM_PROVIDER_VAR, platform.getProvider());
         exportedVariables.put(VM_NAME_OR_LOCAL_VAR, vmName);
-//        exportedVariables.put(JOB_NAME, );
-//        exportedVariables.put(JOB_NAME_SHORTENED, shortenName());
+        if (job != null) {
+            if (job.getName() != null) {
+                exportedVariables.put(JOB_NAME, job.getName());
+            }
+            if (job.getShortName() != null) {
+                exportedVariables.put(JOB_NAME_SHORTENED, job.getShortName());
+            }
+        }
         exportedVariables.put(OS_VAR, platform.getOs() + '.' + platform.getVersion());
         exportedVariables.put(ARCH_VAR, platform.getArchitecture());
         template = template

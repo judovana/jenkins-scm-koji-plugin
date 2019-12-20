@@ -118,7 +118,7 @@ public class TestJob extends TaskJob {
     }
 
     private String generateOToolTemplate() throws IOException {
-        return XML_DECLARATION + new JenkinsJobTemplateBuilder(loadTemplate(TASK_JOB_TEMPLATE))
+        return XML_DECLARATION + new JenkinsJobTemplateBuilder(loadTemplate(TASK_JOB_TEMPLATE), this)
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildFakeKojiXmlRpcApiTemplate(
                         getProjectName(),
@@ -138,7 +138,7 @@ public class TestJob extends TaskJob {
 
     private String generateKojiTemplate() throws IOException {
 
-        return XML_DECLARATION + new JenkinsJobTemplateBuilder(loadTemplate(TASK_JOB_TEMPLATE))
+        return XML_DECLARATION + new JenkinsJobTemplateBuilder(loadTemplate(TASK_JOB_TEMPLATE), this)
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildKojiXmlRpcApiTemplate(
                         getProduct().getPackageName(),

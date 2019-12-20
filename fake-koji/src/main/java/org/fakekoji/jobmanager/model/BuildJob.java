@@ -68,7 +68,7 @@ public class BuildJob extends TaskJob {
             );
         }};
 
-        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(TASK_JOB_TEMPLATE))
+        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(TASK_JOB_TEMPLATE), this)
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildFakeKojiXmlRpcApiTemplate(
                         getProjectName(),

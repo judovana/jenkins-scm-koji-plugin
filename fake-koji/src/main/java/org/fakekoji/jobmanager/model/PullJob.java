@@ -49,7 +49,7 @@ public class PullJob extends Job {
             put(PROJECT_PATH_VAR, Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString());
             put(NO_CHANGE_RETURN_VAR, "-1");
         }};
-        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(PULL_JOB_TEMPLATE))
+        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(PULL_JOB_TEMPLATE), this)
                 .buildPullScriptTemplate(exportedVariables, scriptsRoot)
                 .buildTriggerTemplate("1 1 1 12 *") // run once a year
                 .prettyPrint();

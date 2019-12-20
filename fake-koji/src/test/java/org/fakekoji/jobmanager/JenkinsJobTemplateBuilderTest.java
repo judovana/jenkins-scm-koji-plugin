@@ -2,6 +2,7 @@ package org.fakekoji.jobmanager;
 
 import org.fakekoji.DataGenerator;
 import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.model.NamesProvider;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TestJob;
@@ -66,6 +67,21 @@ public class JenkinsJobTemplateBuilderTest {
         scriptsRoot = temporaryFolder.newFolder("scripts");
     }
 
+    public static final String SHRT_NM = "ShrtNm";
+    public static final String LONG_NAME = "Long-Name";
+
+    private static final NamesProvider dummyNamesProvider = new NamesProvider() {
+        @Override
+        public String getName() {
+            return LONG_NAME;
+        }
+
+        @Override
+        public String getShortName() {
+            return SHRT_NM;
+        }
+    };
+
     private static final String BUILD_PROVIDERS_TEMPLATE = "        <kojiBuildProviders class=\"list\">\n" +
             "            <hudson.plugins.scm.koji.KojiBuildProvider>\n" +
             "                <buildProvider>\n" +
@@ -104,7 +120,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    </hudson.plugins.scm.koji.KojiBuildProvider>\n" +
                 "</kojiBuildProviders>\n";
 
-        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.BUILD_PROVIDERS)
+        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.BUILD_PROVIDERS, dummyNamesProvider)
                 .buildBuildProvidersTemplate(buildProviders).prettyPrint();
 
         Assert.assertEquals(expectedTemplate, actualTemplate);
@@ -125,7 +141,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <subpackageWhitelist>c d</subpackageWhitelist>\n" +
                 "</kojiXmlRpcApi>\n";
 
-        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE))
+        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
                 .buildKojiXmlRpcApiTemplate(
                         jdk8.getPackageName(),
                         vmPlatform.getArchitecture(),
@@ -153,7 +169,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <isBuilt>false</isBuilt>\n" +
                 "</kojiXmlRpcApi>\n";
 
-        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(FAKEKOJI_XML_RPC_API_TEMPLATE))
+        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(FAKEKOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
                 .buildFakeKojiXmlRpcApiTemplate(
                         PROJECT_NAME,
                         buildVariants,
@@ -185,7 +201,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    </tasks>\n" +
                 "</hudson.plugins.postbuildtask.PostbuildTask>\n";
 
-        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(VM_POST_BUILD_TASK_TEMPLATE))
+        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(VM_POST_BUILD_TASK_TEMPLATE), dummyNamesProvider)
                 .buildVmPostBuildTaskTemplate(vmPlatform, scriptsRoot).prettyPrint();
 
         Assert.assertEquals(expectedTemplate, actualTemplate);
@@ -225,7 +241,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.FakeKojiXmlRpcApi\">\n" +
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
-                "            <buildVariants>" + "buildPlatform=" + vmPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
+                "            <buildVariants>" + "buildPlatform=" + vmPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId()
+                + "</buildVariants>\n" +
                 "            <buildPlatform>src</buildPlatform>\n" +
                 "            <isBuilt>" + false + "</isBuilt>\n" +
                 "        </kojiXmlRpcApi>\n" +
@@ -252,6 +269,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + vmPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=build-jdk8-projectName-el7.x86_64.vagrant-release-hotspot" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + vmPlatform.getOs() + '.' + vmPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -277,7 +295,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName() + "&#13;</script>\n" +
+                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName()
+                + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
                 "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
@@ -324,7 +343,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.FakeKojiXmlRpcApi\">\n" +
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
-                "            <buildVariants>buildPlatform=" + hwPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
+                "            <buildVariants>buildPlatform=" + hwPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId()
+                + "</buildVariants>\n" +
                 "            <buildPlatform>src</buildPlatform>\n" +
                 "            <isBuilt>" + false + "</isBuilt>\n" +
                 "        </kojiXmlRpcApi>\n" +
@@ -351,6 +371,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + hwPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=build-jdk8-projectName-el7.aarch64.vagrant-release-hotspot" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + hwPlatform.getOs() + '.' + hwPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -442,6 +463,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.aarch64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -535,6 +557,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -562,7 +585,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName() + "&#13;</script>\n" + "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
+                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                + "&#13;</script>\n" + "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
                 "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
                 DataGenerator.TEST_POST_BUILD_TASK +
@@ -642,6 +666,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=jtreg-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -669,7 +694,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName() + "&#13;</script>\n" +
+                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
                 "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
@@ -750,6 +776,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -777,7 +804,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName() + "&#13;</script>\n" +
+                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
                 "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
@@ -945,6 +973,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "#!/bin/bash&#13;\n" +
                         "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                         "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME=tck-jdk8-testProject-el7.x86_64--el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
                         "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                         "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                         "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -969,7 +998,8 @@ public class JenkinsJobTemplateBuilderTest {
                         "                    </logTexts>\n" +
                         "                    <EscalateStatus>true</EscalateStatus>\n" +
                         "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                        "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName() + "&#13;</script>\n" +
+                        "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                        + "&#13;</script>\n" +
                         "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                         "            </tasks>\n" +
                         "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
