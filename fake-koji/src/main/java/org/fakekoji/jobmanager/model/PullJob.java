@@ -79,6 +79,11 @@ public class PullJob extends Job {
 
     @Override
     public String getShortName() {
-        return null;
+        String fullName = getName();
+        if (fullName.length() < MAX_JOBNAME_LENGTH) {
+            return fullName;
+        } else {
+            throw new RuntimeException("pull job name can not be shortened!");
+        }
     }
 }

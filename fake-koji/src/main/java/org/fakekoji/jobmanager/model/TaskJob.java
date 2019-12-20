@@ -92,7 +92,7 @@ public abstract class TaskJob extends Job {
     }
 
     Map<String, String> getExportedVariables() {
-        return new HashMap<String, String>(){{
+        return new HashMap<String, String>() {{
             put(JDK_VERSION_VAR, product.getVersion());
             put(OJDK_VAR, 'o' + product.getId());
             put(PACKAGE_NAME_VAR, product.getPackageName());
