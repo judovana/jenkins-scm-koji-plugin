@@ -67,14 +67,14 @@ public class PullJob extends Job {
 
     @Override
     public String getName() {
-        return String.join(
+        return Job.sanitizeNames(String.join(
                 Job.DELIMITER,
                 Arrays.asList(
                         PULL,
                         product.getId(),
                         projectName
                 )
-        );
+        ));
     }
 
     @Override

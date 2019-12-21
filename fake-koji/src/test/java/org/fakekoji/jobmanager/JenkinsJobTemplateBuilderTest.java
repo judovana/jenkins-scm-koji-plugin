@@ -979,8 +979,8 @@ public class JenkinsJobTemplateBuilderTest {
                         "#!/bin/bash&#13;\n" +
                         "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                         "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                        "export OTOOL_JOB_NAME=tck-jdk8-testProject-el7.x86_64--el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                        "export OTOOL_JOB_NAME_SHORTENED=tck-testProject--el7.x86_64.vagrant-sw-9e6771a1fc91ac8da1d40" + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME=tck-jdk8-testProject-el7.x86_64-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME_SHORTENED=tck-testProject-el7.x86_64.vagrant-sw-65afe90eebb7a75baca447" + XML_NEW_LINE +
                         "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                         "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                         "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +

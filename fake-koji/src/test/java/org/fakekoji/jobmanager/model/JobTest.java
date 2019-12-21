@@ -64,14 +64,24 @@ public class JobTest {
     public void testFirstLetterAcceptNothing() throws Exception {
         Assert.assertEquals("", Job.firstLetter(null));
         Assert.assertEquals("", Job.firstLetter(""));
-        Assert.assertEquals("", Job.firstLetter("     "));;
+        Assert.assertEquals("", Job.firstLetter("     "));
+        ;
     }
 
     @Test
     public void testFirstLetterWorks() throws Exception {
         Assert.assertEquals("a", Job.firstLetter("a"));
         Assert.assertEquals("a", Job.firstLetter("ab"));
-        Assert.assertEquals("c", Job.firstLetter("    cde "));;
+        Assert.assertEquals("c", Job.firstLetter("    cde "));
+        ;
+    }
+
+    @Test
+    public void testSanitize() throws Exception {
+        Assert.assertEquals("a-b", Job.sanitizeNames("a-b"));
+        Assert.assertEquals("a-b", Job.sanitizeNames("a--b"));
+        Assert.assertEquals("    -c-d-e- ", Job.sanitizeNames("    -c-d---e-- "));
+        ;
     }
 
 }

@@ -42,7 +42,7 @@ public abstract class Job implements NamesProvider {
             } else {
                 return fullOutput.substring(fullOutput.length() - maxLength);
             }
-        }catch (NoSuchAlgorithmException ex){
+        } catch (NoSuchAlgorithmException ex) {
             //impossible
             throw new RuntimeException(ex);
         }
@@ -61,6 +61,20 @@ public abstract class Job implements NamesProvider {
             return "";
         } else {
             return n.trim().substring(0, 1);
+        }
+    }
+
+    /**
+     * In case of test-only jobs, there can appear double delimtier
+     *
+     * @param n
+     * @return
+     */
+    public static String sanitizeNames(String n) {
+        if (n.contains(DELIMITER + DELIMITER)) {
+            return n.replaceAll(DELIMITER + "+", DELIMITER);
+        } else {
+            return n;
         }
     }
 

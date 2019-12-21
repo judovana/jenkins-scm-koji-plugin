@@ -186,7 +186,7 @@ public class TestJob extends TaskJob {
 
     @Override
     public String getName() {
-        return String.join(
+        return Job.sanitizeNames(String.join(
                 Job.DELIMITER,
                 Arrays.asList(
                         getTask().getId(),
@@ -203,7 +203,7 @@ public class TestJob extends TaskJob {
                                 .map(entry -> entry.getValue().getId())
                                 .collect(Collectors.joining(Job.DELIMITER))
                 )
-        );
+        ));
     }
 
     @Override
@@ -217,7 +217,7 @@ public class TestJob extends TaskJob {
             //TODO extract all but this header creation
             //in test, we should care only about length
             //will be fun to set up project
-            String header =  String.join(
+            String header =  Job.sanitizeNames(String.join(
                     Job.DELIMITER,
                     Arrays.asList(
                             getTask().getId(),
@@ -232,7 +232,7 @@ public class TestJob extends TaskJob {
                                     .map(entry -> Job.firstLetter(entry.getValue().getId()))
                                     .collect(Collectors.joining(""))
                     )
-            );
+            ));
             if (header.length() >= Job.MAX_JOBNAME_LENGTH - DELIMITER.length()) {
                 return Job.truncatedSha(fullName, Job.MAX_JOBNAME_LENGTH);
             }
