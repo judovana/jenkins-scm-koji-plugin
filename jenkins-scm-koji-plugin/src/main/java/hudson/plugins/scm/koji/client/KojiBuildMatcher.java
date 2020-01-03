@@ -139,8 +139,6 @@ class KojiBuildMatcher extends BuildMatcher {
      * here so we can store it.
      */
     private List<RPM> retrieveArchives(Build build) {
-        final List<String> supportedArches = new ArrayList<>(1);
-        supportedArches.add("win");
         final XmlRpcRequestParams params = new ListArchives(build.getId(), null);
         final ArchiveList response = ArchiveList.create(execute(build.getProvider().getTopUrl(), params));
         final List<String> archivefilenames = response.getValue();
@@ -148,17 +146,54 @@ class KojiBuildMatcher extends BuildMatcher {
             return Collections.emptyList();
         }
         final List<RPM> archives = new ArrayList<>(archivefilenames.size());
-        for (String archiveName : archivefilenames) {
-            for (String arch : archs) {
-                if (supportedArches.contains(arch)) {
+        if (isBuildContainer(build)) {
+            //for contaiers, we use different approach(because they havee arch in name only), we list all the archives, and include only those of arch (all if no arch is specified)
+            //luckily for us, they are mess.arch.tar.gz
+            if (archs == null || archs.isEmpty()) {
+                for (String archiveName : archivefilenames) {
                     archives.add(new RPM(
                             build.getName(),
                             build.getVersion(),
                             build.getRelease(),
                             archiveName,
-                            arch,
+                            /*Is this necessary at all?*/ deductArchFromImage(archiveName),
                             archiveName
                     ));
+                }
+            } else {
+                for (String archiveName : archivefilenames) {
+                    for (String arch : archs) {
+                        if (archiveName.contains("." + arch + ".")) {
+                            archives.add(new RPM(
+                                    build.getName(),
+                                    build.getVersion(),
+                                    build.getRelease(),
+                                    archiveName,
+                                    arch,
+                                    archiveName
+                            ));
+                        }
+                    }
+                }
+            }
+        } else {
+            final List<String> supportedArches = new ArrayList<>(1);
+            supportedArches.add("win");
+            for (String archiveName : archivefilenames) {
+                //warning! this do not support empty arches  field!
+                //and windows archives are arcehd in the xml response
+                //to list all, similar hack like in containers wouldbeneeded
+                for (String arch : archs) {
+                    if (supportedArches.contains(arch)) {
+                        archives.add(new RPM(
+                                build.getName(),
+                                build.getVersion(),
+                                build.getRelease(),
+                                archiveName,
+                                arch,
+                                archiveName
+                        ));
+                    }
                 }
             }
         }
@@ -179,5 +214,18 @@ class KojiBuildMatcher extends BuildMatcher {
             }
         }
         return list;
+    }
+
+    public static boolean isRpmContainer(RPM rpm) {
+        return rpm.getName().contains("container") && rpm.getFilename("").contains("docker-image");
+    }
+
+    public static boolean isBuildContainer(Build b) {
+        //we do not know the rpms/archives in time of checking this
+        return b.getName().contains("container");
+    }
+
+    private String deductArchFromImage(String archiveName) {
+        return archiveName.replaceAll("\\.tar.*", "").replaceAll(".*\\.", "");
     }
 }
