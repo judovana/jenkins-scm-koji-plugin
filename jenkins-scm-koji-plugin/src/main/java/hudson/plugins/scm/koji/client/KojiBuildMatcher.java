@@ -150,54 +150,66 @@ class KojiBuildMatcher extends BuildMatcher {
             //for contaiers, we use different approach(because they havee arch in name only), we list all the archives, and include only those of arch (all if no arch is specified)
             //luckily for us, they are mess.arch.tar.gz
             if (archs == null || archs.isEmpty()) {
-                for (String archiveName : archivefilenames) {
+                addAllContainerArchives(archivefilenames, archives, build);
+            } else {
+                addSelectedArchesContainers(archivefilenames, archives, build);
+            }
+        } else {
+            addWindowsArchives(archivefilenames, archives, build);
+        }
+        return archives;
+    }
+
+    private void addWindowsArchives(final List<String> archivefilenames, final List<RPM> archives, Build build) {
+        final List<String> supportedArches = new ArrayList<>(1);
+        supportedArches.add("win");
+        for (String archiveName : archivefilenames) {
+            //warning! this do not support empty arches  field!
+            //and windows archives are arcehd in the xml response
+            //to list all, similar hack like in containers wouldbeneeded
+            for (String arch : archs) {
+                if (supportedArches.contains(arch)) {
                     archives.add(new RPM(
                             build.getName(),
                             build.getVersion(),
                             build.getRelease(),
                             archiveName,
-                            /*Is this necessary at all?*/ deductArchFromImage(archiveName),
+                            arch,
                             archiveName
                     ));
                 }
-            } else {
-                for (String archiveName : archivefilenames) {
-                    for (String arch : archs) {
-                        if (archiveName.contains("." + arch + ".")) {
-                            archives.add(new RPM(
-                                    build.getName(),
-                                    build.getVersion(),
-                                    build.getRelease(),
-                                    archiveName,
-                                    arch,
-                                    archiveName
-                            ));
-                        }
-                    }
-                }
             }
-        } else {
-            final List<String> supportedArches = new ArrayList<>(1);
-            supportedArches.add("win");
-            for (String archiveName : archivefilenames) {
-                //warning! this do not support empty arches  field!
-                //and windows archives are arcehd in the xml response
-                //to list all, similar hack like in containers wouldbeneeded
-                for (String arch : archs) {
-                    if (supportedArches.contains(arch)) {
-                        archives.add(new RPM(
-                                build.getName(),
-                                build.getVersion(),
-                                build.getRelease(),
-                                archiveName,
-                                arch,
-                                archiveName
-                        ));
-                    }
+        }
+    }
+
+    private void addSelectedArchesContainers(final List<String> archivefilenames, final List<RPM> archives, Build build) {
+        for (String archiveName : archivefilenames) {
+            for (String arch : archs) {
+                if (archiveName.contains("." + arch + ".")) {
+                    archives.add(new RPM(
+                            build.getName(),
+                            build.getVersion(),
+                            build.getRelease(),
+                            archiveName,
+                            arch,
+                            archiveName
+                    ));
                 }
             }
         }
-        return archives;
+    }
+
+    private void addAllContainerArchives(final List<String> archivefilenames, final List<RPM> archives, Build build) {
+        for (String archiveName : archivefilenames) {
+            archives.add(new RPM(
+                    build.getName(),
+                    build.getVersion(),
+                    build.getRelease(),
+                    archiveName,
+                    /*Is this necessary at all?*/ deductArchFromImage(archiveName),
+                    archiveName
+            ));
+        }
     }
 
     private static List<String> composeArchList(String arch) {
