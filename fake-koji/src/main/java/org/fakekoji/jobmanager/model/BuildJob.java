@@ -43,7 +43,7 @@ public class BuildJob extends TaskJob {
     @Override
     public String generateTemplate() throws IOException {
         final Product product = getProduct();
-        final Map<String, String> variables = new HashMap<String, String>(){{
+        final Map<String, String> variables = new HashMap<String, String>() {{
             put(JDK_VERSION_VAR, product.getVersion());
             put(OJDK_VAR, 'o' + product.getId());
             put(PACKAGE_NAME_VAR, product.getPackageName());
@@ -68,7 +68,7 @@ public class BuildJob extends TaskJob {
             );
         }};
 
-        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(TASK_JOB_TEMPLATE))
+        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(TASK_JOB_TEMPLATE), this)
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildFakeKojiXmlRpcApiTemplate(
                         getProjectName(),
@@ -83,8 +83,8 @@ public class BuildJob extends TaskJob {
     }
 
     @Override
-    public String toString() {
-        return String.join(
+    public String getName() {
+        return Job.sanitizeNames(String.join(
                 Job.DELIMITER,
                 Arrays.asList(
                         getTask().getId(),
@@ -96,6 +96,37 @@ public class BuildJob extends TaskJob {
                                 .map(entry -> entry.getValue().getId())
                                 .collect(Collectors.joining(Job.DELIMITER))
                 )
-        );
+        ));
+    }
+
+    @Override
+    public String getShortName() {
+        String fullName = getName();
+        if (fullName.length() < MAX_JOBNAME_LENGTH) {
+            return fullName;
+        } else {
+            //this is not same as in etName
+            //something is missing and something is shortened
+            //TODO extract all but this header creation
+            //in test, we should care only about length
+            //will be fun to set up project
+            String header = sanitizeNames(String.join(
+                    Job.DELIMITER,
+                    Arrays.asList(
+                            getTask().getId(),
+                            getProjectName(),
+                            getPlatform().getId(),
+                            getVariants().entrySet().stream()
+                                    .sorted(Comparator.comparing(Map.Entry::getKey))
+                                    .map(entry -> Job.firstLetter(entry.getValue().getId()))
+                                    .collect(Collectors.joining(""))
+                    )
+            ));
+            if (header.length() >= Job.MAX_JOBNAME_LENGTH - DELIMITER.length()) {
+                return Job.truncatedSha(fullName, Job.MAX_JOBNAME_LENGTH);
+            }
+            String tail = Job.truncatedSha(fullName, Job.MAX_JOBNAME_LENGTH - header.length() - DELIMITER.length());
+            return header + Job.DELIMITER + tail;
+        }
     }
 }
