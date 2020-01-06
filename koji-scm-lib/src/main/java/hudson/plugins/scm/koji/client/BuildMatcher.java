@@ -53,7 +53,7 @@ import java.util.function.Predicate;
 
 public class BuildMatcher {
 
-    public enum OrderBy {
+public enum OrderBy {
         DATE, VERSION
     }
 
@@ -170,16 +170,50 @@ public class BuildMatcher {
      */
     private List<RPM> retrieveArchives(Build build) {
         final List<String> desiredArches = composeArchesList();
-        final List<String> supportedArches = new ArrayList<>(1);
-        supportedArches.add("win");
         final XmlRpcRequestParams params = new ListArchives(build.getId(), null);
         final ArchiveList response = ArchiveList.create(execute(params));
         final List<String> archivefilenames = response.getValue();
         if (archivefilenames == null || archivefilenames.isEmpty()) {
-        	return Collections.emptyList();
-		}
+            return Collections.emptyList();
+        }
         final List<RPM> archives = new ArrayList<>(archivefilenames.size());
-        for (String archiveName : archivefilenames) {
+        if (isBuildContainer(build)) {
+            //for contaiers, we use different approach(because they havee arch in name only), we list all the archives, and include only those of arch (all if no arch is specified)
+            //luckily for us, they are mess.arch.tar.gz
+            if (desiredArches == null) {
+                for (String archiveName : archivefilenames) {
+                    archives.add(new RPM(
+                            build.getName(),
+                            build.getVersion(),
+                            build.getRelease(),
+                            archiveName,
+                            /*Is this necessary at all?*/deductArchFromImage(archiveName),
+                            archiveName
+                    ));
+                }
+            } else {
+                for (String archiveName : archivefilenames) {
+                    for (String arch : desiredArches) {
+                        if (archiveName.contains("." + arch + ".")) {
+                            archives.add(new RPM(
+                                    build.getName(),
+                                    build.getVersion(),
+                                    build.getRelease(),
+                                    archiveName,
+                                    arch,
+                                    archiveName
+                            ));
+                        }
+                    }
+                }
+            }
+        } else {
+            final List<String> supportedArches = new ArrayList<>(1);
+            supportedArches.add("win");
+            for (String archiveName : archivefilenames) {
+                        //warning! this do not support empty arches  field!
+                        //and windows archives are arcehd in the xml response
+                        //to list all, similar hack like in containers wouldbeneeded
 			for (String arch : desiredArches) {
 				if (supportedArches.contains(arch)) {
 					archives.add(new RPM(
@@ -193,6 +227,7 @@ public class BuildMatcher {
 				}
 			}
 		}
+        }
         return archives;
     }
 
@@ -289,5 +324,19 @@ public class BuildMatcher {
             }
         }
         return true;
+    }
+    
+    
+    public static boolean isRpmContainer(RPM rpm) {
+        return rpm.getName().contains("container") && rpm.getFilename("").contains("docker-image");
+    }
+
+    public static boolean isBuildContainer(Build b) {
+        //we do not know the rpms/archives in time of checking this
+        return b.getName().contains("container");
+    }
+
+  private String deductArchFromImage(String archiveName) {
+        return archiveName.replaceAll("\\.tar.*", "").replaceAll(".*\\.", "");
     }
 }

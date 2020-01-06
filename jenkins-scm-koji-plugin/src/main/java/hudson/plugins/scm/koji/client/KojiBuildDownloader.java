@@ -1,9 +1,7 @@
 package hudson.plugins.scm.koji.client;
 
 import hudson.FilePath;
-import hudson.model.Job;
 import hudson.model.TaskListener;
-import hudson.plugins.scm.koji.BuildsSerializer;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.KojiBuildDownloadResult;
 import hudson.plugins.scm.koji.model.KojiScmConfig;
@@ -24,7 +22,6 @@ import java.util.Date;
 
 import org.jenkinsci.remoting.RoleChecker;
 
-import static hudson.plugins.scm.koji.Constants.BUILD_XML;
 
 
 import org.slf4j.Logger;
@@ -281,7 +278,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         sb.append(build.getName()).append('/')
         .append(build.getVersion()).append('/')
         .append(build.getRelease()).append('/')
-        .append(rpm.getArch()).append('/')
+        .append(addArch(rpm)).append('/')
         .append(rpm.getFilename(suffix));
         return sb.toString();
     }
@@ -392,4 +389,16 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             huc.disconnect();
         }
     }
+
+    private static String addArch(RPM rpm) {
+        //it may happen. that this will be necessary to be configurable in koji plugin
+        //is container checkbox?
+        if (BuildMatcher.isRpmContainer(rpm)) {
+            return "images";
+        } else {
+            return rpm.getArch();
+        }
+    }
+
+
 }
