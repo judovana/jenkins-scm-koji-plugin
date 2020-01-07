@@ -10,10 +10,9 @@ import hudson.remoting.VirtualChannel;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.File;
-import java.util.Optional;
 import java.util.function.Predicate;
 
-public class KojiListBuilds implements FilePath.FileCallable<Optional<Build>> {
+public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
     private final Iterable<KojiBuildProvider> kojiBuildProviders;
     private final KojiXmlRpcApi kojiXmlRpcApi;
@@ -33,7 +32,7 @@ public class KojiListBuilds implements FilePath.FileCallable<Optional<Build>> {
     }
 
     @Override
-    public Optional<Build> invoke(File workspace, VirtualChannel channel) {
+    public Build invoke(File workspace, VirtualChannel channel) {
         final BuildMatcher buildMatcher;
 
         if (kojiXmlRpcApi instanceof RealKojiXmlRpcApi) {
@@ -55,7 +54,9 @@ public class KojiListBuilds implements FilePath.FileCallable<Optional<Build>> {
             throw new RuntimeException("Unknown XML-RPC API: " + kojiXmlRpcApi.getDescriptor().getDisplayName());
         }
 
-        return buildMatcher.getBuild();
+        // so I understand that jenkins serializes return value of this function on slave machines and since Optional
+        // is not Serializable, it would always throw an error, so we need to unwrap it here before returning it
+        return buildMatcher.getBuild().orElse(null);
     }
 
     @Override

@@ -81,17 +81,17 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     @Override
     public KojiBuildDownloadResult invoke(File workspace, VirtualChannel channel) throws IOException, InterruptedException {
         if (build == null) {
-            final Optional<Build> buildOptional = new KojiListBuilds(
+            final Build build = new KojiListBuilds(
                     kojiBuildProviders,
                     kojiXmlRpcApi,
                     notProcessedNvrPredicate,
                     maxPreviousBuilds
             ).invoke(workspace, channel);
-            if (!buildOptional.isPresent()) {
+            if (build == null) {
                 // if we are here - no remote changes on first build, exiting:
                 return null;
             }
-            build = buildOptional.get();
+            this.build = build;
         }
         // we got the build info in workspace, downloading:
         File targetDir = workspace;
