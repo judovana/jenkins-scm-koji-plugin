@@ -1,6 +1,6 @@
 import React from "react";
 import { useObserver, useLocalStore } from "mobx-react"
-import { Task, TaskType, MachinePreference, BinaryRequirement, Item } from "../../stores/model"
+import { Task, TaskType, MachinePreference, Item } from "../../stores/model"
 import LimitationForm from "../formComponents/LimitationForm"
 import TextInput from "../formComponents/TextInput"
 import TextArea from "../formComponents/TextArea"
@@ -82,16 +82,8 @@ const TaskForm: React.FC<TaskFormProps> = props => {
         task.machinePreference = value as MachinePreference
     }
 
-    const onSourcesChange = (value: boolean) => {
-        task.fileRequirements.source = value
-    }
-
     const onScriptChange = (value: string) => {
         task.script = value
-    }
-
-    const onBinaryChange = (value: string) => {
-        task.fileRequirements.binary = value as BinaryRequirement
     }
 
     const onXmlTemplateChange = (value: string) => {
