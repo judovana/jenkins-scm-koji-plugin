@@ -23,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.function.Predicate;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -217,7 +216,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         KojiListBuilds worker = new KojiListBuilds(kojiBuildProviders, kojiXmlRpcApi, createNotProcessedNvrPredicate(project), maxPreviousBuilds);
-        final Optional<Build> buildOptional;
+        final Build build;
         if (!DESCRIPTOR.getKojiSCMConfig()) {
             // when requiresWorkspaceForPolling is set to false (based on descriptor), worksapce may be null.
             // but not always.  So If it os not null, the path to it is passed on.
@@ -226,13 +225,12 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             if (workspace != null) {
                 wFile = new File(workspace.toURI().getPath());
             }
-            buildOptional = worker.invoke(wFile, null);
+            build = worker.invoke(wFile, null);
         } else {
-            buildOptional = workspace.act(worker);
+            build = workspace.act(worker);
         }
 
-        if (buildOptional.isPresent()) {
-            final Build build = buildOptional.get();
+        if (build != null) {
             log("Got new remote build: {}", build);
             log("Saving {} to {}", build, BUILD_XML);
             new BuildsSerializer().write(build, new File(project.getRootDir(), BUILD_XML));
