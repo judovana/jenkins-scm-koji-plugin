@@ -29,8 +29,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class AccessibleSettings {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final File dbFileRoot;
     private final File localReposRoot;
@@ -119,6 +124,7 @@ public class AccessibleSettings {
      * @return the dbFileRoot
      */
     public File getDbFileRoot() {
+        warn(dbFileRoot, "dbFileRoot");
         return dbFileRoot;
     }
 
@@ -130,18 +136,22 @@ public class AccessibleSettings {
     }
 
     public File getConfigRoot() {
+        warn(configRoot, "configRoot");
         return configRoot;
     }
 
     public File getJenkinsJobsRoot() {
+        warn(jenkinsJobsRoot, "jenkinsJobsRoot");
         return jenkinsJobsRoot;
     }
 
     public File getJenkinsJobArchiveRoot() {
+        warn(jenkinsJobArchiveRoot, "jenkinsJobArchiveRoot");
         return jenkinsJobArchiveRoot;
     }
 
     public File getScriptsRoot() {
+        warn(scriptsRoot, "scriptsRoot");
         return scriptsRoot;
     }
 
@@ -171,14 +181,17 @@ public class AccessibleSettings {
     }
 
     public URL getXmlRpcUrl() {
+        warn(xmlRpcUrl, "xmlRpcUrl");
         return xmlRpcUrl;
     }
 
     public URL getJenkinsUrlString() {
+        warn(jenkinsUrlString, "jenkinsUrlString");
         return jenkinsUrlString;
     }
 
     public URL getDownloadUrl() {
+        warn(downloadUrl, "downloadUrl");
         return downloadUrl;
     }
 
@@ -213,5 +226,19 @@ public class AccessibleSettings {
 
     public String get(String property, String value) throws ProjectMappingExceptions.ProjectMappingException {
         return getPublicValues(property, value);
+    }
+
+    private void warn(File f, String src) {
+        if (f == null) {
+            LOGGER.log(Level.SEVERE, "Reqested file for `{0}` is NULL", src);
+        } else if (!f.exists()) {
+            LOGGER.log(Level.SEVERE, "Reqested file `{0}` for `{1}` do not exists. You can expect failure", new Object[]{f.getAbsolutePath(), src});
+        }
+    }
+
+    private void warn(URL u, String src) {
+        if (u == null) {
+            LOGGER.log(Level.SEVERE, "Reqested file for `{0}` is NULL", src);
+        }
     }
 }
