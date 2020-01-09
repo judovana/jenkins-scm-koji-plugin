@@ -270,7 +270,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_ARCH=" + vmPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=build-jdk8-projectName-el7.x86_64.vagrant-release-hotspot" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=build-jdk8-projectName-el7.x86_64.vagrant-release-hotspot" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=build-projectName-el7.x86_64.vagrant-rh-3792248eff" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + vmPlatform.getOs() + '.' + vmPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -373,7 +373,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_ARCH=" + hwPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=build-jdk8-projectName-el7.aarch64.vagrant-release-hotspot" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=build-jdk8-projectName-el7.aarch64.vagrant-release-hotspot" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=build-projectName-el7.aarch64.vagrant-rh-d1727a857" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + hwPlatform.getOs() + '.' + hwPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -466,7 +466,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.aarch64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.aarch64.vagrant-sw-b7c959ecf40116cb64" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.aarch64.vagrant-sw-0116cb64" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -561,7 +561,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-59bb32cbf3d9ddcf019" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-d9ddcf019" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -671,7 +671,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=jtreg-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=jtreg-projectName-rh-el7.x86_64.vagrant-sw-94c79c5c558ab55c2" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=jtreg-projectName-rh-el7.x86_64.vagrant-sw-8ab55c2" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -782,7 +782,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-59bb32cbf3d9ddcf019" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-d9ddcf019" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
@@ -980,7 +980,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                         "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                         "export OTOOL_JOB_NAME=tck-jdk8-testProject-el7.x86_64-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                        "export OTOOL_JOB_NAME_SHORTENED=tck-testProject-el7.x86_64.vagrant-sw-65afe90eebb7a75baca447" + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME_SHORTENED=tck-testProject-el7.x86_64.vagrant-sw-b7a75baca447" + XML_NEW_LINE +
                         "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                         "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                         "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
