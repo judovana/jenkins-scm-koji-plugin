@@ -120,17 +120,11 @@ public class AccessibleSettings {
         this.jenkinsUrlString = new URL("http://" + specialHost + ":" + jenkinsPort + "/");
     }
 
-    /**
-     * @return the dbFileRoot
-     */
     public File getDbFileRoot() {
         warn(dbFileRoot, "dbFileRoot");
         return dbFileRoot;
     }
 
-    /**
-     * @return the localReposRoot
-     */
     public File getLocalReposRoot() {
         return localReposRoot;
     }
@@ -155,24 +149,15 @@ public class AccessibleSettings {
         return scriptsRoot;
     }
 
-    /**
-     * @return the xmlRpcPort
-     */
     public int getXmlRpcPort() {
         return xmlRpcPort;
     }
 
-    /**
-     * @return the fileDownloadPort
-     */
     public int getFileDownloadPort() {
         return fileDownloadPort;
     }
 
-    /**
-     * @return the sshPort
-     */
-    public int getSshPort() {
+        public int getSshPort() {
         return sshPort;
     }
 
