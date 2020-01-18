@@ -3,20 +3,22 @@ package org.fakekoji;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobConfiguration;
 import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TaskConfig;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
@@ -52,8 +54,10 @@ public class DataGenerator {
 
     public static final String JDK_8 = "jdk8";
     public static final String JDK_8_PACKAGE_NAME = "java-1.8.0-openjdk";
+    public static final String RANDOM_JDK_8_PACKAGE_NAME = "javarandom-1.8.0-openjdk";
     public static final String JDK_11 = "jdk11";
     public static final String JDK_11_PACKAGE_NAME = "java-11-openjdk";
+    public static final String RANDOM_JDK_11_PACKAGE_NAME = "javarandom-11-openjdk";
 
 
     public static final String BUILD_PROVIDER_1 = "fakekoji-hydra";
@@ -97,22 +101,32 @@ public class DataGenerator {
 
     private static FolderHolder folderHolder;
 
-    public static Product getJDK8Product() {
-        return new Product(
+    public static JDKVersion getJDKVersion8() {
+        return new JDKVersion(
                 JDK_8,
                 "JDK 8",
                 "8",
-                JDK_8_PACKAGE_NAME
+                Arrays.asList(
+                        JDK_8_PACKAGE_NAME,
+                        RANDOM_JDK_8_PACKAGE_NAME
+                )
         );
     }
 
-    public static Product getJDK11Product() {
-        return new Product(
+    public static JDKVersion getJDKVersion11() {
+        return new JDKVersion(
                 JDK_11,
                 "JDK 11",
                 "11",
-                JDK_11_PACKAGE_NAME
+                Arrays.asList(
+                        JDK_11_PACKAGE_NAME,
+                        RANDOM_JDK_11_PACKAGE_NAME
+                )
         );
+    }
+
+    public static Product getJDK8Product() {
+        return new Product(JDK_8, JDK_8_PACKAGE_NAME);
     }
 
     public static Set<String> getBuildProvidersIds() {
@@ -551,7 +565,7 @@ public class DataGenerator {
     public static JDKProject getJDKProject(String projectName, boolean urlValid, JDKProject.RepoState repoState) {
         return new JDKProject(
                 projectName,
-                JDK_8,
+                new Product(JDK_8, JDK_8_PACKAGE_NAME),
                 repoState,
                 urlValid ? PROJECT_URL : INVALID_PROJECT_URL,
                 DataGenerator.getBuildProvidersIds(),
@@ -588,7 +602,7 @@ public class DataGenerator {
     public static JDKProject getJDKProjectU() {
         return new JDKProject(
                 PROJECT_NAME_U,
-                JDK_8,
+                new Product(JDK_8, JDK_8_PACKAGE_NAME),
                 JDKProject.RepoState.CLONED,
                 PROJECT_URL_U,
                 DataGenerator.getBuildProvidersIds(),
@@ -716,7 +730,7 @@ public class DataGenerator {
     public static JDKTestProject getJDKTestProject() {
         return new JDKTestProject(
                 TEST_PROJECT_NAME,
-                JDK_8,
+                new Product(JDK_8, JDK_8_PACKAGE_NAME),
                 getBuildProvidersIds(),
                 RHEL_7_X64,
                 getSubpackageBlacklist(),
@@ -771,10 +785,10 @@ public class DataGenerator {
         }});
     }
 
-    public static Set<Product> getProducts() {
+    public static Set<JDKVersion> getJDKVersions() {
         return new HashSet<>(Arrays.asList(
-                getJDK8Product(),
-                getJDK11Product()
+                getJDKVersion8(),
+                getJDKVersion11()
         ));
     }
 
@@ -797,6 +811,7 @@ public class DataGenerator {
         return new PullJob(
                 PROJECT_NAME,
                 getJDK8Product(),
+                getJDKVersion8(),
                 folderHolder.reposRoot,
                 folderHolder.scriptsRoot
         );
@@ -806,6 +821,7 @@ public class DataGenerator {
         return new BuildJob(
                 PROJECT_NAME,
                 getJDK8Product(),
+                getJDKVersion8(),
                 getBuildProviders(),
                 getBuildTask(),
                 getRHEL7x64Vagrant(),
@@ -821,6 +837,7 @@ public class DataGenerator {
         return new BuildJob(
                 PROJECT_NAME,
                 getJDK8Product(),
+                getJDKVersion8(),
                 getBuildProviders(),
                 getBuildTask(),
                 getRHEL7x64Vagrant(),
@@ -836,6 +853,7 @@ public class DataGenerator {
         return new BuildJob(
                 PROJECT_NAME,
                 getJDK8Product(),
+                getJDKVersion8(),
                 getBuildProviders(),
                 getBuildTask(),
                 getF29x64Vagrant(),
@@ -853,6 +871,7 @@ public class DataGenerator {
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 getJDK8Product(),
+                getJDKVersion8(),
                 getBuildProviders(),
                 getTCK(),
                 platform,
@@ -875,6 +894,7 @@ public class DataGenerator {
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 getJDK8Product(),
+                getJDKVersion8(),
                 getBuildProviders(),
                 getTCK(),
                 platform,
@@ -915,12 +935,12 @@ public class DataGenerator {
     public static void initBuildsRoot(final File buildsRoot) throws IOException {
         long timeStamp = new Date().getTime();
         final Set<Platform> platforms = DataGenerator.getPlatforms();
-        final Set<Product> products = DataGenerator.getProducts();
+        final Set<JDKVersion> jdkVersions = DataGenerator.getJDKVersions();
         for (final JDKProject jdkProject : DataGenerator.getJDKProjects()) {
-            final Product product = products.stream()
-                    .filter(p -> p.getId().equals(jdkProject.getProduct()))
+            final JDKVersion jdkVersion = jdkVersions.stream()
+                    .filter(v -> v.getId().equals(jdkProject.getProduct().getJdk()))
                     .findFirst().get();
-            final File productDir = new File(buildsRoot, product.getPackageName());
+            final File productDir = new File(buildsRoot, jdkVersion.getPackageNames().get(0));
             productDir.mkdirs();
             for (int versionIndex = 0; versionIndex < versions.length; versionIndex++) {
                 final String version = versions[versionIndex];
@@ -931,7 +951,7 @@ public class DataGenerator {
                     final String releaseName = release + '.' + jdkProject.getId();
                     final File releaseDir = new File(versionDir, releaseName);
                     releaseDir.mkdirs();
-                    final String baseName = product.getPackageName() + '-' + version + '-' + releaseName + '.';
+                    final String baseName = jdkVersion.getPackageNames().get(0) + '-' + version + '-' + releaseName + '.';
                     final File srcDir = new File(releaseDir, SOURCES);
                     srcDir.mkdirs();
                     final String srcName = baseName + SOURCES + SUFFIX;
@@ -973,21 +993,19 @@ public class DataGenerator {
     public static void initConfigsRoot(final File configsRoot) throws IOException {
         final String root = configsRoot.getAbsolutePath();
 
-        final File products = Paths.get(root, "products").toFile();
-        final File platforms = Paths.get(root, "platforms").toFile();
-        final File tasks = Paths.get(root, "tasks").toFile();
-        final File buildProviders = Paths.get(root, "buildProviders").toFile();
-        final File platformProviders = Paths.get(root, "platformProviders").toFile();
-        final File taskVariantCategories = Paths.get(root, "taskVariants").toFile();
-        final File jdkProjects = Paths.get(root, "jdkProjects").toFile();
-        final File jdkTestProjects = Paths.get(root, "jdkTestProjects").toFile();
+        final File products = Paths.get(root, ConfigManager.JDK_VERSIONS).toFile();
+        final File platforms = Paths.get(root, ConfigManager.PLATFORMS).toFile();
+        final File tasks = Paths.get(root, ConfigManager.TASKS).toFile();
+        final File buildProviders = Paths.get(root, ConfigManager.BUILD_PROVIDERS).toFile();
+        final File taskVariantCategories = Paths.get(root, ConfigManager.TASK_VARIANTS).toFile();
+        final File jdkProjects = Paths.get(root, ConfigManager.JDK_PROJECTS).toFile();
+        final File jdkTestProjects = Paths.get(root, ConfigManager.JDK_TEST_PROJECTS).toFile();
 
         final List<File> configFiles = Arrays.asList(
                 products,
                 platforms,
                 tasks,
                 buildProviders,
-                platformProviders,
                 taskVariantCategories,
                 jdkProjects,
                 jdkTestProjects
@@ -1001,10 +1019,10 @@ public class DataGenerator {
 
         final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
 
-        for (final Product product : getProducts()) {
+        for (final JDKVersion jdkVersion : getJDKVersions()) {
             Utils.writeToFile(
-                    Paths.get(products.getAbsolutePath(), product.getId() + ".json"),
-                    writer.writeValueAsString(product)
+                    Paths.get(products.getAbsolutePath(), jdkVersion.getId() + ".json"),
+                    writer.writeValueAsString(jdkVersion)
             );
         }
 

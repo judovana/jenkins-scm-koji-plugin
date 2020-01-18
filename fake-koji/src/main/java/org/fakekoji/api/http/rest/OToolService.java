@@ -11,7 +11,7 @@ import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.manager.BuildProviderManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
-import org.fakekoji.jobmanager.manager.ProductManager;
+import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
@@ -31,8 +31,8 @@ public class OToolService {
     private static final String CONFIG_ID = "/:" + ID;
     private static final String BUILD_PROVIDERS = "/buildProviders";
     private static final String BUILD_PROVIDER = BUILD_PROVIDERS + CONFIG_ID;
-    private static final String PRODUCTS = "/products";
-    private static final String PRODUCT = PRODUCTS + CONFIG_ID;
+    private static final String JDK_VERSIONS = "/jdkVersions";
+    private static final String JDK_VERSION = JDK_VERSIONS + CONFIG_ID;
     private static final String PLATFORMS = "/platforms";
     private static final String PLATFORM = PLATFORMS + CONFIG_ID;
     private static final String TASKS = "/tasks";
@@ -63,9 +63,9 @@ public class OToolService {
             try {
                 oToolHandler.handle(context);
             } catch (ManagementException e) {
-                context.status(400).result(e.toString());
+                context.status(400).result(e.getMessage());
             } catch (StorageException e) {
-                context.status(500).result(e.toString());
+                context.status(500).result(e.getMessage());
             }
         };
 
@@ -102,8 +102,8 @@ public class OToolService {
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
             app.get(BUILD_PROVIDERS, context -> context.json(buildProviderManager.readAll()));
 
-            final ProductManager productManager = new ProductManager(configManager.getProductStorage());
-            app.get(PRODUCTS, context -> context.json(productManager.readAll()));
+            final JDKVersionManager JDKVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
+            app.get(JDK_VERSIONS, context -> context.json(JDKVersionManager.readAll()));
 
             final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
             app.get(PLATFORMS, context -> context.json(platformManager.readAll()));

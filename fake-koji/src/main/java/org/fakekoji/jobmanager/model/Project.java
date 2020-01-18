@@ -6,7 +6,7 @@ import java.util.Set;
 public class Project {
 
     private final String id;
-    private final String product;
+    private final Product product;
     private final ProjectType type;
     private final Set<String> buildProviders;
 
@@ -19,7 +19,7 @@ public class Project {
 
     public Project(
             String id,
-            String product,
+            Product product,
             ProjectType type,
             Set<String> buildProviders
             ) {
@@ -33,7 +33,7 @@ public class Project {
         return id;
     }
 
-    public String getProduct() {
+    public Product getProduct() {
         return product;
     }
 

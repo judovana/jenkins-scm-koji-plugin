@@ -3,8 +3,8 @@ package org.fakekoji.jobmanager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.DirectoryJsonStorage;
@@ -14,16 +14,16 @@ import java.nio.file.Paths;
 
 public class ConfigManager {
 
-    private final static String BUILD_PROVIDERS = "buildProviders";
-    private final static String PRODUCTS = "products";
-    private final static String TASK_VARIANTS = "taskVariants";
-    private final static String PLATFORMS = "platforms";
-    private final static String PROJECTS = "jdkProjects";
-    private final static String JDK_TEST_PROJECTS = "jdkTestProjects";
-    private final static String TASKS = "tasks";
+    public final static String BUILD_PROVIDERS = "buildProviders";
+    public final static String JDK_VERSIONS = "jdkVersions";
+    public final static String TASK_VARIANTS = "taskVariants";
+    public final static String PLATFORMS = "platforms";
+    public final static String JDK_PROJECTS = "jdkProjects";
+    public final static String JDK_TEST_PROJECTS = "jdkTestProjects";
+    public final static String TASKS = "tasks";
 
     private final Storage<BuildProvider> buildProviderStorage;
-    private final Storage<Product> productStorage;
+    private final Storage<JDKVersion> jdkVersionStorage;
     private final Storage<TaskVariant> taskVariantStorage;
     private final Storage<Platform> platformStorage;
     private final Storage<JDKProject> jdkProjectStorage;
@@ -32,7 +32,7 @@ public class ConfigManager {
 
     private ConfigManager(
             Storage<BuildProvider> buildProviderStorage,
-            Storage<Product> productStorage,
+            Storage<JDKVersion> jdkVersionStorage,
             Storage<TaskVariant> taskVariantStorage,
             Storage<Platform> platformStorage,
             Storage<JDKProject> jdkProjectStorage,
@@ -40,7 +40,7 @@ public class ConfigManager {
             Storage<Task> taskStorage
     ) {
         this.buildProviderStorage = buildProviderStorage;
-        this.productStorage = productStorage;
+        this.jdkVersionStorage = jdkVersionStorage;
         this.taskVariantStorage = taskVariantStorage;
         this.platformStorage = platformStorage;
         this.jdkProjectStorage = jdkProjectStorage;
@@ -51,10 +51,10 @@ public class ConfigManager {
     public static ConfigManager create(String storagePath) {
         return new ConfigManager(
                 new DirectoryJsonStorage<>(Paths.get(storagePath, BUILD_PROVIDERS).toFile()),
-                new DirectoryJsonStorage<>(Paths.get(storagePath, PRODUCTS).toFile()),
+                new DirectoryJsonStorage<>(Paths.get(storagePath, JDK_VERSIONS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, TASK_VARIANTS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, PLATFORMS).toFile()),
-                new DirectoryJsonStorage<>(Paths.get(storagePath, PROJECTS).toFile()),
+                new DirectoryJsonStorage<>(Paths.get(storagePath, JDK_PROJECTS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, JDK_TEST_PROJECTS).toFile()),
                 new DirectoryJsonStorage<>(Paths.get(storagePath, TASKS).toFile())
         );
@@ -64,8 +64,8 @@ public class ConfigManager {
         return buildProviderStorage;
     }
 
-    public Storage<Product> getProductStorage() {
-        return productStorage;
+    public Storage<JDKVersion> getJdkVersionStorage() {
+        return jdkVersionStorage;
     }
 
     public Storage<TaskVariant> getTaskVariantStorage() {

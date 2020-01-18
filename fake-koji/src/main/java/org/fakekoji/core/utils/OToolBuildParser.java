@@ -1,8 +1,8 @@
 package org.fakekoji.core.utils;
 
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolBuild;
-import org.fakekoji.model.Product;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,14 +15,14 @@ public class OToolBuildParser {
     static final String ERROR_NVR_SPLIT_LENGTH = "'-' split of NVR is less than " + NVR_MIN_LENGTH + " parts long";
     static final String ERROR_RELEASE_SPLIT_LENGTH = "'.' split of release is less than " +RELEASE_MIN_LENGTH + " parts long";
 
-    private final List<Product> products;
+    private final List<JDKVersion> jdkVersions;
     private final List<JDKProject> jdkProjects;
 
     OToolBuildParser(
-            List<Product> products,
+            List<JDKVersion> jdkVersions,
             List<JDKProject> jdkProjects
     ) {
-        this.products = products;
+        this.jdkVersions = jdkVersions;
         this.jdkProjects = jdkProjects;
     }
 
@@ -54,7 +54,7 @@ public class OToolBuildParser {
             chaos = "";
         }
 
-        if (products.stream().noneMatch(product -> product.getPackageName().equals(packageName))) {
+        if (jdkVersions.stream().noneMatch(jdkVersion -> jdkVersion.getPackageNames().contains(packageName))) {
             throw new ParserException("Unknown package name: " + packageName);
         }
         if (jdkProjects.stream().noneMatch(jdkProject -> jdkProject.getId().equals(projectName))) {

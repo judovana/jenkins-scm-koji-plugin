@@ -7,7 +7,7 @@ import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
-import org.fakekoji.model.Product;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
@@ -112,26 +112,26 @@ public class JDKProjectManager implements Manager<JDKProject> {
     }
 
     public ManagementResult<JDKProject> cloneProject(final JDKProject jdkProject) throws StorageException, ManagementException {
-        final Storage<Product> productStorage = configManager.getProductStorage();
-        if (!productStorage.contains(jdkProject.getProduct())) {
+        final Storage<JDKVersion> productStorage = configManager.getJdkVersionStorage();
+        if (!productStorage.contains(jdkProject.getProduct().getJdk())) {
             throw new ManagementException("Unknown product: " + jdkProject.getProduct());
         }
-        final Product product = productStorage.load(jdkProject.getProduct(), Product.class);
-        cloningThread = new Thread(createRepoCloningThread(jdkProject, product));
+        final JDKVersion jdkVersion = productStorage.load(jdkProject.getProduct().getJdk(), JDKVersion.class);
+        cloningThread = new Thread(createRepoCloningThread(jdkProject, jdkVersion));
         cloningThread.start();
         return new ManagementResult<>(setProjectRepoStatus(jdkProject, JDKProject.RepoState.CLONING), null);
     }
 
     private Runnable createRepoCloningThread(
             final JDKProject jdkProject,
-            final Product product
+            final JDKVersion jdkVersion
     ) {
         return () -> {
             LOGGER.info("Starting cloning project's repository");
             final ProcessBuilder processBuilder = new ProcessBuilder(
                     "bash",
                     Paths.get(scriptsRoot.getAbsolutePath(), "otool", "clone_repo.sh").toString(),
-                    product.getVersion(),
+                    jdkVersion.getVersion(),
                     jdkProject.getUrl(),
                     Paths.get(repositoriesRoot.getAbsolutePath(), jdkProject.getId()).toString()
             );

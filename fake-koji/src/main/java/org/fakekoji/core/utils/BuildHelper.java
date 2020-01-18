@@ -6,9 +6,9 @@ import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolBuild;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
@@ -276,7 +276,7 @@ public class BuildHelper {
     ) throws StorageException {
         final Storage<TaskVariant> taskVariantStorage = configManager.getTaskVariantStorage();
         final Storage<Platform> platformStorage = configManager.getPlatformStorage();
-        final Storage<Product> productStorage = configManager.getProductStorage();
+        final Storage<JDKVersion> jdkVersionStorage = configManager.getJdkVersionStorage();
         final Storage<JDKProject> jdkProjectStorage = configManager.getJdkProjectStorage();
 
         final List<String> platforms = platformStorage.loadAll(Platform.class)
@@ -289,13 +289,14 @@ public class BuildHelper {
                 .filter(taskVariant -> taskVariant.getType() == Task.Type.BUILD)
                 .collect(Collectors.toList());
 
-        final Set<String> packageNames = productStorage.loadAll(Product.class)
+        final Set<String> packageNames = jdkVersionStorage.loadAll(JDKVersion.class)
                 .stream()
-                .map(Product::getPackageName)
+                .map(JDKVersion::getPackageNames)
+                .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
         final OToolBuildParser parser = new OToolBuildParser(
-                productStorage.loadAll(Product.class),
+                jdkVersionStorage.loadAll(JDKVersion.class),
                 jdkProjectStorage.loadAll(JDKProject.class)
         );
 

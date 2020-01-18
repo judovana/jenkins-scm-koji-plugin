@@ -6,8 +6,8 @@ import { JDKTestProject, Item } from "../../stores/model"
 import TextInput from "../formComponents/TextInput"
 import MultiSelect from "../formComponents/MultiSelect"
 import JobConfigComponent from "../formComponents/JobConfigComponent";
-import Select from "../formComponents/Select";
 import useStores from "../../hooks/useStores"
+import ProductSelectForm from "../formComponents/JDKVersionSelectForm"
 
 type JDKTestProjectFormProps = {
     id?: string
@@ -27,7 +27,10 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
         buildProviders: [],
         id: "",
         jobConfiguration: { platforms: {} },
-        product: "",
+        product: {
+            jdk: "",
+            packageName: ""
+        },
         subpackageBlacklist: [],
         subpackageWhitelist: [],
         type: "JDK_TEST_PROJECT"
@@ -56,10 +59,6 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
 
     const onBuildProvidersChange = (value: string[]) => {
         project.buildProviders = value
-    }
-
-    const onProductChange = (value: string) => {
-        project.product = value
     }
 
     const onBuildPlatformChange = (value: string) => {
@@ -97,11 +96,7 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                 label={"build platform"}
                 value={project.buildPlatform}
                 onChange={onBuildPlatformChange} />
-            <Select
-                label="product"
-                onChange={onProductChange}
-                options={configStore.products.map(product => product.id)}
-                value={project.product} />
+            <ProductSelectForm product={project.product} />
             <TextInput
                 label={"subpackage blacklist"}
                 value={project.subpackageBlacklist.join(" ")}

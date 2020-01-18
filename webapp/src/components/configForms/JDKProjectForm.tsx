@@ -4,10 +4,10 @@ import { useLocalStore, useObserver } from "mobx-react"
 import { JDKProject, Item } from "../../stores/model"
 import JobConfigComponent from "../formComponents/JobConfigComponent"
 import TextInput from "../formComponents/TextInput"
-import Select from "../formComponents/Select"
 import { Button, Chip, Box } from "@material-ui/core"
 import MultiSelect from "../formComponents/MultiSelect"
 import useStores from "../../hooks/useStores"
+import ProductSelectForm from "../formComponents/JDKVersionSelectForm"
 
 interface Props {
     jdkProjectID?: string
@@ -24,7 +24,10 @@ const JDKProjectForm: React.FC<Props> = props => {
         buildProviders: [],
         id: "",
         jobConfiguration: { platforms: {} },
-        product: "",
+        product: {
+            jdk: "",
+            packageName: ""
+        },
         type: "JDK_PROJECT",
         url: ""
     }))
@@ -58,16 +61,12 @@ const JDKProjectForm: React.FC<Props> = props => {
         jdkProject!.url = value
     }
 
-    const onProductChange = (value: string) => {
-        jdkProject!.product = value
-    }
-
     const onSubmit = () => {
         props.onSubmit(jdkProject)
     }
 
     return useObserver(() => {
-        const { buildProviders, products } = configStore
+        const { buildProviders } = configStore
 
         return (
             <React.Fragment>
@@ -91,11 +90,7 @@ const JDKProjectForm: React.FC<Props> = props => {
                     options={buildProviders.map(buildProvider => buildProvider.id)}
                     values={jdkProject.buildProviders}
                 />
-                <Select
-                    label={"Product"}
-                    options={products.map(product => product.id)}
-                    value={jdkProject.product}
-                    onChange={onProductChange} />
+                <ProductSelectForm product={jdkProject.product} />
                 <JobConfigComponent
                     jobConfig={jdkProject.jobConfiguration}
                     projectType={jdkProject.type}/>

@@ -2,8 +2,8 @@ package org.fakekoji.core.utils;
 
 import org.fakekoji.DataGenerator;
 import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolBuild;
-import org.fakekoji.model.Product;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,7 +18,7 @@ public class OToolBuildParserTest {
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
 
-    private static final List<Product> products = new ArrayList<>(DataGenerator.getProducts());
+    private static final List<JDKVersion> products = new ArrayList<>(DataGenerator.getJDKVersions());
 
     private static final List<JDKProject> jdkProjects = Arrays.asList(
             new JDKProject("jdkProject1", null, null, null, null, null),

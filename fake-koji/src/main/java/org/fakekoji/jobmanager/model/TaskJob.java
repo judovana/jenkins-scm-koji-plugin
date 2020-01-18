@@ -1,15 +1,13 @@
 package org.fakekoji.jobmanager.model;
 
 import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.TaskVariant;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +23,7 @@ public abstract class TaskJob extends Job {
 
     private final String projectName;
     private final Product product;
+    private final JDKVersion jdkVersion;
     private final Set<BuildProvider> buildProviders;
     private final Task task;
     private final Platform platform;
@@ -34,6 +33,7 @@ public abstract class TaskJob extends Job {
     TaskJob(
             String projectName,
             Product product,
+            JDKVersion jdkVersion,
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
@@ -42,6 +42,7 @@ public abstract class TaskJob extends Job {
     ) {
         this.projectName = projectName;
         this.product = product;
+        this.jdkVersion = jdkVersion;
         this.buildProviders = buildProviders;
         this.task = task;
         this.platform = platform;
@@ -55,6 +56,10 @@ public abstract class TaskJob extends Job {
 
     public Product getProduct() {
         return product;
+    }
+
+    public JDKVersion getJdkVersion() {
+        return jdkVersion;
     }
 
     public Set<BuildProvider> getBuildProviders() {
@@ -84,6 +89,7 @@ public abstract class TaskJob extends Job {
         TaskJob taskJob = (TaskJob) o;
         return Objects.equals(projectName, taskJob.projectName) &&
                 Objects.equals(product, taskJob.product) &&
+                Objects.equals(jdkVersion, taskJob.jdkVersion) &&
                 Objects.equals(buildProviders, taskJob.buildProviders) &&
                 Objects.equals(task, taskJob.task) &&
                 Objects.equals(platform, taskJob.platform) &&
@@ -93,11 +99,11 @@ public abstract class TaskJob extends Job {
 
     Map<String, String> getExportedVariables() {
         return new HashMap<String, String>() {{
-            put(JDK_VERSION_VAR, product.getVersion());
-            put(OJDK_VAR, 'o' + product.getId());
+            put(JDK_VERSION_VAR, jdkVersion.getVersion());
+            put(OJDK_VAR, 'o' + jdkVersion.getId());
             put(PACKAGE_NAME_VAR, product.getPackageName());
-            put(PROJECT_NAME_VAR, getProjectName());
-            putAll(getVariants().entrySet()
+            put(PROJECT_NAME_VAR, projectName);
+            putAll(variants.entrySet()
                     .stream()
                     .collect(Collectors.toMap(key -> key.getKey().getId(), value -> value.getValue().getId())));
         }};

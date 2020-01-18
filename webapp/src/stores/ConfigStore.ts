@@ -1,6 +1,20 @@
 import { observable, runInAction, action } from "mobx";
 
-import { Platform, Product, TaskVariant, Task, JDKProject, Item, ConfigState, BuildProvider, ConfigGroups, JobUpdateResults, ConfigGroup, JDKTestProject, JDKTestProjectMap } from "./model";
+import {
+    Platform,
+    JDKVersion,
+    TaskVariant,
+    Task,
+    JDKProject,
+    Item,
+    ConfigState,
+    BuildProvider,
+    ConfigGroups,
+    JobUpdateResults,
+    ConfigGroup,
+    JDKTestProject,
+    JDKTestProjectMap
+} from "./model";
 import ConfigService from "./services/ConfigService";
 
 export class ConfigStore {
@@ -102,11 +116,11 @@ export class ConfigStore {
         return [
             { id: "buildProviders" },
             { id: "platforms" },
-            { id: "products" },
+            { id: "jdkVersions" },
             { id: "taskVariants" },
             { id: "tasks" },
             { id: "jdkProjects" },
-            { id: "jdkTestProjects"}
+            { id: "jdkTestProjects" }
         ]
     }
 
@@ -208,12 +222,12 @@ export class ConfigStore {
         return this._configGroups["platforms"][id] as Platform | undefined
     }
 
-    get products(): Product[] {
-        return Object.values(this._configGroups["products"]) as Product[]
+    get jdkVersions(): JDKVersion[] {
+        return Object.values(this._configGroups["jdkVersions"]) as JDKVersion[]
     }
 
-    getProduct(id: string): Product | undefined {
-        return this._configGroups["products"][id] as Task | undefined
+    public getJDKVersion = (id: string): JDKVersion | undefined => {
+        return this._configGroups["jdkVersions"][id] as JDKVersion | undefined
     }
 
     get taskVariants(): TaskVariant[] {

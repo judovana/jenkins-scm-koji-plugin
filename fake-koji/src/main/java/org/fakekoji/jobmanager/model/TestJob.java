@@ -2,8 +2,8 @@ package org.fakekoji.jobmanager.model;
 
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
@@ -39,6 +39,7 @@ public class TestJob extends TaskJob {
             String projectName,
             Project.ProjectType projectType,
             Product product,
+            JDKVersion jdkVersion,
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
@@ -49,7 +50,7 @@ public class TestJob extends TaskJob {
             List<String> projectSubpackageWhitelist,
             File scriptsRoot
     ) {
-        super(projectName, product, buildProviders, task, platform, variants, scriptsRoot);
+        super(projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
         this.projectType = projectType;
         this.buildPlatform = buildPlatform;
         this.buildVariants = buildVariants;
@@ -61,6 +62,7 @@ public class TestJob extends TaskJob {
             String projectName,
             Project.ProjectType projectType,
             Product product,
+            JDKVersion jdkVersion,
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
@@ -73,6 +75,7 @@ public class TestJob extends TaskJob {
                 projectName,
                 projectType,
                 product,
+                jdkVersion,
                 buildProviders,
                 task,
                 platform,
@@ -96,6 +99,7 @@ public class TestJob extends TaskJob {
                 buildJob.getProjectName(),
                 Project.ProjectType.JDK_PROJECT,
                 buildJob.getProduct(),
+                buildJob.getJdkVersion(),
                 buildJob.getBuildProviders(),
                 task,
                 platform,
@@ -190,7 +194,7 @@ public class TestJob extends TaskJob {
                 Job.DELIMITER,
                 Arrays.asList(
                         getTask().getId(),
-                        getProduct().getId(),
+                        getProduct().getJdk(),
                         getProjectName(),
                         buildPlatform.assembleString(),
                         buildVariants.entrySet().stream()
@@ -217,7 +221,7 @@ public class TestJob extends TaskJob {
             //TODO extract all but this header creation
             //in test, we should care only about length
             //will be fun to set up project
-            String header =  Job.sanitizeNames(String.join(
+            String header = Job.sanitizeNames(String.join(
                     Job.DELIMITER,
                     Arrays.asList(
                             getTask().getId(),

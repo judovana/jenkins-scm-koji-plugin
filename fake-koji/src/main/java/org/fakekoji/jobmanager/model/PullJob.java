@@ -1,7 +1,7 @@
 package org.fakekoji.jobmanager.model;
 
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
-import org.fakekoji.model.Product;
+import org.fakekoji.model.JDKVersion;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,17 +25,20 @@ public class PullJob extends Job {
 
     private final String projectName;
     private final Product product;
+    private final JDKVersion jdkVersion;
     private final File repositoriesRoot;
     private final File scriptsRoot;
 
     public PullJob(
             String projectName,
             Product product,
+            JDKVersion jdkVersion,
             File repositoriesRoot,
             File scriptsRoot
     ) {
         this.projectName = projectName;
         this.product = product;
+        this.jdkVersion = jdkVersion;
         this.repositoriesRoot = repositoriesRoot;
         this.scriptsRoot = scriptsRoot;
     }
@@ -43,7 +46,7 @@ public class PullJob extends Job {
     @Override
     public String generateTemplate() throws IOException {
         final Map<String, String> exportedVariables = new HashMap<String, String>() {{
-            put(JDK_VERSION_VAR, product.getVersion());
+            put(JDK_VERSION_VAR, jdkVersion.getVersion());
             put(PACKAGE_NAME_VAR, product.getPackageName());
             put(PROJECT_NAME_VAR, projectName);
             put(PROJECT_PATH_VAR, Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString());
@@ -62,6 +65,7 @@ public class PullJob extends Job {
         PullJob pullJob = (PullJob) o;
         return Objects.equals(projectName, pullJob.projectName) &&
                 Objects.equals(product, pullJob.product) &&
+                Objects.equals(jdkVersion, pullJob.jdkVersion) &&
                 Objects.equals(repositoriesRoot, pullJob.repositoriesRoot);
     }
 
@@ -71,7 +75,7 @@ public class PullJob extends Job {
                 Job.DELIMITER,
                 Arrays.asList(
                         PULL,
-                        product.getId(),
+                        product.getJdk(),
                         projectName
                 )
         ));
