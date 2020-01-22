@@ -7,8 +7,8 @@ import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
@@ -38,12 +38,12 @@ import static org.fakekoji.DataGenerator.RELEASE;
 import static org.fakekoji.DataGenerator.SCP_POLL_SCHEDULE;
 import static org.fakekoji.DataGenerator.TEST_PROJECT_NAME;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.DESTROY_SCRIPT_NAME;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JENKINS;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.FAKEKOJI_XML_RPC_API_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.KOJI_XML_RPC_API_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.LOCAL;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.NO_CHANGE_RETURN_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OTOOL_BASH_VAR_PREFIX;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.O_TOOL;
@@ -130,11 +130,11 @@ public class JenkinsJobTemplateBuilderTest {
     public void buildKojiXmlRpcApiTemplate() throws IOException {
 
         final Platform vmPlatform = DataGenerator.getVmPlatform();
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
 
         final String expectedTemplate = "<kojiXmlRpcApi class=\"hudson.plugins.scm.koji.RealKojiXmlRpcApi\">\n" +
                 "    <xmlRpcApiType>REAL_KOJI</xmlRpcApiType>\n" +
-                "    <packageName>" + jdk8.getPackageName() + "</packageName>\n" +
+                "    <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
                 "    <arch>" + vmPlatform.getArchitecture() + "</arch>\n" +
                 "    <tag>" + String.join(" ", vmPlatform.getTags()) + "</tag>\n" +
                 "    <subpackageBlacklist>a b</subpackageBlacklist>\n" +
@@ -143,7 +143,7 @@ public class JenkinsJobTemplateBuilderTest {
 
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
                 .buildKojiXmlRpcApiTemplate(
-                        jdk8.getPackageName(),
+                        jdk8.getPackageNames().get(0),
                         vmPlatform.getArchitecture(),
                         vmPlatform.getTags(),
                         Arrays.asList("a", "b"),
@@ -210,7 +210,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildBuildJobTemplateWithVmPlatform() throws IOException {
 
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task buildTask = DataGenerator.getBuildTask();
         final Platform vmPlatform = DataGenerator.getVmPlatform();
@@ -222,6 +222,7 @@ public class JenkinsJobTemplateBuilderTest {
 
         final BuildJob buildJob = new BuildJob(
                 PROJECT_NAME,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
                 buildTask,
@@ -273,7 +274,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JOB_NAME_SHORTENED=build-projectName-el7.x86_64.vagrant-rh-3792248eff" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + vmPlatform.getOs() + '.' + vmPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + vmPlatform.getProvider() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + vmPlatform.assembleString() + XML_NEW_LINE +
@@ -313,7 +314,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildBuildJobTemplateWithHwPlatform() throws IOException {
 
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task buildTask = DataGenerator.getBuildTask();
         final Platform hwPlatform = DataGenerator.getHwPlatform();
@@ -325,6 +326,7 @@ public class JenkinsJobTemplateBuilderTest {
 
         final BuildJob buildJob = new BuildJob(
                 PROJECT_NAME,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
                 buildTask,
@@ -376,7 +378,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JOB_NAME_SHORTENED=build-projectName-el7.aarch64.vagrant-rh-d1727a857" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + hwPlatform.getOs() + '.' + hwPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + hwPlatform.getProvider() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + hwPlatform.assembleString() + XML_NEW_LINE +
@@ -400,7 +402,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildTestJobTemplateWithHwPlatform() throws IOException {
 
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTask();
         final Platform buildPlatform = DataGenerator.getVmPlatform();
@@ -417,6 +419,7 @@ public class JenkinsJobTemplateBuilderTest {
         final TestJob buildJob = new TestJob(
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
                 testTask,
@@ -469,7 +472,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.aarch64.vagrant-sw-0116cb64" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + buildPlatform.assembleString() + XML_NEW_LINE +
@@ -495,7 +498,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildTestJobTemplateWithVmPlatform() throws IOException {
 
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTask();
         final Platform buildPlatform = DataGenerator.getVmPlatform();
@@ -512,6 +515,7 @@ public class JenkinsJobTemplateBuilderTest {
         final TestJob buildJob = new TestJob(
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
                 testTask,
@@ -564,7 +568,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-d9ddcf019" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.assembleString() + XML_NEW_LINE +
@@ -605,7 +609,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildTestJobTemplateRequestingSourcesAndBinary() throws IOException {
 
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTaskRequiringSourcesAndBinary();
         final Platform buildPlatform = DataGenerator.getVmPlatform();
@@ -622,6 +626,7 @@ public class JenkinsJobTemplateBuilderTest {
         final TestJob buildJob = new TestJob(
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
                 testTask,
@@ -674,7 +679,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JOB_NAME_SHORTENED=jtreg-projectName-rh-el7.x86_64.vagrant-sw-8ab55c2" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.assembleString() + XML_NEW_LINE +
@@ -716,7 +721,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildTestJobTemplateRequestingSourcesAndBinaries() throws IOException {
 
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTaskRequiringSourcesAndBinaries();
         final Platform buildPlatform = DataGenerator.getVmPlatform();
@@ -733,6 +738,7 @@ public class JenkinsJobTemplateBuilderTest {
         final TestJob buildJob = new TestJob(
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
                 testTask,
@@ -785,7 +791,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-d9ddcf019" + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.assembleString() + XML_NEW_LINE +
@@ -827,7 +833,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildPullJobTemplate() throws IOException {
         final File reposRoot = temporaryFolder.newFolder("repos");
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
                 "<project>\n" +
@@ -854,7 +860,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/sh" + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + JDK_VERSION_VAR + "=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + NO_CHANGE_RETURN_VAR + "=-1" + XML_NEW_LINE +
-                "export " + OTOOL_BASH_VAR_PREFIX + PACKAGE_NAME_VAR + "=" + jdk8.getPackageName() + XML_NEW_LINE +
+                "export " + OTOOL_BASH_VAR_PREFIX + PACKAGE_NAME_VAR + "=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_NAME_VAR + "=" + PROJECT_NAME + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_PATH_VAR + "=" + Paths.get(reposRoot.getAbsolutePath(), PROJECT_NAME) + XML_NEW_LINE +
                 "bash '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'" +
@@ -886,6 +892,7 @@ public class JenkinsJobTemplateBuilderTest {
 
         final PullJob pullJob = new PullJob(
                 PROJECT_NAME,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 reposRoot,
                 scriptsRoot
@@ -898,7 +905,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildTestJobTemplateOfJDKTestProject() throws IOException {
 
-        final Product jdk8 = DataGenerator.getJDK8Product();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTask();
         final Platform buildPlatform = DataGenerator.getVmPlatform();
@@ -920,6 +927,7 @@ public class JenkinsJobTemplateBuilderTest {
         final TestJob testJob = new TestJob(
                 TEST_PROJECT_NAME,
                 Project.ProjectType.JDK_TEST_PROJECT,
+                DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
                 testTask,
@@ -950,7 +958,7 @@ public class JenkinsJobTemplateBuilderTest {
                         BUILD_PROVIDERS_TEMPLATE +
                         "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.RealKojiXmlRpcApi\">\n" +
                         "            <xmlRpcApiType>REAL_KOJI</xmlRpcApiType>\n" +
-                        "            <packageName>" + jdk8.getPackageName() + "</packageName>\n" +
+                        "            <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
                         "            <arch>" + buildPlatform.getArchitecture() + "</arch>\n" +
                         "            <tag>" + String.join(" ", buildPlatform.getTags()) + "</tag>\n" +
                         "            <subpackageBlacklist>" + String.join(" ", expectedBlacklist) + "</subpackageBlacklist>\n" +
@@ -983,7 +991,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "export OTOOL_JOB_NAME_SHORTENED=tck-testProject-el7.x86_64.vagrant-sw-b7a75baca447" + XML_NEW_LINE +
                         "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                         "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                        "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageName() + XML_NEW_LINE +
+                        "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                         "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
                         "export OTOOL_PROJECT_NAME=" + TEST_PROJECT_NAME + XML_NEW_LINE +
                         "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +

@@ -2,8 +2,8 @@ package org.fakekoji.jobmanager.model;
 
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.TaskVariant;
@@ -31,22 +31,22 @@ public class BuildJob extends TaskJob {
     public BuildJob(
             String projectName,
             Product product,
+            JDKVersion jdkVersion,
             Set<BuildProvider> buildProviders,
             Task task,
             Platform platform,
             Map<TaskVariant, TaskVariantValue> variants,
             File scriptsRoot
     ) {
-        super(projectName, product, buildProviders, task, platform, variants, scriptsRoot);
+        super(projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
     }
 
     @Override
     public String generateTemplate() throws IOException {
-        final Product product = getProduct();
         final Map<String, String> variables = new HashMap<String, String>() {{
-            put(JDK_VERSION_VAR, product.getVersion());
-            put(OJDK_VAR, 'o' + product.getId());
-            put(PACKAGE_NAME_VAR, product.getPackageName());
+            put(JDK_VERSION_VAR, getJdkVersion().getVersion());
+            put(OJDK_VAR, 'o' + getProduct().getJdk());
+            put(PACKAGE_NAME_VAR, getProduct().getPackageName());
             put(PROJECT_NAME_VAR, getProjectName());
             putAll(getVariants().entrySet()
                     .stream()
@@ -88,7 +88,7 @@ public class BuildJob extends TaskJob {
                 Job.DELIMITER,
                 Arrays.asList(
                         getTask().getId(),
-                        getProduct().getId(),
+                        getProduct().getJdk(),
                         getProjectName(),
                         getPlatform().getId(),
                         getVariants().entrySet().stream()

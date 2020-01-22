@@ -133,7 +133,7 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                 <LimitationForm
                     label={"product limitations"}
                     limitation={productLimitation}
-                    items={configStore.products} />
+                    items={configStore.jdkVersions} />
                 <FileRequirementsForm
                     fileRequirements={fileRequirements} />
                 <TextArea

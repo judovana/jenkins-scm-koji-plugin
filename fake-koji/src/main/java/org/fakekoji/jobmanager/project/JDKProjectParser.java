@@ -6,6 +6,7 @@ import org.fakekoji.jobmanager.Parser;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TaskConfig;
@@ -14,8 +15,8 @@ import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.Product;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
@@ -54,10 +55,10 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     @Override
     public Set<Job> parse(Project project) throws ManagementException, StorageException {
         jobBuilder = new JobBuilder(configManager);
-        if (!configManager.getProductStorage().contains(project.getProduct())) {
+        if (!configManager.getJdkVersionStorage().contains(project.getProduct().getJdk())) {
             throw new ManagementException("Unknown product: " + project.getProduct());
         }
-        final Product product = configManager.getProductStorage().load(project.getProduct(), Product.class);
+        final JDKVersion jdkVersion = configManager.getJdkVersionStorage().load(project.getProduct().getJdk(), JDKVersion.class);
 
         final Set<BuildProvider> buildProviders = new HashSet<>();
         for (final String buildProvider : project.getBuildProviders()) {
@@ -68,7 +69,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         }
 
         jobBuilder.setProjectName(project.getId());
-        jobBuilder.setProduct(product);
+        jobBuilder.setProduct(project.getProduct());
+        jobBuilder.setJDKVersion(jdkVersion);
         jobBuilder.setBuildProviders(buildProviders);
 
         switch (project.getType()) {
@@ -147,6 +149,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private final Set<Job> jobs;
 
         private String projectName;
+        private JDKVersion jdkVersion;
         private Product product;
         private Set<BuildProvider> buildProviders;
         private Platform buildPlatform;
@@ -193,6 +196,10 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             this.projectName = projectName;
         }
 
+        public void setJDKVersion(JDKVersion jdkVersion) {
+            this.jdkVersion = jdkVersion;
+        }
+
         public void setProduct(Product product) {
             this.product = product;
         }
@@ -205,6 +212,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             jobs.add(new PullJob(
                     projectName,
                     product,
+                    jdkVersion,
                     repositoriesRoot,
                     scriptsRoot
             ));
@@ -214,6 +222,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             buildJob = new BuildJob(
                     projectName,
                     product,
+                    jdkVersion,
                     buildProviders,
                     buildTask,
                     buildPlatform,
@@ -229,6 +238,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                             projectName,
                             Project.ProjectType.JDK_TEST_PROJECT,
                             product,
+                            jdkVersion,
                             buildProviders,
                             testTask,
                             testPlatform,

@@ -20,7 +20,7 @@ public class JDKTestProject extends Project {
 
     public JDKTestProject(
             String id,
-            String product,
+            Product product,
             Set<String> buildProviders,
             String buildPlatform,
             List<String> subpackageBlacklist,

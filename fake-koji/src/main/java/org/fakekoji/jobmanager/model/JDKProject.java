@@ -17,7 +17,7 @@ public class JDKProject extends Project {
 
     public JDKProject(
             String id,
-            String product,
+            Product product,
             String url,
             Set<String> buildProviders,
             JobConfiguration jobConfiguration
@@ -34,7 +34,7 @@ public class JDKProject extends Project {
 
     public JDKProject(
             String id,
-            String product,
+            Product product,
             RepoState repoState,
             String url,
             Set<String> buildProviders,

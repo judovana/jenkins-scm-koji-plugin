@@ -1,6 +1,6 @@
 export interface Project extends Item {
     buildProviders: string[]
-    product: string;
+    product: Product;
     type: ProjectType;
 }
 
@@ -15,6 +15,11 @@ export interface JDKProject extends Project {
     url: string;
     repoState?: RepoState;
     jobConfiguration: JobConfig;
+}
+
+export interface Product {
+    jdk: string
+    packageName: string
 }
 
 export interface JDKTestProject extends Project {
@@ -99,7 +104,8 @@ export interface Platform extends Item {
 export interface BuildProvider extends Item {
 }
 
-export interface Product extends Item {
+export interface JDKVersion extends Item {
+    packageNames: string[]
 }
 
 export interface TaskVariant extends Item {

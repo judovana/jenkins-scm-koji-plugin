@@ -1,31 +1,32 @@
 package org.fakekoji.model;
 
+import java.util.List;
 import java.util.Objects;
 
-public class Product {
+public class JDKVersion {
 
     private final String id;
     private final String label;
     private final String version;
-    private final String packageName;
+    private final List<String> packageNames;
 
-    public Product() {
+    public JDKVersion() {
         id = null;
         label = null;
         version = null;
-        packageName = null;
+        packageNames = null;
     }
 
-    public Product(
+    public JDKVersion(
             String id,
             String label,
             String version,
-            String packageName
+            List<String> packageNames
     ) {
         this.id = id;
         this.label = label;
         this.version = version;
-        this.packageName = packageName;
+        this.packageNames = packageNames;
     }
 
     public String getId() {
@@ -40,23 +41,23 @@ public class Product {
         return version;
     }
 
-    public String getPackageName() {
-        return packageName;
+    public List<String> getPackageNames() {
+        return packageNames;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Product)) return false;
-        Product product = (Product) o;
+        if (!(o instanceof JDKVersion)) return false;
+        JDKVersion product = (JDKVersion) o;
         return Objects.equals(id, product.id) &&
                 Objects.equals(label, product.label) &&
                 Objects.equals(version, product.version) &&
-                Objects.equals(packageName, product.packageName);
+                Objects.equals(packageNames, product.packageNames);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, label, version, packageName);
+        return Objects.hash(id, label, version, packageNames);
     }
 }
