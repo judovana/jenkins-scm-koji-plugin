@@ -184,4 +184,15 @@ public class JDKProjectManager implements Manager<JDKProject> {
     Thread getCloningThread() {
         return cloningThread;
     }
+
+    public JobUpdateResults regenerateAll() throws ManagementException, StorageException {
+        JobUpdateResults sum = new JobUpdateResults();
+        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
+        final List<JDKProject> jdkProjects = storage.loadAll(JDKProject.class);
+        for (final JDKProject jdkProject : jdkProjects) {
+            JobUpdateResults r = jobUpdater.regenerate(jdkProject);
+            sum = sum.add(r);
+        }
+        return sum;
+    }
 }

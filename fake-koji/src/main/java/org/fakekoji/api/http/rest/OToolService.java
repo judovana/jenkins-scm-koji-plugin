@@ -16,6 +16,7 @@ import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.Platform;
@@ -71,16 +72,42 @@ public class OToolService {
 
         app.routes(() -> {
 
-            path(MISC, () -> {
-                path(REGENERATE_ALL_JOBS, () -> get(ctx -> {
-                    // TODO: implement
-                }));
-            });
-
             final JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
                     configManager.getJdkTestProjectStorage(),
                     jenkinsJobUpdater
             );
+            final JDKProjectManager jdkProjectManager = new JDKProjectManager(
+                    configManager,
+                    jenkinsJobUpdater,
+                    settings.getLocalReposRoot(),
+                    settings.getScriptsRoot()
+            );
+
+            path(MISC, () -> {
+                path(REGENERATE_ALL_JOBS, () -> get(ctx -> {
+                    JobUpdateResults r = new JobUpdateResults();
+                    try{
+                        JobUpdateResults r1 = jdkTestProjectManager.regenerateAll();
+                        r = r.add(r1);
+                    } catch (ManagementException e) {
+                        ctx.status(400).result(e.toString());
+                    } catch (StorageException e) {
+                        ctx.status(500).result(e.toString());
+                    }
+                    try {
+                        JobUpdateResults r2 = jdkProjectManager.regenerateAll();
+                        r = r.add(r2);
+                        if (ctx.status() < 400) {
+                            ctx.status(200).json(r);
+                        }
+                    } catch (ManagementException e) {
+                        ctx.status(400).result(e.toString());
+                    } catch (StorageException e) {
+                        ctx.status(500).result(e.toString());
+                    }
+                }));
+            });
+
             app.post(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                 final JDKTestProject jdkTestProject = context.bodyValidator(JDKTestProject.class).get();
                 final ManagementResult result = jdkTestProjectManager.create(jdkTestProject);
@@ -182,12 +209,6 @@ public class OToolService {
             final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
             app.get(TASK_VARIANTS, context -> context.json(taskVariantManager.readAll()));
 
-            final JDKProjectManager jdkProjectManager = new JDKProjectManager(
-                    configManager,
-                    jenkinsJobUpdater,
-                    settings.getLocalReposRoot(),
-                    settings.getScriptsRoot()
-            );
             app.post(JDK_PROJECTS, context -> {
                 try {
                     final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
