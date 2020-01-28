@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -100,15 +101,62 @@ public class JenkinsJobTemplateBuilder {
     private String template;
     private final NamesProvider job;
 
+    public static class Variable {
+        final boolean default_prefix;
+        final boolean commented_out;
+        final String comment;
+        final String key;
+        final String value;
+
+        public Variable(boolean default_prefix, boolean commented_out, String comment, String key, String value) {
+            this.default_prefix = default_prefix;
+            this.commented_out = commented_out;
+            this.comment = comment;
+            this.key = key;
+            this.value = value;
+        }
+
+        public Variable(String key, String value) {
+            this.default_prefix = true;
+            this.commented_out = false;
+            this.comment = null;
+            this.key = key;
+            this.value = value;
+        }
+
+        public static List<Variable> createDefault(Map<TaskVariant, TaskVariantValue> map) {
+            Set<Map.Entry<TaskVariant, TaskVariantValue>> s = map.entrySet();
+            List l = new ArrayList(s.size());
+            for (Map.Entry<TaskVariant, TaskVariantValue> e : s) {
+                l.add(new Variable(e.getKey().getId(), e.getValue().getId()));
+            }
+            return l;
+        }
+
+        @Override
+        public String toString() {
+            String name = key;
+            if (default_prefix) {
+                name = OTOOL_BASH_VAR_PREFIX + key;
+            }
+            String line = EXPORT + ' ' + name + '=' + value;
+            if (commented_out) {
+                line = "#" + line;
+            }
+            if (comment != null) {
+                line = line + " # " + comment;
+            }
+            return line + XML_NEW_LINE;
+
+        }
+    }
+
     public JenkinsJobTemplateBuilder(String template, NamesProvider job) {
         this.template = template;
         this.job = job;
     }
 
-    public JenkinsJobTemplateBuilder buildPullScriptTemplate(
-            final Map<String, String> exportedVariables,
-            final File scriptsRoot
-    ) {
+    public JenkinsJobTemplateBuilder buildPullScriptTemplate(final List<Variable> exportedVariables, final File scriptsRoot) {
         template = template.replace(
                 PULL_SCRIPT,
                 SHEBANG + XML_NEW_LINE + getExportedVariablesString(exportedVariables) +
@@ -198,7 +246,7 @@ public class JenkinsJobTemplateBuilder {
             Task task,
             Platform platform,
             File scriptsRoot,
-            Map<String, String> exportedVariables
+            List<Variable> exportedVariables
     ) throws IOException {
         final String vmName;
         final List<String> nodes;
@@ -232,18 +280,18 @@ public class JenkinsJobTemplateBuilder {
             default:
                 throw new RuntimeException("Unknown machine preference");
         }
-        exportedVariables.put(PLATFORM_PROVIDER_VAR, platform.getProvider());
-        exportedVariables.put(VM_NAME_OR_LOCAL_VAR, vmName);
+        exportedVariables.add(new Variable(PLATFORM_PROVIDER_VAR, platform.getProvider()));
+        exportedVariables.add(new Variable(VM_NAME_OR_LOCAL_VAR, vmName));
         if (job != null) {
             if (job.getName() != null) {
-                exportedVariables.put(JOB_NAME, job.getName());
+                exportedVariables.add(new Variable(JOB_NAME, job.getName()));
             }
             if (job.getShortName() != null) {
-                exportedVariables.put(JOB_NAME_SHORTENED, job.getShortName());
+                exportedVariables.add(new Variable(JOB_NAME_SHORTENED, job.getShortName()));
             }
         }
-        exportedVariables.put(OS_VAR, platform.getOs() + '.' + platform.getVersion());
-        exportedVariables.put(ARCH_VAR, platform.getArchitecture());
+        exportedVariables.add(new Variable(OS_VAR, platform.toOsVar()));
+        exportedVariables.add(new Variable(ARCH_VAR, platform.getArchitecture()));
         template = template
                 .replace(NODES, String.join(" ", nodes))
                 .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
@@ -270,11 +318,10 @@ public class JenkinsJobTemplateBuilder {
         return this;
     }
 
-    private String getExportedVariablesString(final Map<String, String> exportedVariables) {
+    private String getExportedVariablesString(final List<Variable> exportedVariables) {
         return exportedVariables
-                .entrySet()
                 .stream()
-                .map(entry -> EXPORT + ' ' + OTOOL_BASH_VAR_PREFIX + entry.getKey() + '=' + entry.getValue() + XML_NEW_LINE)
+                .map(entry -> entry.toString())
                 .sorted()
                 .collect(Collectors.joining());
     }

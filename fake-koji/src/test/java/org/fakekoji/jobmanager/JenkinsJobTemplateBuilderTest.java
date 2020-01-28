@@ -858,8 +858,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>" +
                 "#!/bin/sh" + XML_NEW_LINE +
+                "#export " + NO_CHANGE_RETURN_VAR + "=-1 # any negative is enforcing pull even without changes detected" + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + JDK_VERSION_VAR + "=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export " + OTOOL_BASH_VAR_PREFIX + NO_CHANGE_RETURN_VAR + "=-1" + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PACKAGE_NAME_VAR + "=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_NAME_VAR + "=" + PROJECT_NAME + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_PATH_VAR + "=" + Paths.get(reposRoot.getAbsolutePath(), PROJECT_NAME) + XML_NEW_LINE +
@@ -1025,5 +1025,15 @@ public class JenkinsJobTemplateBuilderTest {
 
         final String actualTemplate = testJob.generateTemplate();
         Assert.assertEquals(expectedTemplate, actualTemplate);
+    }
+
+
+    @Test
+    public void testVariable() throws IOException {
+        JenkinsJobTemplateBuilder.Variable v1 = new JenkinsJobTemplateBuilder.Variable("myVar", "myVal");
+        Assert.assertEquals("export OTOOL_myVar=myVal" + XML_NEW_LINE, v1.toString());
+        v1 = new JenkinsJobTemplateBuilder.Variable(false, true, "comment", "myVar", "myVal");
+        Assert.assertEquals("#export myVar=myVal # comment" + XML_NEW_LINE, v1.toString());
+
     }
 }

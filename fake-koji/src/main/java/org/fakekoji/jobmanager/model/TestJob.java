@@ -166,16 +166,14 @@ public class TestJob extends TaskJob {
     }
 
     @Override
-    Map<String, String> getExportedVariables() {
-        final Map<String, String> exportedVariables = super.getExportedVariables();
-        exportedVariables.putAll(buildVariants.entrySet()
-                .stream()
-                .collect(Collectors.toMap(key -> key.getKey().getId(), value -> value.getValue().getId())));
+    List<JenkinsJobTemplateBuilder.Variable> getExportedVariables() {
+        final List<JenkinsJobTemplateBuilder.Variable> exportedVariables = super.getExportedVariables();
+        exportedVariables.addAll(JenkinsJobTemplateBuilder.Variable.createDefault(buildVariants));
         if (projectType == Project.ProjectType.JDK_PROJECT) {
-            exportedVariables.put(RELEASE_SUFFIX_VAR, buildVariants.entrySet().stream()
+            exportedVariables.add(new JenkinsJobTemplateBuilder.Variable(RELEASE_SUFFIX_VAR, buildVariants.entrySet().stream()
                     .sorted(Comparator.comparing(Map.Entry::getKey))
                     .map(entry -> entry.getValue().getId())
-                    .collect(Collectors.joining(".")) + '.' + getBuildPlatform().assembleString());
+                    .collect(Collectors.joining(".")) + '.' + getBuildPlatform().assembleString()));
         }
         return exportedVariables;
     }

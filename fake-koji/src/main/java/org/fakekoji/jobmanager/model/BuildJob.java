@@ -10,10 +10,12 @@ import org.fakekoji.model.TaskVariant;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -43,20 +45,18 @@ public class BuildJob extends TaskJob {
 
     @Override
     public String generateTemplate() throws IOException {
-        final Map<String, String> variables = new HashMap<String, String>() {{
-            put(JDK_VERSION_VAR, getJdkVersion().getVersion());
-            put(OJDK_VAR, 'o' + getProduct().getJdk());
-            put(PACKAGE_NAME_VAR, getProduct().getPackageName());
-            put(PROJECT_NAME_VAR, getProjectName());
-            putAll(getVariants().entrySet()
-                    .stream()
-                    .collect(Collectors.toMap(key -> key.getKey().getId(), value -> value.getValue().getId())));
-            put(RELEASE_SUFFIX_VAR, getVariants().entrySet()
+        final List<JenkinsJobTemplateBuilder.Variable> variables = new ArrayList<JenkinsJobTemplateBuilder.Variable>() {{
+            add(new JenkinsJobTemplateBuilder.Variable(JDK_VERSION_VAR, getJdkVersion().getVersion()));
+            add(new JenkinsJobTemplateBuilder.Variable(OJDK_VAR, 'o' + getProduct().getJdk()));
+            add(new JenkinsJobTemplateBuilder.Variable(PACKAGE_NAME_VAR, getProduct().getPackageName()));
+            add(new JenkinsJobTemplateBuilder.Variable(PROJECT_NAME_VAR, getProjectName()));
+            addAll(JenkinsJobTemplateBuilder.Variable.createDefault(getVariants()));
+            add(new JenkinsJobTemplateBuilder.Variable(RELEASE_SUFFIX_VAR, getVariants().entrySet()
                     .stream()
                     .filter(e -> e.getKey().getType() == Task.Type.BUILD)
                     .sorted(Comparator.comparing(Map.Entry::getKey))
                     .map(e -> e.getValue().getId())
-                    .collect(Collectors.joining(".")) + '.' + getPlatform().assembleString());
+                    .collect(Collectors.joining(".")) + '.' + getPlatform().assembleString()));
         }};
 
         // TODO: do this better

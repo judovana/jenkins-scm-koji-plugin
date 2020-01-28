@@ -147,4 +147,9 @@ public class Platform {
                 ", tags=" + tags +
                 '}';
     }
+
+    public String toOsVar() {
+        return getOs() + '.' + getVersion();
+    }
 }
+

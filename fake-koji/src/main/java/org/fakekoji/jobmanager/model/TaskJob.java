@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager.model;
 
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
@@ -8,7 +9,9 @@ import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.TaskVariant;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -97,15 +100,13 @@ public abstract class TaskJob extends Job {
                 Objects.equals(scriptsRoot, taskJob.scriptsRoot);
     }
 
-    Map<String, String> getExportedVariables() {
-        return new HashMap<String, String>() {{
-            put(JDK_VERSION_VAR, jdkVersion.getVersion());
-            put(OJDK_VAR, 'o' + jdkVersion.getId());
-            put(PACKAGE_NAME_VAR, product.getPackageName());
-            put(PROJECT_NAME_VAR, projectName);
-            putAll(variants.entrySet()
-                    .stream()
-                    .collect(Collectors.toMap(key -> key.getKey().getId(), value -> value.getValue().getId())));
+    List<JenkinsJobTemplateBuilder.Variable> getExportedVariables() {
+        return new ArrayList<JenkinsJobTemplateBuilder.Variable>() {{
+            add(new JenkinsJobTemplateBuilder.Variable(JDK_VERSION_VAR, jdkVersion.getVersion()));
+            add(new JenkinsJobTemplateBuilder.Variable(OJDK_VAR, 'o' + jdkVersion.getId()));
+            add(new JenkinsJobTemplateBuilder.Variable(PACKAGE_NAME_VAR, product.getPackageName()));
+            add(new JenkinsJobTemplateBuilder.Variable(PROJECT_NAME_VAR, projectName));
+            addAll(JenkinsJobTemplateBuilder.Variable.createDefault(variants));
         }};
     }
 
