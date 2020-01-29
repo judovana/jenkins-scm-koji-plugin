@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager.project;
 
+import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementResult;
@@ -95,6 +96,12 @@ public class JDKTestProjectManager implements Manager<JDKTestProject> {
      */
     public JobUpdateResults regenerateAll() throws StorageException, ManagementException {
         JobUpdateResults sum = new JobUpdateResults();
+        try {
+            //ping the cli, to avoid first impl sometimes fail
+            JenkinsCliWrapper.getCli().listJobsToArray();
+        } catch (Throwable e) {
+            //ignoring
+        }
         final List<JDKTestProject> jdkTestProjects = storage.loadAll(JDKTestProject.class);
         for(final JDKTestProject jdkTestProject: jdkTestProjects) {
             JobUpdateResults r = jobUpdater.regenerate(jdkTestProject);

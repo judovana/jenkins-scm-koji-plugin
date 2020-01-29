@@ -85,26 +85,18 @@ public class OToolService {
 
             path(MISC, () -> {
                 path(REGENERATE_ALL_JOBS, () -> get(ctx -> {
-                    JobUpdateResults r = new JobUpdateResults();
-                    try{
+                    final JobUpdateResults[] r = new JobUpdateResults[]{new JobUpdateResults()};
+                    wrapper.wrap(context -> {
                         JobUpdateResults r1 = jdkTestProjectManager.regenerateAll();
-                        r = r.add(r1);
-                    } catch (ManagementException e) {
-                        ctx.status(400).result(e.toString());
-                    } catch (StorageException e) {
-                        ctx.status(500).result(e.toString());
-                    }
-                    try {
+                        r[0] = r[0].add(r1);
+                    });
+                    wrapper.wrap(context -> {
                         JobUpdateResults r2 = jdkProjectManager.regenerateAll();
-                        r = r.add(r2);
+                        r[0] = r[0].add(r2);
                         if (ctx.status() < 400) {
-                            ctx.status(200).json(r);
+                            ctx.status(200).json(r[0]);
                         }
-                    } catch (ManagementException e) {
-                        ctx.status(400).result(e.toString());
-                    } catch (StorageException e) {
-                        ctx.status(500).result(e.toString());
-                    }
+                    });
                 }));
             });
 
