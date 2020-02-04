@@ -102,7 +102,7 @@ public class BuildJob extends TaskJob {
     @Override
     public String getShortName() {
         String fullName = getName();
-        if (fullName.length() < MAX_JOBNAME_LENGTH) {
+        if (fullName.length() <= MAX_JOBNAME_LENGTH) {
             return fullName;
         } else {
             //this is not same as in etName

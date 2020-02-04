@@ -11,7 +11,7 @@ import java.util.Objects;
 public abstract class Job implements NamesProvider {
 
     public static final String DELIMITER = "-";
-    public static final int MAX_JOBNAME_LENGTH = 50;
+    public static final int MAX_JOBNAME_LENGTH = 59;
 
     public abstract String generateTemplate() throws IOException;
 
