@@ -21,7 +21,11 @@ const ProductSelectForm: React.FC<Props> = props => {
 
         const onJDKVersionChange = (value: string) => {
             product.jdk = value
-            product.packageName = jdkVersion!.packageNames.length > 0 ? jdkVersion!.packageNames[0] : ""
+            const jdkVersion = getJDKVersion(product.jdk)
+            if (jdkVersion) {
+                const packageNames = jdkVersion.packageNames
+                product.packageName = packageNames.length > 0 ? packageNames[0] : ""
+            }
         }
 
         const onPackageNameChange = (value: string) => {
