@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager.model;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +11,26 @@ public class JobUpdateResults {
     public final List<JobUpdateResult> jobsArchived;
     public final List<JobUpdateResult> jobsRewritten;
     public final List<JobUpdateResult> jobsRevived;
+
+    /**
+     * Returns new instance, based on this, accumualted together with
+     * @return
+     */
+    public JobUpdateResults add(JobUpdateResults toAdd) {
+        List<JobUpdateResult> c =new ArrayList<>(jobsCreated.size()+toAdd.jobsCreated.size());
+        List<JobUpdateResult> a =new ArrayList<>(jobsArchived.size()+toAdd.jobsArchived.size());
+        List<JobUpdateResult> rw =new ArrayList<>(jobsRewritten.size()+toAdd.jobsRewritten.size());
+        List<JobUpdateResult> re =new ArrayList<>(jobsRevived.size()+toAdd.jobsRevived.size());
+        c.addAll(jobsCreated);
+        c.addAll(toAdd.jobsCreated);
+        a.addAll(jobsArchived);
+        a.addAll(toAdd.jobsArchived);
+        rw.addAll(jobsRewritten);
+        rw.addAll(toAdd.jobsRewritten);
+        re.addAll(jobsRevived);
+        re.addAll(toAdd.jobsRevived);
+        return new JobUpdateResults(c,a,rw, re);
+    }
 
     public JobUpdateResults() {
         jobsCreated = Collections.emptyList();
@@ -24,10 +45,10 @@ public class JobUpdateResults {
             List<JobUpdateResult> jobsRewritten,
             List<JobUpdateResult> jobsRevived
     ) {
-        this.jobsCreated = jobsCreated;
-        this.jobsArchived = jobsArchived;
-        this.jobsRewritten = jobsRewritten;
-        this.jobsRevived = jobsRevived;
+        this.jobsCreated = Collections.unmodifiableList(jobsCreated);
+        this.jobsArchived = Collections.unmodifiableList(jobsArchived);
+        this.jobsRewritten = Collections.unmodifiableList(jobsRewritten);
+        this.jobsRevived = Collections.unmodifiableList(jobsRevived);
     }
 
     @Override

@@ -46,6 +46,17 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     @Override
+    public JobUpdateResults regenerate(Project project) throws StorageException, ManagementException {
+        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
+                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                settings.getLocalReposRoot(),
+                settings.getScriptsRoot()
+        );
+        final Set<Job> jobs = project == null ? Collections.emptySet() : jdkProjectParser.parse(project);
+        return regenerate(jobs);
+    }
+
+    @Override
     public JobUpdateResults update(Project oldProject, Project newProject) throws StorageException, ManagementException {
 
         final JDKProjectParser jdkProjectParser = new JDKProjectParser(
@@ -61,6 +72,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         return update(oldJobs, newJobs);
     }
 
+    @Override
     public JobUpdateResults update(Platform platform) throws StorageException {
         final Predicate<Job> platformJobPredicate = job ->
                 job instanceof TaskJob && ((TaskJob) job).getPlatform().getId().equals(platform.getId());
@@ -73,6 +85,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         );
     }
 
+    @Override
     public JobUpdateResults update(Task task) throws StorageException {
         final Predicate<Job> taskJobPredicate = job ->
                 job instanceof TaskJob && ((TaskJob) job).getTask().getId().equals(task.getId());
@@ -120,6 +133,46 @@ public class JenkinsJobUpdater implements JobUpdater {
                 .filter(jobPredicate)
                 .map(jobUpdateFunction)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Regenerate job
+     * Unlike update, this one do not delete
+     * Unlike update, it determines its action based on  jobs, not old projects
+     * @param jobs
+     * @return
+     */
+    JobUpdateResults regenerate(Set<Job> jobs) {
+        final Function<Job, JobUpdateResult> rewriteFunction = jobUpdateFunctionWrapper(getRewriteFunction());
+        final Function<Job, JobUpdateResult> createFunction = jobUpdateFunctionWrapper(getCreateFunction());
+        final Function<Job, JobUpdateResult> reviveFunction = jobUpdateFunctionWrapper(getReviveFunction());
+
+        final List<JobUpdateResult> jobsCreated = new LinkedList<>();
+        final List<JobUpdateResult> jobsRewritten = new LinkedList<>();
+        final List<JobUpdateResult> jobsRevived = new LinkedList<>();
+
+        final Set<String> archivedJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobArchiveRoot().list())));
+        final Set<String> existingJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobsRoot().list())));
+
+        for (final Job job : jobs) {
+            if (archivedJobs.contains(job.toString()) && existingJobs.contains(job.toString())){
+                ///very wierd!
+                jobsRewritten .add(rewriteFunction.apply(job));
+            } else if (archivedJobs.contains(job.toString())) {
+                jobsRevived.add(reviveFunction.apply(job));
+            } else  if (existingJobs.contains(job.toString())) {
+                jobsRewritten .add(rewriteFunction.apply(job));
+            } else {
+                jobsCreated.add(createFunction.apply(job));
+            }
+        }
+
+        return new JobUpdateResults(
+                jobsCreated,
+                new LinkedList<JobUpdateResult>(),
+                jobsRewritten,
+                jobsRevived
+        );
     }
 
     JobUpdateResults update(Set<Job> oldJobs, Set<Job> newJobs) {

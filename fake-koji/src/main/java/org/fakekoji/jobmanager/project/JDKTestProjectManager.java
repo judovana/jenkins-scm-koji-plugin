@@ -1,16 +1,22 @@
 package org.fakekoji.jobmanager.project;
 
+import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.ManagementUtils;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.JobConfiguration;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
+import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.TaskConfig;
+import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -83,4 +89,24 @@ public class JDKTestProjectManager implements Manager<JDKTestProject> {
         );
     }
 
+    /**
+     * Regenerate all jobs. If job is mssing, is (re)created.
+     *
+     * @throws StorageException
+     */
+    public JobUpdateResults regenerateAll() throws StorageException, ManagementException {
+        JobUpdateResults sum = new JobUpdateResults();
+        try {
+            //ping the cli, to avoid first impl sometimes fail
+            JenkinsCliWrapper.getCli().listJobsToArray();
+        } catch (Throwable e) {
+            //ignoring
+        }
+        final List<JDKTestProject> jdkTestProjects = storage.loadAll(JDKTestProject.class);
+        for(final JDKTestProject jdkTestProject: jdkTestProjects) {
+            JobUpdateResults r = jobUpdater.regenerate(jdkTestProject);
+            sum= sum.add(r);
+        }
+        return sum;
+    }
 }

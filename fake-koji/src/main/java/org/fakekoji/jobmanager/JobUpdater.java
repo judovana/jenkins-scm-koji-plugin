@@ -10,6 +10,8 @@ public interface JobUpdater {
 
     JobUpdateResults update(Project oldProject, Project newProject) throws StorageException, ManagementException;
 
+    JobUpdateResults regenerate(Project project) throws StorageException, ManagementException;
+
     JobUpdateResults update(Platform platform) throws StorageException;
 
     JobUpdateResults update(Task task) throws StorageException;
