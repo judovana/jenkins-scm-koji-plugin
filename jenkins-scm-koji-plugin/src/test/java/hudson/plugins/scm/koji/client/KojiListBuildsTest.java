@@ -247,6 +247,16 @@ public class KojiListBuildsTest {
         );
     }
 
+    RealKojiXmlRpcApi createConfigWindowsNewName() {
+        return new RealKojiXmlRpcApi(
+                "java-1.8.0-openjdk",
+                "win",
+                "openjdk-win.*",
+                "",
+                null
+        );
+    }
+
     RealKojiXmlRpcApi createConfigCustomWindows() {
         return new RealKojiXmlRpcApi(
                 "openjdk8-win",
@@ -628,6 +638,19 @@ public class KojiListBuildsTest {
                 createConfigWindows(),
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
+        );
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+    }
+
+    @Test
+    public void testListMatchingBuildsWindowsNewJdk8Name() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(
+                createBrewOnlyList(),
+                createConfigWindowsNewName(),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                1
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         Assert.assertTrue(build != null);
