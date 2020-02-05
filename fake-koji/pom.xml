@@ -16,6 +16,7 @@
         <fake.koji.main.class>org.fakekoji.server.JavaServer</fake.koji.main.class>
         <node.version>v10.16.0</node.version>
         <yarn.version>v1.17.3</yarn.version>
+        <headless>false</headless>
     </properties>
   
     <dependencies>
@@ -78,11 +79,15 @@
                 </executions>
                 <configuration>
                     <nodeVersion>${node.version}</nodeVersion>
+                    <skip>${headless}</skip>
                     <yarnVersion>${yarn.version}</yarnVersion>
                     <workingDirectory>${project.parent.basedir}/webapp</workingDirectory>
                 </configuration>
             </plugin>
             <plugin>
+                <configuration>
+                    <skip>${headless}</skip>
+                </configuration>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
@@ -132,6 +137,7 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <outputDirectory>${project.build.outputDirectory}/webapp</outputDirectory>
+                            <skip>${headless}</skip>
                             <resources>
                                 <resource>
                                     <directory>${project.parent.basedir}/webapp/build</directory>
