@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.model.BuildPlatformConfig;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
@@ -15,6 +16,7 @@ import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TaskConfig;
 import org.fakekoji.jobmanager.model.TestJob;
+import org.fakekoji.jobmanager.model.TestJobConfiguration;
 import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
@@ -732,35 +734,43 @@ public class DataGenerator {
                 TEST_PROJECT_NAME,
                 new Product(JDK_8, JDK_8_PACKAGE_NAME),
                 getBuildProvidersIds(),
-                RHEL_7_X64,
                 getSubpackageBlacklist(),
                 getSubpackageWhitelist(),
-                new JobConfiguration(
-                        Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                            put(RHEL_7_X64_VAGRANT, new PlatformConfig(
-                                    Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
-                                        put(TCK, new TaskConfig(
-                                                Arrays.asList(
-                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER)),
-                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND))
-                                                )
-                                        ));
-                                        put(JTREG, new TaskConfig(
-                                                Collections.singletonList(
-                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
-                                                )
-                                        ));
-                                    }})
-                            ));
-                            put(F_29_X64_VAGRANT, new PlatformConfig(
-                                    Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
-                                        put(TCK, new TaskConfig(
-                                                Arrays.asList(
-                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER)),
-                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND))
-                                                )
-                                        ));
-                                    }})
+                new TestJobConfiguration(
+                        Collections.unmodifiableMap(new HashMap<String, BuildPlatformConfig>() {{
+                            put(RHEL_7_X64_VAGRANT, new BuildPlatformConfig(
+                                    Collections.unmodifiableList(Arrays.asList(
+                                            new VariantsConfig(
+                                                    getBuildVariantsMap(HOTSPOT, RELEASE),
+                                                    Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
+                                                        put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                                                                Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
+                                                                    put(TCK, new TaskConfig(
+                                                                            Arrays.asList(
+                                                                                    new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER)),
+                                                                                    new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND))
+                                                                            )
+                                                                    ));
+                                                                    put(JTREG, new TaskConfig(
+                                                                            Collections.singletonList(
+                                                                                    new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
+                                                                            )
+                                                                    ));
+                                                                }})
+                                                        ));
+                                                        put(F_29_X64_VAGRANT, new PlatformConfig(
+                                                                Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
+                                                                    put(TCK, new TaskConfig(
+                                                                            Arrays.asList(
+                                                                                    new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER)),
+                                                                                    new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND))
+                                                                            )
+                                                                    ));
+                                                                }})
+                                                        ));
+                                                    }})
+                                            )
+                                    ))
                             ));
                         }})
                 )

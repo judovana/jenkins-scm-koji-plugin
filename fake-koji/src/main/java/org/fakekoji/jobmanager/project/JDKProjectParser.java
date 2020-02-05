@@ -3,6 +3,7 @@ package org.fakekoji.jobmanager.project;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementUtils;
 import org.fakekoji.jobmanager.Parser;
+import org.fakekoji.jobmanager.model.BuildPlatformConfig;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.PlatformConfig;
@@ -29,7 +30,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -54,7 +54,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
 
     @Override
     public Set<Job> parse(Project project) throws ManagementException, StorageException {
-        jobBuilder = new JobBuilder(configManager);
+        jobBuilder = new JobBuilder(configManager, project.getType());
         if (!configManager.getJdkVersionStorage().contains(project.getProduct().getJdk())) {
             throw new ManagementException("Unknown product: " + project.getProduct());
         }
@@ -90,20 +90,21 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     }
 
     private Set<Job> parse(JDKTestProject project) throws ManagementException {
-        final Optional<Platform> platformOptional = jobBuilder.platformsMap.values()
-                .stream()
-                .filter(platform -> platform.assembleString().equals(project.getBuildPlatform()))
-                .findFirst();
-        if (!platformOptional.isPresent()) {
-            throw new ManagementException("Unknown build platform: " + project.getBuildPlatform());
-        }
         jobBuilder.subpackageBlacklist = project.getSubpackageBlacklist();
         jobBuilder.subpackageWhitelist = project.getSubpackageWhitelist();
-        jobBuilder.buildPlatform = platformOptional.get();
-        jobBuilder.buildVariants = Collections.emptyMap();
         jobBuilder.buildTask = new Task();
-        project.getJobConfiguration().getPlatforms().forEach(getPlatformsConsumer());
+        project.getJobConfiguration().getPlatforms().forEach(getBuildPlatformConsumer());
         return jobBuilder.getJobs();
+    }
+
+    private BiConsumer<String, BuildPlatformConfig> getBuildPlatformConsumer() {
+        return ManagementUtils.managementBiConsumerWrapper(
+                (String id, BuildPlatformConfig config) -> {
+                    jobBuilder.setPlatform(id);
+                    config.getVariants().forEach(getVariantsConsumer());
+                    jobBuilder.resetPlatform();
+                }
+        );
     }
 
     private BiConsumer<String, PlatformConfig> getPlatformsConsumer() {
@@ -138,6 +139,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
 
     private class JobBuilder {
 
+        private final Project.ProjectType projectType;
         private final Map<String, Platform> platformsMap;
         private final Map<String, Task> tasksMap;
         private final Map<String, TaskVariant> testVariantsMap;
@@ -160,7 +162,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private BuildJob buildJob;
         private Map<TaskVariant, TaskVariantValue> testVariants;
 
-        JobBuilder(final ConfigManager configManager) throws StorageException {
+        JobBuilder(final ConfigManager configManager, Project.ProjectType projectType) throws StorageException {
+            this.projectType = projectType;
             jobs = new HashSet<>();
             buildPlatform = null;
             buildTask = null;
@@ -332,7 +335,9 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                     }
                     buildVariants.put(variant, variantValue);
                 });
-                buildBuildJob();
+                if (projectType == Project.ProjectType.JDK_PROJECT) {
+                    buildBuildJob();
+                }
                 return;
             }
             if (testVariants == null) {
