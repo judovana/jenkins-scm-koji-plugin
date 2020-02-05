@@ -39,7 +39,7 @@ const ProductSelectForm: React.FC<Props> = props => {
                 </FormLabel>
                 <FormGroup>
                     <Select
-                        label="JDK version"
+                        label="JDK platform version"
                         onChange={onJDKVersionChange}
                         options={jdkVersions.map(v => v.id)}
                         value={product.jdk} />
