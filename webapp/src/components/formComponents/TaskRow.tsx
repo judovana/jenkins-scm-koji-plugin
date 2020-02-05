@@ -66,17 +66,13 @@ const TaskRow: React.FC<TaskRowProps> = props => {
             </span>
         )
 
-        const buildCols = projectType === "JDK_PROJECT" &&
-            <React.Fragment>
-                <TableCell></TableCell>
-                <TableCell>{type === "BUILD" && cell}</TableCell>
-                <TableCell></TableCell>
-            </React.Fragment>
-
         return (
             <React.Fragment>
                 <TableRow>
-                    {buildCols}
+                    <TableCell></TableCell>
+                    {projectType === "JDK_PROJECT" &&
+                        <TableCell>{type === "BUILD" && cell}</TableCell>}
+                    <TableCell></TableCell>
                     <TableCell></TableCell>
                     <TableCell>{type === "TEST" && cell}</TableCell>
                     <TableCell></TableCell>

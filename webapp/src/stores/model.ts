@@ -23,7 +23,6 @@ export interface Product {
 }
 
 export interface JDKTestProject extends Project {
-    buildPlatform: string
     subpackageBlacklist: string[]
     subpackageWhitelist: string[]
     jobConfiguration: JobConfig
@@ -43,7 +42,8 @@ export interface JobConfig {
 }
 
 export interface PlatformConfig {
-    tasks: { [id: string]: TaskConfig };
+    tasks?: { [id: string]: TaskConfig }
+    variants?: VariantsConfig[]
 }
 
 export interface TaskConfig {

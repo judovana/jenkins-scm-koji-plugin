@@ -61,17 +61,13 @@ const VariantRow: React.FC<VariantRowProps> = props => {
             </div>
         )
 
-        const buildCols = projectType === "JDK_PROJECT" &&
-            <React.Fragment>
-                <TableCell></TableCell>
-                <TableCell></TableCell>
-                <TableCell>{type === "BUILD" && cell}</TableCell>
-            </React.Fragment>
-
         return (
             <React.Fragment>
                 <TableRow>
-                    {buildCols}
+                    <TableCell></TableCell>
+                    {projectType === "JDK_PROJECT" &&
+                        <TableCell></TableCell>}
+                    <TableCell>{type === "BUILD" && cell}</TableCell>
                     <TableCell></TableCell>
                     <TableCell></TableCell>
                     <TableCell>{type === "TEST" && cell}</TableCell>

@@ -19,18 +19,23 @@ const JobConfigComponent: React.FC<Props> = props => {
 
     return useObserver(() => {
         const { jobConfig, projectType } = props
-        const type = projectType === "JDK_PROJECT" ? "BUILD" : "TEST"
 
         const onPlatformDelete = (id: string): void => {
             delete jobConfig.platforms[id]
+        }
+
+        const onPlatformAdd = (id: string) => {
+            if (projectType === "JDK_PROJECT") {
+                platformConfigs[id] = { tasks: {} }
+            } else if (projectType === "JDK_TEST_PROJECT") {
+                platformConfigs[id] = { variants: [] }
+            }
         }
 
         const platformConfigs = jobConfig.platforms
 
         const unselectedPlatforms = configStore!.platforms
             .filter(platform => !platformConfigs[platform.id])
-
-        const typePretty = type.toLowerCase()
 
         return (
             <div>
@@ -39,24 +44,18 @@ const JobConfigComponent: React.FC<Props> = props => {
                         <TableRow>
                             <TableCell>
                                 <span>
-                                    {`${typePretty} platform`}
+                                    {`build platform`}
                                     <AddComponent
-                                        label={`Add ${typePretty} platform`}
+                                        label={`Add build platform`}
                                         items={unselectedPlatforms}
-                                        onAdd={(platformId) => {
-                                            platformConfigs[platformId] = { tasks: {} }
-                                        }} />
+                                        onAdd={onPlatformAdd} />
                                 </span>
                             </TableCell>
-                            <TableCell>{`${typePretty} tasks`}</TableCell>
-                            <TableCell>{`${typePretty} variants`}</TableCell>
-                            {
-                                projectType === "JDK_PROJECT" && <React.Fragment>
-                                    <TableCell>test platform</TableCell>
-                                    <TableCell>test task</TableCell>
-                                    <TableCell>test variants</TableCell>
-                                </React.Fragment>
-                            }
+                            {projectType === "JDK_PROJECT" && <TableCell>build tasks</TableCell>}
+                            <TableCell>build variants</TableCell>
+                            <TableCell>test platform</TableCell>
+                            <TableCell>test task</TableCell>
+                            <TableCell>test variants</TableCell>
                             <TableCell></TableCell>
                         </TableRow>
                     </TableHead>
@@ -69,7 +68,7 @@ const JobConfigComponent: React.FC<Props> = props => {
                                 treeID={id}
                                 onDelete={onPlatformDelete}
                                 projectType={projectType}
-                                type={type}
+                                type={"BUILD"}
                             />)}
                     </TableBody>
                 </Table>

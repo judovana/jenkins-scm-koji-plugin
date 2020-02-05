@@ -1,12 +1,13 @@
 import React from "react"
 import { useObserver } from "mobx-react"
-import { TableCell, TableRow, IconButton } from "@material-ui/core"
-import { Delete } from "@material-ui/icons"
+import { TableCell, TableRow, IconButton, Tooltip } from "@material-ui/core"
+import { Delete, Add } from "@material-ui/icons"
 
 import { PlatformConfig, TaskType, ProjectType } from "../../stores/model"
 import AddComponent from "./AddComponent"
 import useStores from "../../hooks/useStores"
 import TaskRow from "./TaskRow"
+import VariantRow from "./VariantRow"
 
 type PlatformRowProps = {
     config: PlatformConfig
@@ -26,33 +27,63 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
         const { id, config, treeID, onDelete, projectType, type } = props
 
         const taskConfigs = config.tasks
+        const variantConfigs = config.variants
 
         const onTaskDelete = (id: string): void => {
-            delete config.tasks[id]
+            delete config.tasks![id]
         }
 
-        const unselectedTasks = configStore.tasks
+        const onVariantDelete = (index: number) => {
+            config.variants!.splice(index, 1)
+        }
+
+        const onTaskAdd = (id: string) => {
+            config.tasks![id] = { variants: [] }
+        }
+
+        const onVariantAdd = () => {
+            config.variants!.splice(0, 0, {
+                map: configStore.taskVariants
+                    .filter(taskVariant => taskVariant.type === type)
+                    .reduce((map, taskVariant) => {
+                        map[taskVariant.id] = taskVariant.defaultValue
+                        return map
+                    }, {} as { [key: string]: string }),
+                platforms: (type === "BUILD" && {}) || undefined
+            })
+        }
+
+        const unselectedTasks = taskConfigs && configStore.tasks
             .filter(task => task.type === type && !taskConfigs[task.id])
+
+        const unselectedPlatforms = variantConfigs && configStore.taskVariants
+            .filter(variant => variant.type === type)
+
         const cell: JSX.Element = (
             <span>
                 {id}
-                <AddComponent
-                    label={`Add ${type.toLowerCase()} task`}
-                    items={unselectedTasks}
-                    onAdd={(taskId) => { config.tasks[taskId] = { variants: [] } }} />
+                {(
+                    taskConfigs && (<AddComponent
+                        label={`Add ${type.toLowerCase()} ${(taskConfigs && "task") || (variantConfigs && "variant")}`}
+                        items={unselectedTasks || unselectedPlatforms || []}
+                        onAdd={(taskConfigs && onTaskAdd) || (variantConfigs && onVariantAdd) || (() => null)} />)
+                ) || (
+                        variantConfigs && (<Tooltip title={`Add ${type.toLowerCase()} variant`}>
+                            <IconButton onClick={onVariantAdd}>
+                                <Add />
+                            </IconButton>
+                        </Tooltip>)
+                    )}
             </span>
         )
-
-        const buildCols = projectType === "JDK_PROJECT" && <React.Fragment>
-            <TableCell>{type === "BUILD" && cell}</TableCell>
-            <TableCell></TableCell>
-            <TableCell></TableCell>
-        </React.Fragment>
 
         return (
             <React.Fragment>
                 <TableRow>
-                    {buildCols}
+                    <TableCell>{type === "BUILD" && cell}</TableCell>
+                    {projectType === "JDK_PROJECT" &&
+                        <TableCell></TableCell>}
+                    <TableCell></TableCell>
                     <TableCell>{type === "TEST" && cell}</TableCell>
                     <TableCell></TableCell>
                     <TableCell></TableCell>
@@ -62,7 +93,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                         </IconButton>
                     </TableCell>
                 </TableRow>
-                {Object.entries(taskConfigs).map(([id, config]) =>
+                {(taskConfigs && Object.entries(taskConfigs).map(([id, config]) =>
                     <TaskRow
                         config={config}
                         id={id}
@@ -70,7 +101,17 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                         treeID={treeID + id}
                         onDelete={onTaskDelete}
                         projectType={projectType}
-                        type={type} />)}
+                        type={type} />))
+                    ||
+                    (variantConfigs && variantConfigs.map((config, index) =>
+                        <VariantRow
+                            config={config}
+                            key={treeID + id}
+                            onDelete={() => onVariantDelete(index)}
+                            projectType={projectType}
+                            treeID={treeID + id}
+                            type={type} />
+                    ))}
             </React.Fragment>)
     })
 }

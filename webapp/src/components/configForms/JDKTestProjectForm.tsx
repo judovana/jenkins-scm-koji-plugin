@@ -23,7 +23,6 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
     const { id } = props
 
     const project = useLocalStore<JDKTestProject>(() => ({
-        buildPlatform: "",
         buildProviders: [],
         id: "",
         jobConfiguration: { platforms: {} },
@@ -45,7 +44,6 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
             return
         }
         project.buildProviders = _jdkProject.buildProviders || []
-        project.buildPlatform = _jdkProject.buildPlatform || ""
         project.id = _jdkProject.id || ""
         project.jobConfiguration = _jdkProject.jobConfiguration || { platforms: {} }
         project.product = _jdkProject.product || ""
@@ -59,10 +57,6 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
 
     const onBuildProvidersChange = (value: string[]) => {
         project.buildProviders = value
-    }
-
-    const onBuildPlatformChange = (value: string) => {
-        project.buildPlatform = value
     }
 
     const onSubpackageBlacklistChange = (value: string) => {
@@ -92,10 +86,6 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                 options={buildProviders.map(buildProvider => buildProvider.id)}
                 values={project.buildProviders}
             />
-            <TextInput
-                label={"build platform"}
-                value={project.buildPlatform}
-                onChange={onBuildPlatformChange} />
             <ProductSelectForm product={project.product} />
             <TextInput
                 label={"subpackage blacklist"}
