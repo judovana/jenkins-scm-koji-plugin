@@ -36,6 +36,7 @@ public class TestJob extends TaskJob {
     private final List<String> projectSubpackageWhitelist;
 
     public TestJob(
+            String platformProvider,
             String projectName,
             Project.ProjectType projectType,
             Product product,
@@ -50,7 +51,7 @@ public class TestJob extends TaskJob {
             List<String> projectSubpackageWhitelist,
             File scriptsRoot
     ) {
-        super(projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
+        super(platformProvider, projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
         this.projectType = projectType;
         this.buildPlatform = buildPlatform;
         this.buildVariants = buildVariants;
@@ -59,6 +60,7 @@ public class TestJob extends TaskJob {
     }
 
     public TestJob(
+            String platformProvider,
             String projectName,
             Project.ProjectType projectType,
             Product product,
@@ -72,6 +74,7 @@ public class TestJob extends TaskJob {
             File scriptsRoot
     ) {
         this(
+                platformProvider,
                 projectName,
                 projectType,
                 product,
@@ -96,6 +99,7 @@ public class TestJob extends TaskJob {
             Map<TaskVariant, TaskVariantValue> variants
     ) {
         this(
+                buildJob.getPlatformProvider(),
                 buildJob.getProjectName(),
                 Project.ProjectType.JDK_PROJECT,
                 buildJob.getProduct(),
@@ -132,6 +136,7 @@ public class TestJob extends TaskJob {
                 )
                 .buildScriptTemplate(
                         getTask(),
+                        getPlatformProvider(),
                         getPlatform(),
                         getScriptsRoot(),
                         getExportedVariables())
@@ -157,6 +162,7 @@ public class TestJob extends TaskJob {
                 )
                 .buildScriptTemplate(
                         getTask(),
+                        getPlatformProvider(),
                         getPlatform(),
                         getScriptsRoot(),
                         getExportedVariables())
@@ -173,7 +179,7 @@ public class TestJob extends TaskJob {
             exportedVariables.add(new JenkinsJobTemplateBuilder.Variable(RELEASE_SUFFIX_VAR, buildVariants.entrySet().stream()
                     .sorted(Comparator.comparing(Map.Entry::getKey))
                     .map(entry -> entry.getValue().getId())
-                    .collect(Collectors.joining(".")) + '.' + getBuildPlatform().assembleString()));
+                    .collect(Collectors.joining(".")) + '.' + getBuildPlatform().getId()));
         }
         return exportedVariables;
     }
@@ -194,12 +200,12 @@ public class TestJob extends TaskJob {
                         getTask().getId(),
                         getProduct().getJdk(),
                         getProjectName(),
-                        buildPlatform.assembleString(),
+                        buildPlatform.getId(),
                         buildVariants.entrySet().stream()
                                 .sorted(Comparator.comparing(Map.Entry::getKey))
                                 .map(entry -> entry.getValue().getId())
                                 .collect(Collectors.joining(Job.DELIMITER)),
-                        getPlatform().getId(),
+                        getRunPlatform(),
                         getVariants().entrySet().stream()
                                 .sorted(Comparator.comparing(Map.Entry::getKey))
                                 .map(entry -> entry.getValue().getId())
@@ -228,7 +234,7 @@ public class TestJob extends TaskJob {
                                     .sorted(Comparator.comparing(Map.Entry::getKey))
                                     .map(entry -> Job.firstLetter(entry.getValue().getId()))
                                     .collect(Collectors.joining("")),
-                            getPlatform().getId(),
+                            getRunPlatform(),
                             getVariants().entrySet().stream()
                                     .sorted(Comparator.comparing(Map.Entry::getKey))
                                     .map(entry -> Job.firstLetter(entry.getValue().getId()))

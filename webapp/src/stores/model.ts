@@ -43,6 +43,7 @@ export interface JobConfig {
 
 export interface PlatformConfig {
     tasks?: { [id: string]: TaskConfig }
+    provider?: string
     variants?: VariantsConfig[]
 }
 
@@ -90,14 +91,17 @@ export interface RPMLimitation {
     blacklist: string[]
 }
 
+export interface PlatformProvider extends Item {
+    vmNodes: string[]
+    hwNodes: string[]
+}
+
 export interface Platform extends Item {
     os: string
     version: string
     architecture: string
-    provider: string
+    providers: PlatformProvider[]
     vmName: string
-    vmNodes: string[]
-    hwNodes: string[]
     tags: string[]
 }
 
