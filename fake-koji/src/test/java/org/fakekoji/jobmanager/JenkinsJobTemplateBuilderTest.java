@@ -129,7 +129,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildKojiXmlRpcApiTemplate() throws IOException {
 
-        final Platform vmPlatform = DataGenerator.getVmPlatform();
+        final Platform vmPlatform = DataGenerator.getF29x64();
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
 
         final String expectedTemplate = "<kojiXmlRpcApi class=\"hudson.plugins.scm.koji.RealKojiXmlRpcApi\">\n" +
@@ -156,7 +156,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildFakeKojiXmlRpcApiTemplate() throws IOException {
 
-        final Platform vmPlatform = DataGenerator.getVmPlatform();
+        final Platform vmPlatform = DataGenerator.getF29x64();
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
         final TaskVariant jvm = DataGenerator.getJvmVariant();
         final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
@@ -165,7 +165,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "    <projectName>" + PROJECT_NAME + "</projectName>\n" +
                 "    <buildVariants>" + "debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
-                "    <buildPlatform>" + vmPlatform.assembleString() + "</buildPlatform>\n" +
+                "    <buildPlatform>" + vmPlatform.getId() + "</buildPlatform>\n" +
                 "    <isBuilt>false</isBuilt>\n" +
                 "</kojiXmlRpcApi>\n";
 
@@ -173,7 +173,7 @@ public class JenkinsJobTemplateBuilderTest {
                 .buildFakeKojiXmlRpcApiTemplate(
                         PROJECT_NAME,
                         buildVariants,
-                        vmPlatform.assembleString(),
+                        vmPlatform.getId(),
                         false
                 ).prettyPrint();
 
@@ -183,7 +183,7 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void buildVmPostBuildTaskTemplate() throws IOException {
 
-        final Platform vmPlatform = DataGenerator.getVmPlatform();
+        final Platform vmPlatform = DataGenerator.getF29x64();
 
         final String expectedTemplate = "<hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
                 "    <tasks>\n" +
@@ -202,7 +202,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</hudson.plugins.postbuildtask.PostbuildTask>\n";
 
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(VM_POST_BUILD_TASK_TEMPLATE), dummyNamesProvider)
-                .buildVmPostBuildTaskTemplate(vmPlatform, scriptsRoot).prettyPrint();
+                .buildVmPostBuildTaskTemplate(VAGRANT, vmPlatform.getVmName(), scriptsRoot).prettyPrint();
 
         Assert.assertEquals(expectedTemplate, actualTemplate);
     }
@@ -213,7 +213,7 @@ public class JenkinsJobTemplateBuilderTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task buildTask = DataGenerator.getBuildTask();
-        final Platform vmPlatform = DataGenerator.getVmPlatform();
+        final Platform vmPlatform = DataGenerator.getF29x64();
 
         final TaskVariant jvm = DataGenerator.getJvmVariant();
         final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
@@ -221,6 +221,7 @@ public class JenkinsJobTemplateBuilderTest {
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
 
         final BuildJob buildJob = new BuildJob(
+                VAGRANT,
                 PROJECT_NAME,
                 DataGenerator.getJDK8Product(),
                 jdk8,
@@ -242,7 +243,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.FakeKojiXmlRpcApi\">\n" +
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
-                "            <buildVariants>" + "buildPlatform=" + vmPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId()
+                "            <buildVariants>" + "buildPlatform=" + vmPlatform.getId() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId()
                 + "</buildVariants>\n" +
                 "            <buildPlatform>src</buildPlatform>\n" +
                 "            <isBuilt>" + false + "</isBuilt>\n" +
@@ -252,7 +253,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", vmPlatform.getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join(" ", vmPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -270,14 +271,14 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + vmPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=build-jdk8-projectName-el7.x86_64.vagrant-release-hotspot" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=build-jdk8-projectName-el7.x86_64.vagrant-release-hotspot" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=" + buildJob.getName() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=" + buildJob.getShortName() + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + vmPlatform.getOs() + '.' + vmPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + vmPlatform.getProvider() + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=" + vmPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + vmPlatform.assembleString() + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + vmPlatform.getId() + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + vmPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
@@ -317,7 +318,7 @@ public class JenkinsJobTemplateBuilderTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task buildTask = DataGenerator.getBuildTask();
-        final Platform hwPlatform = DataGenerator.getHwPlatform();
+        final Platform hwPlatform = DataGenerator.getRHEL8Aarch64();
 
         final TaskVariant jvm = DataGenerator.getJvmVariant();
         final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
@@ -325,6 +326,7 @@ public class JenkinsJobTemplateBuilderTest {
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
 
         final BuildJob buildJob = new BuildJob(
+                VAGRANT,
                 PROJECT_NAME,
                 DataGenerator.getJDK8Product(),
                 jdk8,
@@ -346,7 +348,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.FakeKojiXmlRpcApi\">\n" +
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
-                "            <buildVariants>buildPlatform=" + hwPlatform.assembleString() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId()
+                "            <buildVariants>buildPlatform=" + hwPlatform.getId() + " debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId()
                 + "</buildVariants>\n" +
                 "            <buildPlatform>src</buildPlatform>\n" +
                 "            <isBuilt>" + false + "</isBuilt>\n" +
@@ -356,7 +358,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", hwPlatform.getHwNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join(" ", hwPlatform.getProviders().get(0).getHwNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -374,14 +376,14 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + hwPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=build-jdk8-projectName-el7.aarch64.vagrant-release-hotspot" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=build-jdk8-projectName-el7.aarch64.vagrant-release-hotspot" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=" + buildJob.getName() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=" + buildJob.getShortName() + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + hwPlatform.getOs() + '.' + hwPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + hwPlatform.getProvider() + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=" + hwPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + hwPlatform.assembleString() + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + hwPlatform.getId() + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + LOCAL + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
@@ -405,8 +407,8 @@ public class JenkinsJobTemplateBuilderTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTask();
-        final Platform buildPlatform = DataGenerator.getVmPlatform();
-        final Platform testPlatform = DataGenerator.getHwPlatform();
+        final Platform buildPlatform = DataGenerator.getRHEL8Aarch64();
+        final Platform testPlatform = DataGenerator.getRHEL8Aarch64();
 
         final TaskVariant jvm = DataGenerator.getJvmVariant();
         final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
@@ -416,7 +418,8 @@ public class JenkinsJobTemplateBuilderTest {
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
         final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
 
-        final TestJob buildJob = new TestJob(
+        final TestJob testJob = new TestJob(
+                VAGRANT,
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 DataGenerator.getJDK8Product(),
@@ -442,7 +445,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
                 "            <buildVariants>" + "debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
-                "            <buildPlatform>" + buildPlatform.assembleString() + "</buildPlatform>\n" +
+                "            <buildPlatform>" + buildPlatform.getId() + "</buildPlatform>\n" +
                 "            <isBuilt>" + true + "</isBuilt>\n" +
                 "        </kojiXmlRpcApi>\n" +
                 "        <downloadDir>rpms</downloadDir>\n" +
@@ -450,7 +453,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getHwNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getHwNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -468,14 +471,14 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.aarch64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.aarch64.vagrant-sw-7c959ecf40116cb64" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + buildPlatform.assembleString() + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + buildPlatform.getId() + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + LOCAL + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
@@ -491,7 +494,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <buildWrappers/>\n" +
                 "</project>\n";
 
-        final String actualTemplate = buildJob.generateTemplate();
+        final String actualTemplate = testJob.generateTemplate();
         Assert.assertEquals(expectedTemplate, actualTemplate);
     }
 
@@ -501,8 +504,8 @@ public class JenkinsJobTemplateBuilderTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTask();
-        final Platform buildPlatform = DataGenerator.getVmPlatform();
-        final Platform testPlatform = DataGenerator.getVmPlatform();
+        final Platform buildPlatform = DataGenerator.getRHEL7x64();
+        final Platform testPlatform = DataGenerator.getRHEL7x64();
 
         final TaskVariant jvm = DataGenerator.getJvmVariant();
         final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
@@ -512,7 +515,8 @@ public class JenkinsJobTemplateBuilderTest {
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
         final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
 
-        final TestJob buildJob = new TestJob(
+        final TestJob testJob = new TestJob(
+                VAGRANT,
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 DataGenerator.getJDK8Product(),
@@ -538,7 +542,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
                 "            <buildVariants>" + "debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
-                "            <buildPlatform>" + testPlatform.assembleString() + "</buildPlatform>\n" +
+                "            <buildPlatform>" + testPlatform.getId() + "</buildPlatform>\n" +
                 "            <isBuilt>" + true + "</isBuilt>\n" +
                 "        </kojiXmlRpcApi>\n" +
                 "        <downloadDir>rpms</downloadDir>\n" +
@@ -546,7 +550,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -564,14 +568,14 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-9bb32cbf3d9ddcf019" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.assembleString() + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.getId() + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
@@ -602,7 +606,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <buildWrappers/>\n" +
                 "</project>\n";
 
-        final String actualTemplate = buildJob.generateTemplate();
+        final String actualTemplate = testJob.generateTemplate();
         Assert.assertEquals(expectedTemplate, actualTemplate);
     }
 
@@ -612,8 +616,8 @@ public class JenkinsJobTemplateBuilderTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTaskRequiringSourcesAndBinary();
-        final Platform buildPlatform = DataGenerator.getVmPlatform();
-        final Platform testPlatform = DataGenerator.getVmPlatform();
+        final Platform buildPlatform = DataGenerator.getF29x64();
+        final Platform testPlatform = DataGenerator.getF29x64();
 
         final TaskVariant jvm = DataGenerator.getJvmVariant();
         final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
@@ -623,7 +627,8 @@ public class JenkinsJobTemplateBuilderTest {
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
         final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
 
-        final TestJob buildJob = new TestJob(
+        final TestJob testJob = new TestJob(
+                VAGRANT,
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 DataGenerator.getJDK8Product(),
@@ -649,7 +654,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
                 "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
                 "            <buildVariants>" + "debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
-                "            <buildPlatform>src " + testPlatform.assembleString() + "</buildPlatform>\n" +
+                "            <buildPlatform>src " + testPlatform.getId() + "</buildPlatform>\n" +
                 "            <isBuilt>" + true + "</isBuilt>\n" +
                 "        </kojiXmlRpcApi>\n" +
                 "        <downloadDir>rpms</downloadDir>\n" +
@@ -657,7 +662,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -675,14 +680,14 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=jtreg-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=jtreg-projectName-rh-el7.x86_64.vagrant-sw-4c79c5c558ab55c2" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.assembleString() + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.getId() + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
@@ -714,7 +719,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <buildWrappers/>\n" +
                 "</project>\n";
 
-        final String actualTemplate = buildJob.generateTemplate();
+        final String actualTemplate = testJob.generateTemplate();
         Assert.assertEquals(expectedTemplate, actualTemplate);
     }
 
@@ -724,8 +729,8 @@ public class JenkinsJobTemplateBuilderTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTaskRequiringSourcesAndBinaries();
-        final Platform buildPlatform = DataGenerator.getVmPlatform();
-        final Platform testPlatform = DataGenerator.getVmPlatform();
+        final Platform buildPlatform = DataGenerator.getF29x64();
+        final Platform testPlatform = DataGenerator.getF29x64();
 
         final TaskVariant jvm = DataGenerator.getJvmVariant();
         final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
@@ -735,7 +740,8 @@ public class JenkinsJobTemplateBuilderTest {
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
         final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
 
-        final TestJob buildJob = new TestJob(
+        final TestJob testJob = new TestJob(
+                VAGRANT,
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 DataGenerator.getJDK8Product(),
@@ -769,7 +775,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -787,14 +793,14 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=tck-jdk8-projectName-el7.x86_64-release-hotspot-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-9bb32cbf3d9ddcf019" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
                 "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.assembleString() + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.getId() + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
@@ -826,7 +832,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <buildWrappers/>\n" +
                 "</project>\n";
 
-        final String actualTemplate = buildJob.generateTemplate();
+        final String actualTemplate = testJob.generateTemplate();
         Assert.assertEquals(expectedTemplate, actualTemplate);
     }
 
@@ -908,8 +914,8 @@ public class JenkinsJobTemplateBuilderTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTask();
-        final Platform buildPlatform = DataGenerator.getVmPlatform();
-        final Platform testPlatform = DataGenerator.getVmPlatform();
+        final Platform buildPlatform = DataGenerator.getF29x64();
+        final Platform testPlatform = DataGenerator.getF29x64();
 
         final TaskVariant garbageCollector = DataGenerator.getGarbageCollectorCategory();
         final TaskVariant displayProtocol = DataGenerator.getDisplayProtocolCategory();
@@ -925,6 +931,7 @@ public class JenkinsJobTemplateBuilderTest {
         );
 
         final TestJob testJob = new TestJob(
+                VAGRANT,
                 TEST_PROJECT_NAME,
                 Project.ProjectType.JDK_TEST_PROJECT,
                 DataGenerator.getJDK8Product(),
@@ -969,7 +976,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "        <dirPerNvr>false</dirPerNvr>\n" +
                         "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                         "    </scm>\n" +
-                        "    <assignedNode>" + String.join(" ", testPlatform.getVmNodes()) + "</assignedNode>\n" +
+                        "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                         "    <canRoam>false</canRoam>\n" +
                         "    <disabled>false</disabled>\n" +
                         "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -987,12 +994,12 @@ public class JenkinsJobTemplateBuilderTest {
                         "#!/bin/bash&#13;\n" +
                         "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                         "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                        "export OTOOL_JOB_NAME=tck-jdk8-testProject-el7.x86_64-el7.x86_64.vagrant-shenandoah-wayland" + XML_NEW_LINE +
-                        "export OTOOL_JOB_NAME_SHORTENED=tck-testProject-el7.x86_64.vagrant-sw-5afe90eebb7a75baca447" + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
                         "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
                         "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
                         "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                        "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProvider() + XML_NEW_LINE +
+                        "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                         "export OTOOL_PROJECT_NAME=" + TEST_PROJECT_NAME + XML_NEW_LINE +
                         "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                         "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +

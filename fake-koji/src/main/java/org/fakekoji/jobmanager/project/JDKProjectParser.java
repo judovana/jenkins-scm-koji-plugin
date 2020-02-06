@@ -1,20 +1,21 @@
 package org.fakekoji.jobmanager.project;
 
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementUtils;
 import org.fakekoji.jobmanager.Parser;
+import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.BuildPlatformConfig;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.PlatformConfig;
 import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TaskConfig;
-import org.fakekoji.jobmanager.model.VariantsConfig;
-import org.fakekoji.jobmanager.model.BuildJob;
-import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.TestJob;
+import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
@@ -22,7 +23,6 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
-import org.fakekoji.jobmanager.ConfigManager;
 
 import java.io.File;
 import java.util.Collections;
@@ -110,6 +110,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     private BiConsumer<String, PlatformConfig> getPlatformsConsumer() {
         return ManagementUtils.managementBiConsumerWrapper(
                 (String platformId, PlatformConfig platformConfig) -> {
+                    jobBuilder.setPlatformProvider(platformConfig.getProvider());
                     jobBuilder.setPlatform(platformId);
                     platformConfig.getTasks().forEach(getTasksConsumer());
                     jobBuilder.resetPlatform();
@@ -154,6 +155,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private JDKVersion jdkVersion;
         private Product product;
         private Set<BuildProvider> buildProviders;
+        private String platformProvider;
         private Platform buildPlatform;
         private Task buildTask;
         private Map<TaskVariant, TaskVariantValue> buildVariants;
@@ -223,6 +225,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
 
         private void buildBuildJob() {
             buildJob = new BuildJob(
+                    platformProvider,
                     projectName,
                     product,
                     jdkVersion,
@@ -238,6 +241,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private void buildTestJob() {
             final TestJob tj = (buildJob == null) ?
                     new TestJob(
+                            platformProvider,
                             projectName,
                             Project.ProjectType.JDK_TEST_PROJECT,
                             product,
@@ -357,6 +361,10 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                 return;
             }
             throw new RuntimeException("Setting platform error");
+        }
+
+        void setPlatformProvider(String platformProvider) {
+            this.platformProvider = platformProvider;
         }
     }
 

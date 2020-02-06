@@ -23,8 +23,6 @@
  */
 package org.fakekoji.jobmanager.model;
 
-import static org.fakekoji.DataGenerator.PROJECT_NAME;
-
 import org.fakekoji.DataGenerator;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
@@ -36,7 +34,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -95,14 +93,15 @@ public class JobTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTaskRequiringSourcesAndBinaries();
-        final Platform buildPlatform = new Platform("pb.1", "pb", "1", "x", "vg", "vm", new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-        final Platform testPlatform = new Platform("pr.1", "pr", "1", "x", "vg", "vm", new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        final Platform buildPlatform = new Platform("pb1.x", "pb", "1", "x", Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null);
+        final Platform testPlatform = new Platform("pr.1", "pr", "1", "x", Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null);
 
 
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
         final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
 
         final TestJob buildJob1 = new TestJob(
+                "",
                 "name", //final name have 59 chars. its maximum possible, before shortening
                 Project.ProjectType.JDK_PROJECT,
                 DataGenerator.getJDK8Product(),
@@ -126,6 +125,7 @@ public class JobTest {
         Assert.assertEquals(ss1, sl1);
 
         final TestJob buildJob2 = new TestJob(
+                "",
                 "nameA", //final name have 60 chars. its maximum is just now exceeded
                 //the sha here is very long 41 chars
                 Project.ProjectType.JDK_PROJECT,
@@ -151,6 +151,7 @@ public class JobTest {
 
 
         final TestJob buildJob3 = new TestJob(
+                "",
                 "nameA0123456789012345678901234567890123456", //projname is now so long
                 //that its hasum is exactly 1char
                 Project.ProjectType.JDK_PROJECT,
@@ -174,6 +175,7 @@ public class JobTest {
         Assert.assertEquals("tck-nameA0123456789012345678901234567890123456-rh-pr.1-sw-3", ss3);
 
         final TestJob buildJob4 = new TestJob(
+                "",
                 "nameA01234567890123456789012345678901234567", //projname is now so long
                 //that its only hashsum
                 Project.ProjectType.JDK_PROJECT,
@@ -205,12 +207,13 @@ public class JobTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getBuildTask();
-        final Platform buildPlatform = new Platform("pb.1", "pb", "1", "x", "vg", "vm", new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        final Platform buildPlatform = new Platform("pb.1", "pb", "1", "x", Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null);
 
 
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
 
         final BuildJob buildJob1 = new BuildJob(
+                "",
                 "nameNameNameNameNameNameNam", //final name have 59 chars. its maximum possible, before shortening
                 DataGenerator.getJDK8Product(),
                 jdk8,
@@ -231,6 +234,7 @@ public class JobTest {
         Assert.assertEquals(ss1, sl1);
 
         final BuildJob buildJob2 = new BuildJob(
+                "",
                 "nameNameNameNameNameNameNamA", //final name have 60 chars. its maximum is just now exceeded
                 //the sha here is very long 41 chars
                 DataGenerator.getJDK8Product(),
@@ -253,6 +257,7 @@ public class JobTest {
 
 
         final BuildJob buildJob3 = new BuildJob(
+                "",
                 "nameNameNameNameNameNameNamA012345678901234", //projname is now so long
                 //that its hasum is exactly 1char
                 DataGenerator.getJDK8Product(),
@@ -273,6 +278,7 @@ public class JobTest {
         Assert.assertEquals("build-nameNameNameNameNameNameNamA012345678901234-pb.1-rh-5", ss3);
 
         final BuildJob buildJob4 = new BuildJob(
+                "",
                 "nameNameNameNameNameNameNamA0123456789012345", //projname is now so long
                 //that its only hashsum
                 DataGenerator.getJDK8Product(),

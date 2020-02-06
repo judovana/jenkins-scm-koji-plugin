@@ -281,7 +281,7 @@ public class BuildHelper {
 
         final List<String> platforms = platformStorage.loadAll(Platform.class)
                 .stream()
-                .map(Platform::assembleString)
+                .map(Platform::getId)
                 .distinct()
                 .collect(Collectors.toList());
         final List<TaskVariant> buildTaskVariants = taskVariantStorage.loadAll(TaskVariant.class)
