@@ -1,5 +1,4 @@
 import React from "react"
-import Select from "../formComponents/Select"
 import { useLocalStore, useObserver } from "mobx-react"
 
 import { Platform, Item } from "../../stores/model"
@@ -20,14 +19,12 @@ const PlatformForm: React.FC<Props> = props => {
 
     const platform = useLocalStore<Platform>(() => ({
         architecture: "",
-        hwNodes: [],
         id: "",
         os: "",
-        provider: "",
+        providers: [],
         tags: [],
         version: "",
         vmName: "",
-        vmNodes: []
     }))
 
     React.useEffect(() => {
@@ -39,14 +36,12 @@ const PlatformForm: React.FC<Props> = props => {
             return
         }
         platform.architecture = _platform.architecture || ""
-        platform.hwNodes = _platform.hwNodes || []
         platform.id = _platform.id || ""
         platform.os = _platform.os || ""
-        platform.provider = _platform.provider || ""
+        platform.providers = _platform.providers || []
         platform.tags = _platform.tags || []
         platform.version = _platform.version || ""
         platform.vmName = _platform.vmName || ""
-        platform.vmNodes = _platform.vmNodes || []
     })
 
     const onOSChange = (value: string) => {
@@ -61,20 +56,8 @@ const PlatformForm: React.FC<Props> = props => {
         platform!.architecture = value
     }
 
-    const onProviderChange = (value: string) => {
-        platform!.provider = value
-    }
-
     const onVMNameChange = (value: string) => {
         platform!.vmName = value
-    }
-
-    const onVMNodesChange = (value: string) => {
-        platform!.vmNodes = value.split(" ")
-    }
-
-    const onHWNodesChange = (value: string) => {
-        platform!.hwNodes = value.split(" ")
     }
 
     const onTagsChange = (value: string) => {
@@ -83,8 +66,6 @@ const PlatformForm: React.FC<Props> = props => {
 
     const onSubmit = () => {
         const filter = (value: string) => value.trim() !== ""
-        platform.vmNodes = platform.vmNodes.filter(filter)
-        platform.hwNodes = platform.hwNodes.filter(filter)
         platform.tags = platform.tags.filter(filter)
         props.onSubmit(platform)
     }
@@ -93,13 +74,12 @@ const PlatformForm: React.FC<Props> = props => {
         const {
             architecture,
             os,
-            provider,
             tags,
             version,
             vmName,
-            vmNodes,
-            hwNodes
         } = platform
+
+        // TODO: Add platform provider form
 
         return (
             <React.Fragment>
@@ -115,23 +95,10 @@ const PlatformForm: React.FC<Props> = props => {
                     label={"architecture"}
                     onChange={onArchitectureChange}
                     value={architecture} />
-                <Select
-                    label={"provider"}
-                    onChange={onProviderChange}
-                    options={["vagrant", "beaker"]}
-                    value={provider} />
                 <TextInput
                     label={"vm name"}
                     onChange={onVMNameChange}
                     value={vmName} />
-                <TextInput
-                    label={"vm nodes"}
-                    onChange={onVMNodesChange}
-                    value={vmNodes.join(" ")} />
-                <TextInput
-                    label={"hw nodes"}
-                    onChange={onHWNodesChange}
-                    value={hwNodes.join(" ")} />
                 <TextInput
                     label={"tags"}
                     onChange={onTagsChange}

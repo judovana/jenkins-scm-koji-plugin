@@ -8,6 +8,7 @@ import AddComponent from "./AddComponent"
 import useStores from "../../hooks/useStores"
 import TaskRow from "./TaskRow"
 import VariantRow from "./VariantRow"
+import Select from "./Select"
 
 type PlatformRowProps = {
     config: PlatformConfig
@@ -22,12 +23,24 @@ type PlatformRowProps = {
 const PlatformRow: React.FC<PlatformRowProps> = props => {
 
     const { configStore } = useStores()
+    const platform = configStore.getPlatform(props.id)
+
+    React.useEffect(() => {
+        if (platform && props.config.tasks) {
+            const provider = platform.providers.find(_ => true)
+            props.config.provider = provider && provider.id
+        }
+    }, [platform, props.config.tasks, props.config.provider])
 
     return useObserver(() => {
         const { id, config, treeID, onDelete, projectType, type } = props
 
         const taskConfigs = config.tasks
         const variantConfigs = config.variants
+
+        if (!platform) {
+            return null
+        }
 
         const onTaskDelete = (id: string): void => {
             delete config.tasks![id]
@@ -63,10 +76,18 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
             <span>
                 {id}
                 {(
-                    taskConfigs && (<AddComponent
-                        label={`Add ${type.toLowerCase()} ${(taskConfigs && "task") || (variantConfigs && "variant")}`}
-                        items={unselectedTasks || unselectedPlatforms || []}
-                        onAdd={(taskConfigs && onTaskAdd) || (variantConfigs && onVariantAdd) || (() => null)} />)
+                    taskConfigs && (<React.Fragment>
+                        {/* This will uglify the form, TODO: pretify it  */}
+                        <Select
+                            label="Provider"
+                            onChange={value => config.provider = value}
+                            options={platform.providers.map(provider => provider.id)}
+                            value={config.provider}/>
+                        <AddComponent
+                            label={`Add ${type.toLowerCase()} ${(taskConfigs && "task") || (variantConfigs && "variant")}`}
+                            items={unselectedTasks || unselectedPlatforms || []}
+                            onAdd={(taskConfigs && onTaskAdd) || (variantConfigs && onVariantAdd) || (() => null)} />
+                    </React.Fragment>)
                 ) || (
                         variantConfigs && (<Tooltip title={`Add ${type.toLowerCase()} variant`}>
                             <IconButton onClick={onVariantAdd}>
