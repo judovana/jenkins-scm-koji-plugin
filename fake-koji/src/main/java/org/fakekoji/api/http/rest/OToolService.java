@@ -47,6 +47,9 @@ public class OToolService {
 
     private static final String MISC = "misc";
     private static final String REGENERATE_ALL_JOBS = "regenerateAllJobs";
+    private static final String MATRIX = "matrix";
+    private static final String MATRIX_COMPRESSED = "matrixCompressed"
+            + "";
 
     private final int port;
     private final Javalin app;
@@ -96,6 +99,11 @@ public class OToolService {
                         if (ctx.status() < 400) {
                             ctx.status(200).json(r[0]);
                         }
+                    });
+                }));
+                path(MATRIX, () -> get(ctx -> {
+                    wrapper.wrap(context -> {
+                        Platform
                     });
                 }));
             });
