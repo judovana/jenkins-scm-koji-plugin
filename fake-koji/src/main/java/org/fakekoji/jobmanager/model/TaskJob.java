@@ -5,17 +5,15 @@ import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
-import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.TaskVariant;
+import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
@@ -24,6 +22,7 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR
 
 public abstract class TaskJob extends Job {
 
+    private final String platformProvider;
     private final String projectName;
     private final Product product;
     private final JDKVersion jdkVersion;
@@ -34,6 +33,7 @@ public abstract class TaskJob extends Job {
     private final File scriptsRoot;
 
     TaskJob(
+            String platformProvider,
             String projectName,
             Product product,
             JDKVersion jdkVersion,
@@ -43,6 +43,7 @@ public abstract class TaskJob extends Job {
             Map<TaskVariant, TaskVariantValue> variants,
             File scriptsRoot
     ) {
+        this.platformProvider = platformProvider;
         this.projectName = projectName;
         this.product = product;
         this.jdkVersion = jdkVersion;
@@ -51,6 +52,10 @@ public abstract class TaskJob extends Job {
         this.platform = platform;
         this.variants = variants;
         this.scriptsRoot = scriptsRoot;
+    }
+
+    public String getPlatformProvider() {
+        return platformProvider;
     }
 
     public String getProjectName() {
@@ -90,7 +95,8 @@ public abstract class TaskJob extends Job {
         if (this == o) return true;
         if (!(o instanceof TaskJob)) return false;
         TaskJob taskJob = (TaskJob) o;
-        return Objects.equals(projectName, taskJob.projectName) &&
+        return Objects.equals(platformProvider, taskJob.platformProvider) &&
+                Objects.equals(projectName, taskJob.projectName) &&
                 Objects.equals(product, taskJob.product) &&
                 Objects.equals(jdkVersion, taskJob.jdkVersion) &&
                 Objects.equals(buildProviders, taskJob.buildProviders) &&
@@ -110,10 +116,7 @@ public abstract class TaskJob extends Job {
         }};
     }
 
-//    static Map<String, String> assembleVariantVariables(Map<TaskVariant, TaskVariantValue> variants) {
-//        variants.entrySet().stream()
-//                .sorted(Comparator.comparing(Map.Entry::getKey))
-//                .map(entry -> entry.getValue().getId())
-//                .collect(Collectors.joining(".")) + '.' + getBuildPlatform().assembleString()
-//    }
+    public String getRunPlatform() {
+        return platform.getId() + '.' + platformProvider;
+    }
 }

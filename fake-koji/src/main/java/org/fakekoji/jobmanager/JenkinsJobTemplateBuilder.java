@@ -222,7 +222,7 @@ public class JenkinsJobTemplateBuilder {
         }
         switch (fileRequirements.getBinary()) {
             case BINARY:
-                platforms.add(platform.assembleString());
+                platforms.add(platform.getId());
                 break;
             case BINARIES:
                 return "";
@@ -244,43 +244,49 @@ public class JenkinsJobTemplateBuilder {
 
     public JenkinsJobTemplateBuilder buildScriptTemplate(
             Task task,
+            String provider,
             Platform platform,
             File scriptsRoot,
             List<Variable> exportedVariables
     ) throws IOException {
+        final Platform.Provider platformProvider = platform.getProviders()
+                .stream()
+                .filter(p -> p.getId().equals(provider))
+                .findFirst()
+                .get(); // TODO: should throw an exception (ManagementException I guess)
         final String vmName;
         final List<String> nodes;
         switch (task.getMachinePreference()) {
             case HW:
-                if (platform.getHwNodes().isEmpty()) {
+                if (platformProvider.getHwNodes().isEmpty()) {
                     vmName = platform.getVmName();
-                    nodes = platform.getVmNodes();
+                    nodes = platformProvider.getVmNodes();
                 } else {
                     vmName = LOCAL;
-                    nodes = platform.getHwNodes();
+                    nodes = platformProvider.getHwNodes();
                 }
                 break;
             case HW_ONLY:
                 vmName = LOCAL;
-                nodes = platform.getHwNodes();
+                nodes = platformProvider.getHwNodes();
                 break;
             case VM:
-                if (platform.getVmNodes().isEmpty()) {
+                if (platformProvider.getVmNodes().isEmpty()) {
                     vmName = LOCAL;
-                    nodes = platform.getHwNodes();
+                    nodes = platformProvider.getHwNodes();
                 } else {
                     vmName = platform.getVmName();
-                    nodes = platform.getVmNodes();
+                    nodes = platformProvider.getVmNodes();
                 }
                 break;
             case VM_ONLY:
                 vmName = platform.getVmName();
-                nodes = platform.getVmNodes();
+                nodes = platformProvider.getVmNodes();
                 break;
             default:
                 throw new RuntimeException("Unknown machine preference");
         }
-        exportedVariables.add(new Variable(PLATFORM_PROVIDER_VAR, platform.getProvider()));
+        exportedVariables.add(new Variable(PLATFORM_PROVIDER_VAR, platformProvider.getId()));
         exportedVariables.add(new Variable(VM_NAME_OR_LOCAL_VAR, vmName));
         if (job != null) {
             if (job.getName() != null) {
@@ -299,17 +305,21 @@ public class JenkinsJobTemplateBuilder {
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
                 .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables));
         if (!vmName.equals(LOCAL)) {
-            return buildVmPostBuildTaskTemplate(platform, scriptsRoot);
+            return buildVmPostBuildTaskTemplate(provider, platform.getVmName(), scriptsRoot);
         }
         template = template.replace(VM_POST_BUILD_TASK, "");
         return this;
     }
 
-    JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(Platform platform, File scriptsRoot) throws IOException {
+    JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(
+            String platformProvider,
+            String platformVMName,
+            File scriptsRoot
+    ) throws IOException {
         template = template
                 .replace(VM_POST_BUILD_TASK, loadTemplate(JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE))
-                .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, platform.getProvider(), DESTROY_SCRIPT_NAME).toString())
-                .replace(PLATFORM_NAME, platform.getVmName());
+                .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, platformProvider, DESTROY_SCRIPT_NAME).toString())
+                .replace(PLATFORM_NAME, platformVMName);
         return this;
     }
 

@@ -30,10 +30,8 @@ public class PlatformManager implements Manager<Platform> {
                 platform.getOs(),
                 platform.getVersion(),
                 platform.getArchitecture(),
-                platform.getProvider(),
+                platform.getProviders(),
                 platform.getVmName(),
-                platform.getVmNodes(),
-                platform.getHwNodes(),
                 platform.getTags()
         );
         ManagementUtils.checkID(newPlatform.getId(), storage, false);

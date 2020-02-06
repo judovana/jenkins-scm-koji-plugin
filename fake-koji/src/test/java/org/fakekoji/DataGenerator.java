@@ -65,9 +65,11 @@ public class DataGenerator {
     public static final String BUILD_PROVIDER_1 = "fakekoji-hydra";
     public static final String BUILD_PROVIDER_2 = "brew-brewhub";
 
+    public static final String VAGRANT = "vagrant";
+    public static final String BEAKER = "beaker";
+
     public static final String RHEL_7_X64 = "el7.x86_64";
-    public static final String RHEL_7_X64_VAGRANT = "el7.x86_64.vagrant";
-    public static final String F_29_X64_VAGRANT = "f29.x86_64.vagrant";
+    public static final String F_29_X64 = "f29.x86_64";
 
     public static final String BUILD = "build";
     public static final String TCK = "tck";
@@ -301,55 +303,60 @@ public class DataGenerator {
         ));
     }
 
-    public static Platform getRHEL7x64Vagrant() {
+    public static Platform.Provider getVMOnlyProvider() {
+        return new Platform.Provider(
+                "vagrant",
+                Collections.emptyList(),
+                Arrays.asList("Hydra", "Norn")
+        );
+    }
+
+    public static Platform.Provider getHWOnlyProvider() {
+        return new Platform.Provider(
+                "vagrant",
+                Arrays.asList("Hydra", "Norn"),
+                Collections.emptyList()
+                );
+    }
+
+    public static Platform.Provider getProvider() {
+        return new Platform.Provider(
+                "vagrant",
+                Arrays.asList("Hydra", "Norn"),
+                Arrays.asList("Odin", "Tyr")
+        );
+    }
+
+    public static Platform getRHEL7x64() {
         return new Platform(
                 "el",
                 "7",
                 "x86_64",
-                "vagrant",
+                Arrays.asList(getProvider()),
                 "rhel-x64",
-                Arrays.asList("Hydra", "Norn"),
-                Collections.emptyList(),
                 Collections.singletonList("el7-*")
         );
     }
 
-    public static Platform getF29x64Vagrant() {
+    public static Platform getF29x64() {
         return new Platform(
                 "f",
                 "29",
                 "x86_64",
-                "vagrant",
+                Arrays.asList(getVMOnlyProvider()),
                 "f29-x64",
-                Arrays.asList("Hydra", "Norn"),
-                Collections.emptyList(),
                 Collections.singletonList("f29-*")
         );
     }
 
-    public static Platform getVmPlatform() {
+    public static Platform getRHEL8Aarch64() {
         return new Platform(
                 "el",
-                "7",
-                "x86_64",
-                "vagrant",
-                "rhel7-x64",
-                Arrays.asList("Hydra", "Norn"),
-                Collections.emptyList(),
-                Collections.singletonList("rhel-7.*-candidate")
-        );
-    }
-
-    public static Platform getHwPlatform() {
-        return new Platform(
-                "el",
-                "7",
+                "8",
                 "aarch64",
-                "vagrant",
-                "rhel7-x64",
-                Collections.emptyList(),
-                Arrays.asList("Odin", "Tyr"),
-                Collections.singletonList("rhel-7.*-candidate")
+                Arrays.asList(getHWOnlyProvider()),
+                "rhel8-aarch64",
+                Collections.singletonList("el8-*")
         );
     }
 
@@ -574,27 +581,27 @@ public class DataGenerator {
 
                 new JobConfiguration(
                         Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                            put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                            put(RHEL_7_X64, new PlatformConfig(
                                     Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                         put(BUILD, new TaskConfig(
                                                 Collections.singletonList(
                                                         getBuildVariantConfig(
                                                                 getBuildVariantsMap(HOTSPOT, RELEASE),
                                                                 Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                                    put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                                                                    put(RHEL_7_X64, new PlatformConfig(
                                                                             Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                                 put(TCK, new TaskConfig(
                                                                                         Collections.singletonList(
                                                                                                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                                         )
                                                                                 ));
-                                                                            }})
+                                                                            }}), VAGRANT
                                                                     ));
                                                                 }})
                                                         )
                                                 )
                                         ));
-                                    }})
+                                    }}), VAGRANT
                             ));
                         }})
                 )
@@ -610,105 +617,105 @@ public class DataGenerator {
                 DataGenerator.getBuildProvidersIds(),
                 new JobConfiguration(
                         Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                            put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                            put(RHEL_7_X64, new PlatformConfig(
                                     Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                         put(BUILD, new TaskConfig(
                                                 Arrays.asList(
                                                         getBuildVariantConfig(
                                                                 getBuildVariantsMap(HOTSPOT, RELEASE),
                                                                 Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                                    put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                                                                    put(RHEL_7_X64, new PlatformConfig(
                                                                             Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                                 put(TCK, new TaskConfig(
                                                                                         Collections.singletonList(
                                                                                                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                                         )
                                                                                 ));
-                                                                            }})
+                                                                            }}), VAGRANT
                                                                     ));
                                                                 }})
                                                         ),
                                                         getBuildVariantConfig(
                                                                 getBuildVariantsMap(HOTSPOT, FASTDEBUG),
                                                                 Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                                    put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                                                                    put(RHEL_7_X64, new PlatformConfig(
                                                                             Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                                 put(TCK, new TaskConfig(
                                                                                         Collections.singletonList(
                                                                                                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                                         )
                                                                                 ));
-                                                                            }})
+                                                                            }}), VAGRANT
                                                                     ));
                                                                 }})
                                                         ),
                                                         getBuildVariantConfig(
                                                                 getBuildVariantsMap(HOTSPOT, SLOWDEBUG),
                                                                 Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                                    put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                                                                    put(RHEL_7_X64, new PlatformConfig(
                                                                             Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                                 put(TCK, new TaskConfig(
                                                                                         Collections.singletonList(
                                                                                                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                                         )
                                                                                 ));
-                                                                            }})
+                                                                            }}), VAGRANT
                                                                     ));
                                                                 }})
                                                         )
                                                 )
                                         ));
-                                    }})
+                                    }}), VAGRANT
                             ));
-                            put(F_29_X64_VAGRANT, new PlatformConfig(
+                            put(F_29_X64, new PlatformConfig(
                                     Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                         put(BUILD, new TaskConfig(
                                                 Arrays.asList(
                                                         getBuildVariantConfig(
                                                                 getBuildVariantsMap(HOTSPOT, RELEASE),
                                                                 Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                                    put(F_29_X64_VAGRANT, new PlatformConfig(
+                                                                    put(F_29_X64, new PlatformConfig(
                                                                             Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                                 put(TCK, new TaskConfig(
                                                                                         Collections.singletonList(
                                                                                                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                                         )
                                                                                 ));
-                                                                            }})
+                                                                            }}), VAGRANT
                                                                     ));
                                                                 }})
                                                         ),
                                                         getBuildVariantConfig(
                                                                 getBuildVariantsMap(HOTSPOT, FASTDEBUG),
                                                                 Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                                    put(F_29_X64_VAGRANT, new PlatformConfig(
+                                                                    put(F_29_X64, new PlatformConfig(
                                                                             Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                                 put(TCK, new TaskConfig(
                                                                                         Collections.singletonList(
                                                                                                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                                         )
                                                                                 ));
-                                                                            }})
+                                                                            }}), VAGRANT
                                                                     ));
                                                                 }})
                                                         ),
                                                         getBuildVariantConfig(
                                                                 getBuildVariantsMap(HOTSPOT, SLOWDEBUG),
                                                                 Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                                    put(F_29_X64_VAGRANT, new PlatformConfig(
+                                                                    put(F_29_X64, new PlatformConfig(
                                                                             Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                                 put(TCK, new TaskConfig(
                                                                                         Collections.singletonList(
                                                                                                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                                         )
                                                                                 ));
-                                                                            }})
+                                                                            }}), VAGRANT
                                                                     ));
                                                                 }})
                                                         )
                                                 )
                                         ));
-                                    }})
+                                    }}), VAGRANT
                             ));
                         }})
                 )
@@ -738,12 +745,12 @@ public class DataGenerator {
                 getSubpackageWhitelist(),
                 new TestJobConfiguration(
                         Collections.unmodifiableMap(new HashMap<String, BuildPlatformConfig>() {{
-                            put(RHEL_7_X64_VAGRANT, new BuildPlatformConfig(
+                            put(RHEL_7_X64, new BuildPlatformConfig(
                                     Collections.unmodifiableList(Arrays.asList(
                                             new VariantsConfig(
                                                     getBuildVariantsMap(HOTSPOT, RELEASE),
                                                     Collections.unmodifiableMap(new HashMap<String, PlatformConfig>() {{
-                                                        put(RHEL_7_X64_VAGRANT, new PlatformConfig(
+                                                        put(RHEL_7_X64, new PlatformConfig(
                                                                 Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                     put(TCK, new TaskConfig(
                                                                             Arrays.asList(
@@ -756,9 +763,9 @@ public class DataGenerator {
                                                                                     new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
                                                                             )
                                                                     ));
-                                                                }})
+                                                                }}), VAGRANT
                                                         ));
-                                                        put(F_29_X64_VAGRANT, new PlatformConfig(
+                                                        put(F_29_X64, new PlatformConfig(
                                                                 Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                                                     put(TCK, new TaskConfig(
                                                                             Arrays.asList(
@@ -766,7 +773,7 @@ public class DataGenerator {
                                                                                     new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND))
                                                                             )
                                                                     ));
-                                                                }})
+                                                                }}), VAGRANT
                                                         ));
                                                     }})
                                             )
@@ -804,8 +811,8 @@ public class DataGenerator {
 
     public static Set<Platform> getPlatforms() {
         return new HashSet<>(Arrays.asList(
-                getRHEL7x64Vagrant(),
-                getF29x64Vagrant()
+                getRHEL7x64(),
+                getF29x64()
         ));
     }
 
@@ -829,12 +836,13 @@ public class DataGenerator {
 
     public static Job get_build_jdk8_project_el7_x86_64_vagrant_hotspot_release() {
         return new BuildJob(
+                VAGRANT,
                 PROJECT_NAME,
                 getJDK8Product(),
                 getJDKVersion8(),
                 getBuildProviders(),
                 getBuildTask(),
-                getRHEL7x64Vagrant(),
+                getRHEL7x64(),
                 new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
@@ -845,12 +853,13 @@ public class DataGenerator {
 
     public static Job get_build_jdk8_project_el7_x86_64_vagrant_hotspot_fastdebug() {
         return new BuildJob(
+                VAGRANT,
                 PROJECT_NAME,
                 getJDK8Product(),
                 getJDKVersion8(),
                 getBuildProviders(),
                 getBuildTask(),
-                getRHEL7x64Vagrant(),
+                getRHEL7x64(),
                 new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getFastdebugVariant());
@@ -861,12 +870,13 @@ public class DataGenerator {
 
     public static Job get_build_jdk8_project_f29_x86_64_vagrant_hotspot_release() {
         return new BuildJob(
+                VAGRANT,
                 PROJECT_NAME,
                 getJDK8Product(),
                 getJDKVersion8(),
                 getBuildProviders(),
                 getBuildTask(),
-                getF29x64Vagrant(),
+                getF29x64(),
                 new HashMap<TaskVariant, TaskVariantValue>() {{
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
@@ -876,8 +886,9 @@ public class DataGenerator {
     }
 
     public static Job get_tck_jdk8_project_el7_x86_64_hotspot_release_el7_x86_64_vagrant_shenandoah_xServer() {
-        final Platform platform = getRHEL7x64Vagrant();
+        final Platform platform = getRHEL7x64();
         return new TestJob(
+                VAGRANT,
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 getJDK8Product(),
@@ -899,8 +910,9 @@ public class DataGenerator {
     }
 
     public static Job get_tck_jdk8_project_el7_x86_64_hotspot_release_el7_x86_64_vagrant_zgc_xServer() {
-        final Platform platform = getRHEL7x64Vagrant();
+        final Platform platform = getRHEL7x64();
         return new TestJob(
+                VAGRANT,
                 PROJECT_NAME,
                 Project.ProjectType.JDK_PROJECT,
                 getJDK8Product(),
@@ -981,7 +993,7 @@ public class DataGenerator {
                                         .sorted(Comparator.comparing(Map.Entry::getKey))
                                         .map(Map.Entry::getValue)
                                         .collect(Collectors.joining("."))
-                                        + '.' + platform.assembleString();
+                                        + '.' + platform.getId();
                                 final File platformDir = new File(releaseDir, archName);
                                 final String archiveFileName = baseName + archName + SUFFIX;
                                 if (!notBuilt.contains(archiveFileName)) {

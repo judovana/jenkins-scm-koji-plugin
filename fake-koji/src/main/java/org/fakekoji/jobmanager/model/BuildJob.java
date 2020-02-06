@@ -31,6 +31,7 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.XML_DECLARATION;
 public class BuildJob extends TaskJob {
 
     public BuildJob(
+            String platformProvider,
             String projectName,
             Product product,
             JDKVersion jdkVersion,
@@ -40,7 +41,7 @@ public class BuildJob extends TaskJob {
             Map<TaskVariant, TaskVariantValue> variants,
             File scriptsRoot
     ) {
-        super(projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
+        super(platformProvider, projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
     }
 
     @Override
@@ -56,7 +57,7 @@ public class BuildJob extends TaskJob {
                     .filter(e -> e.getKey().getType() == Task.Type.BUILD)
                     .sorted(Comparator.comparing(Map.Entry::getKey))
                     .map(e -> e.getValue().getId())
-                    .collect(Collectors.joining(".")) + '.' + getPlatform().assembleString()));
+                    .collect(Collectors.joining(".")) + '.' + getPlatform().getId()));
         }};
 
         // TODO: do this better
@@ -64,7 +65,7 @@ public class BuildJob extends TaskJob {
             putAll(getVariants());
             put(
                     new TaskVariant("buildPlatform", "", Task.Type.BUILD, "", 0, Collections.emptyMap()),
-                    new TaskVariantValue(getPlatform().assembleString(), "")
+                    new TaskVariantValue(getPlatform().getId(), "")
             );
         }};
 
@@ -77,7 +78,7 @@ public class BuildJob extends TaskJob {
                         false
                 )
                 .buildTriggerTemplate(getTask().getScmPollSchedule())
-                .buildScriptTemplate(getTask(), getPlatform(), getScriptsRoot(), variables)
+                .buildScriptTemplate(getTask(), getPlatformProvider(), getPlatform(), getScriptsRoot(), variables)
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }
@@ -90,7 +91,7 @@ public class BuildJob extends TaskJob {
                         getTask().getId(),
                         getProduct().getJdk(),
                         getProjectName(),
-                        getPlatform().getId(),
+                        getRunPlatform(),
                         getVariants().entrySet().stream()
                                 .sorted(Comparator.comparing(Map.Entry::getKey))
                                 .map(entry -> entry.getValue().getId())
@@ -115,7 +116,7 @@ public class BuildJob extends TaskJob {
                     Arrays.asList(
                             getTask().getId(),
                             getProjectName(),
-                            getPlatform().getId(),
+                            getRunPlatform(),
                             getVariants().entrySet().stream()
                                     .sorted(Comparator.comparing(Map.Entry::getKey))
                                     .map(entry -> Job.firstLetter(entry.getValue().getId()))
