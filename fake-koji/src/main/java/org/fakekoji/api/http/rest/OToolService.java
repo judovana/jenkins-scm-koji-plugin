@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
@@ -103,7 +104,8 @@ public class OToolService {
                 }));
                 path(MATRIX, () -> get(ctx -> {
                     wrapper.wrap(context -> {
-                        Platform
+                        MatrixGenerator m = new MatrixGenerator(settings, configManager);
+                        context.status(200).result(m.emptyPrint());
                     });
                 }));
             });

@@ -1,9 +1,11 @@
 package org.fakekoji.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 import java.util.Objects;
 
-public class Task {
+public class Task implements  Comparable<Task> {
 
     private final String id;
     private final String script;
@@ -113,6 +115,11 @@ public class Task {
     @Override
     public int hashCode() {
         return Objects.hash(id, script, type, scmPollSchedule, machinePreference, productLimitation, platformLimitation, fileRequirements, xmlTemplate, rpmLimitation);
+    }
+
+    @Override
+    public int compareTo(@NotNull Task task) {
+        return this.getId().compareTo(task.getId());
     }
 
     public static class FileRequirements {

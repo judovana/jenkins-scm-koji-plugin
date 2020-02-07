@@ -117,10 +117,14 @@ public abstract class TaskJob extends Job {
     }
 
     public String getRunPlatform() {
-        if (platformProvider == null || platformProvider.isEmpty()){
-            return platform.getId();
+        return getPlatformAndProviderString(platform, platformProvider);
+    }
+
+    public static String getPlatformAndProviderString(Platform pl, String pr) {
+        if (pr == null || pr.isEmpty()) {
+            return pl.getId();
         } else {
-            return platform.getId() + '.' + platformProvider;
+            return pl.getId() + '.' + pr;
         }
     }
 }

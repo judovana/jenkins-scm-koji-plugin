@@ -17,6 +17,7 @@ import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -57,7 +58,9 @@ public class JDKTestProjectManager implements Manager<JDKTestProject> {
 
     @Override
     public List<JDKTestProject> readAll() throws StorageException {
-        return storage.loadAll(JDKTestProject.class);
+        List<JDKTestProject> l = storage.loadAll(JDKTestProject.class);
+        Collections.sort(l);
+        return l;
     }
 
     @Override

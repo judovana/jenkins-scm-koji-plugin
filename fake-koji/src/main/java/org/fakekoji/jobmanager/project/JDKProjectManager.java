@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -71,7 +72,9 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     @Override
     public List<JDKProject> readAll() throws StorageException {
-        return configManager.getJdkProjectStorage().loadAll(JDKProject.class);
+        List<JDKProject> l = configManager.getJdkProjectStorage().loadAll(JDKProject.class);
+        Collections.sort(l);
+        return l;
     }
 
     @Override

@@ -1,9 +1,11 @@
 package org.fakekoji.jobmanager.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Objects;
 import java.util.Set;
 
-public class Project {
+public class Project implements Comparable<Project> {
 
     private final String id;
     private final Product product;
@@ -69,6 +71,11 @@ public class Project {
                 ", type=" + type +
                 ", buildProviders=" + buildProviders +
                 '}';
+    }
+
+    @Override
+    public int compareTo(@NotNull Project project) {
+        return this.getId().compareTo(project.getId());
     }
 
     public enum ProjectType {
