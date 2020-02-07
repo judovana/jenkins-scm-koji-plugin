@@ -5,6 +5,7 @@ import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
+import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -31,7 +32,7 @@ public class NewApiTests {
     private static FakeKojiDB kojiDB;
 
     @BeforeClass
-    public static void setup() throws IOException {
+    public static void setup() throws IOException, StorageException {
         final File builds = temporaryFolder.newFolder("builds");
         final File repos = temporaryFolder.newFolder("repos");
         final File configs = temporaryFolder.newFolder("configs");

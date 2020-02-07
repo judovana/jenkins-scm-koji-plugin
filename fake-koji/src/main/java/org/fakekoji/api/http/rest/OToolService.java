@@ -3,6 +3,7 @@ package org.fakekoji.api.http.rest;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
+import io.javalin.plugin.json.JavalinJackson;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
@@ -25,6 +26,7 @@ import org.fakekoji.storage.StorageException;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.get;
+import static org.fakekoji.core.AccessibleSettings.objectMapper;
 
 public class OToolService {
 
@@ -54,6 +56,7 @@ public class OToolService {
 
     public OToolService(AccessibleSettings settings) {
         this.port = settings.getWebappPort();
+        JavalinJackson.configure(objectMapper);
         app = Javalin.create(config -> config
                 .addStaticFiles("/webapp")
         );

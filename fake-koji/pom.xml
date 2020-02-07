@@ -11,14 +11,14 @@
     <artifactId>fake-koji</artifactId>
     <packaging>jar</packaging>
     <name>Fake-Koji</name>
-    
+
     <properties>
         <fake.koji.main.class>org.fakekoji.server.JavaServer</fake.koji.main.class>
         <node.version>v10.16.0</node.version>
         <yarn.version>v1.17.3</yarn.version>
         <headless>false</headless>
     </properties>
-  
+
     <dependencies>
         <dependency>
             <groupId>fake-koji</groupId>
@@ -44,6 +44,11 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.9.10.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jdk8</artifactId>
+            <version>2.9.10</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>

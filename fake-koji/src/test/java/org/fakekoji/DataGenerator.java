@@ -1,7 +1,5 @@
 package org.fakekoji;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.BuildJob;
@@ -24,6 +22,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
+import org.fakekoji.storage.StorageException;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -1012,7 +1011,7 @@ public class DataGenerator {
         }
     }
 
-    public static void initConfigsRoot(final File configsRoot) throws IOException {
+    public static void initConfigsRoot(final File configsRoot) throws IOException, StorageException {
         final String root = configsRoot.getAbsolutePath();
 
         final File products = Paths.get(root, ConfigManager.JDK_VERSIONS).toFile();
@@ -1039,49 +1038,31 @@ public class DataGenerator {
             }
         }
 
-        final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
+        final ConfigManager configManager = ConfigManager.create(configsRoot.getAbsolutePath());
 
         for (final JDKVersion jdkVersion : getJDKVersions()) {
-            Utils.writeToFile(
-                    Paths.get(products.getAbsolutePath(), jdkVersion.getId() + ".json"),
-                    writer.writeValueAsString(jdkVersion)
-            );
+            configManager.getJdkVersionStorage().store(jdkVersion.getId(), jdkVersion);
         }
 
         for (final Platform platform : getPlatforms()) {
-            Utils.writeToFile(
-                    Paths.get(platforms.getAbsolutePath(), platform.getId() + ".json"),
-                    writer.writeValueAsString(platform)
-            );
+            configManager.getPlatformStorage().store(platform.getId(), platform);
         }
 
         for (final TaskVariant taskVariant : getTaskVariants()) {
-            Utils.writeToFile(
-                    Paths.get(taskVariantCategories.getAbsolutePath(), taskVariant.getId() + ".json"),
-                    writer.writeValueAsString(taskVariant)
-            );
+            configManager.getTaskVariantStorage().store(taskVariant.getId(), taskVariant);
         }
 
         for (final Task task : getTasks()) {
-            Utils.writeToFile(
-                    Paths.get(tasks.getAbsolutePath(), task.getId() + ".json"),
-                    writer.writeValueAsString(task)
-            );
+            configManager.getTaskStorage().store(task.getId(), task);
         }
 
         for (final JDKProject jdkProject : getJDKProjects()) {
-            Utils.writeToFile(
-                    Paths.get(jdkProjects.getAbsolutePath(), jdkProject.getId() + ".json"),
-                    writer.writeValueAsString(jdkProject)
-            );
+            configManager.getJdkProjectStorage().store(jdkProject.getId(), jdkProject);
         }
 
         final Set<BuildProvider> buildProviderSet = getBuildProviders();
         for (final BuildProvider buildProvider : buildProviderSet) {
-            Utils.writeToFile(
-                    Paths.get(buildProviders.getAbsolutePath(), buildProvider.getId() + ".json"),
-                    writer.writeValueAsString(buildProvider)
-            );
+            configManager.getBuildProviderStorage().store(buildProvider.getId(), buildProvider);
         }
     }
 
@@ -1103,7 +1084,7 @@ public class DataGenerator {
         );
     }
 
-    public static FolderHolder initFolders(TemporaryFolder temporaryFolder) throws IOException {
+    public static FolderHolder initFolders(TemporaryFolder temporaryFolder) throws IOException, StorageException {
         final File buildsRoot = temporaryFolder.newFolder("builds");
         final File configsRoot = temporaryFolder.newFolder("configs");
         final File scriptsRoot = temporaryFolder.newFolder("scripts");
@@ -1120,7 +1101,7 @@ public class DataGenerator {
         return folderHolder;
     }
 
-    public static FolderHolder initFolders(File root) throws IOException {
+    public static FolderHolder initFolders(File root) throws IOException, StorageException {
         final String rootPath = root.getAbsolutePath();
         final File buildsRoot = Paths.get(rootPath, "builds").toFile();
         final File configsRoot = Paths.get(rootPath, "configs").toFile();

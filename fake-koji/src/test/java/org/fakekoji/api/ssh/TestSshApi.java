@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.fakekoji.DataGenerator;
+import org.fakekoji.storage.StorageException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -182,7 +183,7 @@ public class TestSshApi {
     public final static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @BeforeClass
-    public static void startSshdServer() throws IOException, GeneralSecurityException {
+    public static void startSshdServer() throws IOException, GeneralSecurityException, StorageException {
         ServerSocket s = new ServerSocket(0);
         port = s.getLocalPort();
         final File keys = File.createTempFile("ssh-fake-koji.", ".TestKeys");
