@@ -151,8 +151,7 @@ public class TestJob extends TaskJob {
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildKojiXmlRpcApiTemplate(
                         getProduct().getPackageName(),
-                        getBuildPlatform().getArchitecture(),
-                        getBuildPlatform().getTags(),
+                        getBuildPlatform(),
                         Stream.of(projectSubpackageBlacklist, getTask().getRpmLimitation().getBlacklist())
                                 .flatMap(Collection::stream)
                                 .collect(Collectors.toList()),

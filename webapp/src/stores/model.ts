@@ -100,6 +100,7 @@ export interface Platform extends Item {
     os: string
     version: string
     architecture: string
+    kojiArch?:string
     providers: PlatformProvider[]
     vmName: string
     tags: string[]

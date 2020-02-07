@@ -38,6 +38,7 @@ const PlatformForm: React.FC<Props> = props => {
         platform.architecture = _platform.architecture || ""
         platform.id = _platform.id || ""
         platform.os = _platform.os || ""
+        platform.kojiArch = _platform.kojiArch || undefined
         platform.providers = _platform.providers || []
         platform.tags = _platform.tags || []
         platform.version = _platform.version || ""
@@ -54,6 +55,10 @@ const PlatformForm: React.FC<Props> = props => {
 
     const onArchitectureChange = (value: string) => {
         platform!.architecture = value
+    }
+
+    const onKojiArchChange = (value: string) => {
+        platform.kojiArch = value === "" ? undefined : value
     }
 
     const onVMNameChange = (value: string) => {
@@ -73,6 +78,7 @@ const PlatformForm: React.FC<Props> = props => {
     return useObserver(() => {
         const {
             architecture,
+            kojiArch,
             os,
             tags,
             version,
@@ -95,6 +101,10 @@ const PlatformForm: React.FC<Props> = props => {
                     label={"architecture"}
                     onChange={onArchitectureChange}
                     value={architecture} />
+                <TextInput
+                    label={"koji arch"}
+                    onChange={onKojiArchChange}
+                    value={kojiArch} />
                 <TextInput
                     label={"vm name"}
                     onChange={onVMNameChange}

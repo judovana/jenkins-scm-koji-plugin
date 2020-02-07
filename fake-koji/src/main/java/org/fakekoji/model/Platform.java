@@ -2,6 +2,7 @@ package org.fakekoji.model;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Platform {
 
@@ -9,6 +10,7 @@ public class Platform {
     private final String os;
     private final String version;
     private final String architecture;
+    private final String kojiArch;
     private final List<Provider> providers;
     private final String vmName;
     private final List<String> tags;
@@ -19,25 +21,9 @@ public class Platform {
         os = null;
         version = null;
         architecture = null;
+        kojiArch = null;
         providers = null;
         tags = null;
-    }
-
-    public Platform(
-            String os,
-            String version,
-            String architecture,
-            List<Provider> providers,
-            String vmName,
-            List<String> tags
-    ) {
-        this.os = os;
-        this.version = version;
-        this.architecture = architecture;
-        this.providers = providers;
-        this.vmName = vmName;
-        this.tags = tags;
-        id = os + version + '.' + architecture;
     }
 
     public Platform(
@@ -45,6 +31,7 @@ public class Platform {
             String os,
             String version,
             String architecture,
+            String kojiArch,
             List<Provider> providers,
             String vmName,
             List<String> tags
@@ -53,6 +40,7 @@ public class Platform {
         this.os = os;
         this.version = version;
         this.architecture = architecture;
+        this.kojiArch = kojiArch;
         this.providers = providers;
         this.vmName = vmName;
         this.tags = tags;
@@ -72,6 +60,10 @@ public class Platform {
 
     public String getArchitecture() {
         return architecture;
+    }
+
+    public Optional<String> getKojiArch() {
+        return Optional.ofNullable(kojiArch);
     }
 
     public List<Provider> getProviders() {
@@ -176,6 +168,19 @@ public class Platform {
                     ", vmNodes=" + vmNodes +
                     '}';
         }
+    }
+
+    public static Platform create(Platform platform) {
+        return new Platform(
+                platform.os + platform.version + '.' + platform.getArchitecture(),
+                platform.os,
+                platform.version,
+                platform.architecture,
+                platform.kojiArch,
+                platform.providers,
+                platform.vmName,
+                platform.tags
+        );
     }
 }
 

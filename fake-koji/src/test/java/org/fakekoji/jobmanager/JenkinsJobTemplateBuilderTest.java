@@ -144,8 +144,33 @@ public class JenkinsJobTemplateBuilderTest {
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
                 .buildKojiXmlRpcApiTemplate(
                         jdk8.getPackageNames().get(0),
-                        vmPlatform.getArchitecture(),
-                        vmPlatform.getTags(),
+                        vmPlatform,
+                        Arrays.asList("a", "b"),
+                        Arrays.asList("c", "d")
+                ).prettyPrint();
+
+        Assert.assertEquals(expectedTemplate, actualTemplate);
+    }
+
+    @Test
+    public void buildKojiXmlRpcApiTemplateWithWindows() throws IOException {
+
+        final Platform win = DataGenerator.getWin2019x64();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
+
+        final String expectedTemplate = "<kojiXmlRpcApi class=\"hudson.plugins.scm.koji.RealKojiXmlRpcApi\">\n" +
+                "    <xmlRpcApiType>REAL_KOJI</xmlRpcApiType>\n" +
+                "    <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
+                "    <arch>" + win.getKojiArch().get() + "</arch>\n" +
+                "    <tag>" + String.join(" ", win.getTags()) + "</tag>\n" +
+                "    <subpackageBlacklist>a b</subpackageBlacklist>\n" +
+                "    <subpackageWhitelist>c d</subpackageWhitelist>\n" +
+                "</kojiXmlRpcApi>\n";
+
+        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
+                .buildKojiXmlRpcApiTemplate(
+                        jdk8.getPackageNames().get(0),
+                        win,
                         Arrays.asList("a", "b"),
                         Arrays.asList("c", "d")
                 ).prettyPrint();

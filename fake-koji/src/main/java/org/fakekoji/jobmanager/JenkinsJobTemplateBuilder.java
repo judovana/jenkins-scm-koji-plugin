@@ -182,16 +182,15 @@ public class JenkinsJobTemplateBuilder {
 
     public JenkinsJobTemplateBuilder buildKojiXmlRpcApiTemplate(
             String packageName,
-            String arch,
-            List<String> tags,
+            Platform platform,
             List<String> subpackageBlacklist,
             List<String> subpackageWhitelist
     ) throws IOException {
         template = template
                 .replace(XML_RPC_API, loadTemplate(JenkinsTemplate.KOJI_XML_RPC_API_TEMPLATE))
                 .replace(PACKAGE_NAME, packageName)
-                .replace(ARCH, arch)
-                .replace(TAGS, String.join(" ", tags))
+                .replace(ARCH, platform.getKojiArch().orElse(platform.getArchitecture()))
+                .replace(TAGS, String.join(" ", platform.getTags()))
                 .replace(SUBPACKAGE_BLACKLIST, String.join(" ", subpackageBlacklist))
                 .replace(SUBPACKAGE_WHITELIST, String.join(" ", subpackageWhitelist));
         return this;

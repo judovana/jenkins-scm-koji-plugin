@@ -26,17 +26,10 @@ public class PlatformManager implements Manager<Platform> {
     public ManagementResult<Platform> create(Platform platform) throws StorageException, ManagementException {
         // as frontend doesn't generate platform's ID, this will create platform with the correct ID based on its
         // os, version, architecture and provider
-        final Platform newPlatform = new Platform(
-                platform.getOs(),
-                platform.getVersion(),
-                platform.getArchitecture(),
-                platform.getProviders(),
-                platform.getVmName(),
-                platform.getTags()
-        );
+        final Platform newPlatform = Platform.create(platform);
         ManagementUtils.checkID(newPlatform.getId(), storage, false);
         storage.store(newPlatform.getId(), newPlatform);
-        return new ManagementResult<>(platform, new JobUpdateResults());
+        return new ManagementResult<>(newPlatform, new JobUpdateResults());
     }
 
     @Override

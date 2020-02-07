@@ -327,36 +327,55 @@ public class DataGenerator {
     }
 
     public static Platform getRHEL7x64() {
-        return new Platform(
+        return Platform.create(new Platform(
+                null,
                 "el",
                 "7",
                 "x86_64",
+                null,
                 Arrays.asList(getProvider()),
                 "rhel-x64",
                 Collections.singletonList("el7-*")
-        );
+        ));
     }
 
     public static Platform getF29x64() {
-        return new Platform(
+        return Platform.create(new Platform(
+                null,
                 "f",
                 "29",
                 "x86_64",
+                null,
                 Arrays.asList(getVMOnlyProvider()),
                 "f29-x64",
                 Collections.singletonList("f29-*")
-        );
+        ));
     }
 
     public static Platform getRHEL8Aarch64() {
-        return new Platform(
+        return Platform.create(new Platform(
+                null,
                 "el",
                 "8",
                 "aarch64",
+                null,
                 Arrays.asList(getHWOnlyProvider()),
                 "rhel8-aarch64",
                 Collections.singletonList("el8-*")
-        );
+        ));
+    }
+
+    public static Platform getWin2019x64() {
+        return Platform.create(new Platform(
+                null,
+                "win",
+                "2019",
+                "x86_64",
+                "win",
+                Arrays.asList(getProvider()),
+                "win-2019",
+                Collections.singletonList("win2019-*")
+        ));
     }
 
     public static Map<TaskVariant, TaskVariantValue> getBuildVariants() {
@@ -811,7 +830,9 @@ public class DataGenerator {
     public static Set<Platform> getPlatforms() {
         return new HashSet<>(Arrays.asList(
                 getRHEL7x64(),
-                getF29x64()
+                getF29x64(),
+                getRHEL8Aarch64(),
+                getWin2019x64()
         ));
     }
 
