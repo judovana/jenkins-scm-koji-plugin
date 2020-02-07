@@ -5,6 +5,7 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.plugin.json.JavalinJackson;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
@@ -49,6 +50,9 @@ public class OToolService {
 
     private static final String MISC = "misc";
     private static final String REGENERATE_ALL_JOBS = "regenerateAllJobs";
+    private static final String MATRIX = "matrix";
+    private static final String MATRIX_COMPRESSED = "matrixCompressed"
+            + "";
 
     private final int port;
     private final Javalin app;
@@ -99,6 +103,12 @@ public class OToolService {
                         if (ctx.status() < 400) {
                             ctx.status(200).json(r[0]);
                         }
+                    });
+                }));
+                path(MATRIX, () -> get(ctx -> {
+                    wrapper.wrap(context -> {
+                        MatrixGenerator m = new MatrixGenerator(settings, configManager);
+                        context.status(200).result(m.emptyPrint());
                     });
                 }));
             });

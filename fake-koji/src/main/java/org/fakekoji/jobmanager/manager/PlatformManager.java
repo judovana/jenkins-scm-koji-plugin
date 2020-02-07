@@ -10,6 +10,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 
+import java.util.Collections;
 import java.util.List;
 
 public class PlatformManager implements Manager<Platform> {
@@ -40,7 +41,9 @@ public class PlatformManager implements Manager<Platform> {
 
     @Override
     public List<Platform> readAll() throws StorageException {
-        return storage.loadAll(Platform.class);
+        List<Platform> l = storage.loadAll(Platform.class);
+        Collections.sort(l);
+        return l;
     }
 
     @Override

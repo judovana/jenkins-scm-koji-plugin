@@ -9,6 +9,7 @@ import org.fakekoji.model.Task;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 
+import java.util.Collections;
 import java.util.List;
 
 public class TaskManager implements Manager<Task> {
@@ -43,7 +44,9 @@ public class TaskManager implements Manager<Task> {
 
     @Override
     public List<Task> readAll() throws StorageException {
-        return taskStorage.loadAll(Task.class);
+        List<Task> l = taskStorage.loadAll(Task.class);
+        Collections.sort(l);
+        return l;
     }
 
     @Override

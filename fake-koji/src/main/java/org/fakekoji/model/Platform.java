@@ -1,10 +1,12 @@
 package org.fakekoji.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-public class Platform {
+public class Platform implements  Comparable<Platform> {
 
     private final String id;
     private final String os;
@@ -110,6 +112,11 @@ public class Platform {
 
     public String toOsVar() {
         return getOs() + '.' + getVersion();
+    }
+
+    @Override
+    public int compareTo(@NotNull Platform platform) {
+        return this.getId().compareTo(platform.getId());
     }
 
     public static class Provider {
