@@ -137,11 +137,14 @@ export class ConfigStore {
         const response = await this.service.postConfig(groupId, config)
         if (response.value) {
             const oToolResponse = response.value
-            runInAction(() => {
-                this._configGroups[groupId][config.id] = { ...oToolResponse.config! }
-                this._selectedConfig = this._configGroups[groupId][config.id]
-                this._configState = "update"
-            })
+            const config = oToolResponse.config
+            if (config) {
+                runInAction(() => {
+                    this._configGroups[groupId][config.id] = { ...oToolResponse.config! }
+                    this._selectedConfig = this._configGroups[groupId][config.id]
+                    this._configState = "update"
+                })
+            }
             if (oToolResponse.jobUpdateResults) {
                 this.setJobUpdateResults(oToolResponse.jobUpdateResults)
             }
