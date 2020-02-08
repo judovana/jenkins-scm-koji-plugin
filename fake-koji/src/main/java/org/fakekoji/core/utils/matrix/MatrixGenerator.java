@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 public class MatrixGenerator {
 
@@ -57,16 +58,21 @@ public class MatrixGenerator {
     }
 
     EqualityFilter testFilter = new EqualityFilter(true, true, true, true, true);
-    EqualityFilter buildFilter = new EqualityFilter(true, true, true, false, true);
+    EqualityFilter buildFilter = new EqualityFilter(true, true, true, true, true);
+    String testRegex = ".*f29.*";
+    String buildRegex = ".*";
 
     public List<TestSpec> getTests() throws StorageException {
+        Pattern p = Pattern.compile(testRegex);
         List<TestSpec> r = new ArrayList<>();
         for (Platform platform : platformManager.readAll()) {
             for (Platform.Provider provider : platform.getProviders()) {
                 for (Task task : taskManager.readAll()) {
                     if (!task.getType().equals(Task.Type.TEST)) {
                         TestSpec t = new TestSpec(platform, provider, task, testFilter);
-                        r.add(t);
+                        if (p.matcher(t.toString()).matches()) {
+                            r.add(t);
+                        }
                     } else {
                         Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(taskVariantManager.readAll(), task.getType()));
                         for (Collection<TaskVariantValue> tvvs : variants) {
@@ -74,7 +80,9 @@ public class MatrixGenerator {
                             for (TaskVariantValue tv : tvvs) {
                                 t.addVariant(tv);
                             }
-                            r.add(t);
+                            if (p.matcher(t.toString()).matches()) {
+                                r.add(t);
+                            }
                         }
                     }
                 }
@@ -97,6 +105,7 @@ public class MatrixGenerator {
 
 
     public List<BuildSpec> getBuilds() throws StorageException {
+        Pattern p = Pattern.compile(buildRegex);
         List<BuildSpec> r = new ArrayList<>();
         for (Platform platform : platformManager.readAll()) {
             for (Platform.Provider provider : platform.getProviders()) {
@@ -107,7 +116,9 @@ public class MatrixGenerator {
                         for (TaskVariantValue tv : tvvs) {
                             b.addVariant(tv);
                         }
-                        r.add(b);
+                        if (p.matcher(b.toString()).matches()) {
+                            r.add(b);
+                        }
                     }
                 }
             }
