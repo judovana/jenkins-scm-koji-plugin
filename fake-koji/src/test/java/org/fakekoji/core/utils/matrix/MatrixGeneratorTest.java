@@ -35,8 +35,10 @@ public class MatrixGeneratorTest {
         MatrixGenerator m = new MatrixGenerator(settings, cm);
         List<BuildSpec> bs = m.getBuilds();
         List<TestSpec> ts = m.getTests();
-        m.printMatrix(System.out, bs, ts);
-        m.printMatrix(System.out, ts, bs);
+        int t1 = m.printMatrix(System.out, bs, ts);
+        System.out.println(t1 + "/" + (bs.size() * ts.size()));
+        int t2 = m.printMatrix(System.out, ts, bs);
+        System.out.println(t2 + "/" + (bs.size() * ts.size()));
 
 
     }

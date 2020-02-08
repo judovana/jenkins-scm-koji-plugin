@@ -67,6 +67,10 @@ public abstract class Spec {
     }
 
     public boolean matchProvider(String p) {
+        if (p == null){
+            //provider is ignored for test only jobs
+            return true;
+        }
         return provider.getId().equals(p);
     }
 }

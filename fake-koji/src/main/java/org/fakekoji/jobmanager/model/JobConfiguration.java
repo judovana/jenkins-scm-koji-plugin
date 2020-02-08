@@ -32,4 +32,5 @@ public class JobConfiguration {
     public int hashCode() {
         return Objects.hash(platforms);
     }
+
 }

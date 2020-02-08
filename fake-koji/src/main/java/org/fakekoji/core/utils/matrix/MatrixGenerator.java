@@ -19,10 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class MatrixGenerator {
@@ -183,9 +180,10 @@ public class MatrixGenerator {
         }
     }
 
-    void printMatrix(PrintStream p, Iterable<? extends Spec> rows, Iterable<? extends Spec> columns) throws ManagementException, StorageException {
+    int printMatrix(PrintStream p, Iterable<? extends Spec> rows, Iterable<? extends Spec> columns) throws ManagementException, StorageException {
         int lrow = getLongest(rows) + 1;
         int lcol = getLongest(columns) + 1;
+        int total = 0;
 
         System.out.print(fill("", lrow));
         for (Spec t : columns) {
@@ -197,6 +195,7 @@ public class MatrixGenerator {
             for (Spec t : columns) {
                 int matches = countMatchingProjects(b, t);
                 p.print(fill("" + matches, lcol));
+                total += matches;
             }
             p.println();
 
@@ -206,6 +205,7 @@ public class MatrixGenerator {
             p.print(fill(t.toString(), lcol));
         }
         p.println();
+        return total;
     }
 
     private int countMatchingProjects(Spec b, Spec t) throws StorageException, ManagementException {
@@ -226,76 +226,89 @@ public class MatrixGenerator {
         if (bs == null | ts == null) {
             throw new StorageException("Only build x test ot test x build can be searched for, nothing else");
         }
-        int counter = 0;
+        int[] counter = {0};
         //do not optimise, will break the compression of attributes
-        for (JDKProject project : jdkProjectManager.readAll()) {
-            for (Map.Entry<String, PlatformConfig> bpce : project.getJobConfiguration().getPlatforms().entrySet()) {
-                for (Map.Entry<String, TaskConfig> btce : bpce.getValue().getTasks().entrySet()) {
-                    for (VariantsConfig bvc : btce.getValue().getVariants()) {
-                        for (Map.Entry<String, PlatformConfig> tpce : bvc.getPlatforms().entrySet()) {
-                            for (Map.Entry<String, TaskConfig> ttce : tpce.getValue().getTasks().entrySet()) {
-                                for (VariantsConfig tvc : ttce.getValue().getVariants()) {
-                                    String full = bpce.getKey() + "-" +
-                                            btce.getKey() + "-" +
-                                            project.getId() + "-" +
-                                            String.join(".", bvc.getMap().values()) + "-" +
-                                            tpce.getKey() + "-" +
-                                            ttce.getKey() + "-" +
-                                            String.join(".", tvc.getMap().values());
-                                    String[] buildOsAarch = bpce.getKey().split("\\.");
-                                    String buildProvider = bpce.getValue().getProvider();
-                                    String btask = btce.getKey();
-                                    Collection<String> buildVars = bvc.getMap().values();
-                                    String[] testOsAarch = tpce.getKey().split("\\.");
-                                    String testProvider = tpce.getValue().getProvider();
-                                    String ttask = ttce.getKey();
-                                    Collection<String> testVars = tvc.getMap().values();
-                                    //System.out.println(full);
-                                    if (ts.getTask().getId().equals("build")) { //where it get from?
-                                        if (bs.getProject().getId().equals(project.getId())) {
-                                            if (bs.matchOs(buildOsAarch[0])) {
-                                                if (bs.matchArch(buildOsAarch[1])) {
-                                                    if (bs.matchProvider(buildProvider)) {
-                                                        if (bs.matchVars(buildVars)) {
-                                                            counter++;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        if (bs.getProject().getId().equals(project.getId())) {
-                                            if (bs.matchOs(buildOsAarch[0])) {
-                                                if (bs.matchArch(buildOsAarch[1])) {
-                                                    if (bs.matchProvider(buildProvider)) {
-                                                        if (bs.matchVars(buildVars)) {
-                                                            if (ts.matchOs(testOsAarch[0])) {
-                                                                if (ts.matchArch(testOsAarch[1])) {
-                                                                    if (ts.matchProvider(testProvider)) {
-                                                                        if (ts.matchVars(testVars)) {
-                                                                            counter++;
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+        for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll())) {
+            if (project instanceof JDKTestProject) {
+                TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
+                Set<Map.Entry<String, BuildPlatformConfig>> buildPlatformConfig = jc.getPlatforms().entrySet();
+                for (Map.Entry<String, BuildPlatformConfig> bpce : buildPlatformConfig) {
+                    TaskConfig tc = new TaskConfig(bpce.getValue().getVariants());
+                    Map<String, TaskConfig> taskConfigs = new HashMap<>();
+                    taskConfigs.put(null, tc);
+                    for (Map.Entry<String, TaskConfig> btce : taskConfigs.entrySet()) {
+                        for (VariantsConfig bvc : btce.getValue().getVariants()) {
+                            iterateBuildVariantsConfig(bs, ts, counter, project, bpce.getKey(), null, btce, bvc);
                         }
+                    }
+                }
+            } else if (project instanceof JDKProject) {
+                JobConfiguration jc = ((JDKProject) project).getJobConfiguration();
+                for (Map.Entry<String, PlatformConfig> bpce : jc.getPlatforms().entrySet()) {
+                    for (Map.Entry<String, TaskConfig> btce : bpce.getValue().getTasks().entrySet()) {
+                        for (VariantsConfig bvc : btce.getValue().getVariants()) {
+                            iterateBuildVariantsConfig(bs, ts, counter, project, bpce.getKey(), bpce.getValue().getProvider(), btce, bvc);
+                        }
+                    }
+                }
+            } else {
+                throw new ManagementException("Unknow project type " + project.getClass());
+            }
+        }
+        return counter[0];
+    }
+
+    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, int[] counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce, VariantsConfig bvc) {
+        for (Map.Entry<String, PlatformConfig> tpce : bvc.getPlatforms().entrySet()) {
+            for (Map.Entry<String, TaskConfig> ttce : tpce.getValue().getTasks().entrySet()) {
+                for (VariantsConfig tvc : ttce.getValue().getVariants()) {
+                    String full = buildArchOs + "-" +
+                            btce.getKey() + "-" +
+                            project.getId() + "-" +
+                            String.join(".", bvc.getMap().values()) + "-" +
+                            tpce.getKey() + "-" +
+                            ttce.getKey() + "-" +
+                            String.join(".", tvc.getMap().values());
+                    String[] buildOsAarch = buildArchOs.split("\\.");
+                    String btask = btce.getKey(); //always build
+                    Collection<String> buildVars = bvc.getMap().values();
+                    String[] testOsAarch = tpce.getKey().split("\\.");
+                    String testProvider = tpce.getValue().getProvider();
+                    String ttask = ttce.getKey();
+                    Collection<String> testVars = tvc.getMap().values();
+                    //System.out.println(full);
+                    if (ts.getTask().getId().equals("build")) { //where it get from?
+                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, buildVars)) {
+                            counter[0]++;
+                        }
+                    } else {
+                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, buildVars)
+                                && taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
+                            counter[0]++;
+                        }
+
                     }
                 }
             }
         }
-        for (JDKTestProject p : jdkTestProjectManager.readAll()) {
-            //afaik identical to jdkProject, only build platfrom do not contain provider
-            //so no separate loop folk
-        }
-        return counter;
+    }
+
+
+    private boolean genericMatcher(Spec s, String os, String arch, String provider, Collection<String> variants) {
+        return s.matchOs(os) &&
+                s.matchArch(arch) &&
+                s.matchProvider(provider) &&
+                s.matchVars(variants);
+    }
+
+    private boolean buildMatcher(BuildSpec bs, String projectId, String os, String arch, String provider, Collection<String> variants) {
+        return bs.getProject().getId().equals(projectId) &&
+                genericMatcher(bs, os, arch, provider, variants);
+    }
+
+    private boolean taskMatcher(TestSpec ts, String taskId, String os, String arch, String provider, Collection<String> variants) {
+        return ts.getTask().getId().equals(taskId) &&
+                genericMatcher(ts, os, arch, provider, variants);
     }
 
 }
