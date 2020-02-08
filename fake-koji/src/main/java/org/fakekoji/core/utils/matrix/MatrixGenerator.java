@@ -59,7 +59,7 @@ public class MatrixGenerator {
 
     EqualityFilter testFilter = new EqualityFilter(true, true, true, true, true);
     EqualityFilter buildFilter = new EqualityFilter(true, true, true, true, true);
-    String testRegex = ".*f29.*";
+    String testRegex = ".*";
     String buildRegex = ".*";
 
     public List<TestSpec> getTests() throws StorageException {
