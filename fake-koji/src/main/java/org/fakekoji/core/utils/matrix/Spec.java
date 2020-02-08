@@ -1,5 +1,6 @@
 package org.fakekoji.core.utils.matrix;
 
+import org.fakekoji.jobmanager.model.TaskJob;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.TaskVariantValue;
 
@@ -13,6 +14,7 @@ public abstract class Spec {
     protected final Platform platform;
     protected final Platform.Provider provider;
     protected final List<String> variants;
+    protected final EqualityFilter viewFilter;
 
     public Platform getPlatform() {
         return platform;
@@ -21,14 +23,16 @@ public abstract class Spec {
     public Platform.Provider getProvider() {
         return provider;
     }
-    public List<String> getVariants(){
+
+    public List<String> getVariants() {
         return Collections.unmodifiableList(variants);
     }
 
 
-    public Spec(Platform platform, Platform.Provider provider) {
+    public Spec(Platform platform, Platform.Provider provider, EqualityFilter viewFilter) {
         this.platform = platform;
         this.provider = provider;
+        this.viewFilter = viewFilter;
         this.variants = new ArrayList<>();
     }
 
@@ -38,7 +42,11 @@ public abstract class Spec {
 
     protected String getVariantsString() {
         if (variants.size() > 0) {
-            return "-" + String.join(".", variants);
+            if (!viewFilter.variants) {
+                return "-?";
+            } else {
+                return "-" + String.join(".", variants);
+            }
         } else {
             return "";
         }
@@ -47,7 +55,7 @@ public abstract class Spec {
     public abstract String toString();
 
     public boolean matchOs(String os) {
-        return (platform.getOs()+platform.getVersion()).equals(os);
+        return (platform.getOs() + platform.getVersion()).equals(os);
     }
 
     public boolean matchArch(String a) {
@@ -55,11 +63,11 @@ public abstract class Spec {
     }
 
     public boolean matchVars(Collection<String> buildVars) {
-        if (buildVars.size()!=variants.size()){
+        if (buildVars.size() != variants.size()) {
             return false;
         }
-        for(String v: buildVars){
-            if (!variants.contains(v)){
+        for (String v : buildVars) {
+            if (!variants.contains(v)) {
                 return false;
             }
         }
@@ -67,10 +75,28 @@ public abstract class Spec {
     }
 
     public boolean matchProvider(String p) {
-        if (p == null){
+        if (p == null) {
             //provider is ignored for test only jobs
             return true;
         }
         return provider.getId().equals(p);
     }
+
+    protected String getPlatformString() {
+        String pr = provider.getId();
+        if (!viewFilter.provider) {
+            pr = "?";
+        }
+        Platform pl = platform;
+        if (!viewFilter.arch && !viewFilter.os) {
+            pl = new Platform("??.?", "?", "?", "?", "", null, null, null);
+        } else if (!viewFilter.arch) {
+            pl = new Platform(platform.getOs()+platform.getVersion()+".?", platform.getOs(), platform.getVersion(), "?", "", null, null, null);
+        } else if (!viewFilter.os) {
+            pl = new Platform("??."+platform.getArchitecture(), "?", "?", platform.getArchitecture(), "", null, null, null);
+        }
+        return TaskJob.getPlatformAndProviderString(pl, pr);
+    }
+
+
 }

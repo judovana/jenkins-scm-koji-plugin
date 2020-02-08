@@ -56,18 +56,21 @@ public class MatrixGenerator {
         );
     }
 
+    EqualityFilter testFilter = new EqualityFilter(true, true, true, true, true);
+    EqualityFilter buildFilter = new EqualityFilter(true, true, true, false, true);
+
     public List<TestSpec> getTests() throws StorageException {
-        ArrayList<TestSpec> r = new ArrayList<>();
+        List<TestSpec> r = new ArrayList<>();
         for (Platform platform : platformManager.readAll()) {
             for (Platform.Provider provider : platform.getProviders()) {
                 for (Task task : taskManager.readAll()) {
                     if (!task.getType().equals(Task.Type.TEST)) {
-                        TestSpec t = new TestSpec(platform, provider, task);
+                        TestSpec t = new TestSpec(platform, provider, task, testFilter);
                         r.add(t);
                     } else {
                         Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(taskVariantManager.readAll(), task.getType()));
                         for (Collection<TaskVariantValue> tvvs : variants) {
-                            TestSpec t = new TestSpec(platform, provider, task);
+                            TestSpec t = new TestSpec(platform, provider, task, testFilter);
                             for (TaskVariantValue tv : tvvs) {
                                 t.addVariant(tv);
                             }
@@ -77,18 +80,30 @@ public class MatrixGenerator {
                 }
             }
         }
-        return r;
+        return (List<TestSpec>) filterByToString(r);
+    }
+
+    private List<? extends Spec> filterByToString(List<? extends Spec> r) {
+        for (int i = 0; i < r.size() ; i++) {
+            for (int j = i+1; j < r.size(); j++) {
+                if (r.get(i).toString().equals(r.get(j).toString())){
+                    r.remove(j);
+                    j--;
+                }
+            }
+        }
+        return Collections.unmodifiableList(r);
     }
 
 
     public List<BuildSpec> getBuilds() throws StorageException {
-        ArrayList<BuildSpec> r = new ArrayList<>();
+        List<BuildSpec> r = new ArrayList<>();
         for (Platform platform : platformManager.readAll()) {
             for (Platform.Provider provider : platform.getProviders()) {
                 for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll())) {
                     Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(taskVariantManager.readAll(), Task.Type.BUILD));
                     for (Collection<TaskVariantValue> tvvs : variants) {
-                        BuildSpec b = new BuildSpec(platform, provider, project);
+                        BuildSpec b = new BuildSpec(platform, provider, project, buildFilter);
                         for (TaskVariantValue tv : tvvs) {
                             b.addVariant(tv);
                         }
@@ -97,7 +112,7 @@ public class MatrixGenerator {
                 }
             }
         }
-        return r;
+        return (List<BuildSpec>) filterByToString(r);
     }
 
     private Collection<TaskVariantValue>[] getTasksSets(List<TaskVariant> taskVars, Task.Type build) {
@@ -294,21 +309,21 @@ public class MatrixGenerator {
     }
 
 
-    private boolean genericMatcher(Spec s, String os, String arch, String provider, Collection<String> variants) {
-        return s.matchOs(os) &&
-                s.matchArch(arch) &&
-                s.matchProvider(provider) &&
-                s.matchVars(variants);
+    private static boolean genericMatcher(Spec s, String os, String arch, String provider, Collection<String> variants, EqualityFilter f) {
+        return (!f.os || s.matchOs(os)) &&
+                (!f.arch || s.matchArch(arch)) &&
+                (!f.provider || s.matchProvider(provider)) &&
+                (!f.variants || s.matchVars(variants));
     }
 
     private boolean buildMatcher(BuildSpec bs, String projectId, String os, String arch, String provider, Collection<String> variants) {
-        return bs.getProject().getId().equals(projectId) &&
-                genericMatcher(bs, os, arch, provider, variants);
+        return (!buildFilter.suiteOrProject || bs.getProject().getId().equals(projectId)) &&
+                genericMatcher(bs, os, arch, provider, variants, buildFilter);
     }
 
     private boolean taskMatcher(TestSpec ts, String taskId, String os, String arch, String provider, Collection<String> variants) {
-        return ts.getTask().getId().equals(taskId) &&
-                genericMatcher(ts, os, arch, provider, variants);
+        return (!testFilter.suiteOrProject || ts.getTask().getId().equals(taskId)) &&
+                genericMatcher(ts, os, arch, provider, variants, testFilter);
     }
 
 }

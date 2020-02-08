@@ -1,6 +1,5 @@
 package org.fakekoji.core.utils.matrix;
 
-import org.fakekoji.jobmanager.model.TaskJob;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 
@@ -8,10 +7,8 @@ class TestSpec extends Spec {
     private final Task task;
 
 
-    //fixme enable compress, so providers and/or platforms and/or variants can disapear
-
-    public TestSpec(Platform platform, Platform.Provider provider, Task task) {
-        super(platform, provider);
+    public TestSpec(Platform platform, Platform.Provider provider, Task task, EqualityFilter viewFilter) {
+        super(platform, provider, viewFilter);
         this.task = task;
     }
 
@@ -21,8 +18,12 @@ class TestSpec extends Spec {
 
     @Override
     public String toString() {
-        return TaskJob.getPlatformAndProviderString(platform, provider.getId()) +
-                "-" + task.getId() + getVariantsString();
+        String tsk = task.getId();
+        if (!viewFilter.suiteOrProject) {
+            tsk = "?";
+        }
+        return getPlatformString()+
+                "-" + tsk + getVariantsString();
     }
 
 }
