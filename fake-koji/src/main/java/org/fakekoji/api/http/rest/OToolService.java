@@ -108,7 +108,7 @@ public class OToolService {
                 path(MATRIX, () -> get(ctx -> {
                     wrapper.wrap(context -> {
                         MatrixGenerator m = new MatrixGenerator(settings, configManager);
-                        context.status(200).result(m.emptyPrint());
+                        context.status(200).result(m.printMatrix());
                     });
                 }));
             });

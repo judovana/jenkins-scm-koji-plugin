@@ -3,12 +3,9 @@ package org.fakekoji.core.utils.matrix;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
-import org.fakekoji.jobmanager.manager.BuildProviderManager;
-import org.fakekoji.jobmanager.manager.JDKVersionManager;
-import org.fakekoji.jobmanager.manager.PlatformManager;
-import org.fakekoji.jobmanager.manager.TaskManager;
-import org.fakekoji.jobmanager.manager.TaskVariantManager;
-import org.fakekoji.jobmanager.model.Project;
+import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.manager.*;
+import org.fakekoji.jobmanager.model.*;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.Platform;
@@ -25,7 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class MatrixGenerator {
@@ -170,15 +167,15 @@ public class MatrixGenerator {
     }
 
 
-    public String emptyPrint() throws StorageException {
+    public String printMatrix() throws StorageException, ManagementException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final String utf8 = StandardCharsets.UTF_8.name();
         List<BuildSpec> bs = getBuilds();
         List<TestSpec> ts = getTests();
         try {
             try (PrintStream ps = new PrintStream(baos, true, utf8)) {
-                emptyPrint(ps, bs, ts);
-                emptyPrint(ps, ts, bs);
+                printMatrix(ps, bs, ts);
+                printMatrix(ps, ts, bs);
             }
             return baos.toString(utf8);
         } catch (UnsupportedEncodingException e) {
@@ -186,7 +183,7 @@ public class MatrixGenerator {
         }
     }
 
-    void emptyPrint(PrintStream p, Iterable<? extends Spec> rows, Iterable<? extends Spec> columns) {
+    void printMatrix(PrintStream p, Iterable<? extends Spec> rows, Iterable<? extends Spec> columns) throws ManagementException, StorageException {
         int lrow = getLongest(rows) + 1;
         int lcol = getLongest(columns) + 1;
 
@@ -196,13 +193,109 @@ public class MatrixGenerator {
         }
         p.println();
         for (Spec b : rows) {
-            p.println(fill(b.toString(), lrow));
+            p.print(fill(b.toString(), lrow));
+            for (Spec t : columns) {
+                int matches = countMatchingProjects(b, t);
+                p.print(fill("" + matches, lcol));
+            }
+            p.println();
+
         }
         p.print(fill("", lrow));
         for (Spec t : columns) {
             p.print(fill(t.toString(), lcol));
         }
         p.println();
+    }
+
+    private int countMatchingProjects(Spec b, Spec t) throws StorageException, ManagementException {
+        BuildSpec bs = null;
+        TestSpec ts = null;
+        if (b instanceof BuildSpec) {
+            bs = (BuildSpec) b;
+        }
+        if (t instanceof BuildSpec) {
+            bs = (BuildSpec) t;
+        }
+        if (b instanceof TestSpec) {
+            ts = (TestSpec) b;
+        }
+        if (t instanceof TestSpec) {
+            ts = (TestSpec) t;
+        }
+        if (bs == null | ts == null) {
+            throw new StorageException("Only build x test ot test x build can be searched for, nothing else");
+        }
+        int counter = 0;
+        //do not optimise, will break the compression of attributes
+        for (JDKProject project : jdkProjectManager.readAll()) {
+            for (Map.Entry<String, PlatformConfig> bpce : project.getJobConfiguration().getPlatforms().entrySet()) {
+                for (Map.Entry<String, TaskConfig> btce : bpce.getValue().getTasks().entrySet()) {
+                    for (VariantsConfig bvc : btce.getValue().getVariants()) {
+                        for (Map.Entry<String, PlatformConfig> tpce : bvc.getPlatforms().entrySet()) {
+                            for (Map.Entry<String, TaskConfig> ttce : tpce.getValue().getTasks().entrySet()) {
+                                for (VariantsConfig tvc : ttce.getValue().getVariants()) {
+                                    String full = bpce.getKey() + "-" +
+                                            btce.getKey() + "-" +
+                                            project.getId() + "-" +
+                                            String.join(".", bvc.getMap().values()) + "-" +
+                                            tpce.getKey() + "-" +
+                                            ttce.getKey() + "-" +
+                                            String.join(".", tvc.getMap().values());
+                                    String[] buildOsAarch = bpce.getKey().split("\\.");
+                                    String buildProvider = bpce.getValue().getProvider();
+                                    String btask = btce.getKey();
+                                    Collection<String> buildVars = bvc.getMap().values();
+                                    String[] testOsAarch = tpce.getKey().split("\\.");
+                                    String testProvider = tpce.getValue().getProvider();
+                                    String ttask = ttce.getKey();
+                                    Collection<String> testVars = tvc.getMap().values();
+                                    //System.out.println(full);
+                                    if (ts.getTask().getId().equals("build")) { //where it get from?
+                                        if (bs.getProject().getId().equals(project.getId())) {
+                                            if (bs.matchOs(buildOsAarch[0])) {
+                                                if (bs.matchArch(buildOsAarch[1])) {
+                                                    if (bs.matchProvider(buildProvider)) {
+                                                        if (bs.matchVars(buildVars)) {
+                                                            counter++;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        if (bs.getProject().getId().equals(project.getId())) {
+                                            if (bs.matchOs(buildOsAarch[0])) {
+                                                if (bs.matchArch(buildOsAarch[1])) {
+                                                    if (bs.matchProvider(buildProvider)) {
+                                                        if (bs.matchVars(buildVars)) {
+                                                            if (ts.matchOs(testOsAarch[0])) {
+                                                                if (ts.matchArch(testOsAarch[1])) {
+                                                                    if (ts.matchProvider(testProvider)) {
+                                                                        if (ts.matchVars(testVars)) {
+                                                                            counter++;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (JDKTestProject p : jdkTestProjectManager.readAll()) {
+            //afaik identical to jdkProject, only build platfrom do not contain provider
+            //so no separate loop folk
+        }
+        return counter;
     }
 
 }
