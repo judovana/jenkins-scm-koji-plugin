@@ -234,9 +234,9 @@ public class MatrixGenerator {
         for (Spec b : rows) {
             p.print(fill(b.toString(), lrow));
             for (Spec t : columns) {
-                int matches = countMatchingProjects(b, t);
-                p.print(fill("" + matches, lcol));
-                total += matches;
+                List<Leaf> matched = countMatchingProjects(b, t);
+                p.print(fill("" + matched.size(), lcol));
+                total += matched.size();
             }
             p.println();
 
@@ -249,7 +249,7 @@ public class MatrixGenerator {
         return total;
     }
 
-    private int countMatchingProjects(Spec b, Spec t) throws StorageException, ManagementException {
+    private List<Leaf> countMatchingProjects(Spec b, Spec t) throws StorageException, ManagementException {
         BuildSpec bs = null;
         TestSpec ts = null;
         if (b instanceof BuildSpec) {
@@ -267,7 +267,7 @@ public class MatrixGenerator {
         if (bs == null | ts == null) {
             throw new StorageException("Only build x test ot test x build can be searched for, nothing else");
         }
-        int[] counter = {0};
+        List<Leaf> counter = new ArrayList<>();
         //do not optimise, will break the compression of attributes
         for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll())) {
             if (project instanceof JDKTestProject) {
@@ -296,20 +296,13 @@ public class MatrixGenerator {
                 throw new ManagementException("Unknow project type " + project.getClass());
             }
         }
-        return counter[0];
+        return counter;
     }
 
-    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, int[] counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce, VariantsConfig bvc) {
+    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce, VariantsConfig bvc) {
         for (Map.Entry<String, PlatformConfig> tpce : bvc.getPlatforms().entrySet()) {
             for (Map.Entry<String, TaskConfig> ttce : tpce.getValue().getTasks().entrySet()) {
                 for (VariantsConfig tvc : ttce.getValue().getVariants()) {
-                    String full = buildArchOs + "-" +
-                            btce.getKey() + "-" +
-                            project.getId() + "-" +
-                            String.join(".", bvc.getMap().values()) + "-" +
-                            tpce.getKey() + "-" +
-                            ttce.getKey() + "-" +
-                            String.join(".", tvc.getMap().values());
                     String[] buildOsAarch = buildArchOs.split("\\.");
                     String btask = btce.getKey(); //always build
                     Collection<String> buildVars = bvc.getMap().values();
@@ -317,15 +310,23 @@ public class MatrixGenerator {
                     String testProvider = tpce.getValue().getProvider();
                     String ttask = ttce.getKey();
                     Collection<String> testVars = tvc.getMap().values();
+                    String full = buildArchOs + "." + buildProvider + "-" +
+                            btask + "-" +
+                            project.getProduct().getJdk() + "-" +
+                            project.getId() + "-" +
+                            String.join(".", buildVars) + "-" +
+                            tpce.getKey() + "." + testProvider + "-" +
+                            ttask + "-" +
+                            String.join(".", testVars);
                     //System.out.println(full);
                     if (ts.getTask().getId().equals("build")) { //where it get from?
                         if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
-                            counter[0]++;
+                            counter.add(new Leaf(full));
                         }
                     } else {
                         if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)
                                 && taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
-                            counter[0]++;
+                            counter.add(new Leaf(full));
                         }
 
                     }
@@ -353,4 +354,14 @@ public class MatrixGenerator {
                 genericMatcher(ts, os, arch, provider, variants);
     }
 
+    public static class Leaf {
+
+        //TODO: replace by soem structure or other way from which
+        //will be able to generate jenkins url or the job itself
+        private final String fullPath;
+
+        public Leaf(String fullPath) {
+            this.fullPath = fullPath;
+        }
+    }
 }
