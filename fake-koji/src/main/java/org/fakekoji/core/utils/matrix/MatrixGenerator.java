@@ -213,9 +213,9 @@ public class MatrixGenerator {
         try {
             try (PrintStream ps = new PrintStream(baos, true, utf8)) {
                 int t1 = printMatrix(ps, bs, ts);
-                System.out.println(t1 + "/" + (bs.size() * ts.size()));
+                ps.println(t1 + "/" + (bs.size() * ts.size()));
                 int t2 = printMatrix(ps, ts, bs);
-                System.out.println(t2 + "/" + (bs.size() * ts.size()));
+                ps.println(t2 + "/" + (bs.size() * ts.size()));
             }
             return baos.toString(utf8);
         } catch (UnsupportedEncodingException e) {
