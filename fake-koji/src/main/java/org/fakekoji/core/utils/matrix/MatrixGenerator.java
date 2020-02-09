@@ -58,7 +58,7 @@ public class MatrixGenerator {
     }
 
     TestEqualityFilter testFilter = new TestEqualityFilter(true, true, true, true, true);
-    BuildEqualityFilter buildFilter = new BuildEqualityFilter(true, true, true, true, true);
+    BuildEqualityFilter buildFilter = new BuildEqualityFilter(true, true, true, true, true, true);
     String testRegex = ".*";
     String buildRegex = ".*";
 
@@ -304,11 +304,11 @@ public class MatrixGenerator {
                     Collection<String> testVars = tvc.getMap().values();
                     //System.out.println(full);
                     if (ts.getTask().getId().equals("build")) { //where it get from?
-                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, buildVars)) {
+                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider,project.getProduct().getJdk(), buildVars)) {
                             counter[0]++;
                         }
                     } else {
-                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, buildVars)
+                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)
                                 && taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
                             counter[0]++;
                         }
@@ -327,9 +327,10 @@ public class MatrixGenerator {
                 (s.matchVars(variants));
     }
 
-    private static boolean buildMatcher(BuildSpec bs, String projectId, String os, String arch, String provider, Collection<String> variants) {
-        return (bs.matchProject(projectId)) &&
-                genericMatcher(bs, os, arch, provider, variants);
+    private static boolean buildMatcher(BuildSpec bs, String projectId, String os, String arch, String provider, String jdk, Collection<String> variants) {
+        return (bs.matchProject(projectId) &&
+                bs.matchJdk(jdk) &&
+                genericMatcher(bs, os, arch, provider, variants));
     }
 
     private static boolean taskMatcher(TestSpec ts, String taskId, String os, String arch, String provider, Collection<String> variants) {

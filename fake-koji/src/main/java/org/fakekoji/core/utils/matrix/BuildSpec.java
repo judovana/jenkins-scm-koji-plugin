@@ -20,18 +20,27 @@ class BuildSpec extends Spec {
 
     @Override
     public String toString() {
-        String prj = project.getProduct().getJdk() + "-" + project.getId();
+        String jdk= project.getProduct().getJdk();
+        if (!getViewFilter().jdk){
+            jdk = "?";
+        }
+
+        String prj = project.getId();
         if (!getViewFilter().project){
             prj = "?";
         }
         return getPlatformString()+
-                "-" + prj +
+                "-" + jdk + "-" + prj +
                 getVariantsString();
 
     }
 
     public boolean matchProject(String id){
         return !getViewFilter().project || project.getId().equals(id);
+    }
+
+    public boolean matchJdk(String jdk){
+        return !getViewFilter().jdk || project.getProduct().getJdk().equals(jdk);
     }
 
 }
