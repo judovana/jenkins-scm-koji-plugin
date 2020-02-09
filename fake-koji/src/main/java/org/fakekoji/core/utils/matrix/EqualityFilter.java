@@ -1,6 +1,6 @@
 package org.fakekoji.core.utils.matrix;
 
-public abstract class EqualityFilter {
+abstract class EqualityFilter {
 
     public final boolean os;
     public final boolean arch;

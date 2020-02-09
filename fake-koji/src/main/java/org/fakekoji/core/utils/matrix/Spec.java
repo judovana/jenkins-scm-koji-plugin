@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public abstract class Spec {
+abstract class Spec {
 
     protected final Platform platform;
     protected final Platform.Provider provider;

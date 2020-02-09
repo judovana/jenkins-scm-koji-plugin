@@ -27,16 +27,37 @@ public class MatrixGenerator {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
-    final BuildProviderManager buildProviderManager;
-    final PlatformManager platformManager;
-    final TaskVariantManager taskVariantManager;
-    final JDKVersionManager jDKVersionManager;
-    final TaskManager taskManager;
-    final JDKTestProjectManager jdkTestProjectManager;
-    final JDKProjectManager jdkProjectManager;
+    private final BuildProviderManager buildProviderManager;
+    private final PlatformManager platformManager;
+    private final TaskVariantManager taskVariantManager;
+    private final JDKVersionManager jDKVersionManager;
+    private final TaskManager taskManager;
+    private final JDKTestProjectManager jdkTestProjectManager;
+    private final JDKProjectManager jdkProjectManager;
+
+    private static final TestEqualityFilter defaultTestFilter = new TestEqualityFilter(true, true, true, true, true);
+    private static final BuildEqualityFilter defaultBuildFilter = new BuildEqualityFilter(true, true, true, true, true, true);
+    private static final String defaultRegex = ".*";
+
+    private final TestEqualityFilter testFilter;
+    private final BuildEqualityFilter buildFilter;
+    private final Pattern testRegex;
+    private final Pattern buildRgex;
+
 
     public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager) {
+        this(settings, configManager, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter);
+
+    }
+
+    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter, BuildEqualityFilter buildEqualityFilter) {
+
         final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
+
+        this.testFilter = testEqualityFilter;
+        this.buildFilter = buildEqualityFilter;
+        this.testRegex = Pattern.compile(testRegex);
+        this.buildRgex = Pattern.compile(buildRegex);
         buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
         platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
         //contains both BUILD and TEST variants
@@ -57,20 +78,15 @@ public class MatrixGenerator {
         );
     }
 
-    TestEqualityFilter testFilter = new TestEqualityFilter(true, true, true, true, true);
-    BuildEqualityFilter buildFilter = new BuildEqualityFilter(true, true, true, true, true, true);
-    String testRegex = ".*";
-    String buildRegex = ".*";
 
     public List<TestSpec> getTests() throws StorageException {
-        Pattern p = Pattern.compile(testRegex);
         List<TestSpec> r = new ArrayList<>();
         for (Platform platform : platformManager.readAll()) {
             for (Platform.Provider provider : platform.getProviders()) {
                 for (Task task : taskManager.readAll()) {
                     if (!task.getType().equals(Task.Type.TEST)) {
                         TestSpec t = new TestSpec(platform, provider, task, testFilter);
-                        if (p.matcher(t.toString()).matches()) {
+                        if (testRegex.matcher(t.toString()).matches()) {
                             r.add(t);
                         }
                     } else {
@@ -80,7 +96,7 @@ public class MatrixGenerator {
                             for (TaskVariantValue tv : tvvs) {
                                 t.addVariant(tv);
                             }
-                            if (p.matcher(t.toString()).matches()) {
+                            if (testRegex.matcher(t.toString()).matches()) {
                                 r.add(t);
                             }
                         }
@@ -92,9 +108,9 @@ public class MatrixGenerator {
     }
 
     private List<? extends Spec> filterByToString(List<? extends Spec> r) {
-        for (int i = 0; i < r.size() ; i++) {
-            for (int j = i+1; j < r.size(); j++) {
-                if (r.get(i).toString().equals(r.get(j).toString())){
+        for (int i = 0; i < r.size(); i++) {
+            for (int j = i + 1; j < r.size(); j++) {
+                if (r.get(i).toString().equals(r.get(j).toString())) {
                     r.remove(j);
                     j--;
                 }
@@ -105,7 +121,6 @@ public class MatrixGenerator {
 
 
     public List<BuildSpec> getBuilds() throws StorageException {
-        Pattern p = Pattern.compile(buildRegex);
         List<BuildSpec> r = new ArrayList<>();
         for (Platform platform : platformManager.readAll()) {
             for (Platform.Provider provider : platform.getProviders()) {
@@ -116,7 +131,7 @@ public class MatrixGenerator {
                         for (TaskVariantValue tv : tvvs) {
                             b.addVariant(tv);
                         }
-                        if (p.matcher(b.toString()).matches()) {
+                        if (buildRgex.matcher(b.toString()).matches()) {
                             r.add(b);
                         }
                     }
@@ -304,7 +319,7 @@ public class MatrixGenerator {
                     Collection<String> testVars = tvc.getMap().values();
                     //System.out.println(full);
                     if (ts.getTask().getId().equals("build")) { //where it get from?
-                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider,project.getProduct().getJdk(), buildVars)) {
+                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
                             counter[0]++;
                         }
                     } else {
