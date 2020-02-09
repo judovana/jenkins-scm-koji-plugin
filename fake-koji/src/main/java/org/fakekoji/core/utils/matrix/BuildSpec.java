@@ -8,26 +8,30 @@ class BuildSpec extends Spec {
     private final Project project;
 
 
-    public BuildSpec(Platform platform, Platform.Provider provider, Project project, EqualityFilter viewFilter) {
+    public BuildSpec(Platform platform, Platform.Provider provider, Project project, BuildEqualityFilter viewFilter) {
         super(platform, provider, viewFilter);
         this.project = project;
 
     }
 
-    public Project getProject() {
-        return project;
+    private BuildEqualityFilter getViewFilter() {
+        return (BuildEqualityFilter) viewFilter;
     }
 
     @Override
     public String toString() {
         String prj = project.getProduct().getJdk() + "-" + project.getId();
-        if (!viewFilter.suiteOrProject){
+        if (!getViewFilter().project){
             prj = "?";
         }
         return getPlatformString()+
                 "-" + prj +
                 getVariantsString();
 
+    }
+
+    public boolean matchProject(String id){
+        return !getViewFilter().project || project.getId().equals(id);
     }
 
 }

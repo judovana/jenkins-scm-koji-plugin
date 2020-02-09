@@ -7,7 +7,7 @@ class TestSpec extends Spec {
     private final Task task;
 
 
-    public TestSpec(Platform platform, Platform.Provider provider, Task task, EqualityFilter viewFilter) {
+    public TestSpec(Platform platform, Platform.Provider provider, Task task, TestEqualityFilter viewFilter) {
         super(platform, provider, viewFilter);
         this.task = task;
     }
@@ -16,14 +16,22 @@ class TestSpec extends Spec {
         return task;
     }
 
+    private TestEqualityFilter getViewFilter() {
+        return (TestEqualityFilter) viewFilter;
+    }
+
     @Override
     public String toString() {
         String tsk = task.getId();
-        if (!viewFilter.suiteOrProject) {
+        if (!getViewFilter().suite) {
             tsk = "?";
         }
         return getPlatformString()+
                 "-" + tsk + getVariantsString();
+    }
+
+    public boolean matchSuite(String id){
+        return !getViewFilter().suite || task.getId().equals(id);
     }
 
 }

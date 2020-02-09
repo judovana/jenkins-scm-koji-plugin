@@ -57,8 +57,8 @@ public class MatrixGenerator {
         );
     }
 
-    EqualityFilter testFilter = new EqualityFilter(true, true, true, true, true);
-    EqualityFilter buildFilter = new EqualityFilter(true, true, true, true, true);
+    TestEqualityFilter testFilter = new TestEqualityFilter(true, true, true, true, true);
+    BuildEqualityFilter buildFilter = new BuildEqualityFilter(true, true, true, true, true);
     String testRegex = ".*";
     String buildRegex = ".*";
 
@@ -320,21 +320,21 @@ public class MatrixGenerator {
     }
 
 
-    private static boolean genericMatcher(Spec s, String os, String arch, String provider, Collection<String> variants, EqualityFilter f) {
-        return (!f.os || s.matchOs(os)) &&
-                (!f.arch || s.matchArch(arch)) &&
-                (!f.provider || s.matchProvider(provider)) &&
-                (!f.variants || s.matchVars(variants));
+    private static boolean genericMatcher(Spec s, String os, String arch, String provider, Collection<String> variants) {
+        return (s.matchOs(os)) &&
+                (s.matchArch(arch)) &&
+                (s.matchProvider(provider)) &&
+                (s.matchVars(variants));
     }
 
-    private boolean buildMatcher(BuildSpec bs, String projectId, String os, String arch, String provider, Collection<String> variants) {
-        return (!buildFilter.suiteOrProject || bs.getProject().getId().equals(projectId)) &&
-                genericMatcher(bs, os, arch, provider, variants, buildFilter);
+    private static boolean buildMatcher(BuildSpec bs, String projectId, String os, String arch, String provider, Collection<String> variants) {
+        return (bs.matchProject(projectId)) &&
+                genericMatcher(bs, os, arch, provider, variants);
     }
 
-    private boolean taskMatcher(TestSpec ts, String taskId, String os, String arch, String provider, Collection<String> variants) {
-        return (!testFilter.suiteOrProject || ts.getTask().getId().equals(taskId)) &&
-                genericMatcher(ts, os, arch, provider, variants, testFilter);
+    private static boolean taskMatcher(TestSpec ts, String taskId, String os, String arch, String provider, Collection<String> variants) {
+        return (ts.matchSuite(taskId)) &&
+                genericMatcher(ts, os, arch, provider, variants);
     }
 
 }

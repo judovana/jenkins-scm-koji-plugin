@@ -55,18 +55,22 @@ public abstract class Spec {
     public abstract String toString();
 
     public boolean matchOs(String os) {
-        return (platform.getOs() + platform.getVersion()).equals(os);
+        return !viewFilter.os || (platform.getOs() + platform.getVersion()).equals(os);
     }
 
     public boolean matchArch(String a) {
-        return platform.getArchitecture().equals(a);
+        return !viewFilter.arch || platform.getArchitecture().equals(a);
     }
 
-    public boolean matchVars(Collection<String> buildVars) {
-        if (buildVars.size() != variants.size()) {
+    public boolean matchVars(Collection<String> vars) {
+        return !viewFilter.variants || matchVarsImpl(vars);
+    }
+
+    private boolean matchVarsImpl(Collection<String> vars) {
+        if (vars.size() != variants.size()) {
             return false;
         }
-        for (String v : buildVars) {
+        for (String v : vars) {
             if (!variants.contains(v)) {
                 return false;
             }
@@ -79,7 +83,7 @@ public abstract class Spec {
             //provider is ignored for test only jobs
             return true;
         }
-        return provider.getId().equals(p);
+        return !viewFilter.provider || provider.getId().equals(p);
     }
 
     protected String getPlatformString() {
