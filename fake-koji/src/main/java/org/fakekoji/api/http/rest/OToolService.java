@@ -110,8 +110,6 @@ public class OToolService {
                     }));
                 });
                 get(MATRIX, wrapper.wrap(context -> {
-                    LOGGER.log(Level.SEVERE, "hi1");
-                    System.out.println("hi2");
                     MatrixGenerator m = new MatrixGenerator(settings, configManager);
                     context.status(200).result(m.printMatrix());
                 }));
