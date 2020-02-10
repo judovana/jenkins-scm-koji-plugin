@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.plugin.json.JavalinJackson;
+
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.jobmanager.ConfigManager;
@@ -27,6 +28,7 @@ import org.fakekoji.storage.StorageException;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.get;
+
 import static org.fakekoji.core.AccessibleSettings.objectMapper;
 
 public class OToolService {
@@ -49,10 +51,8 @@ public class OToolService {
     private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
 
     private static final String MISC = "misc";
-    private static final String REGENERATE_ALL_JOBS = "regenerateAllJobs";
+    private static final String REGENERATE_ALL = "regenerateAll";
     private static final String MATRIX = "matrix";
-    private static final String MATRIX_COMPRESSED = "matrixCompressed"
-            + "";
 
     private final int port;
     private final Javalin app;
@@ -91,26 +91,22 @@ public class OToolService {
             );
 
             path(MISC, () -> {
-                path(REGENERATE_ALL_JOBS, () -> get(ctx -> {
-                    final JobUpdateResults[] r = new JobUpdateResults[]{new JobUpdateResults()};
-                    wrapper.wrap(context -> {
+                path(REGENERATE_ALL, () -> {
+                    get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                         JobUpdateResults r1 = jdkTestProjectManager.regenerateAll();
-                        r[0] = r[0].add(r1);
-                    });
-                    wrapper.wrap(context -> {
+                        context.status(200).json(r1);
+                    }));
+                    get(JDK_PROJECTS, wrapper.wrap(context -> {
                         JobUpdateResults r2 = jdkProjectManager.regenerateAll();
-                        r[0] = r[0].add(r2);
-                        if (ctx.status() < 400) {
-                            ctx.status(200).json(r[0]);
-                        }
-                    });
-                }));
-                path(MATRIX, () -> get(ctx -> {
+                        context.status(200).json(r2);
+                    }));
+                });
+                get(MATRIX, ctx -> {
                     wrapper.wrap(context -> {
                         MatrixGenerator m = new MatrixGenerator(settings, configManager);
                         context.status(200).result(m.printMatrix());
                     });
-                }));
+                });
             });
 
             app.post(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
