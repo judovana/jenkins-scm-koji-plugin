@@ -304,7 +304,7 @@ public class JenkinsJobTemplateBuilder {
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
                 .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables));
         if (!vmName.equals(LOCAL)) {
-            return buildVmPostBuildTaskTemplate(provider, platform.getVmName(), scriptsRoot);
+            return buildVmPostBuildTaskTemplate(provider, platform.getVmName(), scriptsRoot, exportedVariables);
         }
         template = template.replace(VM_POST_BUILD_TASK, "");
         return this;
@@ -313,11 +313,13 @@ public class JenkinsJobTemplateBuilder {
     JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(
             String platformProvider,
             String platformVMName,
-            File scriptsRoot
+            File scriptsRoot,
+            List<Variable> exportedVariables
     ) throws IOException {
         template = template
                 .replace(VM_POST_BUILD_TASK, loadTemplate(JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE))
                 .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, platformProvider, DESTROY_SCRIPT_NAME).toString())
+                .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables))
                 .replace(PLATFORM_NAME, platformVMName);
         return this;
     }

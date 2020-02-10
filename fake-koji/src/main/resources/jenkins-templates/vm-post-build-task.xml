@@ -9,7 +9,9 @@
             </logTexts>
             <EscalateStatus>true</EscalateStatus>
             <RunIfJobSuccessful>false</RunIfJobSuccessful>
-            <script>#!/bin/bash&#13;bash %{DESTROY_SCRIPT} %{PLATFORM_NAME}&#13;</script>
+            <script>#!/bin/bash
+                    %{EXPORTED_VARIABLES}
+                    bash %{DESTROY_SCRIPT} %{PLATFORM_NAME}</script>
         </hudson.plugins.postbuildtask.TaskProperties>
     </tasks>
 </hudson.plugins.postbuildtask.PostbuildTask>

@@ -227,7 +227,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</hudson.plugins.postbuildtask.PostbuildTask>\n";
 
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(VM_POST_BUILD_TASK_TEMPLATE), dummyNamesProvider)
-                .buildVmPostBuildTaskTemplate(VAGRANT, vmPlatform.getVmName(), scriptsRoot).prettyPrint();
+                .buildVmPostBuildTaskTemplate(VAGRANT, vmPlatform.getVmName(), scriptsRoot, new ArrayList<>()).prettyPrint();
 
         Assert.assertEquals(expectedTemplate, actualTemplate);
     }
