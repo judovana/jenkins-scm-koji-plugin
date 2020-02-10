@@ -298,7 +298,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=" + buildJob.getName() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME_SHORTENED=" + buildJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
+                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + vmPlatform.getOs() + '.' + vmPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + vmPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
@@ -403,7 +403,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=" + buildJob.getName() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME_SHORTENED=" + buildJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
+                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
                 "export OTOOL_OS=" + hwPlatform.getOs() + '.' + hwPlatform.getVersion() + XML_NEW_LINE +
                 "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export OTOOL_PLATFORM_PROVIDER=" + hwPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
