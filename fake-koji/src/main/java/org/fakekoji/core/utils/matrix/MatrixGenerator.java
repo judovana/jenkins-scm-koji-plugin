@@ -291,7 +291,7 @@ public class MatrixGenerator {
                     taskConfigs.put(null, tc);
                     for (Map.Entry<String, TaskConfig> btce : taskConfigs.entrySet()) {
                         for (VariantsConfig bvc : btce.getValue().getVariants()) {
-                            iterateBuildVariantsConfig(bs, ts, counter, project, bpce.getKey(), null, btce, bvc);
+                            checkAndIterateBuild(bs, ts, counter, project, bpce.getKey(), null, btce, bvc);
                         }
                     }
                 }
@@ -300,7 +300,7 @@ public class MatrixGenerator {
                 for (Map.Entry<String, PlatformConfig> bpce : jc.getPlatforms().entrySet()) {
                     for (Map.Entry<String, TaskConfig> btce : bpce.getValue().getTasks().entrySet()) {
                         for (VariantsConfig bvc : btce.getValue().getVariants()) {
-                            iterateBuildVariantsConfig(bs, ts, counter, project, bpce.getKey(), bpce.getValue().getProvider(), btce, bvc);
+                            checkAndIterateBuild(bs, ts, counter, project, bpce.getKey(), bpce.getValue().getProvider(), btce, bvc);
                         }
                     }
                 }
@@ -311,36 +311,60 @@ public class MatrixGenerator {
         return counter;
     }
 
-    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce, VariantsConfig bvc) {
+    private void checkAndIterateBuild(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce,
+            VariantsConfig bvc) {
+        //builds must be counted here, otherwise they a) multiply b) do not exists for project less leaves(so building wthout testing)
+        String[] buildOsAarch = buildArchOs.split("\\.");
+        String btask = btce.getKey(); //always build
+        String platformVersion = project.getProduct().getJdk();
+        String projectName = project.getId();
+        Collection<String> buildVars = bvc.getMap().values();
+        String fullBuild = "" +
+                buildOsAarch[0] + "." + buildOsAarch[1] + "." + buildProvider + "-" +
+                btask + "-" +
+                platformVersion + "-" +
+                projectName + "-" +
+                String.join(".", buildVars);
+        //System.out.println(fullBuild);
+        if (ts.getTask().getId().equals("build")) { //where it get from?
+            //this is trap. We are checking, whether the build is actually building in gvem combination, first the testsuite must moreover match, then it must "itself"
+            if (genericMatcher(ts, buildOsAarch[0], buildOsAarch[1], buildProvider, new ArrayList<>(0))) {
+                if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
+                    if (btask == null) {//test only jobs
+                        //we add test only job only in case, it actualy have any test, testonly jobs without tests do not have sense?
+                        //but we can see it later in matrix that it do nothave run any tests
+                        counter.add(new Leaf(fullBuild));
+                    } else {
+                        counter.add(new Leaf(fullBuild));
+                    }
+                }
+            }
+        } else {
+            if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
+                iterateBuildVariantsConfig(bs, ts, counter, project, buildArchOs, buildProvider, btce, bvc, fullBuild);
+            }
+        }
+    }
+
+    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce,
+            VariantsConfig bvc, String tmpBuildIdForSimpleTextIdentification) {
         for (Map.Entry<String, PlatformConfig> tpce : bvc.getPlatforms().entrySet()) {
             for (Map.Entry<String, TaskConfig> ttce : tpce.getValue().getTasks().entrySet()) {
                 for (VariantsConfig tvc : ttce.getValue().getVariants()) {
-                    String[] buildOsAarch = buildArchOs.split("\\.");
-                    String btask = btce.getKey(); //always build
-                    Collection<String> buildVars = bvc.getMap().values();
                     String[] testOsAarch = tpce.getKey().split("\\.");
                     String testProvider = tpce.getValue().getProvider();
                     String ttask = ttce.getKey();
                     Collection<String> testVars = tvc.getMap().values();
-                    String full = buildArchOs + "." + buildProvider + "-" +
-                            btask + "-" +
-                            project.getProduct().getJdk() + "-" +
-                            project.getId() + "-" +
-                            String.join(".", buildVars) + "-" +
-                            tpce.getKey() + "." + testProvider + "-" +
+                    String fullTest = "" +
+                            testOsAarch[0] + "." + testOsAarch[1] + "." + testProvider + "-" +
                             ttask + "-" +
                             String.join(".", testVars);
-                    //System.out.println(full);
-                    if (ts.getTask().getId().equals("build")) { //where it get from?
-                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
-                            counter.add(new Leaf(full));
-                        }
-                    } else {
-                        if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)
-                                && taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
-                            counter.add(new Leaf(full));
-                        }
-
+                    //System.out.println(fullTest);
+                    String full = "" +
+                            tmpBuildIdForSimpleTextIdentification + "-" +
+                            fullTest;
+                    if (taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
+                        counter.add(new Leaf(full));
                     }
                 }
             }
