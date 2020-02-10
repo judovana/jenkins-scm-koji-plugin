@@ -1,11 +1,13 @@
 package org.fakekoji.jobmanager.model;
 
 import org.apache.sshd.common.digest.DigestUtils;
+import org.fakekoji.model.OToolVariable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Objects;
 
 public abstract class Job implements NamesProvider {
@@ -78,4 +80,5 @@ public abstract class Job implements NamesProvider {
         }
     }
 
+    abstract List<OToolVariable> getExportedVariables();
 }

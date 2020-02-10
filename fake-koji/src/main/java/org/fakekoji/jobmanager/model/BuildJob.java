@@ -3,14 +3,14 @@ package org.fakekoji.jobmanager.model;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
-import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.TaskVariant;
+import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.TASK_JOB_TEMPLATE;
@@ -46,19 +47,6 @@ public class BuildJob extends TaskJob {
 
     @Override
     public String generateTemplate() throws IOException {
-        final List<JenkinsJobTemplateBuilder.Variable> variables = new ArrayList<JenkinsJobTemplateBuilder.Variable>() {{
-            add(new JenkinsJobTemplateBuilder.Variable(JDK_VERSION_VAR, getJdkVersion().getVersion()));
-            add(new JenkinsJobTemplateBuilder.Variable(OJDK_VAR, 'o' + getProduct().getJdk()));
-            add(new JenkinsJobTemplateBuilder.Variable(PACKAGE_NAME_VAR, getProduct().getPackageName()));
-            add(new JenkinsJobTemplateBuilder.Variable(PROJECT_NAME_VAR, getProjectName()));
-            addAll(JenkinsJobTemplateBuilder.Variable.createDefault(getVariants()));
-            add(new JenkinsJobTemplateBuilder.Variable(RELEASE_SUFFIX_VAR, getVariants().entrySet()
-                    .stream()
-                    .filter(e -> e.getKey().getType() == Task.Type.BUILD)
-                    .sorted(Comparator.comparing(Map.Entry::getKey))
-                    .map(e -> e.getValue().getId())
-                    .collect(Collectors.joining(".")) + '.' + getPlatform().getId()));
-        }};
 
         // TODO: do this better
         final Map<TaskVariant, TaskVariantValue> variants = new HashMap<TaskVariant, TaskVariantValue>() {{
@@ -78,7 +66,7 @@ public class BuildJob extends TaskJob {
                         false
                 )
                 .buildTriggerTemplate(getTask().getScmPollSchedule())
-                .buildScriptTemplate(getTask(), getPlatformProvider(), getPlatform(), getScriptsRoot(), variables)
+                .buildScriptTemplate(getTask(), getPlatformProvider(), getPlatform(), getScriptsRoot(), getExportedVariables())
                 .buildPostBuildTasks(getTask().getXmlTemplate())
                 .prettyPrint();
     }
@@ -129,5 +117,29 @@ public class BuildJob extends TaskJob {
             String tail = Job.truncatedSha(fullName, Job.MAX_JOBNAME_LENGTH - header.length() - DELIMITER.length());
             return header + Job.DELIMITER + tail;
         }
+    }
+
+    @Override
+    List<OToolVariable> getExportedVariables() {
+        final String releaseSuffix = getVariants().entrySet()
+                .stream()
+                .filter(e -> e.getKey().getType() == Task.Type.BUILD)
+                .sorted(Comparator.comparing(Map.Entry::getKey))
+                .map(e -> e.getValue().getId())
+                .collect(Collectors.joining(".")) + '.' + getPlatform().getId();
+
+        final List<OToolVariable> defaultVariables = Arrays.asList(
+                new OToolVariable(JDK_VERSION_VAR, getJdkVersion().getVersion()),
+                new OToolVariable(OJDK_VAR, 'o' + getProduct().getJdk()),
+                new OToolVariable(PACKAGE_NAME_VAR, getProduct().getPackageName()),
+                new OToolVariable(PROJECT_NAME_VAR, getProjectName()),
+                new OToolVariable(RELEASE_SUFFIX_VAR, releaseSuffix)
+        );
+        final List<OToolVariable> variantVariables = OToolVariable.createDefault(getVariants());
+        return Stream.of(
+                defaultVariables,
+                variantVariables
+        ).flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 }

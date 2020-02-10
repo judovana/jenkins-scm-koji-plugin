@@ -8,6 +8,7 @@ import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
@@ -636,6 +637,120 @@ public class JenkinsJobTemplateBuilderTest {
     }
 
     @Test
+    public void buildTestJobTemplateWithCustomVariables() throws IOException {
+
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
+        final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
+        final Task testTask = DataGenerator.getTCKWithAgent();
+        final Platform buildPlatform = DataGenerator.getRHEL7Zx64();
+        final Platform testPlatform = DataGenerator.getRHEL7Zx64();
+
+        final TaskVariant jvm = DataGenerator.getJvmVariant();
+        final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
+        final TaskVariant garbageCollector = DataGenerator.getGarbageCollectorCategory();
+        final TaskVariant displayProtocol = DataGenerator.getDisplayProtocolCategory();
+
+        final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
+        final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
+
+        final TestJob testJob = new TestJob(
+                VAGRANT,
+                PROJECT_NAME,
+                Project.ProjectType.JDK_PROJECT,
+                DataGenerator.getJDK8Product(),
+                jdk8,
+                buildProviders,
+                testTask,
+                testPlatform,
+                testVariants,
+                buildPlatform,
+                buildVariants,
+                scriptsRoot
+        );
+
+        final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
+                "<project>\n" +
+                "    <actions/>\n" +
+                "    <description/>\n" +
+                "    <keepDependencies>false</keepDependencies>\n" +
+                "    <properties/>\n" +
+                "    <scm class=\"hudson.plugins.scm.koji.KojiSCM\" plugin=\"jenkins-scm-koji-plugin@0.2-SNAPSHOT\">\n" +
+                BUILD_PROVIDERS_TEMPLATE +
+                "        <kojiXmlRpcApi class=\"hudson.plugins.scm.koji.FakeKojiXmlRpcApi\">\n" +
+                "            <xmlRpcApiType>FAKE_KOJI</xmlRpcApiType>\n" +
+                "            <projectName>" + PROJECT_NAME + "</projectName>\n" +
+                "            <buildVariants>" + "debugMode=" + buildVariants.get(debugMode).getId() + " jvm=" + buildVariants.get(jvm).getId() + "</buildVariants>\n" +
+                "            <buildPlatform>" + testPlatform.getId() + "</buildPlatform>\n" +
+                "            <isBuilt>" + true + "</isBuilt>\n" +
+                "        </kojiXmlRpcApi>\n" +
+                "        <downloadDir>rpms</downloadDir>\n" +
+                "        <cleanDownloadDir>true</cleanDownloadDir>\n" +
+                "        <dirPerNvr>false</dirPerNvr>\n" +
+                "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
+                "    </scm>\n" +
+                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <canRoam>false</canRoam>\n" +
+                "    <disabled>false</disabled>\n" +
+                "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
+                "    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>\n" +
+                "    <triggers>\n" +
+                "        <hudson.triggers.SCMTrigger>\n" +
+                "            <spec>" + testTask.getScmPollSchedule() + "</spec>\n" +
+                "            <ignorePostCommitHooks>false</ignorePostCommitHooks>\n" +
+                "        </hudson.triggers.SCMTrigger>\n" +
+                "    </triggers>\n" +
+                "    <concurrentBuild>false</concurrentBuild>\n" +
+                "    <builders>\n" +
+                "        <hudson.tasks.Shell>\n" +
+                "            <command>\n" +
+                "#!/bin/bash&#13;\n" +
+                "export OTOOL_AGENT=linux" + XML_NEW_LINE +
+                "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_IS_RHEL_Z_STREAM=true" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
+                "export OTOOL_OJDK=o" + jdk8.getId() + XML_NEW_LINE +
+                "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + testPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
+                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
+                "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
+                "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
+                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
+                "</command>\n" +
+                "        </hudson.tasks.Shell>\n" +
+                "    </builders>\n" +
+                "    <publishers>\n" +
+                "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
+                "            <tasks>\n" +
+                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
+                "                    <logTexts>\n" +
+                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
+                "                            <logText>.*</logText>\n" +
+                "                            <operator>OR</operator>\n" +
+                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
+                "                    </logTexts>\n" +
+                "                    <EscalateStatus>true</EscalateStatus>\n" +
+                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
+                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                + "&#13;</script>\n" + "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
+                "            </tasks>\n" +
+                "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
+                DataGenerator.TEST_POST_BUILD_TASK +
+                "    </publishers>\n" +
+                "    <buildWrappers/>\n" +
+                "</project>\n";
+
+        final String actualTemplate = testJob.generateTemplate();
+        Assert.assertEquals(expectedTemplate, actualTemplate);
+    }
+
+    @Test
     public void buildTestJobTemplateRequestingSourcesAndBinary() throws IOException {
 
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
@@ -1062,10 +1177,10 @@ public class JenkinsJobTemplateBuilderTest {
 
     @Test
     public void testVariable() throws IOException {
-        JenkinsJobTemplateBuilder.Variable v1 = new JenkinsJobTemplateBuilder.Variable("myVar", "myVal");
-        Assert.assertEquals("export OTOOL_myVar=myVal" + XML_NEW_LINE, v1.toString());
-        v1 = new JenkinsJobTemplateBuilder.Variable(false, true, "comment", "myVar", "myVal");
-        Assert.assertEquals("#export myVar=myVal # comment" + XML_NEW_LINE, v1.toString());
+        OToolVariable v1 = new OToolVariable("myVar", "myVal");
+        Assert.assertEquals("export OTOOL_myVar=myVal" + XML_NEW_LINE, JenkinsJobTemplateBuilder.getVariableString(v1));
+        v1 = new OToolVariable("myVar", "myVal", "comment", false, true);
+        Assert.assertEquals("#export myVar=myVal # comment" + XML_NEW_LINE, JenkinsJobTemplateBuilder.getVariableString(v1));
 
     }
 }
