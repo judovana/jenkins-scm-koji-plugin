@@ -50,6 +50,11 @@ public class MatrixGenerator {
 
     }
 
+    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager,  String testRegex, String buildRegex) {
+        this(settings, configManager, testRegex==null?defaultRegex:testRegex, buildRegex==null?defaultRegex:buildRegex, defaultTestFilter, defaultBuildFilter);
+
+    }
+
     public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter, BuildEqualityFilter buildEqualityFilter) {
 
         final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
@@ -205,17 +210,21 @@ public class MatrixGenerator {
     }
 
 
-    public String printMatrix() throws StorageException, ManagementException {
+    public String printMatrix(int orientation) throws StorageException, ManagementException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final String utf8 = StandardCharsets.UTF_8.name();
         List<BuildSpec> bs = getBuilds();
         List<TestSpec> ts = getTests();
         try {
             try (PrintStream ps = new PrintStream(baos, true, utf8)) {
-                int t1 = printMatrix(ps, bs, ts);
-                ps.println(t1 + "/" + (bs.size() * ts.size()));
-                int t2 = printMatrix(ps, ts, bs);
-                ps.println(t2 + "/" + (bs.size() * ts.size()));
+                if (orientation <= 0) {
+                    int t1 = printMatrix(ps, bs, ts);
+                    ps.println(t1 + "/" + (bs.size() * ts.size()));
+                }
+                if (orientation >=0) {
+                    int t2 = printMatrix(ps, ts, bs);
+                    ps.println(t2 + "/" + (bs.size() * ts.size()));
+                }
             }
             return baos.toString(utf8);
         } catch (UnsupportedEncodingException e) {

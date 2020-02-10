@@ -6,7 +6,9 @@ import io.javalin.http.Handler;
 import io.javalin.plugin.json.JavalinJackson;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
+import org.fakekoji.core.utils.matrix.TestEqualityFilter;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
@@ -59,10 +61,23 @@ public class OToolService {
     private static final String MISC = "misc";
     private static final String REGENERATE_ALL = "regenerateAll";
     private static final String MATRIX = "matrix";
+    private static final String MATRIX_ORIENTATION = "orientation";
+    private static final String MATRIX_BREGEX = "buildRegex";
+    private static final String MATRIX_TREGEX = "testRegex";
 
     private final int port;
     private final Javalin app;
     private final JobUpdater jenkinsJobUpdater;
+
+    private String getMiscHelp() {
+        return ""
+                + MISC + "/" + REGENERATE_ALL + "/" + JDK_TEST_PROJECTS + "\n"
+                + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
+                + MISC + "/" + MATRIX + "\n"
+                + "  where parameters for matrix are (with defaults):\n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
+                + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=true bos=true barch=true bprovider=false bproject=true bjdk=true bvars=true\n";
+    }
 
     public OToolService(AccessibleSettings settings) {
         this.port = settings.getWebappPort();
@@ -99,6 +114,9 @@ public class OToolService {
             );
 
             path(MISC, () -> {
+                get("help", wrapper.wrap(context -> {
+                    context.status(200).result(getMiscHelp());
+                }));
                 path(REGENERATE_ALL, () -> {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                         JobUpdateResults r1 = jdkTestProjectManager.regenerateAll();
@@ -110,9 +128,29 @@ public class OToolService {
                     }));
                 });
                 get(MATRIX, wrapper.wrap(context -> {
-                    MatrixGenerator m = new MatrixGenerator(settings, configManager);
-                    context.status(200).result(m.printMatrix());
+                    String trex = context.queryParam(MATRIX_TREGEX);
+                    String brex = context.queryParam(MATRIX_BREGEX);
+                    boolean tos = notNullBoolean(context, "tos", true);
+                    boolean tarch = notNullBoolean(context, "tarch", true);
+                    boolean tprovider = notNullBoolean(context, "tprovider", false);
+                    boolean tsuite = notNullBoolean(context, "tsuite", true);
+                    boolean tvars = notNullBoolean(context, "tvars", true);
+                    boolean bos = notNullBoolean(context, "bos", true);
+                    boolean barch = notNullBoolean(context, "barch", true);
+                    boolean bprovider = notNullBoolean(context, "bprovider", false);
+                    boolean bproject = notNullBoolean(context, "bproject", true);
+                    boolean bjdk = notNullBoolean(context, "bjdk", true);
+                    boolean bvars = notNullBoolean(context, "bvars", true);
+                    TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
+                    BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
+                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf);
+                    int orieantaion = 1;
+                    if (context.queryParam(MATRIX_ORIENTATION) != null) {
+                        orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
+                    }
+                    context.status(200).result(m.printMatrix(orieantaion));
                 }));
+
             });
 
             app.post(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
@@ -253,6 +291,15 @@ public class OToolService {
             });
         });
     }
+
+    private boolean notNullBoolean(Context context, String key, boolean defoult) {
+        if (context.queryParam(key) == null) {
+            return defoult;
+        } else {
+            return Boolean.valueOf(context.queryParam(key));
+        }
+    }
+
 
     public void start() {
         app.start(port);
