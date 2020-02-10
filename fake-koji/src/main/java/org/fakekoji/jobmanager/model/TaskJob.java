@@ -1,19 +1,21 @@
 package org.fakekoji.jobmanager.model;
 
-import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
@@ -106,14 +108,21 @@ public abstract class TaskJob extends Job {
                 Objects.equals(scriptsRoot, taskJob.scriptsRoot);
     }
 
-    List<JenkinsJobTemplateBuilder.Variable> getExportedVariables() {
-        return new ArrayList<JenkinsJobTemplateBuilder.Variable>() {{
-            add(new JenkinsJobTemplateBuilder.Variable(JDK_VERSION_VAR, jdkVersion.getVersion()));
-            add(new JenkinsJobTemplateBuilder.Variable(OJDK_VAR, 'o' + jdkVersion.getId()));
-            add(new JenkinsJobTemplateBuilder.Variable(PACKAGE_NAME_VAR, product.getPackageName()));
-            add(new JenkinsJobTemplateBuilder.Variable(PROJECT_NAME_VAR, projectName));
-            addAll(JenkinsJobTemplateBuilder.Variable.createDefault(variants));
-        }};
+    List<OToolVariable> getExportedVariables() {
+        final List<OToolVariable> defaultVariables = Arrays.asList(
+                new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
+                new OToolVariable(OJDK_VAR, 'o' + jdkVersion.getId()),
+                new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
+                new OToolVariable(PROJECT_NAME_VAR, projectName)
+        );
+        final List<OToolVariable> variantVariables = OToolVariable.createDefault(variants);
+        return Stream.of(
+                defaultVariables,
+                variantVariables,
+                getTask().getVariables(),
+                getPlatform().getVariables()
+        ).flatMap(List::stream)
+                .collect(Collectors.toList());
     }
 
     public String getRunPlatform() {

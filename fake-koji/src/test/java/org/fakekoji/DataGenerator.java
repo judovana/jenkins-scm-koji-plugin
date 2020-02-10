@@ -18,6 +18,7 @@ import org.fakekoji.jobmanager.model.TestJobConfiguration;
 import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
@@ -70,9 +71,14 @@ public class DataGenerator {
     public static final String RHEL_7_X64 = "el7.x86_64";
     public static final String F_29_X64 = "f29.x86_64";
 
+    public static final String AGENT = "AGENT";
+    public static final String LINUX = "linux";
+    public static final String IS_RHEL_Z_STREAM = "IS_RHEL_Z_STREAM";
+    public static final String TRUE = "true";
     public static final String BUILD = "build";
     public static final String TCK = "tck";
     public static final String JTREG = "jtreg";
+    public static final String TCK_AGENT = "tck~agent";
 
     public static final String JVM = "jvm";
 
@@ -335,7 +341,24 @@ public class DataGenerator {
                 null,
                 Arrays.asList(getProvider()),
                 "rhel-x64",
-                Collections.singletonList("el7-*")
+                Collections.singletonList("el7-*"),
+                Collections.emptyList()
+        ));
+    }
+
+    public static Platform getRHEL7Zx64() {
+        return Platform.create(new Platform(
+                null,
+                "el",
+                "7z",
+                "x86_64",
+                null,
+                Arrays.asList(getProvider()),
+                "rhel-x64",
+                Collections.singletonList("el7-*"),
+                Arrays.asList(
+                        new OToolVariable(IS_RHEL_Z_STREAM, TRUE)
+                )
         ));
     }
 
@@ -348,7 +371,8 @@ public class DataGenerator {
                 null,
                 Arrays.asList(getVMOnlyProvider()),
                 "f29-x64",
-                Collections.singletonList("f29-*")
+                Collections.singletonList("f29-*"),
+                Collections.emptyList()
         ));
     }
 
@@ -361,7 +385,8 @@ public class DataGenerator {
                 null,
                 Arrays.asList(getHWOnlyProvider()),
                 "rhel8-aarch64",
-                Collections.singletonList("el8-*")
+                Collections.singletonList("el8-*"),
+                Collections.emptyList()
         ));
     }
 
@@ -374,7 +399,8 @@ public class DataGenerator {
                 "win",
                 Arrays.asList(getProvider()),
                 "win-2019",
-                Collections.singletonList("win2019-*")
+                Collections.singletonList("win2019-*"),
+                Collections.emptyList()
         ));
     }
 
@@ -413,7 +439,8 @@ public class DataGenerator {
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
-                )
+                ),
+                Collections.emptyList()
         );
     }
 
@@ -440,7 +467,8 @@ public class DataGenerator {
                                 "subpackageC",
                                 "subpackageD"
                         )
-                )
+                ),
+                Collections.emptyList()
         );
     }
 
@@ -461,7 +489,8 @@ public class DataGenerator {
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
-                )
+                ),
+                Collections.emptyList()
         );
     }
 
@@ -482,7 +511,8 @@ public class DataGenerator {
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
-                )
+                ),
+                Collections.emptyList()
         );
     }
 
@@ -503,7 +533,8 @@ public class DataGenerator {
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
-                )
+                ),
+                Collections.emptyList()
         );
     }
 
@@ -513,6 +544,30 @@ public class DataGenerator {
 
     public static Task getJTREG() {
         return getTestTaskRequiringSourcesAndBinary();
+    }
+
+    public static Task getTCKWithAgent() {
+        return new Task(
+                TCK_AGENT,
+                "/path/test.sh",
+                Task.Type.TEST,
+                SCP_POLL_SCHEDULE,
+                Task.MachinePreference.VM,
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.FileRequirements(
+                        false,
+                        Task.BinaryRequirements.BINARY
+                ),
+                TEST_POST_BUILD_TASK,
+                new Task.RpmLimitation(
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                ),
+                Arrays.asList(
+                        new OToolVariable(AGENT, LINUX)
+                )
+        );
     }
 
     public static final String BUILD_POST_BUILD_TASK =
@@ -830,6 +885,7 @@ public class DataGenerator {
     public static Set<Platform> getPlatforms() {
         return new HashSet<>(Arrays.asList(
                 getRHEL7x64(),
+                getRHEL7Zx64(),
                 getF29x64(),
                 getRHEL8Aarch64(),
                 getWin2019x64()
@@ -840,6 +896,7 @@ public class DataGenerator {
         return new HashSet<>(Arrays.asList(
                 getBuildTask(),
                 getTCK(),
+                getTCKWithAgent(),
                 getJTREG()
         ));
     }

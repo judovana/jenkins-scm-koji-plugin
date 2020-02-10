@@ -66,6 +66,7 @@ export interface Task extends Item {
     fileRequirements: FileRequirements;
     xmlTemplate: string;
     rpmLimitation: RPMLimitation;
+    variables: Variable[]
 }
 
 export type TaskType = "BUILD" | "TEST"
@@ -104,6 +105,7 @@ export interface Platform extends Item {
     providers: PlatformProvider[]
     vmName: string
     tags: string[]
+    variables: Variable[]
 }
 
 export interface BuildProvider extends Item {
@@ -151,3 +153,11 @@ export type ConfigGroup = { [id: string]: Item }
 export type ConfigGroups = { [id: string]: ConfigGroup }
 
 export type RepoState = "CLONED" | "NOT_CLONED" | "CLONE_ERROR" | "CLONING"
+
+export interface Variable {
+    comment?: string
+    commentedOut: boolean
+    defaultPrefix: boolean
+    name: string
+    value: string
+}

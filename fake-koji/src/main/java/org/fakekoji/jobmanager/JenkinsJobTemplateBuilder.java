@@ -7,6 +7,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
+import org.fakekoji.model.OToolVariable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -27,7 +28,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -102,82 +103,15 @@ public class JenkinsJobTemplateBuilder {
     private String template;
     private final NamesProvider job;
 
-    public static class Variable {
-        final boolean exported;
-        final boolean default_prefix;
-        final boolean commented_out;
-        final String comment;
-        final String key;
-        final String value;
-
-        public Variable(boolean default_prefix, boolean commented_out, String comment, String key, String value, boolean exported) {
-            this.default_prefix = default_prefix;
-            this.commented_out = commented_out;
-            this.comment = comment;
-            this.key = key;
-            this.value = value;
-            this.exported = exported;
-        }
-
-        public Variable(String key, String value) {
-            this.default_prefix = true;
-            this.commented_out = false;
-            this.comment = null;
-            this.key = key;
-            this.value = value;
-            this.exported = true;
-        }
-
-        public static List<Variable> createDefault(Map<TaskVariant, TaskVariantValue> map) {
-            Set<Map.Entry<TaskVariant, TaskVariantValue>> s = map.entrySet();
-            List l = new ArrayList(s.size());
-            for (Map.Entry<TaskVariant, TaskVariantValue> e : s) {
-                l.add(new Variable(e.getKey().getId(), e.getValue().getId()));
-            }
-            return l;
-        }
-
-        public String toString(String terminal) {
-            String name = key;
-            if (default_prefix) {
-                name = OTOOL_BASH_VAR_PREFIX + key;
-            }
-            String line = getExported() + name + '=' + value;
-            if (commented_out) {
-                line = "#" + line;
-            }
-            if (comment != null) {
-                line = line + " # " + comment;
-            }
-            return line + terminal;
-
-        }
-
-        private String getExported() {
-            if (exported) {
-                return EXPORT + ' ';
-            } else {
-                return
-                        "";
-            }
-        }
-
-        public static Variable find(List<Variable> src, String key) {
-            for (Variable var : src) {
-                if (var.key.equals(key)) {
-                    return var;
-                }
-            }
-            return null;
-        }
-    }
-
     public JenkinsJobTemplateBuilder(String template, NamesProvider job) {
         this.template = template;
         this.job = job;
     }
 
-    public JenkinsJobTemplateBuilder buildPullScriptTemplate(final List<Variable> exportedVariables, final File scriptsRoot) {
+    public JenkinsJobTemplateBuilder buildPullScriptTemplate(
+            final List<OToolVariable> exportedVariables,
+            final File scriptsRoot
+    ) {
         template = template.replace(
                 PULL_SCRIPT,
                 SHEBANG + XML_NEW_LINE + getExportedVariablesString(exportedVariables) +
@@ -267,7 +201,7 @@ public class JenkinsJobTemplateBuilder {
             String provider,
             Platform platform,
             File scriptsRoot,
-            List<Variable> exportedVariables
+            List<OToolVariable> exportedVariables
     ) throws IOException {
         final Platform.Provider platformProvider = platform.getProviders()
                 .stream()
@@ -306,18 +240,18 @@ public class JenkinsJobTemplateBuilder {
             default:
                 throw new RuntimeException("Unknown machine preference");
         }
-        exportedVariables.add(new Variable(PLATFORM_PROVIDER_VAR, platformProvider.getId()));
-        exportedVariables.add(new Variable(VM_NAME_OR_LOCAL_VAR, vmName));
+        exportedVariables.add(new OToolVariable(PLATFORM_PROVIDER_VAR, platformProvider.getId()));
+        exportedVariables.add(new OToolVariable(VM_NAME_OR_LOCAL_VAR, vmName));
         if (job != null) {
             if (job.getName() != null) {
-                exportedVariables.add(new Variable(JOB_NAME, job.getName()));
+                exportedVariables.add(new OToolVariable(JOB_NAME, job.getName()));
             }
             if (job.getShortName() != null) {
-                exportedVariables.add(new Variable(JOB_NAME_SHORTENED, job.getShortName()));
+                exportedVariables.add(new OToolVariable(JOB_NAME_SHORTENED, job.getShortName()));
             }
         }
-        exportedVariables.add(new Variable(OS_VAR, platform.toOsVar()));
-        exportedVariables.add(new Variable(ARCH_VAR, platform.getArchitecture()));
+        exportedVariables.add(new OToolVariable(OS_VAR, platform.toOsVar()));
+        exportedVariables.add(new OToolVariable(ARCH_VAR, platform.getArchitecture()));
         template = template
                 .replace(NODES, String.join(" ", nodes))
                 .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
@@ -325,9 +259,20 @@ public class JenkinsJobTemplateBuilder {
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
                 .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables));
         if (!vmName.equals(LOCAL)) {
-            List<Variable> shutdownVars = new ArrayList<>(1);
-            Variable shortenedNameForShutDown = new Variable(true, false, null, JOB_NAME_SHORTENED, Variable.find(exportedVariables, JOB_NAME_SHORTENED).value, false);
-            shutdownVars.add(shortenedNameForShutDown);
+            List<OToolVariable> shutdownVars = Collections.singletonList(
+                    new OToolVariable(
+                            JOB_NAME_SHORTENED,
+                            exportedVariables.stream()
+                                    .filter(var -> var.getName().equals(JOB_NAME_SHORTENED))
+                                    .map(OToolVariable::getValue)
+                                    .findFirst()
+                                    .orElse(""),
+                            null,
+                            true,
+                            false,
+                            false
+                    )
+            );
             return buildVmPostBuildTaskTemplate(provider, platform.getVmName(), scriptsRoot, shutdownVars);
         }
         template = template.replace(VM_POST_BUILD_TASK, "");
@@ -338,7 +283,7 @@ public class JenkinsJobTemplateBuilder {
             String platformProvider,
             String platformVMName,
             File scriptsRoot,
-            List<Variable> shutdownVariables
+            List<OToolVariable> shutdownVariables
     ) throws IOException {
         template = template
                 .replace(VM_POST_BUILD_TASK, loadTemplate(JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE))
@@ -353,16 +298,27 @@ public class JenkinsJobTemplateBuilder {
         return this;
     }
 
-    private String getExportedVariablesString(final List<Variable> exportedVariables) {
+    private String getExportedVariablesString(final List<OToolVariable> exportedVariables) {
         return getExportedVariablesString(exportedVariables, XML_NEW_LINE);
     }
 
-    private String getExportedVariablesString(final List<Variable> exportedVariables, String terminal) {
+    private String getExportedVariablesString(final List<OToolVariable> exportedVariables, String terminal) {
         return exportedVariables
                 .stream()
-                .map(entry -> entry.toString(terminal))
+                .map(var -> getVariableString(var, terminal))
                 .sorted()
                 .collect(Collectors.joining());
+    }
+
+    static String getVariableString(final OToolVariable variable, final String terminal) {
+        final String name = (variable.isDefaultPrefix() ? OTOOL_BASH_VAR_PREFIX : "") + variable.getName();
+        return (variable.isCommentedOut() ? '#' : "") +
+                (variable.isExported() ? EXPORT + ' ' : "") +
+                name +
+                '=' +
+                variable.getValue() +
+                variable.getComment().map(comment -> " # " + comment).orElse("") +
+                terminal;
     }
 
     String getTemplate() {

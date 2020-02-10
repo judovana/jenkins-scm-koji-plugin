@@ -16,6 +16,7 @@ public class Platform implements  Comparable<Platform> {
     private final List<Provider> providers;
     private final String vmName;
     private final List<String> tags;
+    private final List<OToolVariable> variables;
 
     public Platform() {
         id = null;
@@ -26,6 +27,7 @@ public class Platform implements  Comparable<Platform> {
         kojiArch = null;
         providers = null;
         tags = null;
+        variables = null;
     }
 
     public Platform(
@@ -36,7 +38,8 @@ public class Platform implements  Comparable<Platform> {
             String kojiArch,
             List<Provider> providers,
             String vmName,
-            List<String> tags
+            List<String> tags,
+            List<OToolVariable> variables
     ) {
         this.id = id;
         this.os = os;
@@ -46,6 +49,7 @@ public class Platform implements  Comparable<Platform> {
         this.providers = providers;
         this.vmName = vmName;
         this.tags = tags;
+        this.variables = variables;
     }
 
     public String getId() {
@@ -80,6 +84,10 @@ public class Platform implements  Comparable<Platform> {
         return tags;
     }
 
+    public List<OToolVariable> getVariables() {
+        return variables;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -90,12 +98,13 @@ public class Platform implements  Comparable<Platform> {
                 Objects.equals(architecture, platform.architecture) &&
                 Objects.equals(providers, platform.providers) &&
                 Objects.equals(vmName, platform.vmName) &&
-                Objects.equals(tags, platform.tags);
+                Objects.equals(tags, platform.tags) &&
+                Objects.equals(variables, platform.variables);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(os, version, architecture, vmName, tags);
+        return Objects.hash(os, version, architecture, vmName, tags, variables);
     }
 
     @Override
@@ -107,6 +116,7 @@ public class Platform implements  Comparable<Platform> {
                 ", providers='" + providers + '\'' +
                 ", vmName='" + vmName + '\'' +
                 ", tags=" + tags +
+                ", variables=" + variables +
                 '}';
     }
 
@@ -186,7 +196,8 @@ public class Platform implements  Comparable<Platform> {
                 platform.kojiArch,
                 platform.providers,
                 platform.vmName,
-                platform.tags
+                platform.tags,
+                platform.variables
         );
     }
 }

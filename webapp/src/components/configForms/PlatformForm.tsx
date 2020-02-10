@@ -5,6 +5,8 @@ import { Platform, Item } from "../../stores/model"
 import TextInput from "../formComponents/TextInput"
 import { Button } from "@material-ui/core"
 import useStores from "../../hooks/useStores"
+import FormList from "../formComponents/FormList"
+import VariableForm from "../formComponents/VariableForm"
 
 interface Props {
     platformID?: string
@@ -12,7 +14,6 @@ interface Props {
 }
 
 const PlatformForm: React.FC<Props> = props => {
-
     const { configStore } = useStores()
 
     const { platformID } = props
@@ -25,6 +26,7 @@ const PlatformForm: React.FC<Props> = props => {
         tags: [],
         version: "",
         vmName: "",
+        variables: []
     }))
 
     React.useEffect(() => {
@@ -43,6 +45,7 @@ const PlatformForm: React.FC<Props> = props => {
         platform.tags = _platform.tags || []
         platform.version = _platform.version || ""
         platform.vmName = _platform.vmName || ""
+        platform.variables = _platform.variables || []
     })
 
     const onOSChange = (value: string) => {
@@ -83,6 +86,7 @@ const PlatformForm: React.FC<Props> = props => {
             tags,
             version,
             vmName,
+            variables
         } = platform
 
         // TODO: Add platform provider form
@@ -113,6 +117,11 @@ const PlatformForm: React.FC<Props> = props => {
                     label={"tags"}
                     onChange={onTagsChange}
                     value={tags.join(" ")} />
+                <FormList
+                    data={variables}
+                    label="custom variables"
+                    renderItem={item => <VariableForm variable={item} />}
+                />
                 <Button
                     onClick={onSubmit}
                     variant="contained">

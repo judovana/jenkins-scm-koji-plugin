@@ -3,6 +3,7 @@ package org.fakekoji.jobmanager.model;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
@@ -171,16 +172,25 @@ public class TestJob extends TaskJob {
     }
 
     @Override
-    List<JenkinsJobTemplateBuilder.Variable> getExportedVariables() {
-        final List<JenkinsJobTemplateBuilder.Variable> exportedVariables = super.getExportedVariables();
-        exportedVariables.addAll(JenkinsJobTemplateBuilder.Variable.createDefault(buildVariants));
-        if (projectType == Project.ProjectType.JDK_PROJECT) {
-            exportedVariables.add(new JenkinsJobTemplateBuilder.Variable(RELEASE_SUFFIX_VAR, buildVariants.entrySet().stream()
-                    .sorted(Comparator.comparing(Map.Entry::getKey))
-                    .map(entry -> entry.getValue().getId())
-                    .collect(Collectors.joining(".")) + '.' + getBuildPlatform().getId()));
-        }
-        return exportedVariables;
+    List<OToolVariable> getExportedVariables() {
+
+        final String releaseSuffix = buildVariants.entrySet().stream()
+                .sorted(Comparator.comparing(Map.Entry::getKey))
+                .map(entry -> entry.getValue().getId())
+                .collect(Collectors.joining(".")) + '.' + getBuildPlatform().getId();
+
+        final List<OToolVariable> buildVariables = projectType == Project.ProjectType.JDK_PROJECT ?
+                Arrays.asList(
+                        new OToolVariable(RELEASE_SUFFIX_VAR, releaseSuffix)
+                ) : Collections.emptyList();
+
+        final List<OToolVariable> exportedVariables = super.getExportedVariables();
+        final List<OToolVariable> variantVariables = OToolVariable.createDefault(buildVariants);
+        return Stream.of(
+                exportedVariables,
+                variantVariables,
+                buildVariables
+        ).flatMap(List::stream).collect(Collectors.toList());
     }
 
     public Platform getBuildPlatform() {

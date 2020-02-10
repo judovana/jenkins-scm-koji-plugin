@@ -9,6 +9,8 @@ import RPMLimitationForm from "../formComponents/RPMLimitationForm"
 import FileRequirementsForm from "../formComponents/FileRequirementsForm"
 import { Button } from "@material-ui/core"
 import useStores from "../../hooks/useStores"
+import FormList from "../formComponents/FormList"
+import VariableForm from "../formComponents/VariableForm"
 
 type TaskFormProps = {
     taskID?: string,
@@ -43,7 +45,8 @@ const TaskForm: React.FC<TaskFormProps> = props => {
         scmPollSchedule: "",
         script: "",
         type: "TEST",
-        xmlTemplate: ""
+        xmlTemplate: "",
+        variables: []
     }))
 
     React.useEffect(() => {
@@ -64,6 +67,7 @@ const TaskForm: React.FC<TaskFormProps> = props => {
         task.script = _task.script
         task.type = _task.type
         task.xmlTemplate = _task.xmlTemplate
+        task.variables = _task.variables || []
     })
 
     const onIdChange = (value: string) => {
@@ -98,7 +102,14 @@ const TaskForm: React.FC<TaskFormProps> = props => {
     }
 
     return useObserver(() => {
-        const { id, fileRequirements, platformLimitation, productLimitation, rpmLimitation } = task
+        const {
+            id,
+            fileRequirements,
+            platformLimitation,
+            productLimitation,
+            rpmLimitation,
+            variables
+        } = task
 
         return (
             <React.Fragment>
@@ -143,6 +154,10 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                     value={task.xmlTemplate} />
                 <RPMLimitationForm
                     rpmLimitation={rpmLimitation} />
+                <FormList
+                    data={variables}
+                    label="custom variables"
+                    renderItem={item => <VariableForm variable={item} />}/>
                 <Button
                     color="primary"
                     onClick={onSubmit}

@@ -2,15 +2,13 @@ package org.fakekoji.jobmanager.model;
 
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolVariable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
@@ -47,15 +45,9 @@ public class PullJob extends Job {
 
     @Override
     public String generateTemplate() throws IOException {
-        final List<JenkinsJobTemplateBuilder.Variable> exportedVariables = new ArrayList<JenkinsJobTemplateBuilder.Variable>() {{
-            add(new JenkinsJobTemplateBuilder.Variable(JDK_VERSION_VAR, jdkVersion.getVersion()));
-            add(new JenkinsJobTemplateBuilder.Variable(PACKAGE_NAME_VAR, product.getPackageName()));
-            add(new JenkinsJobTemplateBuilder.Variable(PROJECT_NAME_VAR, projectName));
-            add(new JenkinsJobTemplateBuilder.Variable(PROJECT_PATH_VAR, Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString()));
-            add(new JenkinsJobTemplateBuilder.Variable(false, true, "any negative is enforcing pull even without changes detected", NO_CHANGE_RETURN_VAR, "-1", true));
-        }};
-        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(PULL_JOB_TEMPLATE), this)
-                .buildPullScriptTemplate(exportedVariables, scriptsRoot)
+        return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder
+                .loadTemplate(PULL_JOB_TEMPLATE), this)
+                .buildPullScriptTemplate(getExportedVariables(), scriptsRoot)
                 .buildTriggerTemplate("1 1 1 12 *") // run once a year
                 .prettyPrint();
     }
@@ -91,5 +83,23 @@ public class PullJob extends Job {
         } else {
             throw new RuntimeException("pull job name can not be shortened!");
         }
+    }
+
+    @Override
+    List<OToolVariable> getExportedVariables() {
+       return Arrays.asList(
+                new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
+                new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
+                new OToolVariable(PROJECT_NAME_VAR, projectName),
+                new OToolVariable(PROJECT_PATH_VAR, Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString()),
+                new OToolVariable(
+                        NO_CHANGE_RETURN_VAR,
+                        "-1",
+                        "any negative is enforcing pull even without changes detected",
+                        false,
+                        true,
+                        true
+                )
+        );
     }
 }
