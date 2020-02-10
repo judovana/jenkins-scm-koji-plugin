@@ -50,19 +50,20 @@ public class MatrixGenerator {
 
     }
 
-    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager,  String testRegex, String buildRegex) {
-        this(settings, configManager, testRegex==null?defaultRegex:testRegex, buildRegex==null?defaultRegex:buildRegex, defaultTestFilter, defaultBuildFilter);
+    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex) {
+        this(settings, configManager, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter);
 
     }
 
-    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter, BuildEqualityFilter buildEqualityFilter) {
+    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter,
+            BuildEqualityFilter buildEqualityFilter) {
 
         final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
 
         this.testFilter = testEqualityFilter;
         this.buildFilter = buildEqualityFilter;
-        this.testRegex = Pattern.compile(testRegex);
-        this.buildRgex = Pattern.compile(buildRegex);
+        this.testRegex = Pattern.compile(testRegex == null ? defaultRegex : testRegex);
+        this.buildRgex = Pattern.compile(buildRegex == null ? defaultRegex : buildRegex);
         buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
         platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
         //contains both BUILD and TEST variants
@@ -221,7 +222,7 @@ public class MatrixGenerator {
                     int t1 = printMatrix(ps, bs, ts);
                     ps.println(t1 + "/" + (bs.size() * ts.size()));
                 }
-                if (orientation >=0) {
+                if (orientation >= 0) {
                     int t2 = printMatrix(ps, ts, bs);
                     ps.println(t2 + "/" + (bs.size() * ts.size()));
                 }

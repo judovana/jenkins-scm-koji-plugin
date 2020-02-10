@@ -92,11 +92,14 @@ public class OToolService {
             try {
                 oToolHandler.handle(context);
             } catch (ManagementException e) {
-                context.status(400).result(e.getMessage());
+                LOGGER.log(Level.SEVERE, notNullMessage(e), e);
+                context.status(400).result(notNullMessage(e));
             } catch (StorageException e) {
-                context.status(500).result(e.getMessage());
+                LOGGER.log(Level.SEVERE, notNullMessage(e), e);
+                context.status(500).result(notNullMessage(e));
             } catch (Exception e) {
-                context.status(501).result(e.getMessage());
+                LOGGER.log(Level.SEVERE, notNullMessage(e), e);
+                context.status(501).result(notNullMessage(e));
             }
         };
 
@@ -290,6 +293,18 @@ public class OToolService {
                 }
             });
         });
+    }
+
+    private String notNullMessage(Exception e) {
+        if (e == null) {
+            return "exception witout exception. Good luck logger.";
+        } else {
+            if (e.getMessage() == null) {
+                return "Exception was thrown, but no message was left. Pray for trace.";
+            } else {
+                return e.getMessage();
+            }
+        }
     }
 
     private boolean notNullBoolean(Context context, String key, boolean defoult) {
