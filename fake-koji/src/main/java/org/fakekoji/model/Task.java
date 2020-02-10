@@ -17,6 +17,7 @@ public class Task implements  Comparable<Task> {
     private final FileRequirements fileRequirements;
     private final String xmlTemplate;
     private final RpmLimitation rpmLimitation;
+    private final List<OToolVariable> variables;
 
     public Task() {
         id = null;
@@ -29,6 +30,7 @@ public class Task implements  Comparable<Task> {
         fileRequirements = null;
         xmlTemplate = null;
         rpmLimitation = null;
+        variables = null;
     }
 
     public Task(
@@ -41,7 +43,8 @@ public class Task implements  Comparable<Task> {
             Limitation<String> platformLimitation,
             FileRequirements fileRequirements,
             String xmlTemplate,
-            RpmLimitation rpmLimitation
+            RpmLimitation rpmLimitation,
+            List<OToolVariable> variables
     ) {
         this.id = id;
         this.script = script;
@@ -53,6 +56,7 @@ public class Task implements  Comparable<Task> {
         this.fileRequirements = fileRequirements;
         this.xmlTemplate = xmlTemplate;
         this.rpmLimitation = rpmLimitation;
+        this.variables = variables;
     }
 
     public String getId() {
@@ -95,6 +99,10 @@ public class Task implements  Comparable<Task> {
         return rpmLimitation;
     }
 
+    public List<OToolVariable> getVariables() {
+        return variables;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -109,12 +117,25 @@ public class Task implements  Comparable<Task> {
                 Objects.equals(platformLimitation, task.platformLimitation) &&
                 Objects.equals(fileRequirements, task.fileRequirements) &&
                 Objects.equals(xmlTemplate, task.xmlTemplate) &&
-                Objects.equals(rpmLimitation, task.rpmLimitation);
+                Objects.equals(rpmLimitation, task.rpmLimitation) &&
+                Objects.equals(variables, task.variables);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, script, type, scmPollSchedule, machinePreference, productLimitation, platformLimitation, fileRequirements, xmlTemplate, rpmLimitation);
+        return Objects.hash(
+                id,
+                script,
+                type,
+                scmPollSchedule,
+                machinePreference,
+                productLimitation,
+                platformLimitation,
+                fileRequirements,
+                xmlTemplate,
+                rpmLimitation,
+                variables
+        );
     }
 
     @Override
