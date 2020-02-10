@@ -25,13 +25,19 @@ import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.get;
 
 import static org.fakekoji.core.AccessibleSettings.objectMapper;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class OToolService {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private static final String ID = "id";
     private static final String CONFIG_ID = "/:" + ID;
@@ -74,6 +80,8 @@ public class OToolService {
                 context.status(400).result(e.getMessage());
             } catch (StorageException e) {
                 context.status(500).result(e.getMessage());
+            } catch (Exception e) {
+                context.status(501).result(e.getMessage());
             }
         };
 
@@ -101,12 +109,12 @@ public class OToolService {
                         context.status(200).json(r2);
                     }));
                 });
-                get(MATRIX, ctx -> {
-                    wrapper.wrap(context -> {
-                        MatrixGenerator m = new MatrixGenerator(settings, configManager);
-                        context.status(200).result(m.printMatrix());
-                    });
-                });
+                get(MATRIX, wrapper.wrap(context -> {
+                    LOGGER.log(Level.SEVERE, "hi1");
+                    System.out.println("hi2");
+                    MatrixGenerator m = new MatrixGenerator(settings, configManager);
+                    context.status(200).result(m.printMatrix());
+                }));
             });
 
             app.post(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
