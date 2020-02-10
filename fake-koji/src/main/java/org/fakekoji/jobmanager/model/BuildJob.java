@@ -48,7 +48,7 @@ public class BuildJob extends TaskJob {
     public String generateTemplate() throws IOException {
         final List<JenkinsJobTemplateBuilder.Variable> variables = new ArrayList<JenkinsJobTemplateBuilder.Variable>() {{
             add(new JenkinsJobTemplateBuilder.Variable(JDK_VERSION_VAR, getJdkVersion().getVersion()));
-            add(new JenkinsJobTemplateBuilder.Variable(OJDK_VAR, 'o' + getProduct().getJdk()));
+            add(new JenkinsJobTemplateBuilder.Variable(OJDK_VAR, getProduct().getJdk()));
             add(new JenkinsJobTemplateBuilder.Variable(PACKAGE_NAME_VAR, getProduct().getPackageName()));
             add(new JenkinsJobTemplateBuilder.Variable(PROJECT_NAME_VAR, getProjectName()));
             addAll(JenkinsJobTemplateBuilder.Variable.createDefault(getVariants()));
