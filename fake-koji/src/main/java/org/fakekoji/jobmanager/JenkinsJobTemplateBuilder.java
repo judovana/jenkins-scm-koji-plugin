@@ -62,6 +62,7 @@ public class JenkinsJobTemplateBuilder {
     static final String TASK_SCRIPT = "%{TASK_SCRIPT}";
     static final String RUN_SCRIPT = "%{RUN_SCRIPT}";
     static final String EXPORTED_VARIABLES = "%{EXPORTED_VARIABLES}";
+    static final String SHUTDOWN_VARIABLES = "%{SHUTDOWN_VARIABLES}";
     static final String PLATFORM_NAME = "%{PLATFORM_NAME}";
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
     static final String DESTROY_SCRIPT = "%{DESTROY_SCRIPT}";
@@ -102,18 +103,20 @@ public class JenkinsJobTemplateBuilder {
     private final NamesProvider job;
 
     public static class Variable {
+        final boolean exported;
         final boolean default_prefix;
         final boolean commented_out;
         final String comment;
         final String key;
         final String value;
 
-        public Variable(boolean default_prefix, boolean commented_out, String comment, String key, String value) {
+        public Variable(boolean default_prefix, boolean commented_out, String comment, String key, String value, boolean exported) {
             this.default_prefix = default_prefix;
             this.commented_out = commented_out;
             this.comment = comment;
             this.key = key;
             this.value = value;
+            this.exported = exported;
         }
 
         public Variable(String key, String value) {
@@ -122,6 +125,7 @@ public class JenkinsJobTemplateBuilder {
             this.comment = null;
             this.key = key;
             this.value = value;
+            this.exported = true;
         }
 
         public static List<Variable> createDefault(Map<TaskVariant, TaskVariantValue> map) {
@@ -133,21 +137,38 @@ public class JenkinsJobTemplateBuilder {
             return l;
         }
 
-        @Override
-        public String toString() {
+        public String toString(String terminal) {
             String name = key;
             if (default_prefix) {
                 name = OTOOL_BASH_VAR_PREFIX + key;
             }
-            String line = EXPORT + ' ' + name + '=' + value;
+            String line = getExported() + name + '=' + value;
             if (commented_out) {
                 line = "#" + line;
             }
             if (comment != null) {
                 line = line + " # " + comment;
             }
-            return line + XML_NEW_LINE;
+            return line + terminal;
 
+        }
+
+        private String getExported() {
+            if (exported) {
+                return EXPORT + ' ';
+            } else {
+                return
+                        "";
+            }
+        }
+
+        public static Variable find(List<Variable> src, String key) {
+            for (Variable var : src) {
+                if (var.key.equals(key)) {
+                    return var;
+                }
+            }
+            return null;
         }
     }
 
@@ -304,7 +325,10 @@ public class JenkinsJobTemplateBuilder {
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
                 .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables));
         if (!vmName.equals(LOCAL)) {
-            return buildVmPostBuildTaskTemplate(provider, platform.getVmName(), scriptsRoot, exportedVariables);
+            List<Variable> shutdownVars = new ArrayList<>(1);
+            Variable shortenedNameForShutDown = new Variable(true, false, null, JOB_NAME_SHORTENED, Variable.find(exportedVariables, JOB_NAME_SHORTENED).value, false);
+            shutdownVars.add(shortenedNameForShutDown);
+            return buildVmPostBuildTaskTemplate(provider, platform.getVmName(), scriptsRoot, shutdownVars);
         }
         template = template.replace(VM_POST_BUILD_TASK, "");
         return this;
@@ -314,12 +338,12 @@ public class JenkinsJobTemplateBuilder {
             String platformProvider,
             String platformVMName,
             File scriptsRoot,
-            List<Variable> exportedVariables
+            List<Variable> shutdownVariables
     ) throws IOException {
         template = template
                 .replace(VM_POST_BUILD_TASK, loadTemplate(JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE))
                 .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, platformProvider, DESTROY_SCRIPT_NAME).toString())
-                .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables))
+                .replace(SHUTDOWN_VARIABLES, getExportedVariablesString(shutdownVariables, ""))
                 .replace(PLATFORM_NAME, platformVMName);
         return this;
     }
@@ -330,9 +354,13 @@ public class JenkinsJobTemplateBuilder {
     }
 
     private String getExportedVariablesString(final List<Variable> exportedVariables) {
+        return getExportedVariablesString(exportedVariables, XML_NEW_LINE);
+    }
+
+    private String getExportedVariablesString(final List<Variable> exportedVariables, String terminal) {
         return exportedVariables
                 .stream()
-                .map(entry -> entry.toString())
+                .map(entry -> entry.toString(terminal))
                 .sorted()
                 .collect(Collectors.joining());
     }

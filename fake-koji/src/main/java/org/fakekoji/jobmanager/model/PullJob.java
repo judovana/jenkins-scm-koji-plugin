@@ -52,7 +52,7 @@ public class PullJob extends Job {
             add(new JenkinsJobTemplateBuilder.Variable(PACKAGE_NAME_VAR, product.getPackageName()));
             add(new JenkinsJobTemplateBuilder.Variable(PROJECT_NAME_VAR, projectName));
             add(new JenkinsJobTemplateBuilder.Variable(PROJECT_PATH_VAR, Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString()));
-            add(new JenkinsJobTemplateBuilder.Variable(false, true, "any negative is enforcing pull even without changes detected", NO_CHANGE_RETURN_VAR, "-1"));
+            add(new JenkinsJobTemplateBuilder.Variable(false, true, "any negative is enforcing pull even without changes detected", NO_CHANGE_RETURN_VAR, "-1", true));
         }};
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(PULL_JOB_TEMPLATE), this)
                 .buildPullScriptTemplate(exportedVariables, scriptsRoot)

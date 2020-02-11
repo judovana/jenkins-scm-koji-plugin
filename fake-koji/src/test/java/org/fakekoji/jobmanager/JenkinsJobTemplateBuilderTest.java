@@ -221,7 +221,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "            </logTexts>\n" +
                 "            <EscalateStatus>true</EscalateStatus>\n" +
                 "            <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "            <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName() + "&#13;</script>\n" +
+                "            <script>#!/bin/bash&#13; bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName() + "&#13;</script>\n" +
                 "        </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "    </tasks>\n" +
                 "</hudson.plugins.postbuildtask.PostbuildTask>\n";
@@ -323,7 +323,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=build-jdk8-projectName-f29.x86_64.vagrant-release-hotspot bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName()
                 + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
@@ -622,7 +622,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-9bb32cbf3d9ddcf019 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                 + "&#13;</script>\n" + "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
                 "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
@@ -734,7 +734,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=jtreg-projectName-rh-f29.x86_64.vagrant-sw-f380418e5947e259 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                 + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
@@ -847,7 +847,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-f29.x86_64.vagrant-sw-9de1bbc6a90e38e7e8 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                 + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
@@ -1045,7 +1045,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "                    </logTexts>\n" +
                         "                    <EscalateStatus>true</EscalateStatus>\n" +
                         "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                        "                    <script>#!/bin/bash&#13;bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                        "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-testProject-f29.x86_64.vagrant-sw-df8fc73f5f40161585c3e bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                         + "&#13;</script>\n" +
                         "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                         "            </tasks>\n" +
@@ -1063,9 +1063,11 @@ public class JenkinsJobTemplateBuilderTest {
     @Test
     public void testVariable() throws IOException {
         JenkinsJobTemplateBuilder.Variable v1 = new JenkinsJobTemplateBuilder.Variable("myVar", "myVal");
-        Assert.assertEquals("export OTOOL_myVar=myVal" + XML_NEW_LINE, v1.toString());
-        v1 = new JenkinsJobTemplateBuilder.Variable(false, true, "comment", "myVar", "myVal");
-        Assert.assertEquals("#export myVar=myVal # comment" + XML_NEW_LINE, v1.toString());
+        Assert.assertEquals("export OTOOL_myVar=myVal" + XML_NEW_LINE, v1.toString(XML_NEW_LINE));
+        v1 = new JenkinsJobTemplateBuilder.Variable(false, true, "comment", "myVar", "myVal", true);
+        Assert.assertEquals("#export myVar=myVal # comment" + XML_NEW_LINE, v1.toString(XML_NEW_LINE));
+        v1 = new JenkinsJobTemplateBuilder.Variable(false, true, "comment", "myVar", "myVal", false);
+        Assert.assertEquals("#myVar=myVal # comment" + XML_NEW_LINE, v1.toString(XML_NEW_LINE));
 
     }
 }
