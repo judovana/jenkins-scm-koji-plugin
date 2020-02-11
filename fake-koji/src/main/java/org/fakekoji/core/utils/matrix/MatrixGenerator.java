@@ -203,15 +203,19 @@ public class MatrixGenerator {
     }
 
     static String fill(String s, int l) {
+        return fill(s, l, " ");
+    }
+
+    static String fill(String s, int l, String by) {
         StringBuilder sb = new StringBuilder(s);
         while (sb.length() < l) {
-            sb.append(" ");
+            sb.append(by);
         }
         return sb.toString();
     }
 
 
-    public String printMatrix(int orientation) throws StorageException, ManagementException {
+    public String printMatrix(int orientation, boolean dropRows, boolean dropColumns) throws StorageException, ManagementException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final String utf8 = StandardCharsets.UTF_8.name();
         List<BuildSpec> bs = getBuilds();
@@ -219,11 +223,11 @@ public class MatrixGenerator {
         try {
             try (PrintStream ps = new PrintStream(baos, true, utf8)) {
                 if (orientation <= 0) {
-                    int t1 = printMatrix(ps, bs, ts);
+                    int t1 = printMatrix(ps, bs, ts, dropRows, dropColumns);
                     ps.println(t1 + "/" + (bs.size() * ts.size()));
                 }
                 if (orientation >= 0) {
-                    int t2 = printMatrix(ps, ts, bs);
+                    int t2 = printMatrix(ps, ts, bs, dropRows, dropColumns);
                     ps.println(t2 + "/" + (bs.size() * ts.size()));
                 }
             }
@@ -233,32 +237,103 @@ public class MatrixGenerator {
         }
     }
 
-    int printMatrix(PrintStream p, Iterable<? extends Spec> rows, Iterable<? extends Spec> columns) throws ManagementException, StorageException {
+    int printMatrix(PrintStream p, Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns) throws ManagementException, StorageException {
         int lrow = getLongest(rows) + 1;
         int lcol = getLongest(columns) + 1;
         int total = 0;
 
-        System.out.print(fill("", lrow));
-        for (Spec t : columns) {
-            p.print(fill(t.toString(), lcol));
-        }
-        p.println();
-        for (Spec b : rows) {
-            p.print(fill(b.toString(), lrow));
-            for (Spec t : columns) {
-                List<Leaf> matched = countMatchingProjects(b, t);
-                p.print(fill("" + matched.size(), lcol));
-                total += matched.size();
+        List<List<List<Leaf>>> matrix = generateMatrix(rows, columns, dropRows, dropColumns);
+        for (int i = 0; i < matrix.size(); i++) {
+            List<List<Leaf>> row = matrix.get(i);
+            for (int j = 0; j < row.size(); j++) {
+                List<Leaf> cel = row.get(j);
+                String s;
+                if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
+                    s = cel.get(0).toString();
+                } else {
+                    s = "" + cel.size();
+                    total += cel.size();
+                }
+                int align = lcol;
+                if (j == 0 || j == row.size() - 1) {
+                    align = lrow;
+                }
+                if (s.isEmpty()) {
+                    //filing by soething, as leading spaces can be trimmed on the fly
+                    p.print(fill(s, align - 1, "-"));
+                    p.print(" ");
+                } else {
+                    p.print(fill(s, align, " "));
+                }
             }
             p.println();
-
         }
-        p.print(fill("", lrow));
-        for (Spec t : columns) {
-            p.print(fill(t.toString(), lcol));
-        }
-        p.println();
         return total;
+    }
+
+    private List<List<List<Leaf>>> generateMatrix(Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns)
+            throws ManagementException, StorageException {
+        //last list is content of single cel
+        List<List<List<Leaf>>> listOfRows = new ArrayList<>(rows.size() + 2/*rows headers are additional first and last column*/);
+
+        List<List<Leaf>> initialRow = new ArrayList<>(columns.size() + 2);
+        initialRow.add(Arrays.asList(new LeafTitle("")));//initial empty intersection, upper left corner
+        for (Spec t : columns) {
+            initialRow.add(Arrays.asList(new LeafTitle(t.toString())));
+        }
+        initialRow.add(initialRow.get(0));//last empty intersection, upper right corner, reusing
+        listOfRows.add(initialRow);
+        for (Spec b : rows) {
+            List<List<Leaf>> row = new ArrayList<>(columns.size() + 2);
+            row.add(Arrays.asList(new LeafTitle(b.toString())));
+            for (Spec t : columns) {
+                List<Leaf> matched = countMatchingProjects(b, t);
+                row.add(matched);
+            }
+            row.add(row.get(0)); //again ending by rowtitle, why not reuse
+            listOfRows.add(row);
+        }
+        listOfRows.add(new ArrayList<>(initialRow)); //and last row are again only titles, not reusing, because of column delete
+
+        if (dropRows) {
+            //not dropping first and last with headers
+            for (int i = 1; i < listOfRows.size() - 1; i++) {
+                List<List<Leaf>> row = listOfRows.get(i);
+                int total = 0;
+                //same skip here, thus skipping the instance of checks
+                for (int j = 1; j < row.size() - 1; j++) {
+                    total = total + row.get(j).size();
+                }
+                if (total == 0) {
+                    listOfRows.remove(i);
+                    i--;
+                }
+            }
+        }
+
+        if (dropColumns) {
+            //not dropping first and last with headers
+            //crawling columns
+            for (int j = 1; j < listOfRows.get(0).size() - 1; j++) {
+                int total = 0;
+                //same skip here, thus skipping the instance of checks
+                //crawling rows
+                for (int i = 1; i < listOfRows.size() - 1; i++) {
+                    total = total + listOfRows.get(i).get(j).size();
+                }
+                if (total == 0) {
+                    deleteClumn(listOfRows, j);
+                    j--;
+                }
+            }
+        }
+        return listOfRows;
+    }
+
+    private static void deleteClumn(List<List<List<Leaf>>> listOfRows, int j) {
+        for (List<List<Leaf>> row : listOfRows) {
+            row.remove(j);
+        }
     }
 
     private List<Leaf> countMatchingProjects(Spec b, Spec t) throws StorageException, ManagementException {
@@ -398,6 +473,25 @@ public class MatrixGenerator {
 
         public Leaf(String fullPath) {
             this.fullPath = fullPath;
+        }
+
+        @Override
+        public String toString() {
+            return fullPath;
+        }
+    }
+
+    private static class LeafTitle extends Leaf {
+        final String simpleTitle;
+
+        LeafTitle(String title) {
+            super(null);
+            simpleTitle = title;
+        }
+
+        @Override
+        public String toString() {
+            return simpleTitle;
         }
     }
 }

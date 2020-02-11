@@ -76,7 +76,8 @@ public class OToolService {
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
                 + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
-                + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=true bos=true barch=true bprovider=false bproject=true bjdk=true bvars=true\n";
+                + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=true bos=true barch=true bprovider=false bproject=true bjdk=true bvars=true\n"
+                + "  dropRows=true dropColumns=true \n";
     }
 
     public OToolService(AccessibleSettings settings) {
@@ -144,6 +145,8 @@ public class OToolService {
                     boolean bproject = notNullBoolean(context, "bproject", true);
                     boolean bjdk = notNullBoolean(context, "bjdk", true);
                     boolean bvars = notNullBoolean(context, "bvars", true);
+                    boolean dropRows = notNullBoolean(context, "dropRows", true);
+                    boolean dropColumns = notNullBoolean(context, "dropColumns", true);
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
                     MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf);
@@ -151,7 +154,7 @@ public class OToolService {
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
-                    context.status(200).result(m.printMatrix(orieantaion));
+                    context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns));
                 }));
 
             });
