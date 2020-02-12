@@ -111,7 +111,7 @@ public abstract class TaskJob extends Job {
     List<OToolVariable> getExportedVariables() {
         final List<OToolVariable> defaultVariables = Arrays.asList(
                 new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
-                new OToolVariable(OJDK_VAR, 'o' + jdkVersion.getId()),
+                new OToolVariable(OJDK_VAR, jdkVersion.getId()),
                 new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
                 new OToolVariable(PROJECT_NAME_VAR, projectName)
         );
