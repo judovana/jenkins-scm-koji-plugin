@@ -10,6 +10,13 @@ interface VariableFormPros {
 }
 
 const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
+
+    React.useEffect(() => {
+        if (variable.defaultPrefix === undefined) {
+            variable.defaultPrefix = true;
+        }
+    }, [])
+
     return useObserver(() => {
         const onNameChange = (value: string) => {
             variable.name = value
