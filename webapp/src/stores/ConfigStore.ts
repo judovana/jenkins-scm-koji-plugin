@@ -237,8 +237,8 @@ export class ConfigStore {
         return Object.values(this._configGroups["taskVariants"]) as TaskVariant[]
     }
 
-    getTaskVariant(id: string): TaskVariant | undefined {
-        return this._configGroups["taskVariants"][id] as TaskVariant | undefined
+    get taskVariantsMap(): {[id: string] : TaskVariant} {
+        return this._configGroups["taskVariants"] as {[id: string] : TaskVariant}
     }
 
     get tasks(): Task[] {

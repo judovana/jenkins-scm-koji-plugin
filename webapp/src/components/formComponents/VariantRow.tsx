@@ -25,8 +25,7 @@ const VariantRow: React.FC<VariantRowProps> = props => {
     return useObserver(() => {
 
         const { config, treeID, onDelete, projectType, type } = props
-
-        const taskVariants = configStore!.taskVariants.filter(variant => variant.type === type)
+        const { taskVariantsMap} = configStore
 
         const onPlatformDelete = (id: string): void => {
             delete config.platforms![id]
@@ -37,16 +36,22 @@ const VariantRow: React.FC<VariantRowProps> = props => {
 
         const cell = (
             <div style={{ display: "flex", flexDirection: "row" }}>
-                {
-                    taskVariants.map(taskVariant =>
+                {Object.entries(config.map).map(([id, value]) => {
+                    const taskVariant = taskVariantsMap[id]
+                    return (
                         <Select
-                            options={Object.values(taskVariant.variants).map(variant => variant.id)}
-                            label={taskVariant.id}
-                            value={config.map[taskVariant.id]}
-                            onChange={(value: string) => { config.map[taskVariant.id] = value }}
-                            key={taskVariant.id} />
+                            options={Object.values(taskVariant.variants).map(
+                                variant => variant.id
+                            )}
+                            label={id}
+                            value={value || taskVariant.defaultValue}
+                            onChange={(value: string) => {
+                                config.map[id] = value
+                            }}
+                            key={id}
+                        />
                     )
-                }
+                })}
                 {
                     unselectedPlatforms && <AddComponent
                         label={`Add test platform`}

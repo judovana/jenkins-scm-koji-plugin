@@ -9,6 +9,7 @@ import useStores from "../../hooks/useStores"
 import TaskRow from "./TaskRow"
 import VariantRow from "./VariantRow"
 import Select from "./Select"
+import createTaskVariantsMap from "../../utils/createVariantMap";
 
 type PlatformRowProps = {
     config: PlatformConfig
@@ -56,21 +57,16 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
 
         const onVariantAdd = () => {
             config.variants!.splice(0, 0, {
-                map: configStore.taskVariants
-                    .filter(taskVariant => taskVariant.type === type)
-                    .reduce((map, taskVariant) => {
-                        map[taskVariant.id] = taskVariant.defaultValue
-                        return map
-                    }, {} as { [key: string]: string }),
+                map: createTaskVariantsMap(
+                    configStore.taskVariants,
+                    taskVariant => taskVariant.type === type && taskVariant.supportsSubpackages
+                ),
                 platforms: (type === "BUILD" && {}) || undefined
             })
         }
 
         const unselectedTasks = taskConfigs && configStore.tasks
             .filter(task => task.type === type && !taskConfigs[task.id])
-
-        const unselectedPlatforms = variantConfigs && configStore.taskVariants
-            .filter(variant => variant.type === type)
 
         const cell: JSX.Element = (
             <span>
@@ -84,9 +80,9 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                             options={platform.providers.map(provider => provider.id)}
                             value={config.provider}/>
                         <AddComponent
-                            label={`Add ${type.toLowerCase()} ${(taskConfigs && "task") || (variantConfigs && "variant")}`}
-                            items={unselectedTasks || unselectedPlatforms || []}
-                            onAdd={(taskConfigs && onTaskAdd) || (variantConfigs && onVariantAdd) || (() => null)} />
+                            label={`Add ${type.toLowerCase()} task`}
+                            items={unselectedTasks || []}
+                            onAdd={onTaskAdd} />
                     </React.Fragment>)
                 ) || (
                         variantConfigs && (<Tooltip title={`Add ${type.toLowerCase()} variant`}>

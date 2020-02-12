@@ -179,21 +179,33 @@ public class DataGenerator {
     public static TaskVariantValue getReleaseVariant() {
         return new TaskVariantValue(
                 RELEASE,
-                "Release"
+                "Release",
+                Arrays.asList(
+                        "*fastdebug*", "*slowdebug*"
+                ),
+                Arrays.asList("*release*")
         );
     }
 
     public static TaskVariantValue getFastdebugVariant() {
         return new TaskVariantValue(
                 FASTDEBUG,
-                "Fastdebug"
+                "Fastdebug",
+                Arrays.asList(
+                        "*release*", "*slowdebug*"
+                ),
+                Arrays.asList("*fastdebug*")
         );
     }
 
     public static TaskVariantValue getSlowdebugVariant() {
         return new TaskVariantValue(
                 SLOWDEBUG,
-                "Slowdebug"
+                "Slowdebug",
+                Arrays.asList(
+                        "*fastdebug*", "*release*"
+                ),
+                Arrays.asList("*slowdebug*")
         );
     }
 
@@ -239,7 +251,8 @@ public class DataGenerator {
                             final TaskVariantValue zero = getZeroVariant();
                             put(zero.getId(), zero);
                         }}
-                )
+                ),
+                false
         );
     }
 
@@ -259,7 +272,8 @@ public class DataGenerator {
                             final TaskVariantValue slowdebug = getSlowdebugVariant();
                             put(slowdebug.getId(), slowdebug);
                         }}
-                )
+                ),
+                true
         );
     }
 
@@ -277,7 +291,8 @@ public class DataGenerator {
                             final TaskVariantValue zgc = getZGCVariant();
                             put(zgc.getId(), zgc);
                         }}
-                )
+                ),
+                false
         );
     }
 
@@ -295,7 +310,8 @@ public class DataGenerator {
                             final TaskVariantValue xServer = getXServerVariant();
                             put(xServer.getId(), xServer);
                         }}
-                )
+                ),
+                false
         );
     }
 

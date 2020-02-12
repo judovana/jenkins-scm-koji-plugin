@@ -306,7 +306,8 @@ public class BuildHelper {
                 Task.Type.BUILD,
                 "",
                 0,
-                platforms.stream().collect(Collectors.toMap(id -> id, id -> new TaskVariantValue(id, id)))
+                platforms.stream().collect(Collectors.toMap(id -> id, id -> new TaskVariantValue(id, id))),
+                false
         );
 
         return new BuildHelper(

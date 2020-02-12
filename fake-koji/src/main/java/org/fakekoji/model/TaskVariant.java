@@ -11,6 +11,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
     private final String defaultValue;
     private final int order;
     private final Map<String, TaskVariantValue> variants;
+    private final boolean supportsSubpackages;
 
     public TaskVariant() {
         id = null;
@@ -19,6 +20,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
         defaultValue = null;
         order = -1;
         variants = null;
+        supportsSubpackages = false;
     }
 
     public TaskVariant(
@@ -27,7 +29,8 @@ public class TaskVariant implements Comparable<TaskVariant> {
             Task.Type type,
             String defaultValue,
             int order,
-            Map<String, TaskVariantValue> variants
+            Map<String, TaskVariantValue> variants,
+            boolean supportsSubpackageSystem
     ) {
         this.id = id;
         this.label = label;
@@ -35,6 +38,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
         this.defaultValue = defaultValue;
         this.order = order;
         this.variants = variants;
+        this.supportsSubpackages = supportsSubpackageSystem;
     }
 
     public String getId() {
@@ -61,6 +65,10 @@ public class TaskVariant implements Comparable<TaskVariant> {
         return variants;
     }
 
+    public boolean isSupportsSubpackages() {
+        return supportsSubpackages;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -71,7 +79,8 @@ public class TaskVariant implements Comparable<TaskVariant> {
                 Objects.equals(label, category.label) &&
                 type == category.type &&
                 Objects.equals(defaultValue, category.defaultValue) &&
-                Objects.equals(variants, category.variants);
+                Objects.equals(variants, category.variants) &&
+                supportsSubpackages == category.supportsSubpackages;
     }
 
     @Override
@@ -88,6 +97,7 @@ public class TaskVariant implements Comparable<TaskVariant> {
                 ", defaultValud=" + defaultValue +
                 ", order=" + order +
                 ", variants=" + variants +
+                ", supportsSubpackages=" + supportsSubpackages +
                 '}';
     }
 
