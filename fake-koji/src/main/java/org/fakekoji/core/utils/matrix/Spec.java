@@ -67,11 +67,16 @@ abstract class Spec {
     }
 
     private boolean matchVarsImpl(Collection<String> vars) {
-        if (vars.size() != variants.size()) {
-            return false;
+        //we are ok with subset, so iterating throughs horter list and checking its presence in longer one
+        //reason is, test only jobs now have subset of variants only
+        Collection<String> varsLess = vars;
+        Collection<String> varsMore = variants;
+        if (vars.size() > varsMore.size()) {
+            varsLess = variants;
+            varsMore = vars;
         }
-        for (String v : vars) {
-            if (!variants.contains(v)) {
+        for (String v : varsLess) {
+            if (!varsMore.contains(v)) {
                 return false;
             }
         }
