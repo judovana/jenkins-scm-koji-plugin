@@ -12,7 +12,6 @@ import org.fakekoji.model.TaskVariantValue;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -148,17 +147,41 @@ public class TestJob extends TaskJob {
 
     private String generateKojiTemplate() throws IOException {
 
+        final List<String> subpackageBlacklist = Stream.of(
+                projectSubpackageBlacklist,
+                getTask().getRpmLimitation().getBlacklist(),
+                getBuildVariants()
+                        .values()
+                        .stream()
+                        .map(TaskVariantValue::getSubpackageBlacklist)
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList())
+        )
+                .flatMap(List::stream)
+                .distinct()
+                .collect(Collectors.toList());
+
+        final List<String> subpackageWhitelist = Stream.of(
+                projectSubpackageWhitelist,
+                getTask().getRpmLimitation().getWhitelist(),
+                getBuildVariants()
+                        .values()
+                        .stream()
+                        .map(TaskVariantValue::getSubpackageWhitelist)
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList())
+        )
+                .flatMap(List::stream)
+                .distinct()
+                .collect(Collectors.toList());
+
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(loadTemplate(TASK_JOB_TEMPLATE), this)
                 .buildBuildProvidersTemplate(getBuildProviders())
                 .buildKojiXmlRpcApiTemplate(
                         getProduct().getPackageName(),
                         getBuildPlatform(),
-                        Stream.of(projectSubpackageBlacklist, getTask().getRpmLimitation().getBlacklist())
-                                .flatMap(Collection::stream)
-                                .collect(Collectors.toList()),
-                        Stream.of(projectSubpackageWhitelist, getTask().getRpmLimitation().getWhitelist())
-                                .flatMap(Collection::stream)
-                                .collect(Collectors.toList())
+                        subpackageBlacklist,
+                        subpackageWhitelist
                 )
                 .buildScriptTemplate(
                         getTask(),

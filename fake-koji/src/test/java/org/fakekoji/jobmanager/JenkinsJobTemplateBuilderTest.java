@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1061,7 +1062,12 @@ public class JenkinsJobTemplateBuilderTest {
         final TaskVariant garbageCollector = DataGenerator.getGarbageCollectorCategory();
         final TaskVariant displayProtocol = DataGenerator.getDisplayProtocolCategory();
 
-        final Map<TaskVariant, TaskVariantValue> buildVariants = Collections.emptyMap();
+        final TaskVariant debugMode = DataGenerator.getDebugModeVariant();
+        final TaskVariantValue release = DataGenerator.getReleaseVariant();
+
+        final Map<TaskVariant, TaskVariantValue> buildVariants = new HashMap<TaskVariant, TaskVariantValue>() {{
+            put(debugMode, release);
+        }};
         final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
 
         final List<String> blacklist = Arrays.asList(
@@ -1091,9 +1097,11 @@ public class JenkinsJobTemplateBuilderTest {
         final List<String> expectedBlacklist = new ArrayList<>();
         expectedBlacklist.addAll(blacklist);
         expectedBlacklist.addAll(testTask.getRpmLimitation().getBlacklist());
+        expectedBlacklist.addAll(release.getSubpackageBlacklist());
         final List<String> expectedWhitelist = new ArrayList<>();
         expectedWhitelist.addAll(whitelist);
         expectedWhitelist.addAll(testTask.getRpmLimitation().getWhitelist());
+        expectedWhitelist.addAll(release.getSubpackageWhitelist());
 
         final String expectedTemplate =
                 "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -1143,6 +1151,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                         "export OTOOL_PROJECT_NAME=" + TEST_PROJECT_NAME + XML_NEW_LINE +
                         "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
+                        "export OTOOL_debugMode=" + release.getId() + XML_NEW_LINE +
                         "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
                         "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
                         "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
@@ -1161,7 +1170,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "                    </logTexts>\n" +
                         "                    <EscalateStatus>true</EscalateStatus>\n" +
                         "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                        "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-testProject-f29.x86_64.vagrant-sw-df8fc73f5f40161585c3e bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                        "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + " bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                         + "&#13;</script>\n" +
                         "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                         "            </tasks>\n" +

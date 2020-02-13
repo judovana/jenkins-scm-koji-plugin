@@ -117,6 +117,7 @@ export interface JDKVersion extends Item {
 
 export interface TaskVariant extends Item {
     defaultValue: string
+    supportsSubpackages: boolean
     type: TaskType;
     variants: Item[];
 }

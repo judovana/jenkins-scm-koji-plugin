@@ -52,7 +52,7 @@ public class BuildJob extends TaskJob {
         final Map<TaskVariant, TaskVariantValue> variants = new HashMap<TaskVariant, TaskVariantValue>() {{
             putAll(getVariants());
             put(
-                    new TaskVariant("buildPlatform", "", Task.Type.BUILD, "", 0, Collections.emptyMap()),
+                    new TaskVariant("buildPlatform", "", Task.Type.BUILD, "", 0, Collections.emptyMap(), false),
                     new TaskVariantValue(getPlatform().getId(), "")
             );
         }};

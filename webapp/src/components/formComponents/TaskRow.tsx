@@ -7,6 +7,7 @@ import { TaskConfig, TaskType, ProjectType } from "../../stores/model"
 
 import useStores from "../../hooks/useStores"
 import VariantRow from "./VariantRow"
+import createTaskVariantsMap from "../../utils/createVariantMap";
 
 type TaskRowProps = {
     id: string
@@ -45,12 +46,10 @@ const TaskRow: React.FC<TaskRowProps> = props => {
 
         const onAdd = () => {
             taskVariants.splice(0, 0, {
-                map: configStore.taskVariants
-                    .filter(taskVariant => taskVariant.type === type)
-                    .reduce((map, taskVariant) => {
-                        map[taskVariant.id] = taskVariant.defaultValue
-                        return map
-                    }, {} as { [key: string]: string }),
+                map: createTaskVariantsMap(
+                    configStore.taskVariants,
+                    taskVariant => taskVariant.type === type
+                ),
                 platforms: (type === "BUILD" && {}) || undefined
             })
         }
