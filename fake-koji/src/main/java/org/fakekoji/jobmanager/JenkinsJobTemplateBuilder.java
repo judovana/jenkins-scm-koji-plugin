@@ -99,6 +99,8 @@ public class JenkinsJobTemplateBuilder {
     //this name is used to creation of VM name, which vagrant enforces to 60 chars
     static final String JOB_NAME_SHORTENED = "JOB_NAME_SHORTENED";
     static final String OS_VAR = "OS";
+    static final String OS_NAME_VAR = "OS_NAME";
+    static final String OS_VERSION_VAR = "OS_VERSION";
 
     private String template;
     private final NamesProvider job;
@@ -251,6 +253,8 @@ public class JenkinsJobTemplateBuilder {
             }
         }
         exportedVariables.add(new OToolVariable(OS_VAR, platform.toOsVar()));
+        exportedVariables.add(new OToolVariable(OS_NAME_VAR, platform.getOs()));
+        exportedVariables.add(new OToolVariable(OS_VERSION_VAR, platform.getVersionNumber()));
         exportedVariables.add(new OToolVariable(ARCH_VAR, platform.getArchitecture()));
         template = template
                 .replace(NODES, String.join(" ", nodes))

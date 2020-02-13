@@ -100,6 +100,7 @@ export interface PlatformProvider extends Item {
 export interface Platform extends Item {
     os: string
     version: string
+    versionNumber: string
     architecture: string
     kojiArch?:string
     providers: PlatformProvider[]

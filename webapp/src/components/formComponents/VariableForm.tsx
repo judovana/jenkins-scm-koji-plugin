@@ -15,7 +15,7 @@ const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
         if (variable.defaultPrefix === undefined) {
             variable.defaultPrefix = true;
         }
-    }, [])
+    }, [variable.defaultPrefix])
 
     return useObserver(() => {
         const onNameChange = (value: string) => {

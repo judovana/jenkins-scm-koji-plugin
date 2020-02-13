@@ -93,8 +93,8 @@ public class JobTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTaskRequiringSourcesAndBinaries();
-        final Platform buildPlatform = new Platform("pb1.x", "pb", "1", "x", null, Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null, null);
-        final Platform testPlatform = new Platform("pr.1", "pr", "1", "x", null, Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null, null);
+        final Platform buildPlatform = new Platform("pb1.x", "pb", "1", "","x", null, Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null, null);
+        final Platform testPlatform = new Platform("pr.1", "pr", "1", "", "x", null, Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null, null);
 
 
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();
@@ -207,7 +207,7 @@ public class JobTest {
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getBuildTask();
-        final Platform buildPlatform = new Platform("pb.1", "pb", "1", "x", null, Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null, null);
+        final Platform buildPlatform = new Platform("pb.1", "pb", "1","", "x", null, Arrays.asList(new Platform.Provider("vg", null, null)), "vm", null, null);
 
 
         final Map<TaskVariant, TaskVariantValue> buildVariants = DataGenerator.getBuildVariants();

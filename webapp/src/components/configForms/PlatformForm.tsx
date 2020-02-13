@@ -25,6 +25,7 @@ const PlatformForm: React.FC<Props> = props => {
         providers: [],
         tags: [],
         version: "",
+        versionNumber: "",
         vmName: "",
         variables: []
     }))
@@ -44,6 +45,7 @@ const PlatformForm: React.FC<Props> = props => {
         platform.providers = _platform.providers || []
         platform.tags = _platform.tags || []
         platform.version = _platform.version || ""
+        platform.versionNumber = _platform.versionNumber || ""
         platform.vmName = _platform.vmName || ""
         platform.variables = _platform.variables || []
     })
@@ -54,6 +56,10 @@ const PlatformForm: React.FC<Props> = props => {
 
     const onVersionChange = (value: string) => {
         platform!.version = value
+    }
+
+    const onVersionNumberChange = (value: string) => {
+        platform!.versionNumber = value
     }
 
     const onArchitectureChange = (value: string) => {
@@ -85,6 +91,7 @@ const PlatformForm: React.FC<Props> = props => {
             os,
             tags,
             version,
+            versionNumber,
             vmName,
             variables
         } = platform
@@ -101,6 +108,10 @@ const PlatformForm: React.FC<Props> = props => {
                     label={"version"}
                     onChange={onVersionChange}
                     value={version} />
+                <TextInput
+                    label={"versionNumber"}
+                    onChange={onVersionNumberChange}
+                    value={versionNumber} />
                 <TextInput
                     label={"architecture"}
                     onChange={onArchitectureChange}
