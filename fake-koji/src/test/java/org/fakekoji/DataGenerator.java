@@ -181,7 +181,7 @@ public class DataGenerator {
                 RELEASE,
                 "Release",
                 Arrays.asList(
-                        "*fastdebug*", "*slowdebug*"
+                        ".*fastdebug.*", ".*slowdebug.*"
                 ),
                 Arrays.asList("*release*")
         );
@@ -192,9 +192,9 @@ public class DataGenerator {
                 FASTDEBUG,
                 "Fastdebug",
                 Arrays.asList(
-                        "*release*", "*slowdebug*"
+                        ".*release.*", ".*slowdebug.*"
                 ),
-                Arrays.asList("*fastdebug*")
+                Arrays.asList(".*fastdebug*")
         );
     }
 
@@ -203,9 +203,9 @@ public class DataGenerator {
                 SLOWDEBUG,
                 "Slowdebug",
                 Arrays.asList(
-                        "*fastdebug*", "*release*"
+                        ".*fastdebug*", ".*release*"
                 ),
-                Arrays.asList("*slowdebug*")
+                Arrays.asList(".*slowdebug*")
         );
     }
 
@@ -641,6 +641,12 @@ public class DataGenerator {
         return new HashSet<>(Arrays.asList(
                 getJDKProject(),
                 getJDKProjectU()
+        ));
+    }
+
+    public static Set<JDKTestProject> getJDKTestProjects() {
+        return new HashSet<>(Arrays.asList(
+                getJDKTestProject()
         ));
     }
 
@@ -1152,6 +1158,10 @@ public class DataGenerator {
 
         for (final JDKProject jdkProject : getJDKProjects()) {
             configManager.getJdkProjectStorage().store(jdkProject.getId(), jdkProject);
+        }
+
+        for (final JDKTestProject jdkTestProject : getJDKTestProjects()) {
+            configManager.getJdkTestProjectStorage().store(jdkTestProject.getId(), jdkTestProject);
         }
 
         final Set<BuildProvider> buildProviderSet = getBuildProviders();
