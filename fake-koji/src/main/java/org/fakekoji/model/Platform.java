@@ -11,6 +11,7 @@ public class Platform implements  Comparable<Platform> {
     private final String id;
     private final String os;
     private final String version;
+    private final String versionNumber;
     private final String architecture;
     private final String kojiArch;
     private final List<Provider> providers;
@@ -23,6 +24,7 @@ public class Platform implements  Comparable<Platform> {
         vmName = null;
         os = null;
         version = null;
+        versionNumber = null;
         architecture = null;
         kojiArch = null;
         providers = null;
@@ -34,6 +36,7 @@ public class Platform implements  Comparable<Platform> {
             String id,
             String os,
             String version,
+            String versionNumber,
             String architecture,
             String kojiArch,
             List<Provider> providers,
@@ -44,6 +47,7 @@ public class Platform implements  Comparable<Platform> {
         this.id = id;
         this.os = os;
         this.version = version;
+        this.versionNumber = versionNumber;
         this.architecture = architecture;
         this.kojiArch = kojiArch;
         this.providers = providers;
@@ -62,6 +66,10 @@ public class Platform implements  Comparable<Platform> {
 
     public String getVersion() {
         return version;
+    }
+
+    public String getVersionNumber() {
+        return versionNumber;
     }
 
     public String getArchitecture() {
@@ -95,6 +103,7 @@ public class Platform implements  Comparable<Platform> {
         Platform platform = (Platform) o;
         return Objects.equals(os, platform.os) &&
                 Objects.equals(version, platform.version) &&
+                Objects.equals(versionNumber, platform.versionNumber) &&
                 Objects.equals(architecture, platform.architecture) &&
                 Objects.equals(providers, platform.providers) &&
                 Objects.equals(vmName, platform.vmName) &&
@@ -104,7 +113,7 @@ public class Platform implements  Comparable<Platform> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(os, version, architecture, vmName, tags, variables);
+        return Objects.hash(os, version,versionNumber, architecture, vmName, tags, variables);
     }
 
     @Override
@@ -112,6 +121,7 @@ public class Platform implements  Comparable<Platform> {
         return "Platform{" +
                 "os='" + os + '\'' +
                 ", version='" + version + '\'' +
+                ", versionNumber='" + versionNumber + '\'' +
                 ", architecture='" + architecture + '\'' +
                 ", providers='" + providers + '\'' +
                 ", vmName='" + vmName + '\'' +
@@ -192,6 +202,7 @@ public class Platform implements  Comparable<Platform> {
                 platform.os + platform.version + '.' + platform.getArchitecture(),
                 platform.os,
                 platform.version,
+                platform.versionNumber,
                 platform.architecture,
                 platform.kojiArch,
                 platform.providers,
