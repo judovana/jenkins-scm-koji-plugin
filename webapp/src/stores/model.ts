@@ -160,6 +160,7 @@ export interface Variable {
     comment?: string
     commentedOut: boolean
     defaultPrefix: boolean
+    exported: boolean
     name: string
     value: string
 }

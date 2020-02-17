@@ -15,7 +15,10 @@ const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
         if (variable.defaultPrefix === undefined) {
             variable.defaultPrefix = true;
         }
-    }, [variable.defaultPrefix])
+        if (variable.exported === undefined) {
+            variable.exported = true;
+        }
+    }, [variable.defaultPrefix, variable.exported])
 
     return useObserver(() => {
         const onNameChange = (value: string) => {
@@ -38,7 +41,11 @@ const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
             variable.defaultPrefix = value
         }
 
-        const { comment, commentedOut, defaultPrefix, name, value } = variable
+        const onExportedChagne = (value: boolean) => {
+            variable.exported = value
+        }
+
+        const { comment, commentedOut, defaultPrefix, name, value, exported } = variable
         return (
             <FormControl>
                 <FormGroup>
@@ -66,6 +73,11 @@ const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
                         label="default prefix"
                         onChange={onDefaultPrefixChagne}
                         value={defaultPrefix}
+                    />
+                      <Checkbox
+                        label="exported"
+                        onChange={onExportedChagne}
+                        value={exported}
                     />
                 </FormGroup>
             </FormControl>
