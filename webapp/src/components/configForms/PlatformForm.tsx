@@ -1,90 +1,48 @@
 import React from "react"
-import { useLocalStore, useObserver } from "mobx-react"
+import { useObserver } from "mobx-react"
 
-import { Platform, Item } from "../../stores/model"
+import { Platform } from "../../stores/model"
 import TextInput from "../formComponents/TextInput"
-import { Button } from "@material-ui/core"
-import useStores from "../../hooks/useStores"
 import FormList from "../formComponents/FormList"
 import VariableForm from "../formComponents/VariableForm"
 
 interface Props {
-    platformID?: string
-    onSubmit: (item: Item) => void
+    config: Platform
 }
 
 const PlatformForm: React.FC<Props> = props => {
-    const { configStore } = useStores()
-
-    const { platformID } = props
-
-    const platform = useLocalStore<Platform>(() => ({
-        architecture: "",
-        id: "",
-        os: "",
-        providers: [],
-        tags: [],
-        version: "",
-        versionNumber: "",
-        vmName: "",
-        variables: []
-    }))
-
-    React.useEffect(() => {
-        if (platformID === undefined || platformID === platform.id) {
-            return
-        }
-        const _platform = configStore.getPlatform(platformID)
-        if (!_platform) {
-            return
-        }
-        platform.architecture = _platform.architecture || ""
-        platform.id = _platform.id || ""
-        platform.os = _platform.os || ""
-        platform.kojiArch = _platform.kojiArch || undefined
-        platform.providers = _platform.providers || []
-        platform.tags = _platform.tags || []
-        platform.version = _platform.version || ""
-        platform.versionNumber = _platform.versionNumber || ""
-        platform.vmName = _platform.vmName || ""
-        platform.variables = _platform.variables || []
-    })
-
-    const onOSChange = (value: string) => {
-        platform!.os = value
-    }
-
-    const onVersionChange = (value: string) => {
-        platform!.version = value
-    }
-
-    const onVersionNumberChange = (value: string) => {
-        platform!.versionNumber = value
-    }
-
-    const onArchitectureChange = (value: string) => {
-        platform!.architecture = value
-    }
-
-    const onKojiArchChange = (value: string) => {
-        platform.kojiArch = value === "" ? undefined : value
-    }
-
-    const onVMNameChange = (value: string) => {
-        platform!.vmName = value
-    }
-
-    const onTagsChange = (value: string) => {
-        platform!.tags = value.split(" ")
-    }
-
-    const onSubmit = () => {
-        const filter = (value: string) => value.trim() !== ""
-        platform.tags = platform.tags.filter(filter)
-        props.onSubmit(platform)
-    }
 
     return useObserver(() => {
+        const { config: platform } = props
+
+        const onOSChange = (value: string) => {
+            platform.os = value
+        }
+
+        const onVersionChange = (value: string) => {
+            platform.version = value
+        }
+
+        const onVersionNumberChange = (value: string) => {
+            platform.versionNumber = value
+        }
+
+        const onArchitectureChange = (value: string) => {
+            platform.architecture = value
+        }
+
+        const onKojiArchChange = (value: string) => {
+            platform.kojiArch = value === "" ? undefined : value
+        }
+
+        const onVMNameChange = (value: string) => {
+            platform.vmName = value
+        }
+
+        const onTagsChange = (value: string) => {
+            platform.tags = value.split(" ")
+        }
+
         const {
             architecture,
             kojiArch,
@@ -100,44 +58,42 @@ const PlatformForm: React.FC<Props> = props => {
 
         return (
             <React.Fragment>
-                <TextInput
-                    label={"os"}
-                    onChange={onOSChange}
-                    value={os} />
+                <TextInput label={"os"} onChange={onOSChange} value={os} />
                 <TextInput
                     label={"version"}
                     onChange={onVersionChange}
-                    value={version} />
+                    value={version}
+                />
                 <TextInput
                     label={"versionNumber"}
                     onChange={onVersionNumberChange}
-                    value={versionNumber} />
+                    value={versionNumber}
+                />
                 <TextInput
                     label={"architecture"}
                     onChange={onArchitectureChange}
-                    value={architecture} />
+                    value={architecture}
+                />
                 <TextInput
                     label={"koji arch"}
                     onChange={onKojiArchChange}
-                    value={kojiArch} />
+                    value={kojiArch}
+                />
                 <TextInput
                     label={"vm name"}
                     onChange={onVMNameChange}
-                    value={vmName} />
+                    value={vmName}
+                />
                 <TextInput
                     label={"tags"}
                     onChange={onTagsChange}
-                    value={tags.join(" ")} />
+                    value={tags.join(" ")}
+                />
                 <FormList
                     data={variables}
                     label="custom variables"
                     renderItem={item => <VariableForm variable={item} />}
                 />
-                <Button
-                    onClick={onSubmit}
-                    variant="contained">
-                    {platformID === undefined ? "Create" : "Update"}
-                </Button>
             </React.Fragment>
         )
     })

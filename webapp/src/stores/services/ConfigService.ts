@@ -22,7 +22,7 @@ class ConfigService {
         }
 
         return new Promise<FetchResult<T>>(resolve => {
-            fetch(`${this.url}/${input}`, init)
+            fetch(`${this.url}/api/${input}`, init)
                 .then(response => {
                     if (response.status === 200) {
                         response.json()

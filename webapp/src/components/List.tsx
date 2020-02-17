@@ -1,41 +1,60 @@
 import React from "react"
 import { useObserver } from "mobx-react"
-import { Item } from "../stores/model"
-import { IconButton, Grid, Paper, Typography, Table, TableRow, TableCell, TableBody, TableHead } from "@material-ui/core"
+import {
+    IconButton,
+    Grid,
+    Paper,
+    Typography,
+    Table,
+    TableRow,
+    TableCell,
+    TableBody,
+    TableHead
+} from "@material-ui/core"
 import { Delete, Add } from "@material-ui/icons"
-import { useHistory } from "react-router-dom"
 import useStores from "../hooks/useStores"
 
 const List: React.FC = () => {
-
-    const history = useHistory()
-
-    const { configStore } = useStores()
-
-    const onCreate = () => {
-        history.push(`/form/${configStore.selectedGroupId}/`)
-    }
-
-    const onDelete = (config: Item) => (event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void => {
-        event.stopPropagation()
-        configStore.deleteConfig(config.id)
-    }
-
-    const onSelect = (config: Item) => (_: React.MouseEvent<HTMLTableRowElement, MouseEvent>): void => {
-        history.push(`/form/${configStore.selectedGroupId}/${config.id}`)
-        configStore.selectConfig(config)
-    }
+    const { configStore, viewStore } = useStores()
 
     return useObserver(() => {
-        const { selectedGroup, selectedGroupId } = configStore
+        const {
+            configGroupMap,
+            deleteConfig,
+            selectedConfigGroupId
+        } = configStore
+        const { goToConfigEditForm, goToConfigNewForm } = viewStore
 
+        if (!selectedConfigGroupId) {
+            return <div>{`Ooops`}</div>
+        }
+
+        const displayedGroup = configGroupMap[selectedConfigGroupId]
+
+        if (!displayedGroup) {
+            return <div>{`Unknown configs: ${selectedConfigGroupId}`}</div>
+        }
         return (
             <React.Fragment>
-                <Grid alignItems="center" container item justify="center" xs={12}>
+                <Grid
+                    alignItems="center"
+                    container
+                    item
+                    justify="center"
+                    xs={12}>
                     <Paper style={{ padding: 20, width: "100%" }}>
-                        <Grid alignItems="center" container direction="row" justify="space-between">
-                            <Typography variant="h4">{selectedGroupId}</Typography>
-                            <IconButton onClick={onCreate}>
+                        <Grid
+                            alignItems="center"
+                            container
+                            direction="row"
+                            justify="space-between">
+                            <Typography variant="h4">
+                                {selectedConfigGroupId}
+                            </Typography>
+                            <IconButton
+                                onClick={() =>
+                                    goToConfigNewForm(selectedConfigGroupId)
+                                }>
                                 <Add />
                             </IconButton>
                         </Grid>
@@ -47,22 +66,32 @@ const List: React.FC = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {
-                                    selectedGroup.map((config, index) =>
+                                {Object.values(displayedGroup.configs).map(
+                                    ({ id }, index) => (
                                         <TableRow
                                             key={index}
-                                            onClick={onSelect(config)}>
-                                            <TableCell>
-                                                {config.id}
-                                            </TableCell>
+                                            onClick={_ =>
+                                                goToConfigEditForm(
+                                                    selectedConfigGroupId,
+                                                    id
+                                                )
+                                            }>
+                                            <TableCell>{id}</TableCell>
                                             <TableCell align="right">
-                                                <IconButton onClick={onDelete(config)}>
+                                                <IconButton
+                                                    onClick={e => {
+                                                        e.stopPropagation()
+                                                        deleteConfig(
+                                                            selectedConfigGroupId,
+                                                            id
+                                                        )
+                                                    }}>
                                                     <Delete />
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>
                                     )
-                                }
+                                )}
                             </TableBody>
                         </Table>
                     </Paper>
