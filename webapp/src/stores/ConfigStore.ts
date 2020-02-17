@@ -1,4 +1,4 @@
-import { observable, runInAction, action } from "mobx";
+import { observable, runInAction, action } from "mobx"
 
 import {
     Platform,
@@ -9,27 +9,28 @@ import {
     Item,
     ConfigState,
     BuildProvider,
-    ConfigGroups,
     JobUpdateResults,
     ConfigGroup,
     JDKTestProject,
-    JDKTestProjectMap
-} from "./model";
-import ConfigService from "./services/ConfigService";
+    JDKTestProjectMap,
+    ConfigMap,
+    ConfigGroupId
+} from "./model"
+import ConfigService from "./services/ConfigService"
+import defaults from "../utils/defaultConfigs"
 
 export class ConfigStore {
+    @observable
+    private _configGroups: ConfigGroup[]
 
     @observable
-    private _configGroups: ConfigGroups
+    private _selectedGroupId: ConfigGroupId = "buildProviders"
 
     @observable
-    private _selectedGroupId: string | undefined = "tasks";
+    private _selectedConfigId: string = ""
 
     @observable
-    private _selectedConfig: Item | undefined;
-
-    @observable
-    private _configState: ConfigState = "create"
+    private _configState: ConfigState = "new"
 
     @observable
     private _configError?: string
@@ -37,11 +38,40 @@ export class ConfigStore {
     @observable
     private _jobUpdateResults?: JobUpdateResults
 
+    @observable
+    private _editedConfig: Item | null = null
+
     constructor(private readonly service: ConfigService) {
-        this._configGroups = this.configGroups.reduce((map, group) => {
-            map[group.id] = {}
-            return map
-        }, {} as ConfigGroups)
+        this._configGroups = [
+            {
+                id: "buildProviders",
+                configs: {}
+            },
+            {
+                id: "jdkProjects",
+                configs: {}
+            },
+            {
+                id: "jdkTestProjects",
+                configs: {}
+            },
+            {
+                id: "jdkVersions",
+                configs: {}
+            },
+            {
+                id: "platforms",
+                configs: {}
+            },
+            {
+                id: "taskVariants",
+                configs: {}
+            },
+            {
+                id: "tasks",
+                configs: {}
+            }
+        ]
     }
 
     @action
@@ -56,19 +86,31 @@ export class ConfigStore {
         let result = ""
         result += "\nJobs created:\n"
         results.jobsCreated.forEach(res => {
-            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+            result +=
+                res.jobName +
+                (res.success ? ": success" : ": " + res.message) +
+                "\n"
         })
         result += "\nJobs rewritten:\n"
         results.jobsRewritten.forEach(res => {
-            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+            result +=
+                res.jobName +
+                (res.success ? ": success" : ": " + res.message) +
+                "\n"
         })
         result += "\nJobs revived:\n"
         results.jobsRevived.forEach(res => {
-            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+            result +=
+                res.jobName +
+                (res.success ? ": success" : ": " + res.message) +
+                "\n"
         })
         result += "\nJobs archived:\n"
         results.jobsArchived.forEach(res => {
-            result += res.jobName + ((res.success) ? ": success" : ": " + res.message) + "\n"
+            result +=
+                res.jobName +
+                (res.success ? ": success" : ": " + res.message) +
+                "\n"
         })
         console.log(result)
     }
@@ -79,16 +121,34 @@ export class ConfigStore {
     }
 
     @action
-    selectGroup = (id: string) => {
-        this._selectedGroupId = id;
-        this._selectedConfig = undefined;
-        this._configState = "update"
+    public setSelectedConfigGroupId = (id: ConfigGroupId) => {
+        this._selectedGroupId = id
     }
 
     @action
-    selectConfig = (config: Item) => {
-        this._selectedConfig = config;
-        this._configState = "update"
+    public setNewConfig = (configGroupId: ConfigGroupId) => {
+        if (defaults[configGroupId]) {
+            this._selectedGroupId = configGroupId
+            this._editedConfig = defaults[configGroupId]()
+            this._configState = "new"
+        } else {
+            this._editedConfig = null
+        }
+    }
+
+    @action
+    public setEditedConfig = (configGroupId: ConfigGroupId, configId: string) => {
+        const group = this.configGroupMap[configGroupId]
+        if (group) {
+            const config = group.configs[configId]
+            if (config) {
+                this._selectedGroupId = configGroupId
+                this._editedConfig = {...config}
+                this._configState = "edit"
+                return
+            }
+        }
+        this._editedConfig = null
     }
 
     get jobUpdateResults(): JobUpdateResults | undefined {
@@ -103,46 +163,44 @@ export class ConfigStore {
         return this._configState
     }
 
-    get selectedGroupId(): string | undefined {
-        return this._selectedGroupId;
+    get configGroupMap(): { [id in ConfigGroupId]: ConfigGroup } {
+        return this._configGroups.reduce((map, group) => {
+            map[group.id] = group
+            return map
+        }, {} as { [id in ConfigGroupId]: ConfigGroup })
     }
 
-    get selectedGroup(): Item[] {
-        const groupId = this._selectedGroupId || ""
-        return Object.values(this._configGroups[groupId] || {})
+    get configGroups(): ConfigGroup[] {
+        return this._configGroups
     }
 
-    get configGroups(): Item[] {
-        return [
-            { id: "buildProviders" },
-            { id: "platforms" },
-            { id: "jdkVersions" },
-            { id: "taskVariants" },
-            { id: "tasks" },
-            { id: "jdkProjects" },
-            { id: "jdkTestProjects" }
-        ]
-    }
-
-    get selectedConfig(): Item | undefined {
-        return this._selectedConfig;
-    }
-
-    createConfig = async (config: Item) => {
-        const groupId = this._selectedGroupId
-        if (!groupId) {
-            this.setError("No group is selected!")
+    public submit = () => {
+        if (!this._editedConfig) {
             return
         }
+        const groupId = this._selectedGroupId
+        switch (this._configState) {
+            case "edit":
+                this.updateConfig(groupId, this._editedConfig)
+                break
+            case "new":
+                this.createConfig(groupId, this._editedConfig)
+                break
+        }
+    }
+
+    createConfig = async (groupId: ConfigGroupId, config: Item) => {
         const response = await this.service.postConfig(groupId, config)
         if (response.value) {
             const oToolResponse = response.value
             const config = oToolResponse.config
             if (config) {
                 runInAction(() => {
-                    this._configGroups[groupId][config.id] = { ...oToolResponse.config! }
-                    this._selectedConfig = this._configGroups[groupId][config.id]
-                    this._configState = "update"
+                    this.configGroupMap[groupId].configs[config.id] = {
+                        ...oToolResponse.config!
+                    }
+                    this._selectedConfigId = config.id
+                    this._configState = "edit"
                 })
             }
             if (oToolResponse.jobUpdateResults) {
@@ -153,40 +211,13 @@ export class ConfigStore {
         }
     }
 
-    updateConfig = async (config: Item) => {
-        const groupId = this._selectedGroupId
-        if (!groupId) {
-            this.setError("No group is selected!")
-            return
-        }
+    updateConfig = async (groupId: ConfigGroupId, config: Item) => {
         const response = await this.service.putConfig(groupId, config)
         if (response.value) {
             const oToolResponse = response.value
             runInAction(() => {
-                this._configGroups[groupId][config.id] = { ...oToolResponse.config! }
-            })
-            if (oToolResponse.jobUpdateResults) {
-                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
-            }
-        } else {
-            this.setError(response.error!)
-        }
-    }
-
-    deleteConfig = async (id: string) => {
-        const groupId = this._selectedGroupId
-        if (!groupId) {
-            this.setError("No group is selected!")
-            return
-        }
-        const response = await this.service.deleteConfig(groupId, id)
-        if (response.value) {
-            const oToolResponse = response.value
-            runInAction(() => {
-                delete this._configGroups[groupId][oToolResponse.config!.id]
-                const selectedConfig = this._selectedConfig
-                if (selectedConfig && id === selectedConfig.id) {
-                    this._selectedConfig = undefined
+                this.configGroupMap[groupId].configs[config.id] = {
+                    ...oToolResponse.config!
                 }
             })
             if (oToolResponse.jobUpdateResults) {
@@ -197,71 +228,117 @@ export class ConfigStore {
         }
     }
 
-    fetchConfigs = async () => {
+    deleteConfig = async (groupId: ConfigGroupId, id: string) => {
+        const response = await this.service.deleteConfig(groupId, id)
+        if (response.value) {
+            const oToolResponse = response.value
+            runInAction(() => {
+                delete this.configGroupMap[groupId].configs[
+                    oToolResponse.config!.id
+                ]
+                this._selectedConfigId = ""
+            })
+            if (oToolResponse.jobUpdateResults) {
+                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
+            }
+        } else {
+            this.setError(response.error!)
+        }
+    }
 
-        for (const group of this.configGroups) {
+    fetchConfigs = async () => {
+        for (const group of this._configGroups) {
             const result = await this.service.fetchConfig(group.id)
             if (result.value) {
-                const configMap: ConfigGroup = {}
-                result.value.forEach(config =>
-                    configMap[config.id] = config
-                )
+                const configMap: ConfigMap = {}
+                result.value.forEach(config => (configMap[config.id] = config))
                 runInAction(() => {
-                    this._configGroups[group.id] = configMap
+                    this.configGroupMap[group.id].configs = configMap
                 })
             }
         }
     }
 
     get buildProviders(): BuildProvider[] {
-        return Object.values(this._configGroups["buildProviders"])
+        return Object.values(this.configGroupMap["buildProviders"].configs)
     }
 
     get platforms(): Platform[] {
-        return Object.values(this._configGroups["platforms"]) as Platform[]
+        return Object.values(
+            this.configGroupMap["platforms"].configs
+        ) as Platform[]
     }
 
     getPlatform(id: string): Platform | undefined {
-        return this._configGroups["platforms"][id] as Platform | undefined
+        return this.configGroupMap["platforms"].configs[id] as
+            | Platform
+            | undefined
     }
 
     get jdkVersions(): JDKVersion[] {
-        return Object.values(this._configGroups["jdkVersions"]) as JDKVersion[]
+        return Object.values(
+            this.configGroupMap["jdkVersions"].configs
+        ) as JDKVersion[]
     }
 
     public getJDKVersion = (id: string): JDKVersion | undefined => {
-        return this._configGroups["jdkVersions"][id] as JDKVersion | undefined
+        return this.configGroupMap["jdkVersions"].configs[id] as
+            | JDKVersion
+            | undefined
     }
 
     get taskVariants(): TaskVariant[] {
-        return Object.values(this._configGroups["taskVariants"]) as TaskVariant[]
+        return Object.values(
+            this.configGroupMap["taskVariants"].configs
+        ) as TaskVariant[]
     }
 
-    get taskVariantsMap(): {[id: string] : TaskVariant} {
-        return this._configGroups["taskVariants"] as {[id: string] : TaskVariant}
+    get taskVariantsMap(): { [id: string]: TaskVariant } {
+        return this.configGroupMap["taskVariants"].configs as {
+            [id: string]: TaskVariant
+        }
     }
 
     get tasks(): Task[] {
-        return Object.values(this._configGroups["tasks"]) as Task[]
+        return Object.values(this.configGroupMap["tasks"].configs) as Task[]
     }
 
     getTask(id: string): Task | undefined {
-        return this._configGroups["tasks"][id] as Task | undefined
+        return this.configGroupMap["tasks"].configs[id] as Task | undefined
     }
 
     get jdkProjects(): JDKProject[] {
-        return Object.values(this._configGroups["jdkProjects"]) as JDKProject[]
+        return Object.values(
+            this.configGroupMap["jdkProjects"].configs
+        ) as JDKProject[]
     }
 
-    getJDKProject(id: string): JDKProject | undefined {
-        return this._configGroups["jdkProjects"][id] as JDKProject | undefined
+    get jdkProjectsMap(): { [id: string]: JDKProject | undefined } {
+        return this.configGroupMap["jdkProjects"].configs as {
+            [id: string]: JDKProject | undefined
+        }
     }
 
     get jdkTestProjects(): JDKTestProject[] {
-        return Object.values(this._configGroups["jdkTestProjects"]) as JDKTestProject[]
+        return Object.values(
+            this.configGroupMap["jdkTestProjects"].configs
+        ) as JDKTestProject[]
     }
 
     get jdkTestProjectMap(): JDKTestProjectMap {
-        return this._configGroups["jdkTestProjects"] as JDKTestProjectMap
+        return this.configGroupMap["jdkTestProjects"]
+            .configs as JDKTestProjectMap
+    }
+
+    get editedConfig(): Item | null {
+        return this._editedConfig
+    }
+
+    get selectedConfigGroupId(): ConfigGroupId {
+        return this._selectedGroupId
+    }
+
+    get selectedConfigId(): string {
+        return this._selectedConfigId
     }
 }

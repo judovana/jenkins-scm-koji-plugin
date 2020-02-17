@@ -148,11 +148,21 @@ export interface OToolResponse {
 
 export type ProjectCategories = { [id: string]: ProjectCategory };
 
-export type ConfigState = "create" | "update"
+export type ConfigState = "new" | "edit"
 
-export type ConfigGroup = { [id: string]: Item }
+export type ConfigMap = { [id: string]: Item }
 
-export type ConfigGroups = { [id: string]: ConfigGroup }
+export interface ConfigGroup extends Item {
+    id: ConfigGroupId
+    configs: ConfigMap
+}
+
+export type ConfigGroups = { [id in ConfigGroupId]: ConfigGroup }
+
+export interface DisplayedConfig {
+    groupId?: ConfigGroupId
+    id?: string
+}
 
 export type RepoState = "CLONED" | "NOT_CLONED" | "CLONE_ERROR" | "CLONING"
 
@@ -164,3 +174,12 @@ export interface Variable {
     name: string
     value: string
 }
+
+export type ConfigGroupId =
+    | "buildProviders"
+    | "platforms"
+    | "jdkVersions"
+    | "taskVariants"
+    | "tasks"
+    | "jdkProjects"
+    | "jdkTestProjects"
