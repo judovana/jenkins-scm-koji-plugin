@@ -27,7 +27,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
     const platform = configStore.getPlatform(props.id)
 
     React.useEffect(() => {
-        if (platform && props.config.tasks) {
+        if (platform && props.config.tasks && !props.config.provider) {
             const provider = platform.providers.find(_ => true)
             props.config.provider = provider && provider.id
         }
