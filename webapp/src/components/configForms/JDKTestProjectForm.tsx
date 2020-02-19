@@ -37,7 +37,8 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
             project.subpackageWhitelist = value.split(" ")
         }
 
-        const { id, product } = validation || ({} as JDKTestProjectValidation)
+        const { id, product, subpackageBlacklist, subpackageWhitelist } =
+            validation || ({} as JDKTestProjectValidation)
 
         return (
             <React.Fragment>
@@ -61,11 +62,13 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                 />
                 <TextInput
                     label={"subpackage blacklist"}
+                    validation={subpackageBlacklist}
                     value={project.subpackageBlacklist.join(" ")}
                     onChange={onSubpackageBlacklistChange}
                 />
                 <TextInput
                     label={"subpackage whitelist"}
+                    validation={subpackageWhitelist}
                     value={project.subpackageWhitelist.join(" ")}
                     onChange={onSubpackageWhitelistChange}
                 />

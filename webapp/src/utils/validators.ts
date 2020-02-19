@@ -26,14 +26,20 @@ const requiredStringValidator = (value: StringInputValue): BasicValidation => {
     return "ok"
 }
 
-const requiredStringListValidator = (
+const stringListValidator = (required: boolean) => (
     value: StringListInputValue
 ): BasicValidation => {
-    if (!value || value.length === 0) {
+    if (required && (!value || value.length === 0)) {
         return "required"
+    }
+    if (value && value.some(val => !val)) {
+        return "whitespaces"
     }
     return "ok"
 }
+
+const requiredStringListValidator = stringListValidator(true)
+const optionalStringListValidator = stringListValidator(false)
 
 const numericStringValidator = (value: string): BasicValidation => {
     const firstValidation = requiredStringValidator(value)
@@ -80,9 +86,9 @@ const platformProviderValidator = ({
     id,
     vmNodes
 }: PlatformProvider) => ({
-    hwNodes: requiredStringListValidator(hwNodes),
+    hwNodes: optionalStringListValidator(hwNodes),
     id: requiredStringValidator(id),
-    vmNodes: requiredStringListValidator(vmNodes)
+    vmNodes: optionalStringListValidator(vmNodes)
 })
 
 const buildProviderValidator = ({ id }: BuildProvider) => ({
@@ -99,19 +105,24 @@ const jdkProjectValidator = ({ id, product, url }: JDKProject) => ({
     url: requiredStringValidator(url)
 })
 
-const jdkTestProjectValidator = ({ id, product }: JDKTestProject) => ({
+const jdkTestProjectValidator = ({
+    id,
+    product,
+    subpackageBlacklist,
+    subpackageWhitelist
+}: JDKTestProject) => ({
     buildProviders: "ok",
     id: requiredStringValidator(id),
     jobConfiguration: "ok",
     product: productValidator(product),
-    subpackageBlacklist: "ok",
-    subpackageWhitelist: "ok",
+    subpackageBlacklist: optionalStringListValidator(subpackageBlacklist),
+    subpackageWhitelist: optionalStringListValidator(subpackageWhitelist),
     type: "ok"
 })
 
 const jdkVersionValidator = (_: JDKVersion) => ({
     id: "ok",
-    packageNames: "ok"
+    packageNames: optionalStringListValidator
 })
 
 const taskVariantValidator = (_: TaskVariant) => ({
@@ -191,7 +202,7 @@ export const checkValidation = (validation?: Validation): boolean => {
 export const isConfigValid = (validation: ConfigValidation): boolean =>
     checkValidation(validation)
 
-export const setDefaultValidations = <T> (
+export const setDefaultValidations = <T>(
     validations: T[] | undefined,
     formFields: any[]
 ) =>
@@ -240,7 +251,7 @@ export type PlatformProviderValidation = ReturnType<
     typeof platformProviderValidator
 >
 
-export type BasicValidation = "invalid" | "required" | "ok"
+export type BasicValidation = "invalid" | "required" | "ok" | "whitespaces"
 
 export type Validation =
     | BasicValidation

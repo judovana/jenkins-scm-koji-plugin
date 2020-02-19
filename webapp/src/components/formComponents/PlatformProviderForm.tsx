@@ -20,11 +20,11 @@ const PlatformProviderForm: React.FC<PlatformProviderFormProps> = props =>
         }
 
         const onHwNodesChange = (value: string) => {
-            platformProvider.hwNodes = value.trim().split(" ")
+            platformProvider.hwNodes = value.split(" ")
         }
 
         const onVmNodesChange = (value: string) => {
-            platformProvider.vmNodes = value.trim().split(" ")
+            platformProvider.vmNodes = value.split(" ")
         }
 
         const { hwNodes, id, vmNodes } =
