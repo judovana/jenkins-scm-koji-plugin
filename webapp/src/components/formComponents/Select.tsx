@@ -36,8 +36,7 @@ const Select: React.FC<SelectProps> = props => {
         <FormControl margin={"normal"} fullWidth error={isError}>
             {label && <InputLabel>{label}</InputLabel>}
             <MaterialSelect
-                defaultValue={"NONE"}
-                value={value}
+                value={value || "NONE"}
                 onChange={onChange}>
                 <MenuItem value="NONE">None</MenuItem>
                 {options.map(option => (
