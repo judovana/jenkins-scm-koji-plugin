@@ -140,13 +140,14 @@ public class JenkinsJobTemplateBuilder {
     public JenkinsJobTemplateBuilder buildKojiXmlRpcApiTemplate(
             String packageName,
             Platform platform,
+            Task.FileRequirements fileRequirements,
             List<String> subpackageBlacklist,
             List<String> subpackageWhitelist
     ) throws IOException {
         template = template
                 .replace(XML_RPC_API, loadTemplate(JenkinsTemplate.KOJI_XML_RPC_API_TEMPLATE))
                 .replace(PACKAGE_NAME, packageName)
-                .replace(ARCH, platform.getKojiArch().orElse(platform.getArchitecture()))
+                .replace(ARCH, fillArch(platform, fileRequirements))
                 .replace(TAGS, String.join(" ", platform.getTags()))
                 .replace(SUBPACKAGE_BLACKLIST, String.join(" ", subpackageBlacklist))
                 .replace(SUBPACKAGE_WHITELIST, String.join(" ", subpackageWhitelist));
@@ -169,6 +170,23 @@ public class JenkinsJobTemplateBuilder {
                 .replace(PLATFORM, platform)
                 .replace(IS_BUILT, String.valueOf(isBuilt));
         return this;
+    }
+
+    public static String fillArch(Platform platform, Task.FileRequirements fileRequirements) {
+        final List<String> archs = new LinkedList<>();
+        if (fileRequirements.isSource()) {
+            archs.add("src");
+        }
+        switch (fileRequirements.getBinary()) {
+            case BINARY:
+                archs.add(platform.getKojiArch().orElse(platform.getArchitecture()));
+                break;
+            case BINARIES:
+                return "";
+            case NONE:
+                break;
+        }
+        return String.join(" ", archs);
     }
 
     public static String fillBuildPlatform(Platform platform, Task.FileRequirements fileRequirements) {

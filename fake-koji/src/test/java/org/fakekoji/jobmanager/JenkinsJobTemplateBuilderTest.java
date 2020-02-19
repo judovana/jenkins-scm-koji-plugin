@@ -148,6 +148,34 @@ public class JenkinsJobTemplateBuilderTest {
                 .buildKojiXmlRpcApiTemplate(
                         jdk8.getPackageNames().get(0),
                         vmPlatform,
+                        new Task.FileRequirements(false, Task.BinaryRequirements.BINARY),
+                        Arrays.asList("a", "b"),
+                        Arrays.asList("c", "d")
+                ).prettyPrint();
+
+        Assert.assertEquals(expectedTemplate, actualTemplate);
+    }
+
+    @Test
+    public void buildKojiXmlRpcApiTemplateWithBinaries() throws IOException {
+
+        final Platform vmPlatform = DataGenerator.getF29x64();
+        final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
+
+        final String expectedTemplate = "<kojiXmlRpcApi class=\"hudson.plugins.scm.koji.RealKojiXmlRpcApi\">\n" +
+                "    <xmlRpcApiType>REAL_KOJI</xmlRpcApiType>\n" +
+                "    <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
+                "    <arch/>\n" +
+                "    <tag>" + String.join(" ", vmPlatform.getTags()) + "</tag>\n" +
+                "    <subpackageBlacklist>a b</subpackageBlacklist>\n" +
+                "    <subpackageWhitelist>c d</subpackageWhitelist>\n" +
+                "</kojiXmlRpcApi>\n";
+
+        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
+                .buildKojiXmlRpcApiTemplate(
+                        jdk8.getPackageNames().get(0),
+                        vmPlatform,
+                        new Task.FileRequirements(false, Task.BinaryRequirements.BINARIES),
                         Arrays.asList("a", "b"),
                         Arrays.asList("c", "d")
                 ).prettyPrint();
@@ -174,6 +202,7 @@ public class JenkinsJobTemplateBuilderTest {
                 .buildKojiXmlRpcApiTemplate(
                         jdk8.getPackageNames().get(0),
                         win,
+                        new Task.FileRequirements(false, Task.BinaryRequirements.BINARY),
                         Arrays.asList("a", "b"),
                         Arrays.asList("c", "d")
                 ).prettyPrint();

@@ -191,6 +191,7 @@ public class TestJob extends TaskJob {
                 .buildKojiXmlRpcApiTemplate(
                         getProduct().getPackageName(),
                         getBuildPlatform(),
+                        getTask().getFileRequirements(),
                         subpackageBlacklist,
                         subpackageWhitelist
                 )
