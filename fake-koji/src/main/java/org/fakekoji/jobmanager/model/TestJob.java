@@ -11,6 +11,7 @@ import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -146,34 +147,44 @@ public class TestJob extends TaskJob {
     }
 
     private String generateKojiTemplate() throws IOException {
+        final List<String> subpackageBlacklist;
+        final List<String> subpackageWhitelist;
+        if (getTask().getFileRequirements().getBinary().equals(Task.BinaryRequirements.BINARIES)) {
+            //this is workaround
+            //only one task is known to require binaries, and that requires them all
+            //if ever listing will need filtering also on BINARIES
+            //BINARIES and BINARIES_ALL mayb need to be introduced
+            subpackageBlacklist = Arrays.asList();
+            subpackageWhitelist = Arrays.asList(".*");
+        } else {
+            subpackageBlacklist = Stream.of(
+                    projectSubpackageBlacklist,
+                    getTask().getRpmLimitation().getBlacklist(),
+                    getBuildVariants()
+                            .values()
+                            .stream()
+                            .map(TaskVariantValue::getSubpackageBlacklist)
+                            .flatMap(List::stream)
+                            .collect(Collectors.toList())
+            )
+                    .flatMap(List::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
 
-        final List<String> subpackageBlacklist = Stream.of(
-                projectSubpackageBlacklist,
-                getTask().getRpmLimitation().getBlacklist(),
-                getBuildVariants()
-                        .values()
-                        .stream()
-                        .map(TaskVariantValue::getSubpackageBlacklist)
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList())
-        )
-                .flatMap(List::stream)
-                .distinct()
-                .collect(Collectors.toList());
-
-        final List<String> subpackageWhitelist = Stream.of(
-                projectSubpackageWhitelist,
-                getTask().getRpmLimitation().getWhitelist(),
-                getBuildVariants()
-                        .values()
-                        .stream()
-                        .map(TaskVariantValue::getSubpackageWhitelist)
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList())
-        )
-                .flatMap(List::stream)
-                .distinct()
-                .collect(Collectors.toList());
+            subpackageWhitelist = Stream.of(
+                    projectSubpackageWhitelist,
+                    getTask().getRpmLimitation().getWhitelist(),
+                    getBuildVariants()
+                            .values()
+                            .stream()
+                            .map(TaskVariantValue::getSubpackageWhitelist)
+                            .flatMap(List::stream)
+                            .collect(Collectors.toList())
+            )
+                    .flatMap(List::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
 
         return XML_DECLARATION + new JenkinsJobTemplateBuilder(loadTemplate(TASK_JOB_TEMPLATE), this)
                 .buildBuildProvidersTemplate(getBuildProviders())
