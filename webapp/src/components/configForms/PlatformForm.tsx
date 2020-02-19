@@ -123,6 +123,17 @@ const PlatformForm: React.FC<Props> = props => {
                     validation={vmNameValidation}
                     value={vmName}
                 />
+                <FormList
+                    data={providers}
+                    label="platform providers"
+                    onAdd={createDefaultPlatfromProvider}
+                    renderItem={(item, index) => (
+                        <PlatformProviderForm
+                            platformProvider={item}
+                            validation={providersValidation[index]}
+                        />
+                    )}
+                />
                 <TextInput
                     label={"tags"}
                     onChange={onTagsChange}
