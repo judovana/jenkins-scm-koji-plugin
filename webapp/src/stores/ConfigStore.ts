@@ -18,13 +18,14 @@ import {
 } from "./model"
 import ConfigService from "./services/ConfigService"
 import defaults from "../utils/defaultConfigs"
+import { ConfigValidator, validators, ConfigValidation, isConfigValid } from "../utils/validators"
 
 export class ConfigStore {
     @observable
     private _configGroups: ConfigGroup[]
 
     @observable
-    private _selectedGroupId: ConfigGroupId = "buildProviders"
+    private _selectedGroupId: ConfigGroupId = "platforms"
 
     @observable
     private _selectedConfigId: string = ""
@@ -40,6 +41,12 @@ export class ConfigStore {
 
     @observable
     private _editedConfig: Item | null = null
+
+    @observable
+    private _configValidator: ConfigValidator | null = null
+
+    @observable
+    private _configValidation: ConfigValidation | null = null
 
     constructor(private readonly service: ConfigService) {
         this._configGroups = [
@@ -121,6 +128,11 @@ export class ConfigStore {
     }
 
     @action
+    private setConfigState = (configState: ConfigState) => {
+        this._configState = configState
+    }
+
+    @action
     public setSelectedConfigGroupId = (id: ConfigGroupId) => {
         this._selectedGroupId = id
     }
@@ -130,6 +142,7 @@ export class ConfigStore {
         if (defaults[configGroupId]) {
             this._selectedGroupId = configGroupId
             this._editedConfig = defaults[configGroupId]()
+            this._configValidator = validators[configGroupId]
             this._configState = "new"
         } else {
             this._editedConfig = null
@@ -137,13 +150,24 @@ export class ConfigStore {
     }
 
     @action
-    public setEditedConfig = (configGroupId: ConfigGroupId, configId: string) => {
+    public validate = () => {
+        if (this._editedConfig && this._configValidator) {
+            this._configValidation = this._configValidator(this._editedConfig as any) as ConfigValidation
+        }
+    }
+
+    @action
+    public setEditedConfig = (
+        configGroupId: ConfigGroupId,
+        configId: string
+    ) => {
         const group = this.configGroupMap[configGroupId]
         if (group) {
             const config = group.configs[configId]
             if (config) {
                 this._selectedGroupId = configGroupId
-                this._editedConfig = {...config}
+                this._editedConfig = { ...config }
+                this._configValidator = validators[configGroupId]
                 this._configState = "edit"
                 return
             }
@@ -176,6 +200,10 @@ export class ConfigStore {
 
     public submit = () => {
         if (!this._editedConfig) {
+            return
+        }
+        this.validate()
+        if (!isConfigValid(this._configValidation as any)) {
             return
         }
         const groupId = this._selectedGroupId
@@ -332,6 +360,10 @@ export class ConfigStore {
 
     get editedConfig(): Item | null {
         return this._editedConfig
+    }
+
+    get configValidation(): ConfigValidation | null {
+        return this._configValidation
     }
 
     get selectedConfigGroupId(): ConfigGroupId {

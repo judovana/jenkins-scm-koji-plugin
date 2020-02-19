@@ -26,12 +26,10 @@ const RPMLimitationForm: React.FunctionComponent<Props> = ({ rpmLimitation }) =>
                     <TextInput
                         label={"subpackage blacklist"}
                         onChange={onRPMLimitationBlacklistChange}
-                        placeholder={"Enter glob"}
                         value={rpmLimitation.blacklist.join(" ")} />
                     <TextInput
                         label={"subpackage whitelist"}
                         onChange={onRPMLimitationWhitelistChange}
-                        placeholder={"Enter glob"}
                         value={rpmLimitation.whitelist.join(" ")} />
                 </Grid>
 

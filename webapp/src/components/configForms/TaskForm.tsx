@@ -10,16 +10,23 @@ import FileRequirementsForm from "../formComponents/FileRequirementsForm"
 import useStores from "../../hooks/useStores"
 import FormList from "../formComponents/FormList"
 import VariableForm from "../formComponents/VariableForm"
+import { createDefaultVariable } from "../../utils/defaultConfigs"
+import {
+    TaskValidation,
+    setDefaultValidations,
+    VariableValidation
+} from "../../utils/validators"
 
 type TaskFormProps = {
     config: Task
+    validation?: TaskValidation
 }
 
 const TaskForm: React.FC<TaskFormProps> = props => {
     const { configStore } = useStores()
 
     return useObserver(() => {
-        const { config: task } = props
+        const { config: task, validation } = props
 
         const onIdChange = (value: string) => {
             task.id = value
@@ -54,9 +61,22 @@ const TaskForm: React.FC<TaskFormProps> = props => {
             variables
         } = task
 
+        const { id: idValidation, script: scriptValidation } =
+            validation || ({} as TaskValidation)
+
+        const variablesValidation = setDefaultValidations<VariableValidation>(
+            validation && validation.variables,
+            variables
+        )
+
         return (
             <React.Fragment>
-                <TextInput label={"Task id"} onChange={onIdChange} value={id} />
+                <TextInput
+                    label={"Task id"}
+                    onChange={onIdChange}
+                    validation={idValidation}
+                    value={id}
+                />
                 <Select
                     label={"type"}
                     onChange={onTypeChange}
@@ -75,9 +95,9 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                     value={task.scmPollSchedule}></TextInput>
                 <TextInput
                     label={"script"}
+                    validation={scriptValidation}
                     value={task.script}
                     onChange={onScriptChange}
-                    placeholder={"Enter path to bash script"}
                 />
                 <LimitationForm
                     label={"platform limitations"}
@@ -100,7 +120,13 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                 <FormList
                     data={variables}
                     label="custom variables"
-                    renderItem={item => <VariableForm variable={item} />}
+                    onAdd={createDefaultVariable}
+                    renderItem={(item, index) => (
+                        <VariableForm
+                            variable={item}
+                            validation={variablesValidation[index]}
+                        />
+                    )}
                 />
             </React.Fragment>
         )

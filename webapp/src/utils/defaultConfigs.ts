@@ -4,7 +4,9 @@ import {
     JDKTestProject,
     JDKProject,
     ConfigGroupId,
-    Item
+    Item,
+    Variable,
+    PlatformProvider
 } from "../stores/model"
 
 const createDefaultJDKProject = (): JDKProject => ({
@@ -68,6 +70,21 @@ const createDefaultTask = (): Task => ({
     type: "TEST",
     xmlTemplate: "",
     variables: []
+})
+
+export const createDefaultVariable = (): Variable => ({
+    comment: "",
+    commentedOut: false,
+    defaultPrefix: true,
+    exported: true,
+    name: "",
+    value: ""
+})
+
+export const createDefaultPlatfromProvider = (): PlatformProvider => ({
+    hwNodes: [],
+    id: "",
+    vmNodes: []
 })
 
 const empty = (): Item => ({ id: "id" })

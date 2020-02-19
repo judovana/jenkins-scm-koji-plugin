@@ -7,9 +7,11 @@ import MultiSelect from "../formComponents/MultiSelect"
 import JobConfigComponent from "../formComponents/JobConfigComponent"
 import useStores from "../../hooks/useStores"
 import ProductSelectForm from "../formComponents/JDKVersionSelectForm"
+import { JDKTestProjectValidation } from "../../utils/validators"
 
 type JDKTestProjectFormProps = {
     config: JDKTestProject
+    validation?: JDKTestProjectValidation
 }
 
 const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
@@ -17,7 +19,7 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
 
     return useObserver(() => {
         const { buildProviders } = configStore
-        const { config: project } = props
+        const { config: project, validation } = props
 
         const onIDChange = (value: string) => {
             project.id = value
@@ -35,10 +37,13 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
             project.subpackageWhitelist = value.split(" ")
         }
 
+        const { id, product } = validation || ({} as JDKTestProjectValidation)
+
         return (
             <React.Fragment>
                 <TextInput
                     label={"name"}
+                    validation={id}
                     value={project.id}
                     onChange={onIDChange}
                 />
@@ -50,7 +55,10 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                     )}
                     values={project.buildProviders}
                 />
-                <ProductSelectForm product={project.product} />
+                <ProductSelectForm
+                    product={project.product}
+                    validation={product}
+                />
                 <TextInput
                     label={"subpackage blacklist"}
                     value={project.subpackageBlacklist.join(" ")}
