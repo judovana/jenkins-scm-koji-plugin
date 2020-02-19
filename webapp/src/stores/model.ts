@@ -149,7 +149,7 @@ export interface OToolResponse {
 
 export type ProjectCategories = { [id: string]: ProjectCategory };
 
-export type ConfigState = "new" | "edit"
+export type ConfigState = "new" | "edit" | "pending"
 
 export type ConfigMap = { [id: string]: Item }
 

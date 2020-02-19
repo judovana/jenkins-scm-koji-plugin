@@ -14,11 +14,18 @@ import {
     JDKTestProject,
     JDKTestProjectMap,
     ConfigMap,
-    ConfigGroupId
+    ConfigGroupId,
+    OToolResponse,
+    FetchResult
 } from "./model"
 import ConfigService from "./services/ConfigService"
 import defaults from "../utils/defaultConfigs"
-import { ConfigValidator, validators, ConfigValidation, isConfigValid } from "../utils/validators"
+import {
+    ConfigValidator,
+    validators,
+    ConfigValidation,
+    isConfigValid
+} from "../utils/validators"
 
 export class ConfigStore {
     @observable
@@ -152,7 +159,9 @@ export class ConfigStore {
     @action
     public validate = () => {
         if (this._editedConfig && this._configValidator) {
-            this._configValidation = this._configValidator(this._editedConfig as any) as ConfigValidation
+            this._configValidation = this._configValidator(
+                this._editedConfig as any
+            ) as ConfigValidation
         }
     }
 
@@ -217,43 +226,54 @@ export class ConfigStore {
         }
     }
 
-    createConfig = async (groupId: ConfigGroupId, config: Item) => {
-        const response = await this.service.postConfig(groupId, config)
-        if (response.value) {
-            const oToolResponse = response.value
-            const config = oToolResponse.config
+    @action
+    private handleResponse = (
+        groupId: ConfigGroupId,
+        configState: ConfigState
+    ) => (result: FetchResult<OToolResponse>) => {
+        const { value, error } = result
+        if (value) {
+            const { config, jobUpdateResults } = value
             if (config) {
-                runInAction(() => {
-                    this.configGroupMap[groupId].configs[config.id] = {
-                        ...oToolResponse.config!
-                    }
-                    this._selectedConfigId = config.id
-                    this._configState = "edit"
-                })
+                this.configGroupMap[groupId].configs[config.id] = {
+                    ...config
+                }
+                this._selectedConfigId = config.id
+                this.setEditedConfig(groupId, config.id)
+                this._configState = "edit"
             }
-            if (oToolResponse.jobUpdateResults) {
-                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
+            if (jobUpdateResults) {
+                this.setJobUpdateResults(jobUpdateResults)
             }
-        } else {
-            this.setError(response.error!)
+        }
+        if (error) {
+            this._configError = error
+            this._configState = configState
         }
     }
 
+    @action
+    private handleError = (configState: ConfigState) => (error: string) => {
+        this._configError = error
+        this._configState = configState
+    }
+
+    createConfig = (groupId: ConfigGroupId, config: Item) => {
+        const configState = this._configState
+        this.setConfigState("pending")
+        this.service
+            .postConfig(groupId, config)
+            .then(this.handleResponse(groupId, configState))
+            .catch(this.handleError(configState))
+    }
+
     updateConfig = async (groupId: ConfigGroupId, config: Item) => {
-        const response = await this.service.putConfig(groupId, config)
-        if (response.value) {
-            const oToolResponse = response.value
-            runInAction(() => {
-                this.configGroupMap[groupId].configs[config.id] = {
-                    ...oToolResponse.config!
-                }
-            })
-            if (oToolResponse.jobUpdateResults) {
-                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
-            }
-        } else {
-            this.setError(response.error!)
-        }
+        const configState = this._configState
+        this.setConfigState("pending")
+        this.service
+            .putConfig(groupId, config)
+            .then(this.handleResponse(groupId, configState))
+            .catch(this.handleError(configState))
     }
 
     deleteConfig = async (groupId: ConfigGroupId, id: string) => {

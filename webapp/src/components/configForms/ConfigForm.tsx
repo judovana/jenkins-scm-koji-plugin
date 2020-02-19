@@ -107,9 +107,13 @@ const ConfigForm: React.FC = () => {
             <React.Fragment>
                 <Paper style={{ padding: 20, width: "100%" }}>
                     {renderForm()}
-                    <Button onClick={() => submit()} variant="contained">
+                    <Button
+                        disabled={configState === "pending"}
+                        onClick={() => submit()}
+                        variant="contained">
                         {(configState === "edit" && "Edit") ||
-                            (configState === "new" && "Create")}
+                            (configState === "new" && "Create") ||
+                            (configState === "pending" && "...")}
                     </Button>
                 </Paper>
                 {snackbarState && (
