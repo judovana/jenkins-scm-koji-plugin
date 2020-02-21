@@ -1003,8 +1003,8 @@ public class OToolServiceRun {
             if (isSkipped(blackList)) {
                 return r;
             }
-            for (int i = 0; i < r.size(); i++) {
-                for (String w : blackList) {
+            for (String w : blackList) {
+                for (int i = 0; i < r.size(); i++) {
                     if (r.get(i).matches(w)) {
                         r.remove(i);
                         i--;
@@ -1045,14 +1045,20 @@ public class OToolServiceRun {
 
     @Test
     public void bwlWorks() {
-        BlackWhiteLister bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
+        BlackWhiteLister bwl;
+        bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
+        List<String> e = bwl.removeBlacklisted(new String[]{"aa", "bb", "aa"});
+        System.out.println(Arrays.toString(e.toArray()));
+        Assert.assertEquals(new String[]{}, e.toArray());
+
+        bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
         List<String> o = bwl.removeBlacklisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm"});
         System.out.println(Arrays.toString(o.toArray()));
         Assert.assertEquals(new String[]{"kkk", "ooo", "zz", "yy", "mmm"}, o.toArray());
 
         List<String> oo = bwl.allowJustWhitelisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm", "zz"});
         System.out.println(Arrays.toString(oo.toArray()));
-        Assert.assertEquals(new String[]{"zz", "yy", "zz"}, oo.toArray());
+        Assert.assertEquals(new String[]{"zz", "yy"}, oo.toArray());
 
         BlackWhiteLister onlyW = new BlackWhiteLister("test", new String[]{}, new String[]{"aa"});
         List<String> a = onlyW.match(new String[]{"aa"});
@@ -1111,27 +1117,30 @@ public class OToolServiceRun {
 
         containers.put("container", container);
     }
-    BlackWhiteLister sdk = new BlackWhiteLister("sdk", new String[]{}, new String[]{});
+
+    BlackWhiteLister sdk = new BlackWhiteLister("sdk",
+            new String[]{".*-jre-.*windows.*"},
+            new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*"},
+            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[\\d\\.\\-]{3,}windows.*"},
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
-            new String[]{},
+            new String[]{".*windows.*"},
             new String[]{".*-jre-headless.*"});
     BlackWhiteLister allDebugRelease = new BlackWhiteLister("allDebugRelease", new String[]{}, new String[]{});
     BlackWhiteLister release = new BlackWhiteLister("release",
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
             new String[]{""});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*", ".*-debug.-"},
+            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[\\d\\.\\-]{3,}windows.*"},
             new String[]{".*-fastdebug-.*"});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*"},
-            new String[]{".*-slowdebug-.*", ".*-debug.-"});
+            new String[]{".*-fastdebug-.*", ".*-openjdk[\\d\\.\\-]{3,}windows.*"},
+            new String[]{".*-slowdebug-.*", ".*-debug-.*"});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
     BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
     BlackWhiteLister winZipsLists = new BlackWhiteLister("winzips",
-            new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", "^java-1.8.0-openjdk-debug.*", ".*\\.json$", ".*-jre-.*"},
+            new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", ".*\\.json$"},
             new String[]{".*x86_64.zip$", ".*static.*"});
     BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite",
             new String[]{".*-debuginfo-.*"},
