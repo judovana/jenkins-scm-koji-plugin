@@ -1123,11 +1123,11 @@ public class OToolServiceRun {
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
             new String[]{""});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*"},
-            new String[]{".*-fastdebug-.*", ".*-debug.-"});
+            new String[]{".*-slowdebug-.*", ".*-debug.-"},
+            new String[]{".*-fastdebug-.*"});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*", ".*-debug.-"},
-            new String[]{".*-slowdebug-.*"});
+            new String[]{".*-fastdebug-.*"},
+            new String[]{".*-slowdebug-.*", ".*-debug.-"});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
     BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
     BlackWhiteLister winZipsLists = new BlackWhiteLister("winzips",
