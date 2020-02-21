@@ -1122,7 +1122,7 @@ public class OToolServiceRun {
             new String[]{".*-jre-.*windows.*"},
             new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[\\d\\.\\-]{3,}windows.*"},
+            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[b\\d\\.\\-]{3,}windows.*"},
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
             new String[]{".*windows.*"},
@@ -1132,10 +1132,10 @@ public class OToolServiceRun {
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
             new String[]{""});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[\\d\\.\\-]{3,}windows.*"},
+            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}windows.*"},
             new String[]{".*-fastdebug-.*"});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*", ".*-openjdk[\\d\\.\\-]{3,}windows.*"},
+            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}windows.*"},
             new String[]{".*-slowdebug-.*", ".*-debug-.*"});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
     BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
