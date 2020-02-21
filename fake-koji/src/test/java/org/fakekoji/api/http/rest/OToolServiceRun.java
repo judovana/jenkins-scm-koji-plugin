@@ -1065,38 +1065,6 @@ public class OToolServiceRun {
         Assert.assertEquals(new String[]{"bb"}, b.toArray());
     }
 
-    BlackWhiteLister sdk = new BlackWhiteLister("sdk", new String[]{}, new String[]{});
-    BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*"},
-            new String[]{});
-    BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
-            new String[]{},
-            new String[]{".*-jre-headless.*"});
-    BlackWhiteLister allDebugRelease = new BlackWhiteLister("allDebugRelease", new String[]{}, new String[]{});
-    BlackWhiteLister release = new BlackWhiteLister("release",
-            new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
-            new String[]{""});
-    BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*", ".*-debug.-"},
-            new String[]{".*-fastdebug-.*"});
-    BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*"},
-            new String[]{".*-slowdebug-.*", ".*-debug-.*"});
-    BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
-    BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
-    BlackWhiteLister winZipsLists = new BlackWhiteLister("winzips",
-            new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", "^java-1.8.0-openjdk-debug.*", ".*\\.json$", ".*-jre-.*"},
-            new String[]{".*x86_64.zip$", ".*static.*"});
-    BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite",
-            new String[]{".*-debuginfo-.*"},
-            new String[]{});
-    BlackWhiteLister nonDebuginfoSuite = new BlackWhiteLister("nonDebuginfoSuite", new String[]{}, new String[]{});
-
-    BlackWhiteLister[] jresdk = new BlackWhiteLister[]{sdk, jre, jreHeadless};
-    BlackWhiteLister[] debugMode = new BlackWhiteLister[]{/*allDebugRelease unused now,*/ release, fasdebug, slowdebug};
-    BlackWhiteLister[] suites = new BlackWhiteLister[]{debuginfoSuite, nonDebuginfoSuite};
-
-
     public OToolServiceRun() {
         winZips.put("jdk11WinZips", jdk11WinZips);
         winZips.put("jdk8WinZips", jdk8WinZips);
@@ -1143,6 +1111,36 @@ public class OToolServiceRun {
 
         containers.put("container", container);
     }
+    BlackWhiteLister sdk = new BlackWhiteLister("sdk", new String[]{}, new String[]{});
+    BlackWhiteLister jre = new BlackWhiteLister("jre",
+            new String[]{".*-devel-.*", ".*-jmods-.*"},
+            new String[]{});
+    BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
+            new String[]{},
+            new String[]{".*-jre-headless.*"});
+    BlackWhiteLister allDebugRelease = new BlackWhiteLister("allDebugRelease", new String[]{}, new String[]{});
+    BlackWhiteLister release = new BlackWhiteLister("release",
+            new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
+            new String[]{""});
+    BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
+            new String[]{".*-slowdebug-.*"},
+            new String[]{".*-fastdebug-.*", ".*-debug.-"});
+    BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
+            new String[]{".*-fastdebug-.*", ".*-debug.-"},
+            new String[]{".*-slowdebug-.*"});
+    BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
+    BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
+    BlackWhiteLister winZipsLists = new BlackWhiteLister("winzips",
+            new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", "^java-1.8.0-openjdk-debug.*", ".*\\.json$", ".*-jre-.*"},
+            new String[]{".*x86_64.zip$", ".*static.*"});
+    BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite",
+            new String[]{".*-debuginfo-.*"},
+            new String[]{});
+    BlackWhiteLister nonDebuginfoSuite = new BlackWhiteLister("nonDebuginfoSuite", new String[]{}, new String[]{});
+
+    BlackWhiteLister[] jresdk = new BlackWhiteLister[]{sdk, jre, jreHeadless};
+    BlackWhiteLister[] debugMode = new BlackWhiteLister[]{/*allDebugRelease unused now,*/ release, fasdebug, slowdebug};
+    BlackWhiteLister[] suites = new BlackWhiteLister[]{debuginfoSuite, nonDebuginfoSuite};
 
     @Test
     public void regexgame() {
