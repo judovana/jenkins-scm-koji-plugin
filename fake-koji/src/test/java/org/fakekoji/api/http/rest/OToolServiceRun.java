@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OToolServiceRun {
 
@@ -1021,7 +1022,7 @@ public class OToolServiceRun {
             if (isSkipped(whiteList)) {
                 return new ArrayList<>(s);
             }
-            List<String> r = new ArrayList<>(s.size());
+            Set<String> r = new HashSet<>(s.size());
             for (int i = 0; i < s.size(); i++) {
                 for (String w : whiteList) {
                     if (s.get(i).matches(w)) {
@@ -1029,7 +1030,7 @@ public class OToolServiceRun {
                     }
                 }
             }
-            return r;
+            return new ArrayList<>(r);
         }
 
         public List<String> match(String[] s) {
