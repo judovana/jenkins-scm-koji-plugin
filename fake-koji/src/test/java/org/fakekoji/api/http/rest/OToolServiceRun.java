@@ -1150,11 +1150,11 @@ public class OToolServiceRun {
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
             new String[]{""});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*"},
-            new String[]{".*-fastdebug-.*"});
+            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*-fastdebug-.*).*"},
+            new String[]{});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*"},
-            new String[]{".*-slowdebug-.*", ".*-debug-.*"});
+            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*","(?!.*(-slowdebug-|-debug-).*).*"},
+            new String[]{});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
     BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
     BlackWhiteLister win64ZipsLists = new BlackWhiteLister("win64zips",
@@ -1233,8 +1233,8 @@ public class OToolServiceRun {
         bl.looger = new StringBuilder();
         List<String> r = bl.match(orig);
         System.out.println(" ** " + bl.getName() + " x " + id);
-        System.out.println(bl.listsToString());
-        System.out.print(bl.looger.toString());
+//        System.out.println(bl.listsToString());
+//        System.out.print(bl.looger.toString());
         System.out.println(" =>  (" + r.size() + ")" + r.toString());
         bl.looger = null;
         return r;
