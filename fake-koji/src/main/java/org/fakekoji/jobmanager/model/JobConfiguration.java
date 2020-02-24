@@ -1,22 +1,22 @@
 package org.fakekoji.jobmanager.model;
 
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 public class JobConfiguration {
 
-    private final Map<String, PlatformConfig> platforms;
+    private final List<PlatformConfig> platforms;
 
     public JobConfiguration() {
-        platforms = Collections.emptyMap();
+        platforms = Collections.emptyList();
     }
 
-    public JobConfiguration(Map<String, PlatformConfig> platforms) {
-        this.platforms = platforms != null ? platforms : Collections.emptyMap();
+    public JobConfiguration(List<PlatformConfig> platforms) {
+        this.platforms = platforms != null ? platforms : Collections.emptyList();
     }
 
-    public Map<String, PlatformConfig> getPlatforms() {
+    public List<PlatformConfig> getPlatforms() {
         return platforms;
     }
 

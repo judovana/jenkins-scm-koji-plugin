@@ -97,21 +97,21 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         return jobBuilder.getJobs();
     }
 
-    private BiConsumer<String, BuildPlatformConfig> getBuildPlatformConsumer() {
-        return ManagementUtils.managementBiConsumerWrapper(
-                (String id, BuildPlatformConfig config) -> {
-                    jobBuilder.setPlatform(id);
+    private Consumer<BuildPlatformConfig> getBuildPlatformConsumer() {
+        return ManagementUtils.managementConsumerWrapper(
+                (BuildPlatformConfig config) -> {
+                    jobBuilder.setPlatform(config.getId());
                     config.getVariants().forEach(getVariantsConsumer());
                     jobBuilder.resetPlatform();
                 }
         );
     }
 
-    private BiConsumer<String, PlatformConfig> getPlatformsConsumer() {
-        return ManagementUtils.managementBiConsumerWrapper(
-                (String platformId, PlatformConfig platformConfig) -> {
+    private Consumer<PlatformConfig> getPlatformsConsumer() {
+        return ManagementUtils.managementConsumerWrapper(
+                (PlatformConfig platformConfig) -> {
                     jobBuilder.setPlatformProvider(platformConfig.getProvider());
-                    jobBuilder.setPlatform(platformId);
+                    jobBuilder.setPlatform(platformConfig.getId());
                     platformConfig.getTasks().forEach(getTasksConsumer());
                     jobBuilder.resetPlatform();
                 }

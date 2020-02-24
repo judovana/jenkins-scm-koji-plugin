@@ -1,12 +1,16 @@
 import React from "react"
 
 import { Tooltip, IconButton, Dialog, Button, DialogContent, DialogActions } from "@material-ui/core"
-import { Add } from "@material-ui/icons"
+import { Add, Check } from "@material-ui/icons"
 
 import { Item } from "../../stores/model"
 
+interface AddItem extends Item {
+    marked?: boolean
+}
+
 interface Props {
-    items: Item[]
+    items: AddItem[]
     label: string
     onAdd: (id: string) => void
 }
@@ -28,14 +32,15 @@ const AddComponent: React.FC<Props> = ({ items, label, onAdd }) => {
         >
             <DialogContent dividers>
                 {
-                    items.map(item => (
+                    items.map(({id, marked}) => (
                         <Button
-                            key={item.id}
+                            endIcon={marked && <Check />}
+                            key={id}
                             onClick={() => {
-                                onAdd(item.id)
+                                onAdd(id)
                                 closeDialog()
                                 }}>
-                            {item.id}
+                            {id}
                         </Button>
                     ))
                 }

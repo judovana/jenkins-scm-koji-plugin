@@ -359,23 +359,23 @@ public class MatrixGenerator {
         for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll())) {
             if (project instanceof JDKTestProject) {
                 TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
-                Set<Map.Entry<String, BuildPlatformConfig>> buildPlatformConfig = jc.getPlatforms().entrySet();
-                for (Map.Entry<String, BuildPlatformConfig> bpce : buildPlatformConfig) {
-                    TaskConfig tc = new TaskConfig(bpce.getValue().getVariants());
+                List<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
+                for (BuildPlatformConfig bpce : buildPlatformConfig) {
+                    TaskConfig tc = new TaskConfig(bpce.getVariants());
                     Map<String, TaskConfig> taskConfigs = new HashMap<>();
                     taskConfigs.put(null, tc);
                     for (Map.Entry<String, TaskConfig> btce : taskConfigs.entrySet()) {
                         for (VariantsConfig bvc : btce.getValue().getVariants()) {
-                            checkAndIterateBuild(bs, ts, counter, project, bpce.getKey(), null, btce, bvc);
+                            checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), null, btce, bvc);
                         }
                     }
                 }
             } else if (project instanceof JDKProject) {
                 JobConfiguration jc = ((JDKProject) project).getJobConfiguration();
-                for (Map.Entry<String, PlatformConfig> bpce : jc.getPlatforms().entrySet()) {
-                    for (Map.Entry<String, TaskConfig> btce : bpce.getValue().getTasks().entrySet()) {
+                for (PlatformConfig bpce : jc.getPlatforms()) {
+                    for (Map.Entry<String, TaskConfig> btce : bpce.getTasks().entrySet()) {
                         for (VariantsConfig bvc : btce.getValue().getVariants()) {
-                            checkAndIterateBuild(bs, ts, counter, project, bpce.getKey(), bpce.getValue().getProvider(), btce, bvc);
+                            checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), bpce.getProvider(), btce, bvc);
                         }
                     }
                 }
@@ -423,11 +423,11 @@ public class MatrixGenerator {
 
     private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce,
             VariantsConfig bvc, String tmpBuildIdForSimpleTextIdentification) {
-        for (Map.Entry<String, PlatformConfig> tpce : bvc.getPlatforms().entrySet()) {
-            for (Map.Entry<String, TaskConfig> ttce : tpce.getValue().getTasks().entrySet()) {
+        for (PlatformConfig tpce : bvc.getPlatforms()) {
+            for (Map.Entry<String, TaskConfig> ttce : tpce.getTasks().entrySet()) {
                 for (VariantsConfig tvc : ttce.getValue().getVariants()) {
-                    String[] testOsAarch = tpce.getKey().split("\\.");
-                    String testProvider = tpce.getValue().getProvider();
+                    String[] testOsAarch = tpce.getId().split("\\.");
+                    String testProvider = tpce.getProvider();
                     String ttask = ttce.getKey();
                     Collection<String> testVars = tvc.getMap().values();
                     String fullTest = "" +

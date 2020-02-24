@@ -25,7 +25,7 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
     const project = useLocalStore<JDKTestProject>(() => ({
         buildProviders: [],
         id: "",
-        jobConfiguration: { platforms: {} },
+        jobConfiguration: { platforms: [] },
         product: {
             jdk: "",
             packageName: ""

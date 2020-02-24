@@ -73,19 +73,19 @@ public class TaskVariant implements Comparable<TaskVariant> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof TaskVariant)) return false;
-        TaskVariant category = (TaskVariant) o;
-        return order == category.order &&
-                Objects.equals(id, category.id) &&
-                Objects.equals(label, category.label) &&
-                type == category.type &&
-                Objects.equals(defaultValue, category.defaultValue) &&
-                Objects.equals(variants, category.variants) &&
-                supportsSubpackages == category.supportsSubpackages;
+        TaskVariant that = (TaskVariant) o;
+        return order == that.order &&
+                supportsSubpackages == that.supportsSubpackages &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(label, that.label) &&
+                type == that.type &&
+                Objects.equals(defaultValue, that.defaultValue) &&
+                Objects.equals(variants, that.variants);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, label, type, order, variants);
+        return Objects.hash(id, label, type, defaultValue, order, variants, supportsSubpackages);
     }
 
     @Override

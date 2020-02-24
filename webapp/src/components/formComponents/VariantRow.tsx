@@ -25,14 +25,15 @@ const VariantRow: React.FC<VariantRowProps> = props => {
     return useObserver(() => {
 
         const { config, treeID, onDelete, projectType, type } = props
-        const { taskVariantsMap} = configStore
+        const { taskVariantsMap, platforms } = configStore
 
-        const onPlatformDelete = (id: string): void => {
-            delete config.platforms![id]
+        const onPlatformDelete = (index: number): void => {
+            config.platforms!.splice(index, 1)
         }
-
-        const unselectedPlatforms = config.platforms && type === "BUILD" && configStore.platforms
-            .filter(platform => !config.platforms![platform.id])
+        const selectedPlatformsIds =
+            config.platforms &&
+            type === "BUILD" &&
+            config.platforms.map(platform => platform.id)
 
         const cell = (
             <div style={{ display: "flex", flexDirection: "row" }}>
@@ -53,14 +54,18 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                     )
                 })}
                 {
-                    unselectedPlatforms && <AddComponent
+                    selectedPlatformsIds && <AddComponent
                         label={`Add test platform`}
-                        items={unselectedPlatforms}
-                        onAdd={(taskId) => {
+                        items={platforms
+                            .map(({id}) => ({
+                                id,
+                                marked: selectedPlatformsIds.includes(id)
+                            }))}
+                        onAdd={id => {
                             if (!config.platforms) {
-                                config.platforms = {}
+                                config.platforms = []
                             }
-                            config.platforms[taskId] = { tasks: {} }
+                            config.platforms.push({ id, tasks: {} })
                         }} />
                 }
             </div>
@@ -83,13 +88,12 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                     </TableCell>
                 </TableRow>
                 {type === "BUILD" && config.platforms && Object.entries(config.platforms)
-                    .map(([id, config]) =>
+                    .map(([id, config], index) =>
                         <PlatformRow
                             config={config}
-                            id={id}
                             key={treeID + id}
                             treeID={treeID + id}
-                            onDelete={onPlatformDelete}
+                            onDelete={() => onPlatformDelete(index)}
                             projectType={projectType}
                             type="TEST"
                         />)}

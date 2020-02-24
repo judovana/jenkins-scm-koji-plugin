@@ -38,10 +38,11 @@ export type ProjectType = "JDK_PROJECT" | "JDK_TEST_PROJECT"
 
 
 export interface JobConfig {
-    platforms: { [id: string]: PlatformConfig };
+    platforms: PlatformConfig[]
 }
 
 export interface PlatformConfig {
+    id: string
     tasks?: { [id: string]: TaskConfig }
     provider?: string
     variants?: VariantsConfig[]
@@ -53,7 +54,7 @@ export interface TaskConfig {
 
 export interface VariantsConfig {
     map: { [key: string]: string };
-    platforms?: { [id: string]: PlatformConfig };
+    platforms?: PlatformConfig[]
 }
 
 export interface Task extends Item {

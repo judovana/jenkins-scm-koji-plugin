@@ -1,8 +1,8 @@
 package org.fakekoji.model;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class TaskVariantValue {
 
@@ -45,12 +45,12 @@ public class TaskVariantValue {
         return label;
     }
 
-    public List<String> getSubpackageBlacklist() {
-        return subpackageBlacklist == null ? Collections.emptyList() : subpackageBlacklist;
+    public Optional<List<String>> getSubpackageBlacklist() {
+        return Optional.ofNullable(subpackageBlacklist);
     }
 
-    public List<String> getSubpackageWhitelist() {
-        return subpackageWhitelist == null ? Collections.emptyList() : subpackageWhitelist;
+    public Optional<List<String>> getSubpackageWhitelist() {
+        return Optional.ofNullable(subpackageWhitelist);
     }
 
     @Override
