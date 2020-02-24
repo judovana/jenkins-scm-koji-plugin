@@ -956,6 +956,7 @@ public class OToolServiceRun {
         private final List<String> blackList;
         private final List<String> whiteList;
         private final String name;
+        public StringBuilder looger;
 
         public String getName() {
             return name;
@@ -1001,11 +1002,17 @@ public class OToolServiceRun {
         public List<String> removeBlacklisted(List<String> s) {
             List<String> r = new ArrayList<>(s);
             if (isSkipped(blackList)) {
+                if (looger!=null){
+                    looger.append(s.size() + " allowed by missing balcklist \n");
+                }
                 return r;
             }
             for (String w : blackList) {
                 for (int i = 0; i < r.size(); i++) {
                     if (r.get(i).matches(w)) {
+                        if (looger!=null){
+                            looger.append(r.get(i) + " removed by "+ w+"\n");
+                        }
                         r.remove(i);
                         i--;
                     }
@@ -1020,6 +1027,9 @@ public class OToolServiceRun {
 
         public List<String> allowJustWhitelisted(List<String> s) {
             if (isSkipped(whiteList)) {
+                if (looger!=null){
+                    looger.append(s.size() + " allowed by missing whitelist \n");
+                }
                 return new ArrayList<>(s);
             }
             Set<String> r = new HashSet<>(s.size());
@@ -1027,6 +1037,9 @@ public class OToolServiceRun {
                 for (String w : whiteList) {
                     if (s.get(i).matches(w)) {
                         r.add(s.get(i));
+                        if (looger!=null){
+                            looger.append(s.get(i) + " allowed by "+ w+"\n");
+                        }
                     }
                 }
             }
@@ -1040,6 +1053,11 @@ public class OToolServiceRun {
         public List<String> match(List<String> s) {
             //first balcklist, and then whitelist
             return allowJustWhitelisted(removeBlacklisted(s));
+        }
+
+        public String listsToString() {
+            return "  B: " + blackList + "\n"
+                    + "  W: " + whiteList;
         }
     }
 
@@ -1126,7 +1144,7 @@ public class OToolServiceRun {
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
             new String[]{".*windows.*"},
-            new String[]{".*-jre-headless.*"});
+            new String[]{".*-headless.*"});
     BlackWhiteLister allDebugRelease = new BlackWhiteLister("allDebugRelease", new String[]{}, new String[]{});
     BlackWhiteLister release = new BlackWhiteLister("release",
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
@@ -1142,14 +1160,14 @@ public class OToolServiceRun {
     BlackWhiteLister win64ZipsLists = new BlackWhiteLister("win64zips",
             new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", ".*\\.json$", ".*(redhat.windows|windows.redhat).x86.zip$"},
             new String[]{".*x86_64.zip$", ".*static.*"});
-    BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite",
-            new String[]{".*-debuginfo-.*"},
+    BlackWhiteLister nonDebuginfoSuite = new BlackWhiteLister("nonDebuginfoSuite",
+            new String[]{".*-debuginfo-.*", ".*-debugsource-.*"},
             new String[]{});
-    BlackWhiteLister nonDebuginfoSuite = new BlackWhiteLister("nonDebuginfoSuite", new String[]{}, new String[]{});
+    BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite", new String[]{}, new String[]{});
 
-    BlackWhiteLister[] jresdk = new BlackWhiteLister[]{sdk, jre, jreHeadless};
+    BlackWhiteLister[] jresdk = new BlackWhiteLister[]{jreHeadless, jre, sdk};
     BlackWhiteLister[] debugMode = new BlackWhiteLister[]{/*allDebugRelease unused now,*/ release, fasdebug, slowdebug};
-    BlackWhiteLister[] suites = new BlackWhiteLister[]{debuginfoSuite, nonDebuginfoSuite};
+    BlackWhiteLister[] suites = new BlackWhiteLister[]{nonDebuginfoSuite, debuginfoSuite};
 
     @Test
     public void regexgame() {
@@ -1188,11 +1206,13 @@ public class OToolServiceRun {
     }
 
     private List<String> checkMatch(BlackWhiteLister bl, List<String> orig, String id) {
+        bl.looger = new StringBuilder();
         List<String> r = bl.match(orig);
         System.out.println(" ** " + bl.getName() + " x " + id);
-        //System.out.println("  B: " + bl.blackList);
-        //System.out.println("  W: " + bl.whiteList);
-        System.out.println(" =>  " + r.toString());
+        System.out.println(bl.listsToString());
+        System.out.print(bl.looger.toString());
+        System.out.println(" =>  ("+r.size()+")" + r.toString());
+        bl.looger = null;
         return r;
     }
 }
