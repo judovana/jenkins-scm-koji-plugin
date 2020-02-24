@@ -1122,7 +1122,7 @@ public class OToolServiceRun {
             new String[]{".*-jre-.*windows.*"},
             new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[b\\d\\.\\-]{3,}windows.*"},
+            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*"},
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
             new String[]{".*windows.*"},
@@ -1132,15 +1132,15 @@ public class OToolServiceRun {
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
             new String[]{""});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}windows.*"},
+            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*"},
             new String[]{".*-fastdebug-.*"});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}windows.*"},
+            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*"},
             new String[]{".*-slowdebug-.*", ".*-debug-.*"});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
     BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
-    BlackWhiteLister winZipsLists = new BlackWhiteLister("winzips",
-            new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", ".*\\.json$"},
+    BlackWhiteLister win64ZipsLists = new BlackWhiteLister("win64zips",
+            new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", ".*\\.json$", ".*(redhat.windows|windows.redhat).x86.zip$"},
             new String[]{".*x86_64.zip$", ".*static.*"});
     BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite",
             new String[]{".*-debuginfo-.*"},
@@ -1158,7 +1158,8 @@ public class OToolServiceRun {
                 for (BlackWhiteLister d : debugMode) {
                     for (BlackWhiteLister s : suites) {
                         BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, containersLists);
-                        checkMatch(bl, e.getValue(), e.getKey());
+                        List<String> r = checkMatch(bl, e.getValue(), e.getKey());
+                        Assert.assertTrue(r.size() >= 0 && r.size() <= 1);
                     }
                 }
             }
@@ -1167,8 +1168,9 @@ public class OToolServiceRun {
             for (BlackWhiteLister j : jresdk) {
                 for (BlackWhiteLister d : debugMode) {
                     for (BlackWhiteLister s : suites) {
-                        BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, winZipsLists);
-                        checkMatch(bl, e.getValue(), e.getKey());
+                        BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, win64ZipsLists);
+                        List<String> r = checkMatch(bl, e.getValue(), e.getKey());
+                        Assert.assertTrue(r.size() >= 0 && r.size() <= 1);
                     }
                 }
             }
@@ -1185,11 +1187,12 @@ public class OToolServiceRun {
         }
     }
 
-    private void checkMatch(BlackWhiteLister bl, List<String> orig, String id) {
+    private List<String> checkMatch(BlackWhiteLister bl, List<String> orig, String id) {
         List<String> r = bl.match(orig);
         System.out.println(" ** " + bl.getName() + " x " + id);
         //System.out.println("  B: " + bl.blackList);
         //System.out.println("  W: " + bl.whiteList);
         System.out.println(" =>  " + r.toString());
+        return r;
     }
 }
