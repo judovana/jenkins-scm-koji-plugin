@@ -1140,11 +1140,11 @@ public class JenkinsJobTemplateBuilderTest {
         final List<String> expectedBlacklist = new ArrayList<>();
         expectedBlacklist.addAll(blacklist);
         expectedBlacklist.addAll(testTask.getRpmLimitation().getBlacklist());
-        expectedBlacklist.addAll(release.getSubpackageBlacklist());
+        expectedBlacklist.addAll(release.getSubpackageBlacklist().get());
         final List<String> expectedWhitelist = new ArrayList<>();
         expectedWhitelist.addAll(whitelist);
         expectedWhitelist.addAll(testTask.getRpmLimitation().getWhitelist());
-        expectedWhitelist.addAll(release.getSubpackageWhitelist());
+        expectedWhitelist.addAll(release.getSubpackageWhitelist().get());
 
         final String expectedTemplate =
                 "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +

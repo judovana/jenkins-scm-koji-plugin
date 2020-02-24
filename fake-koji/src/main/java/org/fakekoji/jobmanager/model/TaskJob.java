@@ -108,6 +108,22 @@ public abstract class TaskJob extends Job {
                 Objects.equals(scriptsRoot, taskJob.scriptsRoot);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                super.hashCode(),
+                platformProvider,
+                projectName,
+                product,
+                jdkVersion,
+                buildProviders,
+                task,
+                platform,
+                variants,
+                scriptsRoot
+        );
+    }
+
     List<OToolVariable> getExportedVariables() {
         final List<OToolVariable> defaultVariables = Arrays.asList(
                 new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),

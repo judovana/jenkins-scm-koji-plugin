@@ -2,6 +2,7 @@ package org.fakekoji.model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -75,5 +76,23 @@ public class OToolVariable {
 
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OToolVariable)) return false;
+        OToolVariable that = (OToolVariable) o;
+        return commentedOut == that.commentedOut &&
+                exported == that.exported &&
+                defaultPrefix == that.defaultPrefix &&
+                Objects.equals(comment, that.comment) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(comment, commentedOut, exported, defaultPrefix, name, value);
     }
 }

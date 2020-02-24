@@ -110,7 +110,7 @@ public class Task implements  Comparable<Task> {
         Task task = (Task) o;
         return Objects.equals(id, task.id) &&
                 Objects.equals(script, task.script) &&
-                Objects.equals(type, task.type) &&
+                type == task.type &&
                 Objects.equals(scmPollSchedule, task.scmPollSchedule) &&
                 machinePreference == task.machinePreference &&
                 Objects.equals(productLimitation, task.productLimitation) &&

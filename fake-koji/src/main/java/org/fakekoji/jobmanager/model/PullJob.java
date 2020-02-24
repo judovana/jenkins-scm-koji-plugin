@@ -60,7 +60,20 @@ public class PullJob extends Job {
         return Objects.equals(projectName, pullJob.projectName) &&
                 Objects.equals(product, pullJob.product) &&
                 Objects.equals(jdkVersion, pullJob.jdkVersion) &&
-                Objects.equals(repositoriesRoot, pullJob.repositoriesRoot);
+                Objects.equals(repositoriesRoot, pullJob.repositoriesRoot) &&
+                Objects.equals(scriptsRoot, pullJob.scriptsRoot);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                super.hashCode(),
+                projectName,
+                product,
+                jdkVersion,
+                repositoriesRoot,
+                scriptsRoot
+        );
     }
 
     @Override

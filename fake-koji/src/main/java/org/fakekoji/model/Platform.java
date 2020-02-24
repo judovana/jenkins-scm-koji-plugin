@@ -96,15 +96,18 @@ public class Platform implements  Comparable<Platform> {
         return variables;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Platform)) return false;
         Platform platform = (Platform) o;
-        return Objects.equals(os, platform.os) &&
+        return Objects.equals(id, platform.id) &&
+                Objects.equals(os, platform.os) &&
                 Objects.equals(version, platform.version) &&
                 Objects.equals(versionNumber, platform.versionNumber) &&
                 Objects.equals(architecture, platform.architecture) &&
+                Objects.equals(kojiArch, platform.kojiArch) &&
                 Objects.equals(providers, platform.providers) &&
                 Objects.equals(vmName, platform.vmName) &&
                 Objects.equals(tags, platform.tags) &&
@@ -113,7 +116,18 @@ public class Platform implements  Comparable<Platform> {
 
     @Override
     public int hashCode() {
-        return Objects.hash(os, version,versionNumber, architecture, vmName, tags, variables);
+        return Objects.hash(
+                id,
+                os,
+                version,
+                versionNumber,
+                architecture,
+                kojiArch,
+                providers,
+                vmName,
+                tags,
+                variables
+        );
     }
 
     @Override

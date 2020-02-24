@@ -164,6 +164,7 @@ public class TestJob extends TaskJob {
                             .values()
                             .stream()
                             .map(TaskVariantValue::getSubpackageBlacklist)
+                            .map(list -> list.orElse(Collections.emptyList()))
                             .flatMap(List::stream)
                             .collect(Collectors.toList())
             )
@@ -178,6 +179,7 @@ public class TestJob extends TaskJob {
                             .values()
                             .stream()
                             .map(TaskVariantValue::getSubpackageWhitelist)
+                            .map(list -> list.orElse(Collections.emptyList()))
                             .flatMap(List::stream)
                             .collect(Collectors.toList())
             )
@@ -299,7 +301,22 @@ public class TestJob extends TaskJob {
         if (!(o instanceof TestJob)) return false;
         if (!super.equals(o)) return false;
         TestJob testJob = (TestJob) o;
-        return Objects.equals(buildPlatform, testJob.buildPlatform) &&
-                Objects.equals(buildVariants, testJob.buildVariants);
+        return projectType == testJob.projectType &&
+                Objects.equals(buildPlatform, testJob.buildPlatform) &&
+                Objects.equals(buildVariants, testJob.buildVariants) &&
+                Objects.equals(projectSubpackageBlacklist, testJob.projectSubpackageBlacklist) &&
+                Objects.equals(projectSubpackageWhitelist, testJob.projectSubpackageWhitelist);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                super.hashCode(),
+                projectType,
+                buildPlatform,
+                buildVariants,
+                projectSubpackageBlacklist,
+                projectSubpackageWhitelist
+        );
     }
 }
