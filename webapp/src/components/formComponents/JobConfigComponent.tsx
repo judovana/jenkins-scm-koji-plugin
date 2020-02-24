@@ -19,23 +19,20 @@ const JobConfigComponent: React.FC<Props> = props => {
 
     return useObserver(() => {
         const { jobConfig, projectType } = props
-
-        const onPlatformDelete = (id: string): void => {
-            delete jobConfig.platforms[id]
+        const platformConfigs = jobConfig.platforms
+        const onPlatformDelete = (index: number): void => {
+            platformConfigs.splice(index, 1)
         }
 
         const onPlatformAdd = (id: string) => {
             if (projectType === "JDK_PROJECT") {
-                platformConfigs[id] = { tasks: {} }
+                platformConfigs.push({ id, tasks: {} })
             } else if (projectType === "JDK_TEST_PROJECT") {
-                platformConfigs[id] = { variants: [] }
+                platformConfigs.push({ id, variants: [] })
             }
         }
-
-        const platformConfigs = jobConfig.platforms
-
-        const unselectedPlatforms = configStore!.platforms
-            .filter(platform => !platformConfigs[platform.id])
+        const selectedPlatformsIds = platformConfigs.map(platform => platform.id)
+        const { platforms } = configStore
 
         return (
             <div>
@@ -47,7 +44,11 @@ const JobConfigComponent: React.FC<Props> = props => {
                                     {`build platform`}
                                     <AddComponent
                                         label={`Add build platform`}
-                                        items={unselectedPlatforms}
+                                        items={platforms
+                                            .map(({id}) => ({
+                                                id,
+                                                marked: selectedPlatformsIds.includes(id)
+                                            }))}
                                         onAdd={onPlatformAdd} />
                                 </span>
                             </TableCell>
@@ -60,13 +61,12 @@ const JobConfigComponent: React.FC<Props> = props => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {Object.entries(platformConfigs).flatMap(([id, config]) =>
+                        {platformConfigs.map((config, index) =>
                             <PlatformRow
                                 config={config}
-                                id={id}
-                                key={id}
-                                treeID={id}
-                                onDelete={onPlatformDelete}
+                                key={index}
+                                treeID={index.toString()}
+                                onDelete={() => onPlatformDelete(index)}
                                 projectType={projectType}
                                 type={"BUILD"}
                             />)}

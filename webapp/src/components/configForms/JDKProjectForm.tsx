@@ -23,7 +23,7 @@ const JDKProjectForm: React.FC<Props> = props => {
     const jdkProject = useLocalStore<JDKProject>(() => ({
         buildProviders: [],
         id: "",
-        jobConfiguration: { platforms: {} },
+        jobConfiguration: { platforms: [] },
         product: {
             jdk: "",
             packageName: ""

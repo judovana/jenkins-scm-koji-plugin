@@ -50,7 +50,7 @@ const TaskRow: React.FC<TaskRowProps> = props => {
                     configStore.taskVariants,
                     taskVariant => taskVariant.type === type
                 ),
-                platforms: (type === "BUILD" && {}) || undefined
+                platforms: (type === "BUILD" && []) || undefined
             })
         }
 

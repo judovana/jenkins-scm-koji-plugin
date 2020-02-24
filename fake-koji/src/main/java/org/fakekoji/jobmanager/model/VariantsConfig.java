@@ -1,34 +1,35 @@
 package org.fakekoji.jobmanager.model;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public class VariantsConfig {
 
     private final Map<String, String> map;
-    private final Map<String, PlatformConfig> platforms;
+    private final List<PlatformConfig> platforms;
 
     public VariantsConfig() {
         map = Collections.emptyMap();
-        platforms = Collections.emptyMap();
+        platforms = Collections.emptyList();
     }
 
     public VariantsConfig(Map<String, String> map) {
         this.map = map != null ? map : Collections.emptyMap();
-        this.platforms = Collections.emptyMap();
+        this.platforms = Collections.emptyList();
     }
 
-    public VariantsConfig(Map<String, String> map, Map<String, PlatformConfig> platforms) {
+    public VariantsConfig(Map<String, String> map, List<PlatformConfig> platforms) {
         this.map = map != null ? map : Collections.emptyMap();
-        this.platforms = platforms != null ? platforms : Collections.emptyMap();
+        this.platforms = platforms != null ? platforms : Collections.emptyList();
     }
 
     public Map<String, String> getMap() {
         return map;
     }
 
-    public Map<String, PlatformConfig> getPlatforms() {
+    public List<PlatformConfig> getPlatforms() {
         return platforms;
     }
 

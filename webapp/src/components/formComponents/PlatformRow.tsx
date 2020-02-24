@@ -13,9 +13,8 @@ import createTaskVariantsMap from "../../utils/createVariantMap";
 
 type PlatformRowProps = {
     config: PlatformConfig
-    id: string
     treeID: string
-    onDelete: (id: string) => void
+    onDelete: () => void
     projectType: ProjectType
     type: TaskType
 
@@ -24,7 +23,8 @@ type PlatformRowProps = {
 const PlatformRow: React.FC<PlatformRowProps> = props => {
 
     const { configStore } = useStores()
-    const platform = configStore.getPlatform(props.id)
+
+    const platform = configStore.getPlatform(props.config.id)
 
     React.useEffect(() => {
         if (platform && props.config.tasks && !props.config.provider) {
@@ -34,15 +34,12 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
     }, [platform, props.config.tasks, props.config.provider])
 
     return useObserver(() => {
-        const { id, config, treeID, onDelete, projectType, type } = props
-
-        const taskConfigs = config.tasks
-        const variantConfigs = config.variants
+        const { config, treeID, onDelete, projectType, type } = props
+        const { id, tasks: taskConfigs, variants: variantConfigs } = config
 
         if (!platform) {
             return null
         }
-
         const onTaskDelete = (id: string): void => {
             delete config.tasks![id]
         }
@@ -61,7 +58,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                     configStore.taskVariants,
                     taskVariant => taskVariant.type === type && taskVariant.supportsSubpackages
                 ),
-                platforms: (type === "BUILD" && {}) || undefined
+                platforms: (type === "BUILD" && []) || undefined
             })
         }
 
@@ -105,7 +102,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                     <TableCell></TableCell>
                     <TableCell></TableCell>
                     <TableCell>
-                        <IconButton onClick={() => onDelete(id)}>
+                        <IconButton onClick={onDelete}>
                             <Delete />
                         </IconButton>
                     </TableCell>
