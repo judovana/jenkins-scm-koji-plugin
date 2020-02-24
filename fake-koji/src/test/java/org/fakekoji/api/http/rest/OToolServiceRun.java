@@ -1002,7 +1002,7 @@ public class OToolServiceRun {
         public List<String> removeBlacklisted(List<String> s) {
             List<String> r = new ArrayList<>(s);
             if (isSkipped(blackList)) {
-                if (looger!=null){
+                if (looger != null) {
                     looger.append(s.size() + " allowed by missing balcklist \n");
                 }
                 return r;
@@ -1010,8 +1010,8 @@ public class OToolServiceRun {
             for (String w : blackList) {
                 for (int i = 0; i < r.size(); i++) {
                     if (r.get(i).matches(w)) {
-                        if (looger!=null){
-                            looger.append(r.get(i) + " removed by "+ w+"\n");
+                        if (looger != null) {
+                            looger.append(r.get(i) + " removed by " + w + "\n");
                         }
                         r.remove(i);
                         i--;
@@ -1027,7 +1027,7 @@ public class OToolServiceRun {
 
         public List<String> allowJustWhitelisted(List<String> s) {
             if (isSkipped(whiteList)) {
-                if (looger!=null){
+                if (looger != null) {
                     looger.append(s.size() + " allowed by missing whitelist \n");
                 }
                 return new ArrayList<>(s);
@@ -1037,8 +1037,8 @@ public class OToolServiceRun {
                 for (String w : whiteList) {
                     if (s.get(i).matches(w)) {
                         r.add(s.get(i));
-                        if (looger!=null){
-                            looger.append(s.get(i) + " allowed by "+ w+"\n");
+                        if (looger != null) {
+                            looger.append(s.get(i) + " allowed by " + w + "\n");
                         }
                     }
                 }
@@ -1056,8 +1056,8 @@ public class OToolServiceRun {
         }
 
         public String listsToString() {
-            return "  B: " + blackList + "\n"
-                    + "  W: " + whiteList;
+            return "  B: [" + String.join(" " , blackList) + "]\n"
+                    + "  W: ["  + String.join(" " , whiteList)+ "]";
         }
     }
 
@@ -1170,6 +1170,30 @@ public class OToolServiceRun {
     BlackWhiteLister[] suites = new BlackWhiteLister[]{nonDebuginfoSuite, debuginfoSuite};
 
     @Test
+    //for paste to json file, you can copy the declarations itself
+    public void printListsFrOtoolGui() {
+        for (BlackWhiteLister j : jresdk) {
+            System.out.println(" ** " + j.getName());
+            System.out.println(j.listsToString());
+        }
+        for (BlackWhiteLister d : debugMode) {
+            System.out.println(" ** " + d.getName());
+            System.out.println(d.listsToString());
+        }
+        for (BlackWhiteLister s : suites) {
+            System.out.println(" ** " + s.getName());
+            System.out.println(s.listsToString());
+        }
+        System.out.println(" ** " + containersLists.getName());
+        System.out.println(containersLists.listsToString());
+        System.out.println(" ** " + win64ZipsLists.getName());
+        System.out.println(win64ZipsLists.listsToString());
+        System.out.println(" ** " + rpmsLists.getName());
+        System.out.println(rpmsLists.listsToString());
+
+    }
+
+    @Test
     public void regexgame() {
         for (Map.Entry<String, List<String>> e : containers.entrySet()) {
             for (BlackWhiteLister j : jresdk) {
@@ -1211,7 +1235,7 @@ public class OToolServiceRun {
         System.out.println(" ** " + bl.getName() + " x " + id);
         System.out.println(bl.listsToString());
         System.out.print(bl.looger.toString());
-        System.out.println(" =>  ("+r.size()+")" + r.toString());
+        System.out.println(" =>  (" + r.size() + ")" + r.toString());
         bl.looger = null;
         return r;
     }
