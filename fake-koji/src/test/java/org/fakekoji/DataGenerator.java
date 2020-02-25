@@ -2,6 +2,7 @@ package org.fakekoji;
 
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.BuildPlatformConfig;
 import org.fakekoji.jobmanager.model.JDKProject;
@@ -454,6 +455,7 @@ public class DataGenerator {
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.FileRequirements(
                         true,
+                        false,
                         Task.BinaryRequirements.NONE
                 ),
                 BUILD_POST_BUILD_TASK,
@@ -475,6 +477,7 @@ public class DataGenerator {
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.FileRequirements(
+                        false,
                         false,
                         Task.BinaryRequirements.BINARY
                 ),
@@ -504,6 +507,7 @@ public class DataGenerator {
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.FileRequirements(
                         false,
+                        false,
                         Task.BinaryRequirements.BINARY
                 ),
                 TEST_POST_BUILD_TASK,
@@ -526,6 +530,7 @@ public class DataGenerator {
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.FileRequirements(
                         true,
+                        false,
                         Task.BinaryRequirements.BINARY
                 ),
                 TEST_POST_BUILD_TASK,
@@ -548,6 +553,7 @@ public class DataGenerator {
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.FileRequirements(
                         true,
+                        false,
                         Task.BinaryRequirements.BINARIES
                 ),
                 TEST_POST_BUILD_TASK,
@@ -577,6 +583,7 @@ public class DataGenerator {
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.Limitation<>(Collections.emptyList(), null),
                 new Task.FileRequirements(
+                        false,
                         false,
                         Task.BinaryRequirements.BINARY
                 ),
@@ -1051,7 +1058,6 @@ public class DataGenerator {
     public static final String VERSION_2 = "version2";
     public static final String RELEASE_1 = "release1";
     public static final String RELEASE_2 = "re.l.ease.2";
-    public static final String SOURCES = "src";
 
     public static final List<String> notBuilt = Arrays.asList(
             "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.fastdebug.hotspot.f29.x86_64.tarxz",
@@ -1086,9 +1092,9 @@ public class DataGenerator {
                     final File releaseDir = new File(versionDir, releaseName);
                     releaseDir.mkdirs();
                     final String baseName = jdkVersion.getPackageNames().get(0) + '-' + version + '-' + releaseName + '.';
-                    final File srcDir = new File(releaseDir, SOURCES);
+                    final File srcDir = new File(releaseDir, JenkinsJobTemplateBuilder.SOURCES);
                     srcDir.mkdirs();
-                    final String srcName = baseName + SOURCES + SUFFIX;
+                    final String srcName = baseName + JenkinsJobTemplateBuilder.SOURCES + SUFFIX;
                     final File srcFile = new File(srcDir, srcName);
                     Files.write(srcFile.toPath(), srcName.getBytes());
                     if (!srcFile.setLastModified(timeStamp += 60000)) {

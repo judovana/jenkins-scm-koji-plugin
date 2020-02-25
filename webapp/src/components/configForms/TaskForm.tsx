@@ -26,7 +26,8 @@ const TaskForm: React.FC<TaskFormProps> = props => {
     const task = useLocalStore<Task>(() => ({
         fileRequirements: {
             binary: "NONE",
-            source: false
+            source: false,
+            noarch: false
         },
         id: "",
         machinePreference: "VM",

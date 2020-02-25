@@ -102,6 +102,9 @@ public class JenkinsJobTemplateBuilder {
     static final String OS_NAME_VAR = "OS_NAME";
     static final String OS_VERSION_VAR = "OS_VERSION";
 
+    public static final String SOURCES= "src";
+    public static final String NOARCH= "noarch";
+
     private String template;
     private final NamesProvider job;
 
@@ -175,7 +178,10 @@ public class JenkinsJobTemplateBuilder {
     public static String fillArch(Platform platform, Task.FileRequirements fileRequirements) {
         final List<String> archs = new LinkedList<>();
         if (fileRequirements.isSource()) {
-            archs.add("src");
+            archs.add(SOURCES);
+        }
+        if (fileRequirements.isNoarch()) {
+            archs.add(NOARCH);
         }
         switch (fileRequirements.getBinary()) {
             case BINARY:
@@ -192,7 +198,10 @@ public class JenkinsJobTemplateBuilder {
     public static String fillBuildPlatform(Platform platform, Task.FileRequirements fileRequirements) {
         final List<String> platforms = new LinkedList<>();
         if (fileRequirements.isSource()) {
-            platforms.add("src");
+            platforms.add(SOURCES);
+        }
+        if (fileRequirements.isNoarch()) {
+            platforms.add(NOARCH);
         }
         switch (fileRequirements.getBinary()) {
             case BINARY:

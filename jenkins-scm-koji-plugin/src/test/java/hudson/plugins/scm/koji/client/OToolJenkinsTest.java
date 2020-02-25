@@ -25,7 +25,7 @@ import java.util.Collections;
 import static org.fakekoji.DataGenerator.JDK_8_PACKAGE_NAME;
 import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
 import static org.fakekoji.DataGenerator.RELEASE_1;
-import static org.fakekoji.DataGenerator.SOURCES;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.SOURCES;
 import static org.fakekoji.DataGenerator.SUFFIX;
 import static org.fakekoji.DataGenerator.VERSION_1;
 import static org.junit.Assert.assertEquals;

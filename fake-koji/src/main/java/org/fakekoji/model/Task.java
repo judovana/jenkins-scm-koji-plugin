@@ -146,23 +146,28 @@ public class Task implements  Comparable<Task> {
     public static class FileRequirements {
 
         private final boolean source;
+        private final boolean noarch;
         private final BinaryRequirements binary;
 
         public FileRequirements() {
             source = false;
+            noarch = false;
             binary = null;
         }
 
-        public FileRequirements(
-                boolean source,
-                BinaryRequirements binary
+        public FileRequirements(boolean source, boolean noarch, BinaryRequirements binary
         ) {
             this.source = source;
+            this.noarch = noarch;
             this.binary = binary;
         }
 
         public boolean isSource() {
             return source;
+        }
+
+        public boolean isNoarch() {
+            return noarch;
         }
 
         public BinaryRequirements getBinary() {
@@ -175,6 +180,7 @@ public class Task implements  Comparable<Task> {
             if (!(o instanceof FileRequirements)) return false;
             FileRequirements that = (FileRequirements) o;
             return source == that.source &&
+                    noarch == that.noarch &&
                     binary == that.binary;
         }
 

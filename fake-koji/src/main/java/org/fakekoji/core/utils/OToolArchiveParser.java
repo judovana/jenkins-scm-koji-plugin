@@ -1,5 +1,6 @@
 package org.fakekoji.core.utils;
 
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.model.OToolArchive;
 
@@ -11,7 +12,6 @@ import java.util.stream.Collectors;
 public class OToolArchiveParser {
 
     private static final int NVR_MIN_LENGTH = 3;
-    private static final String SOURCES = "src";
 
     private final List<JDKProject> jdkProjects;
 
@@ -42,7 +42,7 @@ public class OToolArchiveParser {
             suffix = releaseSplit[releaseLength - 1];
             changeSet = releaseSplit[0];
             // begin to search for the project from the end, skip suffix and platform (can be of length 1 or 2)
-            final int archiveEnd = releaseLength - (releaseSplit[releaseLength - 2].equals(SOURCES) ? 3 : 4);
+            final int archiveEnd = releaseLength - (releaseSplit[releaseLength - 2].equals(JenkinsJobTemplateBuilder.SOURCES) ? 3 : 4);
             for (int i = archiveEnd; i > 0; i--) {
                 final String releasePart = releaseSplit[i];
                 if (jdkProjects.stream().anyMatch(jdkProject -> jdkProject.getId().equals(releasePart))) {

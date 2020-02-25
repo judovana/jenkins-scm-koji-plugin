@@ -5,6 +5,7 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolBuild;
@@ -44,7 +45,6 @@ public class BuildHelper {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private static final String BUILD_PLATFORM = "buildPlatform";
-    private static final String SOURCES = "src";
 
     private final File buildsRoot;
     private final GetBuildList params;
@@ -110,7 +110,7 @@ public class BuildHelper {
             final Supplier<Stream<File>> archiveRootStreamSupplier = () -> platforms.stream()
                     .map(archiveName -> new File(
                             buildRoot,
-                            archiveName.equals(SOURCES) ? archiveName : buildVariantString + '.' + archiveName
+                            archiveName.equals(JenkinsJobTemplateBuilder.SOURCES) ? archiveName : buildVariantString + '.' + archiveName
                     ));
 
             // check whether root exists and is a directory
