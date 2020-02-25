@@ -48,6 +48,8 @@ import java.util.stream.Stream;
 import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
+
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.core.utils.DirFilter;
 import org.fakekoji.core.utils.FileFileFilter;
@@ -416,7 +418,7 @@ public class FakeBuild {
         List<String> arches = getArches();
         Collections.sort(getArches());
         //primary case - the build have src, so we expect to build it in time onall arches
-        if (arches.contains("src")) {
+        if (arches.contains(JenkinsJobTemplateBuilder.SOURCES)) {
             boolean allBuilt = true; //warning! duplicated code with isBuilt!
             //there may be IO involved
             String[] thisOnesArches = getSupportedArches();
@@ -597,7 +599,7 @@ public class FakeBuild {
     }
 
     public boolean haveSrcs() {
-        File srcDir = new File(dir, "src");
+        File srcDir = new File(dir, JenkinsJobTemplateBuilder.SOURCES);
         if (srcDir.exists() && srcDir.isDirectory()) {
             File[] content = srcDir.listFiles();
             return content.length > 0 && content[0].getName().length() >= 5 && content[0].length() > 5;

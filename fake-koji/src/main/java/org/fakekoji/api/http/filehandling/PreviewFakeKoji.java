@@ -52,6 +52,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.server.JavaServer;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.ProjectMappingExceptions;
@@ -669,7 +670,7 @@ public class PreviewFakeKoji {
             String logsUrl = mainUrl + "/data/logs/" + rpm.getArch();
             String filename = rpm.getFilename("tarxz");
             String fileUrl = archedUrl + "/" + filename;
-            if (rpm.getArch().equals("src")) {
+            if (rpm.getArch().equals(JenkinsJobTemplateBuilder.SOURCES)) {
                 sourceSnapshot = "sources: <a href='" + fileUrl + "'>src snapshot</a> <a href='" + logsUrl + "'>hg incomming logs</a><br/>";
             } else {
                 r.append("<b>").append(rpm.getArch()).append("</b>: \n");

@@ -24,6 +24,10 @@ const FileRequirementsForm: React.FunctionComponent<Props> = (props) => {
             fileRequirements.source = value
         }
 
+        const onNoarchChange = (value: boolean) => {
+            fileRequirements.noarch = value
+        }
+
         return (
             <FormControl margin="normal">
                 <FormLabel>
@@ -34,6 +38,10 @@ const FileRequirementsForm: React.FunctionComponent<Props> = (props) => {
                         label="require sources"
                         onChange={onSourcesChange}
                         value={fileRequirements.source} />
+                    <Checkbox
+                        label="require noarch"
+                        onChange={onNoarchChange}
+                        value={fileRequirements.noarch} />
                     <Select
                         label={"binary requirements"}
                         onChange={onBinaryChange}

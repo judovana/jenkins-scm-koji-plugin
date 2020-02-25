@@ -148,7 +148,7 @@ public class JenkinsJobTemplateBuilderTest {
                 .buildKojiXmlRpcApiTemplate(
                         jdk8.getPackageNames().get(0),
                         vmPlatform,
-                        new Task.FileRequirements(false, Task.BinaryRequirements.BINARY),
+                        new Task.FileRequirements(false,false,  Task.BinaryRequirements.BINARY),
                         Arrays.asList("a", "b"),
                         Arrays.asList("c", "d")
                 ).prettyPrint();
@@ -175,7 +175,7 @@ public class JenkinsJobTemplateBuilderTest {
                 .buildKojiXmlRpcApiTemplate(
                         jdk8.getPackageNames().get(0),
                         vmPlatform,
-                        new Task.FileRequirements(false, Task.BinaryRequirements.BINARIES),
+                        new Task.FileRequirements(false, false, Task.BinaryRequirements.BINARIES),
                         Arrays.asList("a", "b"),
                         Arrays.asList("c", "d")
                 ).prettyPrint();
@@ -202,7 +202,7 @@ public class JenkinsJobTemplateBuilderTest {
                 .buildKojiXmlRpcApiTemplate(
                         jdk8.getPackageNames().get(0),
                         win,
-                        new Task.FileRequirements(false, Task.BinaryRequirements.BINARY),
+                        new Task.FileRequirements(false, false,  Task.BinaryRequirements.BINARY),
                         Arrays.asList("a", "b"),
                         Arrays.asList("c", "d")
                 ).prettyPrint();

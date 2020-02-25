@@ -5,6 +5,7 @@ import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.junit.Assert;
@@ -61,7 +62,7 @@ public class NewApiTests {
         final GetBuildList params = new GetBuildList(
                 DataGenerator.PROJECT_NAME_U,
                 "jvm=hotspot debugMode=release buildPlatform=f29.x86_64",
-                "src",
+                JenkinsJobTemplateBuilder.SOURCES,
                 false
         );
         List<Build> buildList = kojiDB.getBuildList(params);
@@ -83,7 +84,7 @@ public class NewApiTests {
         final GetBuildList params = new GetBuildList(
                 DataGenerator.PROJECT_NAME_U,
                 "jvm=hotspot debugMode=fastdebug buildPlatform=f29.x86_64",
-                "src",
+                JenkinsJobTemplateBuilder.SOURCES,
                 false
         );
         List<Build> buildList = kojiDB.getBuildList(params);
@@ -112,7 +113,7 @@ public class NewApiTests {
         final GetBuildList params = new GetBuildList(
                 DataGenerator.PROJECT_NAME_U,
                 "jvm=hotspot debugMode=slowdebug buildPlatform=f29.x86_64",
-                "src",
+                JenkinsJobTemplateBuilder.SOURCES,
                 false
         );
         List<Build> buildList = kojiDB.getBuildList(params);

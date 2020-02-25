@@ -78,6 +78,7 @@ export type BinaryRequirement = "NONE" | "BINARY" | "BINARIES"
 
 export interface FileRequirements {
     source: boolean;
+    noarch: boolean;
     binary: BinaryRequirement;
 }
 
