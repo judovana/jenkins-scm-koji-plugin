@@ -98,11 +98,11 @@ abstract class Spec {
         }
         Platform pl = platform;
         if (!viewFilter.arch && !viewFilter.os) {
-            pl = new Platform("??.?", "?","?", "?", "?", "", null, null, null, null);
+            pl = new Platform("??.?", "?","?", "?", "?", "", null, null, null, null, null, null);
         } else if (!viewFilter.arch) {
-            pl = new Platform(platform.getOs()+platform.getVersion()+".?", platform.getOs(), platform.getVersion(),platform.getVersionNumber(), "?", "", null, null, null, null);
+            pl = new Platform(platform.getOs()+platform.getVersion()+".?", platform.getOs(), platform.getVersion(),platform.getVersionNumber(), "?", "", null, null,null, null,  null, null);
         } else if (!viewFilter.os) {
-            pl = new Platform("??."+platform.getArchitecture(), "?", "?","?",  platform.getArchitecture(), "", null, null, null, null);
+            pl = new Platform("??."+platform.getArchitecture(), "?", "?","?",  platform.getArchitecture(), "", null, null, null, null,  null, null);
         }
         return TaskJob.getPlatformAndProviderString(pl, pr);
     }

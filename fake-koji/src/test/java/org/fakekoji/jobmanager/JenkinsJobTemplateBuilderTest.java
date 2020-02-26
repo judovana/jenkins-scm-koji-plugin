@@ -762,6 +762,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
                 "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
                 "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "export OTOOL_ystream=true"  + XML_NEW_LINE +
+                "export OTOOL_zstream=false" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +

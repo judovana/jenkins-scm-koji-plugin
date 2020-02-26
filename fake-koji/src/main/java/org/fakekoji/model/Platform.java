@@ -16,6 +16,8 @@ public class Platform implements  Comparable<Platform> {
     private final String kojiArch;
     private final List<Provider> providers;
     private final String vmName;
+    private final TestStableYZupdates testingYstream;
+    private final TestStableYZupdates stableZstream;
     private final List<String> tags;
     private final List<OToolVariable> variables;
 
@@ -30,6 +32,8 @@ public class Platform implements  Comparable<Platform> {
         providers = null;
         tags = null;
         variables = null;
+        testingYstream = null;
+        stableZstream = null;
     }
 
     public Platform(
@@ -41,6 +45,8 @@ public class Platform implements  Comparable<Platform> {
             String kojiArch,
             List<Provider> providers,
             String vmName,
+            TestStableYZupdates testingYstream,
+            TestStableYZupdates stableZstream,
             List<String> tags,
             List<OToolVariable> variables
     ) {
@@ -53,6 +59,8 @@ public class Platform implements  Comparable<Platform> {
         this.providers = providers;
         this.vmName = vmName;
         this.tags = tags;
+        this.testingYstream = testingYstream;
+        this.stableZstream = stableZstream;
         this.variables = variables;
     }
 
@@ -96,6 +104,13 @@ public class Platform implements  Comparable<Platform> {
         return variables;
     }
 
+    public TestStableYZupdates getStableZstream() {
+        return stableZstream;
+    }
+
+    public TestStableYZupdates getTestingYstream() {
+        return testingYstream;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -151,6 +166,18 @@ public class Platform implements  Comparable<Platform> {
     @Override
     public int compareTo(@NotNull Platform platform) {
         return this.getId().compareTo(platform.getId());
+    }
+
+    public void addZstreamVar(List<OToolVariable> defaultVariables) {
+        if (getStableZstream() != null && !getStableZstream().isNaN()){
+            defaultVariables.add(getStableZstream().toVar("zstream"));
+        }
+    }
+
+    public void addYstreamVar(List<OToolVariable> defaultVariables) {
+        if (getTestingYstream() != null && !getTestingYstream().isNaN()){
+            defaultVariables.add(getTestingYstream().toVar("ystream"));
+        }
     }
 
     public static class Provider {
@@ -211,6 +238,36 @@ public class Platform implements  Comparable<Platform> {
         }
     }
 
+    public enum TestStableYZupdates {
+        NaN("Nan"),
+        True("True"),
+        False("False");
+
+        private final String value;
+
+        TestStableYZupdates(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public boolean isNaN(){
+            return this.equals(NaN);
+        }
+
+        public OToolVariable toVar(String name) {
+            switch (this){
+                case True:
+                    return new OToolVariable(name, "true");
+                case False:
+                    return new OToolVariable(name, "false");
+            }
+            throw new RuntimeException("Unexportable value: "+this);
+        }
+    }
+
     public static Platform create(Platform platform) {
         return new Platform(
                 platform.os + platform.version + '.' + platform.getArchitecture(),
@@ -221,6 +278,8 @@ public class Platform implements  Comparable<Platform> {
                 platform.kojiArch,
                 platform.providers,
                 platform.vmName,
+                platform.testingYstream,
+                platform.stableZstream,
                 platform.tags,
                 platform.variables
         );

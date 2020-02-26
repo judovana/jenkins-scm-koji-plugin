@@ -1,12 +1,13 @@
 import React from "react"
 import { useLocalStore, useObserver } from "mobx-react"
 
-import { Platform, Item } from "../../stores/model"
+import { Platform, Item, TestStableYZupdates } from "../../stores/model"
 import TextInput from "../formComponents/TextInput"
 import { Button } from "@material-ui/core"
 import useStores from "../../hooks/useStores"
 import FormList from "../formComponents/FormList"
 import VariableForm from "../formComponents/VariableForm"
+import Select from "../formComponents/Select"
 
 interface Props {
     platformID?: string
@@ -27,6 +28,8 @@ const PlatformForm: React.FC<Props> = props => {
         version: "",
         versionNumber: "",
         vmName: "",
+        testingYstream: "NaN",
+        stableZstream: "NaN",
         variables: []
     }))
 
@@ -47,6 +50,8 @@ const PlatformForm: React.FC<Props> = props => {
         platform.version = _platform.version || ""
         platform.versionNumber = _platform.versionNumber || ""
         platform.vmName = _platform.vmName || ""
+        platform.testingYstream = _platform.testingYstream || "NaN"
+        platform.stableZstream = _platform.stableZstream || "NaN"
         platform.variables = _platform.variables || []
     })
 
@@ -78,6 +83,14 @@ const PlatformForm: React.FC<Props> = props => {
         platform!.tags = value.split(" ")
     }
 
+    const onStableZstreamChange = (value: string) => {
+        platform!.stableZstream = value as TestStableYZupdates
+    }
+
+    const onTestingYstreamChange = (value: string) => {
+        platform!.testingYstream = value as TestStableYZupdates
+    }
+
     const onSubmit = () => {
         const filter = (value: string) => value.trim() !== ""
         platform.tags = platform.tags.filter(filter)
@@ -93,6 +106,8 @@ const PlatformForm: React.FC<Props> = props => {
             version,
             versionNumber,
             vmName,
+            testingYstream,
+            stableZstream,
             variables
         } = platform
 
@@ -128,6 +143,16 @@ const PlatformForm: React.FC<Props> = props => {
                     label={"tags"}
                     onChange={onTagsChange}
                     value={tags.join(" ")} />
+                <Select
+                        label={"stable/zStream"}
+                        onChange={onStableZstreamChange}
+                        options={["NaN", "True", "False"]}
+                        value={stableZstream} />
+                <Select
+                        label={"testing/yStream"}
+                        onChange={onTestingYstreamChange}
+                        options={["NaN", "True", "False"]}
+                        value={testingYstream} />
                 <FormList
                     data={variables}
                     label="custom variables"

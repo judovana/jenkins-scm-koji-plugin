@@ -359,6 +359,8 @@ public class DataGenerator {
                 null,
                 Arrays.asList(getProvider()),
                 "rhel-x64",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
                 Collections.singletonList("el7-*"),
                 Collections.emptyList()
         ));
@@ -374,6 +376,8 @@ public class DataGenerator {
                 null,
                 Arrays.asList(getProvider()),
                 "rhel-x64",
+                Platform.TestStableYZupdates.True,
+                Platform.TestStableYZupdates.False,
                 Collections.singletonList("el7-*"),
                 Arrays.asList(
                         new OToolVariable(IS_RHEL_Z_STREAM, TRUE)
@@ -391,6 +395,8 @@ public class DataGenerator {
                 null,
                 Arrays.asList(getVMOnlyProvider()),
                 "f29-x64",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
                 Collections.singletonList("f29-*"),
                 Collections.emptyList()
         ));
@@ -406,6 +412,8 @@ public class DataGenerator {
                 null,
                 Arrays.asList(getHWOnlyProvider()),
                 "rhel8-aarch64",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
                 Collections.singletonList("el8-*"),
                 Collections.emptyList()
         ));
@@ -421,6 +429,8 @@ public class DataGenerator {
                 "win",
                 Arrays.asList(getProvider()),
                 "win-2019",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
                 Collections.singletonList("win2019-*"),
                 Collections.emptyList()
         ));
