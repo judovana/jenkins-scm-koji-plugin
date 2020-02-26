@@ -94,13 +94,14 @@ public class TestJob extends TaskJob {
     }
 
     public TestJob(
+            String testPlatformProvider,
             BuildJob buildJob,
             Task task,
             Platform platform,
             Map<TaskVariant, TaskVariantValue> variants
     ) {
         this(
-                buildJob.getPlatformProvider(),
+                testPlatformProvider,
                 buildJob.getProjectName(),
                 Project.ProjectType.JDK_PROJECT,
                 buildJob.getProduct(),

@@ -257,6 +257,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                             scriptsRoot
                     ) :
                     new TestJob(
+                            platformProvider,
                             buildJob,
                             testTask,
                             testPlatform,
