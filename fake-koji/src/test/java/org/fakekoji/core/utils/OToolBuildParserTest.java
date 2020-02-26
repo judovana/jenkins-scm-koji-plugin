@@ -21,9 +21,9 @@ public class OToolBuildParserTest {
     private static final List<JDKVersion> products = new ArrayList<>(DataGenerator.getJDKVersions());
 
     private static final List<JDKProject> jdkProjects = Arrays.asList(
-            new JDKProject("jdkProject1", null, null, null, null, null),
-            new JDKProject("jdkProject2", null, null, null, null, null),
-            new JDKProject("jdkProject3", null, null, null, null, null)
+            new JDKProject("jdkProject1", null, null, null, null, null, null),
+            new JDKProject("jdkProject2", null, null, null, null, null, null),
+            new JDKProject("jdkProject3", null, null, null, null, null, null)
     );
 
     private static OToolBuildParser parser = new OToolBuildParser(

@@ -8,6 +8,8 @@ import { Button, Chip, Box } from "@material-ui/core"
 import MultiSelect from "../formComponents/MultiSelect"
 import useStores from "../../hooks/useStores"
 import ProductSelectForm from "../formComponents/JDKVersionSelectForm"
+import FormList from "../formComponents/FormList"
+import VariableForm from "../formComponents/VariableForm"
 
 interface Props {
     jdkProjectID?: string
@@ -29,7 +31,8 @@ const JDKProjectForm: React.FC<Props> = props => {
             packageName: ""
         },
         type: "JDK_PROJECT",
-        url: ""
+        url: "",
+        variables: []
     }))
 
     React.useEffect(() => {
@@ -47,6 +50,7 @@ const JDKProjectForm: React.FC<Props> = props => {
         jdkProject.repoState = _jdkProject.repoState
         jdkProject.type = _jdkProject.type || "JDK_PROJECT"
         jdkProject.url = _jdkProject.url || ""
+        jdkProject.variables = _jdkProject.variables || []
     })
 
     const onIdChange = (value: string) => {
@@ -67,6 +71,8 @@ const JDKProjectForm: React.FC<Props> = props => {
 
     return useObserver(() => {
         const { buildProviders } = configStore
+
+        const { variables } = jdkProject
 
         return (
             <React.Fragment>
@@ -94,6 +100,11 @@ const JDKProjectForm: React.FC<Props> = props => {
                 <JobConfigComponent
                     jobConfig={jdkProject.jobConfiguration}
                     projectType={jdkProject.type}/>
+                 <FormList
+                      data={variables}
+                      label="custom variables"
+                      renderItem={item => <VariableForm variable={item} />}
+                />
                 <Button
                     onClick={onSubmit}
                     variant="contained">

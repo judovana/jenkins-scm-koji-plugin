@@ -2,6 +2,7 @@ export interface Project extends Item {
     buildProviders: string[]
     product: Product;
     type: ProjectType;
+    variables: Variable[]
 }
 
 export interface ProjectCategory {

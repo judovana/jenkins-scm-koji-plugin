@@ -712,7 +712,7 @@ public class DataGenerator {
                                 }}), VAGRANT
 
                         )))
-                )
+                ), null
         );
     }
 
@@ -831,7 +831,8 @@ public class DataGenerator {
                                             ));
                                         }}), VAGRANT
                         )))
-                ));
+                ), null
+        );
     }
 
     public static List<String> getSubpackageBlacklist() {
@@ -895,7 +896,7 @@ public class DataGenerator {
                                         )
                                 ))
                         )
-                )))
+                ))), null
         );
     }
 
