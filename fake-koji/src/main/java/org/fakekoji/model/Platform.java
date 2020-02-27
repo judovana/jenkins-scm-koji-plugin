@@ -126,6 +126,8 @@ public class Platform implements  Comparable<Platform> {
                 Objects.equals(providers, platform.providers) &&
                 Objects.equals(vmName, platform.vmName) &&
                 Objects.equals(tags, platform.tags) &&
+                Objects.equals(stableZstream, platform.stableZstream) &&
+                Objects.equals(testingYstream, platform.testingYstream) &&
                 Objects.equals(variables, platform.variables);
     }
 
@@ -141,6 +143,8 @@ public class Platform implements  Comparable<Platform> {
                 providers,
                 vmName,
                 tags,
+                stableZstream,
+                testingYstream,
                 variables
         );
     }
@@ -155,6 +159,8 @@ public class Platform implements  Comparable<Platform> {
                 ", providers='" + providers + '\'' +
                 ", vmName='" + vmName + '\'' +
                 ", tags=" + tags +
+                ", stableZstream=" + stableZstream +
+                ", testingYstream=" + testingYstream +
                 ", variables=" + variables +
                 '}';
     }
