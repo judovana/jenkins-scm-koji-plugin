@@ -4,21 +4,12 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.plugin.json.JavalinJackson;
-
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
-import org.fakekoji.jobmanager.ConfigManager;
-import org.fakekoji.jobmanager.JenkinsJobUpdater;
-import org.fakekoji.jobmanager.JobUpdater;
-import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagementResult;
-import org.fakekoji.jobmanager.manager.BuildProviderManager;
-import org.fakekoji.jobmanager.manager.PlatformManager;
-import org.fakekoji.jobmanager.manager.JDKVersionManager;
-import org.fakekoji.jobmanager.manager.TaskManager;
-import org.fakekoji.jobmanager.manager.TaskVariantManager;
+import org.fakekoji.jobmanager.*;
+import org.fakekoji.jobmanager.manager.*;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
@@ -29,13 +20,12 @@ import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
-import static io.javalin.apibuilder.ApiBuilder.path;
-import static io.javalin.apibuilder.ApiBuilder.get;
-
-import static org.fakekoji.core.AccessibleSettings.objectMapper;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static io.javalin.apibuilder.ApiBuilder.get;
+import static io.javalin.apibuilder.ApiBuilder.path;
+import static org.fakekoji.core.AccessibleSettings.objectMapper;
 
 public class OToolService {
 
@@ -76,7 +66,7 @@ public class OToolService {
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
                 + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
-                + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=true bos=true barch=true bprovider=false bproject=true bjdk=true bvars=true\n"
+                + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true \n";
     }
 
@@ -138,13 +128,13 @@ public class OToolService {
                     boolean tarch = notNullBoolean(context, "tarch", true);
                     boolean tprovider = notNullBoolean(context, "tprovider", false);
                     boolean tsuite = notNullBoolean(context, "tsuite", true);
-                    boolean tvars = notNullBoolean(context, "tvars", true);
+                    boolean tvars = notNullBoolean(context, "tvars", false);
                     boolean bos = notNullBoolean(context, "bos", true);
                     boolean barch = notNullBoolean(context, "barch", true);
                     boolean bprovider = notNullBoolean(context, "bprovider", false);
                     boolean bproject = notNullBoolean(context, "bproject", true);
                     boolean bjdk = notNullBoolean(context, "bjdk", true);
-                    boolean bvars = notNullBoolean(context, "bvars", true);
+                    boolean bvars = notNullBoolean(context, "bvars", false);
                     boolean dropRows = notNullBoolean(context, "dropRows", true);
                     boolean dropColumns = notNullBoolean(context, "dropColumns", true);
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
