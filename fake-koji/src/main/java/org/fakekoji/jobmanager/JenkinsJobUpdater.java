@@ -74,6 +74,7 @@ public class JenkinsJobUpdater implements JobUpdater {
 
     @Override
     public JobUpdateResults update(Platform platform) throws StorageException {
+        wakeUpJenkins();
         final Predicate<Job> platformJobPredicate = job ->
                 job instanceof TaskJob && ((TaskJob) job).getPlatform().getId().equals(platform.getId());
         final List<JobUpdateResult> jobsRewritten = update(platformJobPredicate, jobUpdateFunctionWrapper(getRewriteFunction()));
@@ -87,6 +88,7 @@ public class JenkinsJobUpdater implements JobUpdater {
 
     @Override
     public JobUpdateResults update(Task task) throws StorageException {
+        wakeUpJenkins();
         final Predicate<Job> taskJobPredicate = job ->
                 job instanceof TaskJob && ((TaskJob) job).getTask().getId().equals(task.getId());
         final List<JobUpdateResult> jobsRewritten = update(taskJobPredicate, jobUpdateFunctionWrapper(getRewriteFunction()));
@@ -96,6 +98,15 @@ public class JenkinsJobUpdater implements JobUpdater {
                 jobsRewritten,
                 Collections.emptyList()
         );
+    }
+
+    public static void wakeUpJenkins() {
+        try {
+            //ping the cli, to avoid first call sometimes to fail
+            JenkinsCliWrapper.getCli().listJobsToArray();
+        } catch (Throwable e) {
+            //ignoring
+        }
     }
 
     private List<JobUpdateResult> update(
@@ -188,6 +199,8 @@ public class JenkinsJobUpdater implements JobUpdater {
         final List<JobUpdateResult> jobsRevived = new LinkedList<>();
 
         final Set<String> archivedJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobArchiveRoot().list())));
+
+        wakeUpJenkins();
 
         for (final Job job : oldJobs) {
             if (newJobs.stream().noneMatch(newJob -> job.toString().equals(newJob.toString()))) {
