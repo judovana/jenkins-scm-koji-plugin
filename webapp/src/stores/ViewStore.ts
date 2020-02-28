@@ -1,17 +1,93 @@
 import { action, observable, computed } from "mobx"
 import { History } from "history"
+import {
+    match,
+    MatchFunction,
+    MatchResult,
+    RegexpToFunctionOptions,
+    TokensToRegexpOptions
+} from "path-to-regexp"
+
 import { ConfigGroupId } from "./model"
 import { ConfigStore } from "./ConfigStore"
+import { ParseOptions } from "querystring"
 
-const CONFIGS = "/configs"
-const EDIT_FORM = "/editform"
-const NEW_FORM = "/newform"
+const CONFIGS = "configs"
+const EDITFORM = "editform"
+const NEWFORM = "newform"
+const GROUPID = ":groupId"
+const CONFIGID = ":configId"
 
-type View =
-    | "list"
-    | "form"
+const options: ParseOptions &
+    TokensToRegexpOptions &
+    RegexpToFunctionOptions = {
+    decode: decodeURIComponent
+}
+
+const listRegexp = match(`/${CONFIGS}/${GROUPID}`, options)
+const newFormRegexp = match(`/${CONFIGS}/${GROUPID}/${NEWFORM}`, options)
+const editFormRegexp = match(
+    `/${CONFIGS}/${GROUPID}/${CONFIGID}/${EDITFORM}`,
+    options
+)
+
+interface Route {
+    path: MatchFunction
+    handler: (match: MatchResult<any>) => void
+}
+
+interface ListRouteParams {
+    groupId: string
+}
+
+interface NewFormRouteParams {
+    groupId: string
+}
+
+interface EditFormRouteParams {
+    groupId: string
+    configId: string
+}
+
+type View = "list" | "form"
 
 export class ViewStore {
+    private readonly routes: Route[] = [
+        {
+            path: listRegexp,
+            handler: ({
+                params: { groupId }
+            }: MatchResult<ListRouteParams>) => {
+                this.setConfigListView(groupId as ConfigGroupId)
+            }
+        },
+        {
+            path: newFormRegexp,
+            handler: ({
+                params: { groupId }
+            }: MatchResult<NewFormRouteParams>) => {
+                this.setConfigNewFormView(groupId as ConfigGroupId)
+            }
+        },
+        {
+            path: editFormRegexp,
+            handler: ({
+                params: { groupId, configId }
+            }: MatchResult<EditFormRouteParams>) => {
+                this.setConfigEditFormView(groupId as ConfigGroupId, configId)
+            }
+        },
+        {
+            path: match("/"),
+            handler: () => {}
+        },
+        {
+            path: match("/(.*)"),
+            handler: () => {
+                this.history.push("/")
+            }
+        }
+    ]
 
     @observable
     private _currentView: View = "list"
@@ -25,42 +101,45 @@ export class ViewStore {
     }
 
     private handleURLChange = (pathname: string) => {
-        if (pathname === "/") {
-            return
-        }
-        if (pathname.startsWith(CONFIGS)) {
-            const paths = pathname.split("/")
-            if (paths.length === 3) {
-                this.setCurrentView("list")
-                this.configStore.setSelectedConfigGroupId(paths[2] as ConfigGroupId)
+        for (const route of this.routes) {
+            const match = route.path(pathname)
+            if (match === false) {
+                continue
             }
-            if (paths.length === 4 && paths[3] === NEW_FORM) {
-                this.setCurrentView("form")
-                this.configStore.setNewConfig(paths[2] as ConfigGroupId)
-            }
-            if (paths.length === 5 && paths[4] === EDIT_FORM) {
-                this.setCurrentView("form")
-                this.configStore.setEditedConfig(paths[3] as ConfigGroupId, paths[4])
-            }
-        } else {
-            this.history.push("/")
+            route.handler(match)
+            break
         }
     }
 
     public goToConfigList = (groupId: ConfigGroupId) => {
-        this.history.push(`${CONFIGS}/${groupId}`)
+        this.history.push(`/${CONFIGS}/${groupId}`)
+        this.setConfigListView(groupId)
+    }
+
+    private setConfigListView = (groupId: ConfigGroupId) => {
         this.setCurrentView("list")
         this.configStore.setSelectedConfigGroupId(groupId)
     }
 
     public goToConfigEditForm = (groupId: ConfigGroupId, configId: string) => {
-        this.history.push(`${CONFIGS}/${groupId}/${configId}${EDIT_FORM}`)
+        this.history.push(`/${CONFIGS}/${groupId}/${configId}/${EDITFORM}`)
+        this.setConfigEditFormView(groupId, configId)
+    }
+
+    private setConfigEditFormView = (
+        groupId: ConfigGroupId,
+        configId: string
+    ) => {
         this.setCurrentView("form")
         this.configStore.setEditedConfig(groupId, configId)
     }
 
     public goToConfigNewForm = (groupId: ConfigGroupId) => {
-        this.history.push(`${CONFIGS}/${groupId}${NEW_FORM}`)
+        this.history.push(`/${CONFIGS}/${groupId}/${NEWFORM}`)
+        this.setConfigNewFormView(groupId)
+    }
+
+    private setConfigNewFormView = (groupId: ConfigGroupId) => {
         this.setCurrentView("form")
         this.configStore.setNewConfig(groupId)
     }
