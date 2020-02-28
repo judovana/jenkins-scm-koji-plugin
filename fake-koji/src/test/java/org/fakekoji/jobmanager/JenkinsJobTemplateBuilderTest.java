@@ -358,7 +358,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=build-jdk8-projectName-f29.x86_64.vagrant-release-hotspot bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=build-jdk8-projectName-f29.x86_64.vagrant-release.hotspot bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName()
                 + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
@@ -666,7 +666,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-9bb32cbf3d9ddcf019 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-el7.x86_64.vagrant-sw-d2e69c2abdeab5eb24 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                 + "&#13;</script>\n" + "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
                 "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
@@ -900,7 +900,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=jtreg-projectName-rh-f29.x86_64.vagrant-sw-f380418e5947e259 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=jtreg-projectName-rh-f29.x86_64.vagrant-sw-fb64711238c9d386 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                 + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +
@@ -1016,7 +1016,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>true</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-f29.x86_64.vagrant-sw-9de1bbc6a90e38e7e8 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
+                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=tck-projectName-rh-f29.x86_64.vagrant-sw-4f9a375d5f1d4068a9 bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
                 + "&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
                 "            </tasks>\n" +

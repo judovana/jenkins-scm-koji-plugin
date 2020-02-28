@@ -85,7 +85,7 @@ public class BuildJob extends TaskJob {
                         getVariants().entrySet().stream()
                                 .sorted(Comparator.comparing(Map.Entry::getKey))
                                 .map(entry -> entry.getValue().getId())
-                                .collect(Collectors.joining(Job.DELIMITER))
+                                .collect(Collectors.joining(Job.VARIANTS_DELIMITER))
                 )
         ));
     }

@@ -83,6 +83,10 @@ public class JobTest {
         Assert.assertEquals("a-b", Job.sanitizeNames("a-b"));
         Assert.assertEquals("a-b", Job.sanitizeNames("a--b"));
         Assert.assertEquals("    -c-d-e- ", Job.sanitizeNames("    -c-d---e-- "));
+        Assert.assertEquals("a.b", Job.sanitizeNames("a.b"));
+        Assert.assertEquals("a.b", Job.sanitizeNames("a.b"));
+        Assert.assertEquals("    .c.d.e. ", Job.sanitizeNames("    .c.d.e. "));
+        Assert.assertEquals("    -c.-d-.-.-e-.- ", Job.sanitizeNames("    -c..--d-..-.-e-..- "));
         ;
     }
 
@@ -149,7 +153,7 @@ public class JobTest {
         System.out.println(ss2);
         System.out.println(ss2.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
-        Assert.assertEquals("tck-nameA-rh-pr.1-sw-e392978d65fbe52a9ebe8ef8656ab47747c5ba", ss2);
+        Assert.assertEquals("tck-nameA-rh-pr.1-sw-845ddd6d7e9704a3149d2a7abae2a8f08a9865", ss2);
 
 
         final TestJob buildJob3 = new TestJob(
@@ -175,7 +179,7 @@ public class JobTest {
         System.out.println(ss3);
         System.out.println(ss3.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
-        Assert.assertEquals("tck-nameA0123456789012345678901234567890123456-rh-pr.1-sw-3", ss3);
+        Assert.assertEquals("tck-nameA0123456789012345678901234567890123456-rh-pr.1-sw-c", ss3);
 
         final TestJob buildJob4 = new TestJob(
                 "",
@@ -200,7 +204,7 @@ public class JobTest {
         System.out.println(ss4);
         System.out.println(ss4.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
-        Assert.assertEquals("67da6da50e4bac3f653c947eb95bf311b41840a09dd695441a0679703a9", ss4);
+        Assert.assertEquals("257a8a5033ff9ed487c3c955b360e3e20e74dacb2cd081b30707c01ac7d", ss4);
     }
 
 
@@ -259,7 +263,7 @@ public class JobTest {
         System.out.println(ss2);
         System.out.println(ss2.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
-        Assert.assertEquals("build-nameNameNameNameNameNameNamA-pb.1-rh-3471aced9ef5802d", ss2);
+        Assert.assertEquals("build-nameNameNameNameNameNameNamA-pb.1-rh-40bc2fb82186d52f", ss2);
 
 
         final BuildJob buildJob3 = new BuildJob(
@@ -282,7 +286,7 @@ public class JobTest {
         System.out.println(ss3);
         System.out.println(ss3.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
-        Assert.assertEquals("build-nameNameNameNameNameNameNamA012345678901234-pb.1-rh-5", ss3);
+        Assert.assertEquals("build-nameNameNameNameNameNameNamA012345678901234-pb.1-rh-c", ss3);
 
         final BuildJob buildJob4 = new BuildJob(
                 "",
@@ -304,7 +308,7 @@ public class JobTest {
         System.out.println(ss4);
         System.out.println(ss4.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
-        Assert.assertEquals("1e2571669f01fa5675c925d027bcca632315256dd55f687fab9483de465", ss4);
+        Assert.assertEquals("4a6389f501a4c51f05436278d7051d62cd65e3ee06d2b85f43ddcef39f0", ss4);
     }
 
 }

@@ -13,6 +13,7 @@ import java.util.Objects;
 public abstract class Job implements NamesProvider {
 
     public static final String DELIMITER = "-";
+    public static final String VARIANTS_DELIMITER = ".";
     public static final int MAX_JOBNAME_LENGTH = 59;
 
     private final List<OToolVariable> projectVariables;
@@ -87,11 +88,16 @@ public abstract class Job implements NamesProvider {
      * @return
      */
     public static String sanitizeNames(String n) {
-        if (n.contains(DELIMITER + DELIMITER)) {
-            return n.replaceAll(DELIMITER + "+", DELIMITER);
-        } else {
-            return n;
+        while (n.contains(DELIMITER+DELIMITER) || n.contains(VARIANTS_DELIMITER+VARIANTS_DELIMITER)) {
+            if (n.contains(VARIANTS_DELIMITER + VARIANTS_DELIMITER)) {
+                n = n.replace(VARIANTS_DELIMITER + VARIANTS_DELIMITER, VARIANTS_DELIMITER);
+            }
+            if (n.contains(DELIMITER + DELIMITER)) {
+                n = n.replace(DELIMITER + DELIMITER, DELIMITER);
+            }
         }
+        return n;
+
     }
 
     abstract List<OToolVariable> getExportedVariables();
