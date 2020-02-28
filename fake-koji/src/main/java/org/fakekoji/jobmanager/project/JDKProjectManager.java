@@ -181,7 +181,8 @@ public class JDKProjectManager implements Manager<JDKProject> {
                 repoState,
                 jdkProject.getUrl(),
                 jdkProject.getBuildProviders(),
-                jdkProject.getJobConfiguration()
+                jdkProject.getJobConfiguration(),
+                jdkProject.getVariables()
         );
     }
 

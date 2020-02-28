@@ -1,18 +1,23 @@
 package org.fakekoji.jobmanager.model;
 
+import org.fakekoji.model.OToolVariable;
+
 import java.util.Objects;
 import java.util.Set;
+import java.util.List;
 
 public class JDKProject extends Project {
     private final String url;
     private final RepoState repoState;
     private final JobConfiguration jobConfiguration;
+    private final List<OToolVariable> variables;
 
     public JDKProject() {
         super();
         url = null;
         repoState = null;
         jobConfiguration = null;
+        this.variables = null;
     }
 
     public JDKProject(
@@ -20,7 +25,8 @@ public class JDKProject extends Project {
             Product product,
             String url,
             Set<String> buildProviders,
-            JobConfiguration jobConfiguration
+            JobConfiguration jobConfiguration,
+            List<OToolVariable> variables
     ) {
         this(
                 id,
@@ -28,7 +34,8 @@ public class JDKProject extends Project {
                 RepoState.NOT_CLONED,
                 url,
                 buildProviders,
-                jobConfiguration
+                jobConfiguration,
+                variables
         );
     }
 
@@ -38,12 +45,14 @@ public class JDKProject extends Project {
             RepoState repoState,
             String url,
             Set<String> buildProviders,
-            JobConfiguration jobConfiguration
+            JobConfiguration jobConfiguration,
+            List<OToolVariable> variables
     ) {
         super(id, product, ProjectType.JDK_PROJECT, buildProviders);
         this.url = url;
         this.repoState = repoState;
         this.jobConfiguration = jobConfiguration;
+        this.variables = variables;
     }
 
     public String getUrl() {
@@ -58,6 +67,10 @@ public class JDKProject extends Project {
         return jobConfiguration;
     }
 
+    public List<OToolVariable> getVariables() {
+        return variables;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -66,12 +79,13 @@ public class JDKProject extends Project {
         JDKProject that = (JDKProject) o;
         return Objects.equals(url, that.url) &&
                 Objects.equals(repoState, that.repoState) &&
-                Objects.equals(jobConfiguration, that.jobConfiguration);
+                Objects.equals(jobConfiguration, that.jobConfiguration) &&
+                Objects.equals(variables, that.getVariables());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), url, repoState, jobConfiguration);
+        return Objects.hash(super.hashCode(), url, repoState, jobConfiguration, variables);
     }
 
     @Override

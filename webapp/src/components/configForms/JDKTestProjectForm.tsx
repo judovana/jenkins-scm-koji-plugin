@@ -8,6 +8,8 @@ import MultiSelect from "../formComponents/MultiSelect"
 import JobConfigComponent from "../formComponents/JobConfigComponent";
 import useStores from "../../hooks/useStores"
 import ProductSelectForm from "../formComponents/JDKVersionSelectForm"
+import FormList from "../formComponents/FormList"
+import VariableForm from "../formComponents/VariableForm"
 
 type JDKTestProjectFormProps = {
     id?: string
@@ -32,7 +34,8 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
         },
         subpackageBlacklist: [],
         subpackageWhitelist: [],
-        type: "JDK_TEST_PROJECT"
+        type: "JDK_TEST_PROJECT",
+        variables: []
     }))
 
     React.useEffect(() => {
@@ -49,6 +52,7 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
         project.product = _jdkProject.product || ""
         project.subpackageBlacklist = _jdkProject.subpackageBlacklist
         project.subpackageWhitelist = _jdkProject.subpackageWhitelist
+        project.variables = _jdkProject.variables || []
     })
 
     const onIDChange = (value: string) => {
@@ -74,8 +78,10 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
         props.onSubmit(project)
     }
 
-    return useObserver(() =>
-        <React.Fragment>
+    return useObserver(() => {
+     const { variables } = project
+
+     return (  <React.Fragment>
             <TextInput
                 label={"name"}
                 value={project.id}
@@ -99,13 +105,20 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                 jobConfig={project.jobConfiguration}
                 projectType={project.type}
                  />
+            <FormList
+                 data={variables}
+                 label="custom variables"
+                 renderItem={item => <VariableForm variable={item} />}
+            />
             <Button
                 onClick={onSubmit}
                 variant="contained">
                 {id === undefined ? "Create" : "Update"}
             </Button>
         </React.Fragment>
+        )
+    }
     )
-}
 
+}
 export default JDKTestProjectForm
