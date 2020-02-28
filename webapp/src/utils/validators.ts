@@ -95,21 +95,23 @@ const buildProviderValidator = ({ id }: BuildProvider) => ({
     id: requiredStringValidator(id)
 })
 
-const jdkProjectValidator = ({ id, product, url }: JDKProject) => ({
+const jdkProjectValidator = ({ id, product, url, variables }: JDKProject) => ({
     buildProviders: "ok",
     id: requiredStringValidator(id),
     jobConfiguration: "ok",
     product: productValidator(product),
     repoState: "ok",
     type: "ok",
-    url: requiredStringValidator(url)
+    url: requiredStringValidator(url),
+    variables: variablesValidator(variables)
 })
 
 const jdkTestProjectValidator = ({
     id,
     product,
     subpackageBlacklist,
-    subpackageWhitelist
+    subpackageWhitelist,
+    variables
 }: JDKTestProject) => ({
     buildProviders: "ok",
     id: requiredStringValidator(id),
@@ -117,7 +119,8 @@ const jdkTestProjectValidator = ({
     product: productValidator(product),
     subpackageBlacklist: optionalStringListValidator(subpackageBlacklist),
     subpackageWhitelist: optionalStringListValidator(subpackageWhitelist),
-    type: "ok"
+    type: "ok",
+    variables: variablesValidator(variables)
 })
 
 const jdkVersionValidator = (_: JDKVersion) => ({

@@ -18,7 +18,8 @@ const createDefaultJDKProject = (): JDKProject => ({
         packageName: ""
     },
     type: "JDK_PROJECT",
-    url: ""
+    url: "",
+    variables: []
 })
 
 const createDefaultJDKTestProject = (): JDKTestProject => ({
@@ -31,7 +32,8 @@ const createDefaultJDKTestProject = (): JDKTestProject => ({
     },
     subpackageBlacklist: [],
     subpackageWhitelist: [],
-    type: "JDK_TEST_PROJECT"
+    type: "JDK_TEST_PROJECT",
+    variables: []
 })
 
 const createDefaultPlatform = (): Platform => ({
@@ -40,6 +42,8 @@ const createDefaultPlatform = (): Platform => ({
     os: "",
     providers: [],
     tags: [],
+    testingYstream: "NaN",
+    stableZstream: "NaN",
     version: "",
     versionNumber: "",
     vmName: "",
@@ -49,6 +53,7 @@ const createDefaultPlatform = (): Platform => ({
 const createDefaultTask = (): Task => ({
     fileRequirements: {
         binary: "NONE",
+        noarch: false,
         source: false
     },
     id: "",
