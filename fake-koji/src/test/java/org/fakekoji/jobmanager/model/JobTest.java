@@ -112,7 +112,8 @@ public class JobTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
         String ss1 = buildJob1.getShortName();
         String sl1 = buildJob1.getName();
@@ -137,7 +138,8 @@ public class JobTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         String ss2 = buildJob2.getShortName();
@@ -163,7 +165,8 @@ public class JobTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
         String ss3 = buildJob3.getShortName();
         String sl3 = buildJob3.getName();
@@ -187,7 +190,8 @@ public class JobTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
         String ss4 = buildJob4.getShortName();
         String sl4 = buildJob4.getName();
@@ -221,7 +225,8 @@ public class JobTest {
                 testTask,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
         String ss1 = buildJob1.getShortName();
         String sl1 = buildJob1.getName();
@@ -243,7 +248,8 @@ public class JobTest {
                 testTask,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         String ss2 = buildJob2.getShortName();
@@ -266,7 +272,8 @@ public class JobTest {
                 testTask,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
         String ss3 = buildJob3.getShortName();
         String sl3 = buildJob3.getName();
@@ -287,7 +294,8 @@ public class JobTest {
                 testTask,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
         String ss4 = buildJob4.getShortName();
         String sl4 = buildJob4.getName();

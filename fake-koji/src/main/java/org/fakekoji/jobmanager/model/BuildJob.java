@@ -41,9 +41,10 @@ public class BuildJob extends TaskJob {
             Task task,
             Platform platform,
             Map<TaskVariant, TaskVariantValue> variants,
-            File scriptsRoot
+            File scriptsRoot,
+            List<OToolVariable> projectVariables
     ) {
-        super(platformProvider, projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
+        super(platformProvider, projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot, projectVariables);
     }
 
     @Override
@@ -138,6 +139,7 @@ public class BuildJob extends TaskJob {
         ));
         getPlatform().addZstreamVar(defaultVariables);
         getPlatform().addYstreamVar(defaultVariables);
+        defaultVariables.addAll(getProjectVariables());
         final List<OToolVariable> variantVariables = OToolVariable.createDefault(getVariants());
         return Stream.of(
                 defaultVariables,

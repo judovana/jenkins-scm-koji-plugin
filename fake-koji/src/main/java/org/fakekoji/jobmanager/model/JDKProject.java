@@ -10,14 +10,12 @@ public class JDKProject extends Project {
     private final String url;
     private final RepoState repoState;
     private final JobConfiguration jobConfiguration;
-    private final List<OToolVariable> variables;
 
     public JDKProject() {
         super();
         url = null;
         repoState = null;
         jobConfiguration = null;
-        this.variables = null;
     }
 
     public JDKProject(
@@ -48,11 +46,10 @@ public class JDKProject extends Project {
             JobConfiguration jobConfiguration,
             List<OToolVariable> variables
     ) {
-        super(id, product, ProjectType.JDK_PROJECT, buildProviders);
+        super(id, product, ProjectType.JDK_PROJECT, buildProviders, variables);
         this.url = url;
         this.repoState = repoState;
         this.jobConfiguration = jobConfiguration;
-        this.variables = variables;
     }
 
     public String getUrl() {
@@ -67,9 +64,6 @@ public class JDKProject extends Project {
         return jobConfiguration;
     }
 
-    public List<OToolVariable> getVariables() {
-        return variables;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -79,13 +73,12 @@ public class JDKProject extends Project {
         JDKProject that = (JDKProject) o;
         return Objects.equals(url, that.url) &&
                 Objects.equals(repoState, that.repoState) &&
-                Objects.equals(jobConfiguration, that.jobConfiguration) &&
-                Objects.equals(variables, that.getVariables());
+                Objects.equals(jobConfiguration, that.jobConfiguration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), url, repoState, jobConfiguration, variables);
+        return Objects.hash(super.hashCode(), url, repoState, jobConfiguration);
     }
 
     @Override

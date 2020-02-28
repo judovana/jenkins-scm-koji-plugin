@@ -44,8 +44,10 @@ public abstract class TaskJob extends Job {
             Task task,
             Platform platform,
             Map<TaskVariant, TaskVariantValue> variants,
-            File scriptsRoot
+            File scriptsRoot,
+            List<OToolVariable> projectVariables
     ) {
+        super(projectVariables);
         this.platformProvider = platformProvider;
         this.projectName = projectName;
         this.product = product;
@@ -106,7 +108,8 @@ public abstract class TaskJob extends Job {
                 Objects.equals(task, taskJob.task) &&
                 Objects.equals(platform, taskJob.platform) &&
                 Objects.equals(variants, taskJob.variants) &&
-                Objects.equals(scriptsRoot, taskJob.scriptsRoot);
+                Objects.equals(scriptsRoot, taskJob.scriptsRoot) &&
+                Objects.equals(getProjectVariables(), taskJob.getProjectVariables()) ;
     }
 
     @Override
@@ -121,7 +124,8 @@ public abstract class TaskJob extends Job {
                 task,
                 platform,
                 variants,
-                scriptsRoot
+                scriptsRoot,
+                getProjectVariables()
         );
     }
 
@@ -134,6 +138,7 @@ public abstract class TaskJob extends Job {
         ));
         getPlatform().addZstreamVar(defaultVariables);
         getPlatform().addYstreamVar(defaultVariables);
+        defaultVariables.addAll(getProjectVariables());
         final List<OToolVariable> variantVariables = OToolVariable.createDefault(variants);
         return Stream.of(
                 defaultVariables,

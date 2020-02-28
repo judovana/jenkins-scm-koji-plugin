@@ -960,7 +960,8 @@ public class DataGenerator {
                 getJDK8Product(),
                 getJDKVersion8(),
                 folderHolder.reposRoot,
-                folderHolder.scriptsRoot
+                folderHolder.scriptsRoot,
+                Arrays.asList(new OToolVariable("o1", "v1"))
         );
     }
 
@@ -977,7 +978,8 @@ public class DataGenerator {
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
-                folderHolder.scriptsRoot
+                folderHolder.scriptsRoot,
+                Arrays.asList(new OToolVariable("o2", "v2"))
         );
     }
 
@@ -994,7 +996,8 @@ public class DataGenerator {
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getFastdebugVariant());
                 }},
-                folderHolder.scriptsRoot
+                folderHolder.scriptsRoot,
+                Arrays.asList(new OToolVariable("o3", "v3"))
         );
     }
 
@@ -1011,7 +1014,8 @@ public class DataGenerator {
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
-                folderHolder.scriptsRoot
+                folderHolder.scriptsRoot,
+                null
         );
     }
 
@@ -1035,7 +1039,8 @@ public class DataGenerator {
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
-                folderHolder.scriptsRoot
+                folderHolder.scriptsRoot,
+                Arrays.asList(new OToolVariable("o4", "v4"))
         );
     }
 
@@ -1059,7 +1064,8 @@ public class DataGenerator {
                     put(getJvmVariant(), getHotspotVariant());
                     put(getDebugModeVariant(), getReleaseVariant());
                 }},
-                folderHolder.scriptsRoot
+                folderHolder.scriptsRoot,
+                null
         );
     }
 

@@ -34,8 +34,10 @@ public class PullJob extends Job {
             Product product,
             JDKVersion jdkVersion,
             File repositoriesRoot,
-            File scriptsRoot
+            File scriptsRoot,
+            List<OToolVariable> projectVariables
     ) {
+        super(projectVariables);
         this.projectName = projectName;
         this.product = product;
         this.jdkVersion = jdkVersion;
@@ -113,6 +115,7 @@ public class PullJob extends Job {
                         true,
                         true
                 )
+               //not propagaing project specific vars right now
         );
     }
 }

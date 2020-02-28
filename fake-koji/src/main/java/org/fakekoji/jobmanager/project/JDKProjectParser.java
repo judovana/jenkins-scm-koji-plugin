@@ -22,6 +22,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.storage.StorageException;
 
 import java.io.File;
@@ -72,6 +73,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         jobBuilder.setProduct(project.getProduct());
         jobBuilder.setJDKVersion(jdkVersion);
         jobBuilder.setBuildProviders(buildProviders);
+        jobBuilder.setProjectVariables(project.getVariables());
 
         switch (project.getType()) {
             case JDK_PROJECT:
@@ -163,6 +165,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private Task testTask;
         private BuildJob buildJob;
         private Map<TaskVariant, TaskVariantValue> testVariants;
+        private List<OToolVariable> projectVariables;
 
         JobBuilder(final ConfigManager configManager, Project.ProjectType projectType) throws StorageException {
             this.projectType = projectType;
@@ -219,7 +222,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                     product,
                     jdkVersion,
                     repositoriesRoot,
-                    scriptsRoot
+                    scriptsRoot,
+                    projectVariables
             ));
         }
 
@@ -233,7 +237,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                     buildTask,
                     buildPlatform,
                     buildVariants,
-                    scriptsRoot
+                    scriptsRoot,
+                    projectVariables
             );
             jobs.add(buildJob);
         }
@@ -254,14 +259,16 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                             buildVariants,
                             subpackageBlacklist,
                             subpackageWhitelist,
-                            scriptsRoot
+                            scriptsRoot,
+                            projectVariables
                     ) :
                     new TestJob(
                             platformProvider,
                             buildJob,
                             testTask,
                             testPlatform,
-                            testVariants
+                            testVariants,
+                            projectVariables
                     );
             jobs.add(tj);
         }
@@ -366,6 +373,10 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
 
         void setPlatformProvider(String platformProvider) {
             this.platformProvider = platformProvider;
+        }
+
+        public void setProjectVariables(List<OToolVariable> variables) {
+            this.projectVariables = variables;
         }
     }
 

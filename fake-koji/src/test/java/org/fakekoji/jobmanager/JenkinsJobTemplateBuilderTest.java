@@ -286,7 +286,8 @@ public class JenkinsJobTemplateBuilderTest {
                 buildTask,
                 vmPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -393,7 +394,8 @@ public class JenkinsJobTemplateBuilderTest {
                 buildTask,
                 hwPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -491,7 +493,8 @@ public class JenkinsJobTemplateBuilderTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -590,7 +593,8 @@ public class JenkinsJobTemplateBuilderTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -704,7 +708,8 @@ public class JenkinsJobTemplateBuilderTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -822,7 +827,8 @@ public class JenkinsJobTemplateBuilderTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -937,7 +943,8 @@ public class JenkinsJobTemplateBuilderTest {
                 testVariants,
                 buildPlatform,
                 buildVariants,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -1088,7 +1095,8 @@ public class JenkinsJobTemplateBuilderTest {
                 DataGenerator.getJDK8Product(),
                 jdk8,
                 reposRoot,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final String actualTemplate = pullJob.generateTemplate();
@@ -1136,7 +1144,8 @@ public class JenkinsJobTemplateBuilderTest {
                 buildVariants,
                 blacklist,
                 whitelist,
-                scriptsRoot
+                scriptsRoot,
+                null
         );
 
         final List<String> expectedBlacklist = new ArrayList<>();

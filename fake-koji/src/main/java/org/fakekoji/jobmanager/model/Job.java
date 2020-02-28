@@ -1,12 +1,12 @@
 package org.fakekoji.jobmanager.model;
 
-import org.apache.sshd.common.digest.DigestUtils;
 import org.fakekoji.model.OToolVariable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -14,6 +14,20 @@ public abstract class Job implements NamesProvider {
 
     public static final String DELIMITER = "-";
     public static final int MAX_JOBNAME_LENGTH = 59;
+
+    private final List<OToolVariable> projectVariables;
+
+    protected Job(List<OToolVariable> projectVariables) {
+        this.projectVariables = projectVariables;
+    }
+
+    public List<OToolVariable> getProjectVariables() {
+        if (projectVariables == null) {
+            return Collections.emptyList();
+        } else {
+            return projectVariables;
+        }
+    }
 
     public abstract String generateTemplate() throws IOException;
 

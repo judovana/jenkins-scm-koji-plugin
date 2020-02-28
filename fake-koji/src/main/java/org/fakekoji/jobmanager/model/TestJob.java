@@ -50,9 +50,10 @@ public class TestJob extends TaskJob {
             Map<TaskVariant, TaskVariantValue> buildVariants,
             List<String> projectSubpackageBlacklist,
             List<String> projectSubpackageWhitelist,
-            File scriptsRoot
+            File scriptsRoot,
+            List<OToolVariable> projectVariables
     ) {
-        super(platformProvider, projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot);
+        super(platformProvider, projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot, projectVariables);
         this.projectType = projectType;
         this.buildPlatform = buildPlatform;
         this.buildVariants = buildVariants;
@@ -72,7 +73,8 @@ public class TestJob extends TaskJob {
             Map<TaskVariant, TaskVariantValue> variants,
             Platform buildPlatform,
             Map<TaskVariant, TaskVariantValue> buildVariants,
-            File scriptsRoot
+            File scriptsRoot,
+            List<OToolVariable> projectVariables
     ) {
         this(
                 platformProvider,
@@ -88,7 +90,8 @@ public class TestJob extends TaskJob {
                 buildVariants,
                 Collections.emptyList(),
                 Collections.emptyList(),
-                scriptsRoot
+                scriptsRoot,
+                projectVariables
         );
 
     }
@@ -98,7 +101,8 @@ public class TestJob extends TaskJob {
             BuildJob buildJob,
             Task task,
             Platform platform,
-            Map<TaskVariant, TaskVariantValue> variants
+            Map<TaskVariant, TaskVariantValue> variants,
+            List<OToolVariable> projectVariables
     ) {
         this(
                 testPlatformProvider,
@@ -112,7 +116,8 @@ public class TestJob extends TaskJob {
                 variants,
                 buildJob.getPlatform(),
                 buildJob.getVariants(),
-                buildJob.getScriptsRoot()
+                buildJob.getScriptsRoot(),
+                projectVariables
         );
     }
 
