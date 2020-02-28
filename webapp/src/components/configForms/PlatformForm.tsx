@@ -1,107 +1,73 @@
 import React from "react"
-import { useLocalStore, useObserver } from "mobx-react"
+import { useObserver } from "mobx-react"
 
-import { Platform, Item, TestStableYZupdates } from "../../stores/model"
+import { Platform, TestStableYZupdates } from "../../stores/model"
 import TextInput from "../formComponents/TextInput"
-import { Button } from "@material-ui/core"
-import useStores from "../../hooks/useStores"
 import FormList from "../formComponents/FormList"
 import VariableForm from "../formComponents/VariableForm"
+import {
+    PlatformValidation,
+    PlatformProviderValidation,
+    setDefaultValidations,
+    VariableValidation
+} from "../../utils/validators"
+import PlatformProviderForm from "../formComponents/PlatformProviderForm"
+import {
+    createDefaultVariable,
+    createDefaultPlatfromProvider
+} from "../../utils/defaultConfigs"
 import Select from "../formComponents/Select"
 
 interface Props {
-    platformID?: string
-    onSubmit: (item: Item) => void
+    config: Platform
+    validation?: PlatformValidation
 }
 
 const PlatformForm: React.FC<Props> = props => {
-    const { configStore } = useStores()
-
-    const { platformID } = props
-
-    const platform = useLocalStore<Platform>(() => ({
-        architecture: "",
-        id: "",
-        os: "",
-        providers: [],
-        tags: [],
-        version: "",
-        versionNumber: "",
-        vmName: "",
-        testingYstream: "NaN",
-        stableZstream: "NaN",
-        variables: []
-    }))
-
-    React.useEffect(() => {
-        if (platformID === undefined || platformID === platform.id) {
-            return
-        }
-        const _platform = configStore.getPlatform(platformID)
-        if (!_platform) {
-            return
-        }
-        platform.architecture = _platform.architecture || ""
-        platform.id = _platform.id || ""
-        platform.os = _platform.os || ""
-        platform.kojiArch = _platform.kojiArch || undefined
-        platform.providers = _platform.providers || []
-        platform.tags = _platform.tags || []
-        platform.version = _platform.version || ""
-        platform.versionNumber = _platform.versionNumber || ""
-        platform.vmName = _platform.vmName || ""
-        platform.testingYstream = _platform.testingYstream || "NaN"
-        platform.stableZstream = _platform.stableZstream || "NaN"
-        platform.variables = _platform.variables || []
-    })
-
-    const onOSChange = (value: string) => {
-        platform!.os = value
-    }
-
-    const onVersionChange = (value: string) => {
-        platform!.version = value
-    }
-
-    const onVersionNumberChange = (value: string) => {
-        platform!.versionNumber = value
-    }
-
-    const onArchitectureChange = (value: string) => {
-        platform!.architecture = value
-    }
-
-    const onKojiArchChange = (value: string) => {
-        platform.kojiArch = value === "" ? undefined : value
-    }
-
-    const onVMNameChange = (value: string) => {
-        platform!.vmName = value
-    }
-
-    const onTagsChange = (value: string) => {
-        platform!.tags = value.split(" ")
-    }
-
-    const onStableZstreamChange = (value: string) => {
-        platform!.stableZstream = value as TestStableYZupdates
-    }
-
-    const onTestingYstreamChange = (value: string) => {
-        platform!.testingYstream = value as TestStableYZupdates
-    }
-
-    const onSubmit = () => {
-        const filter = (value: string) => value.trim() !== ""
-        platform.tags = platform.tags.filter(filter)
-        props.onSubmit(platform)
-    }
-
     return useObserver(() => {
+        const { config: platform, validation } = props
+
+        const onOSChange = (value: string) => {
+            platform.os = value
+        }
+
+        const onVersionChange = (value: string) => {
+            platform.version = value
+        }
+
+        const onVersionNumberChange = (value: string) => {
+            platform.versionNumber = value
+        }
+
+        const onArchitectureChange = (value: string) => {
+            platform.architecture = value
+        }
+
+        const onKojiArchChange = (value: string) => {
+            platform.kojiArch = value === "" ? undefined : value
+        }
+
+        const onVMNameChange = (value: string) => {
+            platform.vmName = value
+        }
+
+        const onStableZstreamChange = (value: string) => {
+            platform!.stableZstream = value as TestStableYZupdates
+        }
+
+        const onTestingYstreamChange = (value: string) => {
+            platform!.testingYstream = value as TestStableYZupdates
+        }
+
+        const onTagsChange = (value: string) => {
+            platform.tags = value.split(" ")
+        }
+
         const {
             architecture,
             kojiArch,
             os,
+            providers,
             tags,
             version,
             versionNumber,
@@ -111,58 +77,103 @@ const PlatformForm: React.FC<Props> = props => {
             variables
         } = platform
 
-        // TODO: Add platform provider form
+        const {
+            architecture: architectureValidation,
+            kojiArch: kojiArchValidation,
+            os: osValidation,
+            tags: tagsValidation,
+            version: versionValidation,
+            versionNumber: versionNumberValidation,
+            vmName: vmNameValidation
+        } = validation || ({} as PlatformValidation)
+
+        const providersValidation = setDefaultValidations<
+            PlatformProviderValidation
+        >(validation && validation.providers, providers)
+
+        const variablesValidation = setDefaultValidations<VariableValidation>(
+            validation && validation.variables,
+            variables
+        )
 
         return (
             <React.Fragment>
                 <TextInput
                     label={"os"}
                     onChange={onOSChange}
-                    value={os} />
+                    validation={osValidation}
+                    value={os}
+                />
                 <TextInput
                     label={"version"}
                     onChange={onVersionChange}
-                    value={version} />
+                    validation={versionValidation}
+                    value={version}
+                />
                 <TextInput
                     label={"versionNumber"}
                     onChange={onVersionNumberChange}
-                    value={versionNumber} />
+                    validation={versionNumberValidation}
+                    value={versionNumber}
+                />
                 <TextInput
                     label={"architecture"}
                     onChange={onArchitectureChange}
-                    value={architecture} />
+                    validation={architectureValidation}
+                    value={architecture}
+                />
                 <TextInput
                     label={"koji arch"}
                     onChange={onKojiArchChange}
-                    value={kojiArch} />
+                    validation={kojiArchValidation}
+                    value={kojiArch}
+                />
                 <TextInput
                     label={"vm name"}
                     onChange={onVMNameChange}
-                    value={vmName} />
+                    validation={vmNameValidation}
+                    value={vmName}
+                />
+                <FormList
+                    data={providers}
+                    label="platform providers"
+                    onAdd={createDefaultPlatfromProvider}
+                    renderItem={(item, index) => (
+                        <PlatformProviderForm
+                            platformProvider={item}
+                            validation={providersValidation[index]}
+                        />
+                    )}
+                />
                 <TextInput
                     label={"tags"}
                     onChange={onTagsChange}
-                    value={tags.join(" ")} />
+                    validation={tagsValidation}
+                    value={tags.join(" ")}
+                />
                 <Select
-                        label={"stable/zStream"}
-                        onChange={onStableZstreamChange}
-                        options={["NaN", "True", "False"]}
-                        value={stableZstream} />
+                    label={"stable/zStream"}
+                    onChange={onStableZstreamChange}
+                    options={["NaN", "True", "False"]}
+                    value={stableZstream}
+                />
                 <Select
-                        label={"testing/yStream"}
-                        onChange={onTestingYstreamChange}
-                        options={["NaN", "True", "False"]}
-                        value={testingYstream} />
+                    label={"testing/yStream"}
+                    onChange={onTestingYstreamChange}
+                    options={["NaN", "True", "False"]}
+                    value={testingYstream}
+                />
                 <FormList
                     data={variables}
                     label="custom variables"
-                    renderItem={item => <VariableForm variable={item} />}
+                    onAdd={createDefaultVariable}
+                    renderItem={(item, index) => (
+                        <VariableForm
+                            validation={variablesValidation[index]}
+                            variable={item}
+                        />
+                    )}
                 />
-                <Button
-                    onClick={onSubmit}
-                    variant="contained">
-                    {platformID === undefined ? "Create" : "Update"}
-                </Button>
             </React.Fragment>
         )
     })

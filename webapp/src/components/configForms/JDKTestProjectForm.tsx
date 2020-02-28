@@ -1,124 +1,112 @@
 import React from "react"
-import { useLocalStore, useObserver } from "mobx-react-lite"
-import { Button } from "@material-ui/core"
+import { useObserver } from "mobx-react-lite"
 
-import { JDKTestProject, Item } from "../../stores/model"
+import { JDKTestProject } from "../../stores/model"
 import TextInput from "../formComponents/TextInput"
 import MultiSelect from "../formComponents/MultiSelect"
-import JobConfigComponent from "../formComponents/JobConfigComponent";
+import JobConfigComponent from "../formComponents/JobConfigComponent"
 import useStores from "../../hooks/useStores"
 import ProductSelectForm from "../formComponents/JDKVersionSelectForm"
 import FormList from "../formComponents/FormList"
 import VariableForm from "../formComponents/VariableForm"
+import {
+    JDKTestProjectValidation,
+    setDefaultValidations,
+    VariableValidation
+} from "../../utils/validators"
+import { createDefaultVariable } from "../../utils/defaultConfigs"
 
 type JDKTestProjectFormProps = {
-    id?: string
-    onSubmit: (item: Item) => void
+    config: JDKTestProject
+    validation?: JDKTestProjectValidation
 }
 
 const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
-
     const { configStore } = useStores()
 
-    const { buildProviders } = configStore
-
-    const { id } = props
-
-    const project = useLocalStore<JDKTestProject>(() => ({
-        buildProviders: [],
-        id: "",
-        jobConfiguration: { platforms: [] },
-        product: {
-            jdk: "",
-            packageName: ""
-        },
-        subpackageBlacklist: [],
-        subpackageWhitelist: [],
-        type: "JDK_TEST_PROJECT",
-        variables: []
-    }))
-
-    React.useEffect(() => {
-        if (id === undefined || id === project.id) {
-            return
-        }
-        const _jdkProject = configStore.jdkTestProjectMap[id]
-        if (!_jdkProject) {
-            return
-        }
-        project.buildProviders = _jdkProject.buildProviders || []
-        project.id = _jdkProject.id || ""
-        project.jobConfiguration = _jdkProject.jobConfiguration || { platforms: {} }
-        project.product = _jdkProject.product || ""
-        project.subpackageBlacklist = _jdkProject.subpackageBlacklist
-        project.subpackageWhitelist = _jdkProject.subpackageWhitelist
-        project.variables = _jdkProject.variables || []
-    })
-
-    const onIDChange = (value: string) => {
-        project.id = value
-    }
-
-    const onBuildProvidersChange = (value: string[]) => {
-        project.buildProviders = value
-    }
-
-    const onSubpackageBlacklistChange = (value: string) => {
-        project.subpackageBlacklist = value.split(" ")
-    }
-
-    const onSubpackageWhitelistChange = (value: string) => {
-        project.subpackageWhitelist = value.split(" ")
-    }
-
-    const onSubmit = () => {
-        const filter = (value: string) => value.trim() !== ""
-        project.subpackageBlacklist = project.subpackageBlacklist.filter(filter)
-        project.subpackageWhitelist = project.subpackageWhitelist.filter(filter)
-        props.onSubmit(project)
-    }
-
     return useObserver(() => {
-     const { variables } = project
+        const { buildProviders } = configStore
+        const { config: project, validation } = props
 
-     return (  <React.Fragment>
-            <TextInput
-                label={"name"}
-                value={project.id}
-                onChange={onIDChange} />
-            <MultiSelect
-                label={"build providers"}
-                onChange={onBuildProvidersChange}
-                options={buildProviders.map(buildProvider => buildProvider.id)}
-                values={project.buildProviders}
-            />
-            <ProductSelectForm product={project.product} />
-            <TextInput
-                label={"subpackage blacklist"}
-                value={project.subpackageBlacklist.join(" ")}
-                onChange={onSubpackageBlacklistChange} />
-            <TextInput
-                label={"subpackage whitelist"}
-                value={project.subpackageWhitelist.join(" ")}
-                onChange={onSubpackageWhitelistChange} />
-            <JobConfigComponent
-                jobConfig={project.jobConfiguration}
-                projectType={project.type}
-                 />
-            <FormList
-                 data={variables}
-                 label="custom variables"
-                 renderItem={item => <VariableForm variable={item} />}
-            />
-            <Button
-                onClick={onSubmit}
-                variant="contained">
-                {id === undefined ? "Create" : "Update"}
-            </Button>
-        </React.Fragment>
+        const onIDChange = (value: string) => {
+            project.id = value
+        }
+
+        const onBuildProvidersChange = (value: string[]) => {
+            project.buildProviders = value
+        }
+
+        const onSubpackageBlacklistChange = (value: string) => {
+            project.subpackageBlacklist = value.split(" ")
+        }
+
+        const onSubpackageWhitelistChange = (value: string) => {
+            project.subpackageWhitelist = value.split(" ")
+        }
+
+        const {
+            id,
+            product,
+            subpackageBlacklist,
+            subpackageWhitelist,
+            variables
+        } = validation || ({} as JDKTestProjectValidation)
+
+        const variablesValidation = setDefaultValidations<VariableValidation>(
+            validation && validation.variables,
+            variables
         )
-    }
-    )
 
+        return (
+            <React.Fragment>
+                <TextInput
+                    label={"name"}
+                    validation={id}
+                    value={project.id}
+                    onChange={onIDChange}
+                />
+                <MultiSelect
+                    label={"build providers"}
+                    onChange={onBuildProvidersChange}
+                    options={buildProviders.map(
+                        buildProvider => buildProvider.id
+                    )}
+                    values={project.buildProviders}
+                />
+                <ProductSelectForm
+                    product={project.product}
+                    validation={product}
+                />
+                <TextInput
+                    label={"subpackage blacklist"}
+                    validation={subpackageBlacklist}
+                    value={project.subpackageBlacklist.join(" ")}
+                    onChange={onSubpackageBlacklistChange}
+                />
+                <TextInput
+                    label={"subpackage whitelist"}
+                    validation={subpackageWhitelist}
+                    value={project.subpackageWhitelist.join(" ")}
+                    onChange={onSubpackageWhitelistChange}
+                />
+                <JobConfigComponent
+                    jobConfig={project.jobConfiguration}
+                    projectType={project.type}
+                />
+                <FormList
+                    data={project.variables}
+                    label="custom variables"
+                    onAdd={createDefaultVariable}
+                    renderItem={(item, index) => (
+                        <VariableForm
+                            validation={variablesValidation[index]}
+                            variable={item}
+                        />
+                    )}
+                />
+            </React.Fragment>
+        )
+    })
 }
+
 export default JDKTestProjectForm

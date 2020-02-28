@@ -1,36 +1,27 @@
-import React from "react";
+import React from "react"
 import { useObserver } from "mobx-react"
 
-import { useHistory, Link } from "react-router-dom"
 import { AppBar, Tabs, Tab, Toolbar } from "@material-ui/core"
 import useStores from "../hooks/useStores"
 
 const Header: React.FC = () => {
-
-    const { configStore } = useStores()
-    const history = useHistory()
+    const { configStore, viewStore } = useStores()
 
     return useObserver(() => {
-
-        const onTabClick = (_: React.ChangeEvent<{}>, id: string) => {
-            history.push(`/${id}`)
-            configStore.selectGroup(id)
-        }
-
+        const { selectedConfigGroupId } = configStore
+        const { goToConfigList } = viewStore
         return (
             <React.Fragment>
                 <AppBar position="fixed">
-                    <Tabs
-                        onChange={onTabClick}
-                        value={configStore.selectedGroupId}>
-                        {configStore.configGroups.map(({ id }) =>
+                    <Tabs value={selectedConfigGroupId}>
+                        {configStore.configGroups.map(({ id }, index) => (
                             <Tab
-                                component={Link}
-                                key={id}
+                                onClick={_ => goToConfigList(id)}
+                                key={index}
                                 label={id}
-                                to={id}
-                                value={id} />
-                        )}
+                                value={id}
+                            />
+                        ))}
                     </Tabs>
                 </AppBar>
                 <Toolbar />

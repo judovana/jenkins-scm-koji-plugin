@@ -1,5 +1,12 @@
 import React from "react"
-import { FormControl, InputLabel, Select as MaterialSelect, MenuItem } from "@material-ui/core";
+import {
+    FormControl,
+    InputLabel,
+    Select as MaterialSelect,
+    MenuItem,
+    FormHelperText
+} from "@material-ui/core"
+import { BasicValidation } from "../../utils/validators"
 
 type SelectPropsRequired = {
     options: string[]
@@ -8,61 +15,39 @@ type SelectPropsRequired = {
 type SelectPropsOptional = {
     label?: string
     onChange: (value: string) => void
-    value: string
+    validation?: BasicValidation
+    value?: string
 }
 
 type SelectProps = SelectPropsRequired & SelectPropsOptional
 
-class Select extends React.PureComponent<SelectProps> {
+const Select: React.FC<SelectProps> = props => {
+    const { label, options, validation, value } = props
 
-    static defaultProps: SelectPropsOptional = {
-        onChange: _ => { },
-        value: ""
+    const onChange = (
+        event: React.ChangeEvent<{ name?: string | undefined; value: unknown }>
+    ) => {
+        props.onChange(event.target.value as string)
     }
 
-    onChange = (event: React.ChangeEvent<{ name?: string | undefined; value: unknown; }>) => {
-        this.props.onChange(event.target.value as string)
-    }
+    const isError = validation && validation !== "ok"
 
-    renderSelect = () => {
-        const { value, options } = this.props
-        return (
+    return (
+        <FormControl margin={"normal"} fullWidth error={isError}>
+            {label && <InputLabel>{label}</InputLabel>}
             <MaterialSelect
-                defaultValue={"NONE"}
-                value={value}
-                onChange={this.onChange}>
-                    <MenuItem value="NONE">
-                        None
+                value={value || "NONE"}
+                onChange={onChange}>
+                <MenuItem value="NONE">None</MenuItem>
+                {options.map(option => (
+                    <MenuItem key={option} value={option}>
+                        {option}
                     </MenuItem>
-                {
-                    options.map(option =>
-                        <MenuItem
-                            key={option}
-                            value={option}>
-                            {option}
-                        </MenuItem>
-                    )
-                }
+                ))}
             </MaterialSelect>
-        )
-    }
-
-    render() {
-        const label = this.props.label
-        if (!label) {
-            return (
-                <div className="value-container">
-                    {this.renderSelect()}
-                </div>
-            )
-        }
-        return (
-            <FormControl margin={"normal"} fullWidth>
-                <InputLabel>{label}</InputLabel>
-                {this.renderSelect()}
-            </FormControl>
-        )
-    }
+            {isError && <FormHelperText>{validation}</FormHelperText>}
+        </FormControl>
+    )
 }
 
 export default Select

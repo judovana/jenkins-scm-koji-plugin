@@ -4,23 +4,16 @@ import { FormControl, FormGroup } from "@material-ui/core"
 import { Variable } from "../../stores/model"
 import TextInput from "./TextInput"
 import Checkbox from "./Checkbox"
+import { VariableValidation } from "../../utils/validators"
 
 interface VariableFormPros {
+    validation?: VariableValidation
     variable: Variable
 }
 
-const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
-
-    React.useEffect(() => {
-        if (variable.defaultPrefix === undefined) {
-            variable.defaultPrefix = true;
-        }
-        if (variable.exported === undefined) {
-            variable.exported = true;
-        }
-    }, [variable.defaultPrefix, variable.exported])
-
-    return useObserver(() => {
+const VariableForm: React.FC<VariableFormPros> = props =>
+    useObserver(() => {
+        const { validation, variable } = props
         const onNameChange = (value: string) => {
             variable.name = value
         }
@@ -45,23 +38,38 @@ const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
             variable.exported = value
         }
 
-        const { comment, commentedOut, defaultPrefix, name, value, exported } = variable
+        const {
+            comment,
+            commentedOut,
+            defaultPrefix,
+            name,
+            value,
+            exported
+        } = variable
+        const {
+            comment: commentValidation,
+            name: nameValidation,
+            value: valueValidation
+        } = validation || {} as VariableValidation
         return (
             <FormControl>
                 <FormGroup>
                     <TextInput
                         label="name"
                         onChange={onNameChange}
+                        validation={nameValidation}
                         value={name}
                     />
                     <TextInput
                         label="value"
                         onChange={onValueChange}
+                        validation={valueValidation}
                         value={value}
                     />
                     <TextInput
                         label="comment"
                         onChange={onCommentChange}
+                        validation={commentValidation}
                         value={comment}
                     />
                     <Checkbox
@@ -74,7 +82,7 @@ const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
                         onChange={onDefaultPrefixChagne}
                         value={defaultPrefix}
                     />
-                      <Checkbox
+                    <Checkbox
                         label="exported"
                         onChange={onExportedChagne}
                         value={exported}
@@ -83,6 +91,5 @@ const VariableForm: React.FC<VariableFormPros> = ({ variable }) => {
             </FormControl>
         )
     })
-}
 
 export default VariableForm

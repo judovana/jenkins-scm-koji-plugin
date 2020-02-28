@@ -6,26 +6,27 @@ import { Add, Delete } from "@material-ui/icons"
 interface FormListProps {
     data: any[]
     label: string
-    renderItem: (item: any) => React.ReactNode
+    onAdd: () => any
+    renderItem: (item: any, index: number) => React.ReactNode
 }
 
 const FormList: React.FC<FormListProps> = props => {
     return useObserver(() => {
-        const { data, label, renderItem } = props
+        const { data, label, onAdd, renderItem } = props
         return (
             <div>
                 <FormControl fullWidth margin="normal">
                     <FormLabel>{label}</FormLabel>
                     {data.map((item, index) => (
                         <div style={{ flexDirection: "row" }} key={index}>
-                            {renderItem(item)}
+                            {renderItem(item, index)}
                             <IconButton onClick={() => data.splice(index, 1)}>
                                 <Delete />
                             </IconButton>
                         </div>
                     ))}
                 </FormControl>
-                <IconButton onClick={() => data.push({})}>
+                <IconButton onClick={() => data.push(onAdd())}>
                     <Add />
                 </IconButton>
             </div>

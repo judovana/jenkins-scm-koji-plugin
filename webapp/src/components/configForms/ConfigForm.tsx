@@ -2,13 +2,18 @@ import React from "react"
 import { useObserver } from "mobx-react"
 import { Button, Snackbar, Paper } from "@material-ui/core"
 
-import { Item } from "../../stores/model"
+import { Platform, JDKTestProject, JDKProject, Task } from "../../stores/model"
 import JDKProjectForm from "./JDKProjectForm"
 import TaskForm from "./TaskForm"
 import PlatformForm from "./PlatformForm"
 import JDKTestProjectForm from "./JDKTestProjectForm"
-import { useParams } from "react-router-dom"
 import useStores from "../../hooks/useStores"
+import {
+    PlatformValidation,
+    JDKProjectValidation,
+    JDKTestProjectValidation,
+    TaskValidation
+} from "../../utils/validators"
 
 interface SnackbarState {
     open: boolean
@@ -17,74 +22,84 @@ interface SnackbarState {
 }
 
 const ConfigForm: React.FC = () => {
-
     const { configStore } = useStores()
 
-    const { group, id } = useParams()
-
     return useObserver(() => {
-
-        const { createConfig, configError, jobUpdateResults, updateConfig, discardOToolResponse } = configStore
+        const {
+            configState,
+            editedConfig,
+            selectedConfigGroupId,
+            configValidation
+        } = configStore
+        if (!selectedConfigGroupId) {
+            return <div>{"ooops"}</div>
+        }
+        const {
+            configError,
+            discardOToolResponse,
+            jobUpdateResults,
+            submit
+        } = configStore
         const okButton = (
             <Button
                 color="secondary"
                 key="ok"
-                onClick={() => { discardOToolResponse() }}
+                onClick={() => {
+                    discardOToolResponse()
+                }}
                 size="small">
                 OK
-        </Button>
+            </Button>
         )
 
-        const snackbarState: SnackbarState | undefined = (configError && {
-            open: true,
-            message: configError,
-            actions: [
-                okButton
-            ]
-        }) || (jobUpdateResults && {
-            open: true,
-            message: "Done, see console output",
-            actions: [
-                okButton
-            ]
-        })
-
-        const onSubmit = async (config: Item) => {
-            if (id !== undefined) {
-                updateConfig(config)
-            } else {
-                createConfig(config)
-            }
-        }
+        const snackbarState: SnackbarState | undefined =
+            (configError && {
+                open: true,
+                message: configError,
+                actions: [okButton]
+            }) ||
+            (jobUpdateResults && {
+                open: true,
+                message: "Done, see console output",
+                actions: [okButton]
+            })
 
         const renderForm = () => {
-            switch (group) {
+            switch (selectedConfigGroupId) {
                 case "jdkProjects":
                     return (
                         <JDKProjectForm
-                            onSubmit={onSubmit}
-                            jdkProjectID={id} />
-                    );
+                            config={editedConfig as JDKProject}
+                            validation={
+                                configValidation as JDKProjectValidation
+                            }
+                        />
+                    )
                 case "jdkTestProjects":
                     return (
                         <JDKTestProjectForm
-                            onSubmit={onSubmit}
-                            id={id} />
+                            config={editedConfig as JDKTestProject}
+                            validation={
+                                configValidation as JDKTestProjectValidation
+                            }
+                        />
                     )
                 case "tasks":
                     return (
                         <TaskForm
-                            onSubmit={onSubmit}
-                            taskID={id} />
-                    );
+                            config={editedConfig as Task}
+                            validation={configValidation as TaskValidation}
+                        />
+                    )
                 case "platforms":
                     return (
                         <PlatformForm
-                            onSubmit={onSubmit}
-                            platformID={id} />
+                            config={editedConfig as Platform}
+                            validation={configValidation as PlatformValidation}
+                        />
                     )
                 default:
-                    return null;
+                    return null
             }
         }
 
@@ -92,18 +107,31 @@ const ConfigForm: React.FC = () => {
             <React.Fragment>
                 <Paper style={{ padding: 20, width: "100%" }}>
                     {renderForm()}
+                    <Button
+                        disabled={configState === "pending"}
+                        onClick={() => submit()}
+                        variant="contained">
+                        {(configState === "edit" && "Edit") ||
+                            (configState === "new" && "Create") ||
+                            (configState === "pending" && "...")}
+                    </Button>
                 </Paper>
-                {
-                    snackbarState && <Snackbar
+                {snackbarState && (
+                    <Snackbar
                         action={snackbarState.actions}
                         anchorOrigin={{
                             horizontal: "center",
                             vertical: "top"
                         }}
                         autoHideDuration={10000}
-                        message={<span>{(snackbarState.message || "").toString()}</span>}
-                        open={snackbarState.open} />
-                }
+                        message={
+                            <span>
+                                {(snackbarState.message || "").toString()}
+                            </span>
+                        }
+                        open={snackbarState.open}
+                    />
+                )}
             </React.Fragment>
         )
     })

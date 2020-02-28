@@ -1,6 +1,8 @@
 import React from "react"
-import { observer } from "mobx-react"
-import { TextField } from "@material-ui/core";
+import { useObserver } from "mobx-react"
+import { TextField } from "@material-ui/core"
+import { BasicValidation } from "../../utils/validators"
+import { TextFieldProps } from "@material-ui/core/TextField"
 
 type TextInputPropsRequired = {
     label: string
@@ -8,35 +10,37 @@ type TextInputPropsRequired = {
 
 type TextInputPropsOptional = {
     onChange: (value: string) => void
-    placeholder: string
-    value: string
+    validation?: BasicValidation
+    value?: string
 }
 
-type TextInputProps = TextInputPropsRequired & TextInputPropsOptional;
+type TextInputProps = TextInputPropsRequired & TextInputPropsOptional
 
-class TextInput extends React.PureComponent<TextInputProps> {
+const TextInput: React.FC<TextInputProps> = props =>
+    useObserver(() => {
+        const { label, validation, value } = props
 
-    static defaultProps: TextInputPropsOptional = {
-        onChange: _ => null,
-        placeholder: "",
-        value: ""
-    }
+        const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            props.onChange(event.target.value)
+        }
 
-    onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        this.props.onChange(event.target.value)
-    }
-
-    render() {
-        const { label, value } = this.props
+        const errorProps: TextFieldProps =
+            (validation &&
+                validation !== "ok" && {
+                    error: true,
+                    helperText: validation
+                }) ||
+            {}
         return (
             <TextField
+                {...errorProps}
                 fullWidth
                 label={label}
                 margin={"normal"}
-                value={value}
-                onChange={this.onChange} />
+                value={value || ""}
+                onChange={onChange}
+            />
         )
-    }
-}
+    })
 
-export default observer(TextInput);
+export default TextInput

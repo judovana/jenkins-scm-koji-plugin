@@ -1,40 +1,39 @@
 import React from "react"
 import Header from "./components/Header"
-import List from "./components/List"
 import ConfigForm from "./components/configForms/ConfigForm"
+import { useObserver } from "mobx-react"
 
-import { Switch, Route } from "react-router-dom"
 import { Grid } from "@material-ui/core"
 import useStores from "./hooks/useStores"
+import List from "./components/List"
 
 const App: React.FC = () => {
-
-    const { configStore } = useStores()
+    const { configStore, viewStore } = useStores()
 
     React.useEffect(() => {
         configStore.fetchConfigs()
     }, [configStore])
 
+    const content = useObserver(() => {
+        const { currentView } = viewStore
+        switch (currentView) {
+            case "form":
+                return <ConfigForm />
+            case "list":
+                return <List />
+        }
+    })
+
     return (
         <React.Fragment>
             <Header />
-            <Grid
-                alignItems="center"
-                container
-                justify="center">
+            <Grid alignItems="center" container justify="center">
                 <Grid item xs={11}>
-                    <Switch>
-                        <Route exact path="/:group">
-                            <List />
-                        </Route>
-                        <Route path="/form/:group/:id?">
-                            <ConfigForm />
-                        </Route>
-                    </Switch>
+                    {content}
                 </Grid>
             </Grid>
         </React.Fragment>
-    );
+    )
 }
 
-export default App;
+export default App
