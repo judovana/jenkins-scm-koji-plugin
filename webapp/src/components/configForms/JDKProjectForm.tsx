@@ -41,12 +41,12 @@ const JDKProjectForm: React.FC<Props> = props => {
         }
 
         const { buildProviders } = configStore
-        const { id, product, url, variables } =
+        const { id, product, url } =
             validation || ({} as JDKProjectValidation)
 
         const variablesValidation = setDefaultValidations<VariableValidation>(
             validation && validation.variables,
-            variables
+            jdkProject.variables
         )
 
         return (

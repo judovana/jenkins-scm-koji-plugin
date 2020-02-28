@@ -49,12 +49,11 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
             product,
             subpackageBlacklist,
             subpackageWhitelist,
-            variables
         } = validation || ({} as JDKTestProjectValidation)
 
         const variablesValidation = setDefaultValidations<VariableValidation>(
             validation && validation.variables,
-            variables
+            project.variables
         )
 
         return (

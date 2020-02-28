@@ -722,7 +722,8 @@ public class DataGenerator {
                                 }}), VAGRANT
 
                         )))
-                ), null
+                ),
+                Collections.emptyList()
         );
     }
 
@@ -841,7 +842,8 @@ public class DataGenerator {
                                             ));
                                         }}), VAGRANT
                         )))
-                ), null
+                ),
+                Collections.emptyList()
         );
     }
 
@@ -906,7 +908,8 @@ public class DataGenerator {
                                         )
                                 ))
                         )
-                ))), null
+                ))),
+                Collections.emptyList()
         );
     }
 
