@@ -9,6 +9,7 @@ import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -125,12 +126,14 @@ public abstract class TaskJob extends Job {
     }
 
     List<OToolVariable> getExportedVariables() {
-        final List<OToolVariable> defaultVariables = Arrays.asList(
+        final List<OToolVariable> defaultVariables = new ArrayList<>(Arrays.asList(
                 new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
                 new OToolVariable(OJDK_VAR, jdkVersion.getId()),
                 new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
                 new OToolVariable(PROJECT_NAME_VAR, projectName)
-        );
+        ));
+        getPlatform().addZstreamVar(defaultVariables);
+        getPlatform().addYstreamVar(defaultVariables);
         final List<OToolVariable> variantVariables = OToolVariable.createDefault(variants);
         return Stream.of(
                 defaultVariables,

@@ -76,6 +76,7 @@ export type TaskType = "BUILD" | "TEST"
 export type MachinePreference = "VM" | "VM_ONLY" | "HW" | "HW_ONLY"
 
 export type BinaryRequirement = "NONE" | "BINARY" | "BINARIES"
+export type TestStableYZupdates = "NaN" | "True" | "False"
 
 export interface FileRequirements {
     source: boolean;
@@ -109,6 +110,8 @@ export interface Platform extends Item {
     providers: PlatformProvider[]
     vmName: string
     tags: string[]
+    testingYstream: TestStableYZupdates
+    stableZstream: TestStableYZupdates
     variables: Variable[]
 }
 

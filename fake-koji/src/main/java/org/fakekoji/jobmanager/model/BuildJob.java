@@ -11,6 +11,7 @@ import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -128,13 +129,15 @@ public class BuildJob extends TaskJob {
                 .map(e -> e.getValue().getId())
                 .collect(Collectors.joining(".")) + '.' + getPlatform().getId();
 
-        final List<OToolVariable> defaultVariables = Arrays.asList(
+        final List<OToolVariable> defaultVariables = new ArrayList<>(Arrays.asList(
                 new OToolVariable(JDK_VERSION_VAR, getJdkVersion().getVersion()),
                 new OToolVariable(OJDK_VAR, getProduct().getJdk()),
                 new OToolVariable(PACKAGE_NAME_VAR, getProduct().getPackageName()),
                 new OToolVariable(PROJECT_NAME_VAR, getProjectName()),
                 new OToolVariable(RELEASE_SUFFIX_VAR, releaseSuffix)
-        );
+        ));
+        getPlatform().addZstreamVar(defaultVariables);
+        getPlatform().addYstreamVar(defaultVariables);
         final List<OToolVariable> variantVariables = OToolVariable.createDefault(getVariants());
         return Stream.of(
                 defaultVariables,
