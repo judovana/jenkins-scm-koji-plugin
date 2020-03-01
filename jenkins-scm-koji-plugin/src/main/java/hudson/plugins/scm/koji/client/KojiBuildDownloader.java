@@ -214,14 +214,26 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
         if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
             GlobPredicate glob = new GlobPredicate(subpackageBlacklist);
-            nvrPredicate = rpm -> !glob.test(rpm.getNvr());
+            nvrPredicate = (RPM rpm) -> {
+                if (rpm.getArch().equals("src")){
+                    return true;
+                } else {
+                    return !glob.test(rpm.getNvr());
+                }
+            };
         }
 
         Predicate<RPM> whitelistPredicate = i -> true;
         final String subpackageWhitelist = realKojiXmlRpcApi.getSubpackageWhitelist();
         if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
             GlobPredicate glob = new GlobPredicate(subpackageWhitelist);
-            whitelistPredicate = rpm -> glob.test(rpm.getNvr());
+            whitelistPredicate = (RPM rpm) -> {
+                if (rpm.getArch().equals("src")){
+                    return true;
+                } else {
+                    return glob.test(rpm.getNvr());
+                }
+            };
         }
 
         List<String> l = build.getRpms()
