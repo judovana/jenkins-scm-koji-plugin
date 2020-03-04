@@ -71,27 +71,30 @@ const List: React.FC = () => {
                                     ({ id }, index) => (
                                         <TableRow key={index}>
                                             <TableCell>
-                                                <Typography variant="body1">
-                                                    {id}
-                                                </Typography>
+                                                <Grid alignItems="center" container direction="row">
+                                                    <Typography variant="body1">
+                                                        {id}
+                                                    </Typography>
+                                                    <IconButton
+                                                        onClick={() =>
+                                                            goToConfigEditForm(
+                                                                selectedConfigGroupId,
+                                                                id
+                                                            )
+                                                        }>
+                                                        <Edit />
+                                                    </IconButton>
+                                                </Grid>
                                             </TableCell>
                                             <TableCell align="right">
-                                                <IconButton
-                                                    onClick={() =>
-                                                        goToConfigEditForm(
-                                                            selectedConfigGroupId,
-                                                            id
-                                                        )
-                                                    }>
-                                                    <Edit />
-                                                </IconButton>
                                                 <DeleteButton
                                                     onClick={() =>
                                                         deleteConfig(
                                                             selectedConfigGroupId,
                                                             id
                                                         )
-                                                    } />
+                                                    }
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     )
