@@ -1,13 +1,14 @@
 import React from "react"
 import { useObserver } from "mobx-react"
 import { Tooltip, IconButton, TableCell, TableRow } from "@material-ui/core"
-import { Add, Delete } from "@material-ui/icons"
+import { Add } from "@material-ui/icons"
 
 import { TaskConfig, TaskType, ProjectType } from "../../stores/model"
 
 import useStores from "../../hooks/useStores"
 import VariantRow from "./VariantRow"
 import createTaskVariantsMap from "../../utils/createVariantMap";
+import DeleteButton from "../DeleteButton"
 
 type TaskRowProps = {
     id: string
@@ -76,9 +77,7 @@ const TaskRow: React.FC<TaskRowProps> = props => {
                     <TableCell>{type === "TEST" && cell}</TableCell>
                     <TableCell></TableCell>
                     <TableCell>
-                        <IconButton onClick={() => { onDelete(id) }}>
-                            <Delete />
-                        </IconButton>
+                        <DeleteButton onClick={() => { onDelete(id) }} />
                     </TableCell>
                 </TableRow>
                 {taskVariants.map((taskVariant, index) =>

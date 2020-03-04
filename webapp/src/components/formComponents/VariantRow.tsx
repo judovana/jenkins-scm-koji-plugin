@@ -1,13 +1,13 @@
 import React from "react"
 import { useObserver } from "mobx-react"
-import { TableCell, TableRow, IconButton } from "@material-ui/core"
-import { Delete } from "@material-ui/icons"
+import { TableCell, TableRow } from "@material-ui/core"
 
 import { VariantsConfig, TaskType, ProjectType } from "../../stores/model"
 import Select from "./Select"
 import AddComponent from "./AddComponent"
 import useStores from "../../hooks/useStores"
 import PlatformRow from "./PlatformRow"
+import DeleteButton from "../DeleteButton"
 
 
 type VariantRowProps = {
@@ -82,9 +82,7 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                     <TableCell></TableCell>
                     <TableCell>{type === "TEST" && cell}</TableCell>
                     <TableCell>
-                        <IconButton onClick={onDelete}>
-                            <Delete />
-                        </IconButton>
+                        <DeleteButton onClick={onDelete} />
                     </TableCell>
                 </TableRow>
                 {type === "BUILD" && config.platforms && Object.entries(config.platforms)

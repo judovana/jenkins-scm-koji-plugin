@@ -11,8 +11,9 @@ import {
     TableBody,
     TableHead
 } from "@material-ui/core"
-import { Add, Edit, Delete } from "@material-ui/icons"
+import { Add, Edit } from "@material-ui/icons"
 import useStores from "../hooks/useStores"
+import DeleteButton from "./DeleteButton"
 
 const List: React.FC = () => {
     const { configStore, viewStore } = useStores()
@@ -84,7 +85,7 @@ const List: React.FC = () => {
                                                     }>
                                                     <Edit />
                                                 </IconButton>
-                                                <IconButton
+                                                <DeleteButton
                                                     onClick={() =>
                                                         viewStore.confirm(() =>
                                                             deleteConfig(
@@ -92,9 +93,7 @@ const List: React.FC = () => {
                                                                 id
                                                             )
                                                         )
-                                                    }>
-                                                    <Delete />
-                                                </IconButton>
+                                                    } />
                                             </TableCell>
                                         </TableRow>
                                     )

@@ -1,7 +1,7 @@
 import React from "react"
 import { useObserver } from "mobx-react"
 import { TableCell, TableRow, IconButton, Tooltip } from "@material-ui/core"
-import { Delete, Add } from "@material-ui/icons"
+import { Add } from "@material-ui/icons"
 
 import { PlatformConfig, TaskType, ProjectType } from "../../stores/model"
 import AddComponent from "./AddComponent"
@@ -10,6 +10,7 @@ import TaskRow from "./TaskRow"
 import VariantRow from "./VariantRow"
 import Select from "./Select"
 import createTaskVariantsMap from "../../utils/createVariantMap";
+import DeleteButton from "../DeleteButton"
 
 type PlatformRowProps = {
     config: PlatformConfig
@@ -102,9 +103,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                     <TableCell></TableCell>
                     <TableCell></TableCell>
                     <TableCell>
-                        <IconButton onClick={onDelete}>
-                            <Delete />
-                        </IconButton>
+                        <DeleteButton onClick={onDelete} />
                     </TableCell>
                 </TableRow>
                 {(taskConfigs && Object.entries(taskConfigs).map(([id, config]) =>

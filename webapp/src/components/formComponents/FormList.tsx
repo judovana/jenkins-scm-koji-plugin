@@ -1,7 +1,8 @@
 import React from "react"
 import { useObserver } from "mobx-react"
 import { FormControl, FormLabel, IconButton } from "@material-ui/core"
-import { Add, Delete } from "@material-ui/icons"
+import { Add, } from "@material-ui/icons"
+import DeleteButton from "../DeleteButton"
 
 interface FormListProps {
     data: any[]
@@ -20,9 +21,7 @@ const FormList: React.FC<FormListProps> = props => {
                     {data.map((item, index) => (
                         <div style={{ flexDirection: "row" }} key={index}>
                             {renderItem(item, index)}
-                            <IconButton onClick={() => data.splice(index, 1)}>
-                                <Delete />
-                            </IconButton>
+                            <DeleteButton onClick={() => data.splice(index, 1)} />
                         </div>
                     ))}
                 </FormControl>
