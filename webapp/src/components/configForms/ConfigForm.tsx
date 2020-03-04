@@ -22,7 +22,7 @@ interface SnackbarState {
 }
 
 const ConfigForm: React.FC = () => {
-    const { configStore } = useStores()
+    const { configStore, viewStore } = useStores()
 
     return useObserver(() => {
         const {
@@ -109,7 +109,7 @@ const ConfigForm: React.FC = () => {
                     {renderForm()}
                     <Button
                         disabled={configState === "pending"}
-                        onClick={() => submit()}
+                        onClick={() => viewStore.confirm(submit)}
                         variant="contained">
                         {(configState === "edit" && "Edit") ||
                             (configState === "new" && "Create") ||

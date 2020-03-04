@@ -90,6 +90,12 @@ export class ViewStore {
     ]
 
     @observable
+    private _dialog = {
+        action: () => {},
+        open: false,
+    }
+
+    @observable
     private _currentView: View = "list"
 
     constructor(
@@ -145,6 +151,17 @@ export class ViewStore {
     }
 
     @action
+    public closeDialog = () => {
+        this._dialog.open = false
+    }
+
+    @action
+    public confirm = (action: () => void) => {
+        this._dialog.open = true
+        this._dialog.action = action
+    }
+
+    @action
     private setCurrentView = (view: View) => {
         this._currentView = view
     }
@@ -152,5 +169,10 @@ export class ViewStore {
     @computed
     get currentView(): View {
         return this._currentView
+    }
+
+    @computed
+    get dialog() {
+        return this._dialog
     }
 }

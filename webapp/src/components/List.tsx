@@ -11,7 +11,7 @@ import {
     TableBody,
     TableHead
 } from "@material-ui/core"
-import { Delete, Add } from "@material-ui/icons"
+import { Add, Edit, Delete } from "@material-ui/icons"
 import useStores from "../hooks/useStores"
 
 const List: React.FC = () => {
@@ -68,24 +68,31 @@ const List: React.FC = () => {
                             <TableBody>
                                 {Object.values(displayedGroup.configs).map(
                                     ({ id }, index) => (
-                                        <TableRow
-                                            key={index}
-                                            onClick={_ =>
-                                                goToConfigEditForm(
-                                                    selectedConfigGroupId,
-                                                    id
-                                                )
-                                            }>
-                                            <TableCell>{id}</TableCell>
+                                        <TableRow key={index}>
+                                            <TableCell>
+                                                <Typography variant="body1">
+                                                    {id}
+                                                </Typography>
+                                            </TableCell>
                                             <TableCell align="right">
                                                 <IconButton
-                                                    onClick={e => {
-                                                        e.stopPropagation()
-                                                        deleteConfig(
+                                                    onClick={() =>
+                                                        goToConfigEditForm(
                                                             selectedConfigGroupId,
                                                             id
                                                         )
-                                                    }}>
+                                                    }>
+                                                    <Edit />
+                                                </IconButton>
+                                                <IconButton
+                                                    onClick={() =>
+                                                        viewStore.confirm(() =>
+                                                            deleteConfig(
+                                                                selectedConfigGroupId,
+                                                                id
+                                                            )
+                                                        )
+                                                    }>
                                                     <Delete />
                                                 </IconButton>
                                             </TableCell>
