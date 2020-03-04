@@ -16,5 +16,5 @@ public interface Manager<T> {
 
     ManagementResult delete(String id) throws StorageException, ManagementException;
 
-
+    boolean contains(String id);
 }

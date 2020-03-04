@@ -63,4 +63,9 @@ public class TaskManager implements Manager<Task> {
     public ManagementResult<Task> delete(String id) throws StorageException, ManagementException {
         throw new ManagementException("Not supported");
     }
+
+    @Override
+    public boolean contains(String id) {
+        return taskStorage.contains(id);
+    }
 }

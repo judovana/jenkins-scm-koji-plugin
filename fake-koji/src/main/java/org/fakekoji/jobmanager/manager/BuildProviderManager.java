@@ -48,5 +48,10 @@ public class BuildProviderManager implements Manager<BuildProvider> {
     public ManagementResult delete(String id) throws StorageException, ManagementException {
         return null;
     }
+
+    @Override
+    public boolean contains(String id) {
+        return storage.contains(id);
+    }
 }
 

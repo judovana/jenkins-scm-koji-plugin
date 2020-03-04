@@ -201,4 +201,9 @@ public class JDKProjectManager implements Manager<JDKProject> {
         }
         return sum;
     }
+
+    @Override
+    public boolean contains(String id) {
+        return configManager.getJdkProjectStorage().contains(id);
+    }
 }

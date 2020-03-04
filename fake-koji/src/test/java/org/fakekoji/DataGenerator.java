@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class DataGenerator {
@@ -670,6 +671,12 @@ public class DataGenerator {
         return new HashSet<>(Arrays.asList(
                 getJDKTestProject()
         ));
+    }
+
+    public static Set<Project> getProjects() {
+        return Stream.of(getJDKTestProjects(), getJDKProjects())
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
     }
 
     public static JDKProject getJDKProject() {
