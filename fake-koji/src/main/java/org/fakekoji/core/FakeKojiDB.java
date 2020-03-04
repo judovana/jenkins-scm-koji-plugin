@@ -28,6 +28,7 @@ import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.core.utils.BuildHelper;
 import org.fakekoji.core.utils.DirFilter;
+import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
@@ -269,9 +270,9 @@ public class FakeKojiDB {
 
         return builds.stream()
                 .map(FakeBuild::getNVR)
-                .map(buildHelper.getOToolBuildParser())
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                .filter(Result::isOk)
+                .map(Result::getValue)
                 .filter(buildHelper.getPackageNamePredicate())
                 .filter(buildHelper.getProjectNamePredicate())
                 .filter(buildHelper.getBuildPlatformPredicate())

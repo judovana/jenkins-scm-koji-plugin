@@ -48,7 +48,7 @@ public class BuildHelper {
 
     private final File buildsRoot;
     private final GetBuildList params;
-    private final OToolBuildParser oToolBuildParser;
+    private final OToolParser oToolParser;
     private final List<TaskVariant> taskVariants;
     private final Set<String> packageNames;
     private final TaskVariant buildPlatformVariant;
@@ -60,7 +60,7 @@ public class BuildHelper {
     private BuildHelper(
             final File buildsRoot,
             final GetBuildList params,
-            final OToolBuildParser oToolBuildParser,
+            final OToolParser oToolParser,
             final List<TaskVariant> taskVariants,
             final Set<String> packageNames,
             final TaskVariant buildPlatformVariant,
@@ -68,7 +68,7 @@ public class BuildHelper {
     ) {
         this.taskVariants = taskVariants;
         this.packageNames = packageNames;
-        this.oToolBuildParser = oToolBuildParser;
+        this.oToolParser = oToolParser;
         this.params = params;
         this.buildsRoot = buildsRoot;
         this.buildPlatformVariant = buildPlatformVariant;
@@ -81,16 +81,6 @@ public class BuildHelper {
 
     private Comparator<File> getArchiveComparator() {
         return (archive1, archive2) -> Long.compare(archive2.lastModified(), archive1.lastModified());
-    }
-
-    public Function<String, Optional<OToolBuild>> getOToolBuildParser() {
-        return nvr -> {
-            try {
-                return Optional.of(oToolBuildParser.parse(nvr));
-            } catch (ParserException e) {
-                return Optional.empty();
-            }
-        };
     }
 
     public Function<OToolBuild, Optional<Build>> getBuildParser() {
@@ -235,6 +225,10 @@ public class BuildHelper {
         };
     }
 
+    public OToolParser getOToolParser() {
+        return oToolParser;
+    }
+
     private String getBuildVariantString() {
         return buildVariantMap
                 .entrySet()
@@ -295,9 +289,15 @@ public class BuildHelper {
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
-        final OToolBuildParser parser = new OToolBuildParser(
+        final OToolParser parser = new OToolParser(
+                jdkProjectStorage.loadAll(JDKProject.class),
                 jdkVersionStorage.loadAll(JDKVersion.class),
-                jdkProjectStorage.loadAll(JDKProject.class)
+                taskVariantStorage
+                        .loadAll(TaskVariant.class)
+                        .stream()
+                        .filter(variant -> variant.getType() == Task.Type.BUILD)
+                        .sorted(TaskVariant::compareTo)
+                        .collect(Collectors.toList())
         );
 
         final TaskVariant buildPlatformVariant = new TaskVariant(
