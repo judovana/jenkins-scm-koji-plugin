@@ -37,7 +37,6 @@ const ConfigForm: React.FC = () => {
         const {
             configError,
             discardOToolResponse,
-            jobUpdateResults,
             submit
         } = configStore
         const okButton = (
@@ -53,11 +52,11 @@ const ConfigForm: React.FC = () => {
         )
 
         const snackbarState: SnackbarState | undefined =
-            configError && {
+            (configError && {
                 open: true,
                 message: configError,
                 actions: [okButton]
-            } || undefined
+            }) || undefined
 
         const renderForm = () => {
             switch (selectedConfigGroupId) {
