@@ -1,4 +1,4 @@
-import { observable, runInAction, action } from "mobx"
+import { action, autorun, observable, runInAction } from "mobx"
 
 import {
     Platform,
@@ -55,6 +55,9 @@ export class ConfigStore {
     @observable
     private _configValidation: ConfigValidation | null = null
 
+    @observable
+    private _resultDialogOpen: boolean = false
+
     constructor(private readonly service: ConfigService) {
         this._configGroups = [
             {
@@ -95,8 +98,22 @@ export class ConfigStore {
     }
 
     @action
-    setJobUpdateResults = (results: JobUpdateResults) => {
+    public closeResultDialog = () => {
+        this._resultDialogOpen = false
+    }
+
+    @action
+    private showResultDialog = (results: JobUpdateResults) => {
         this._jobUpdateResults = results
+        this._resultDialogOpen = true
+
+    }
+
+    private displayJobResults = autorun(() => {
+        const results = this.jobUpdateResults
+        if (!results) {
+            return
+        }
         let result = ""
         result += "\nJobs created:\n"
         results.jobsCreated.forEach(res => {
@@ -127,7 +144,7 @@ export class ConfigStore {
                 "\n"
         })
         console.log(result)
-    }
+    })
 
     @action
     setError = (error?: string) => {
@@ -243,7 +260,7 @@ export class ConfigStore {
                 this._configState = "edit"
             }
             if (jobUpdateResults) {
-                this.setJobUpdateResults(jobUpdateResults)
+                this.showResultDialog(jobUpdateResults)
             }
         }
         if (error) {
@@ -287,7 +304,7 @@ export class ConfigStore {
                 this._selectedConfigId = ""
             })
             if (oToolResponse.jobUpdateResults) {
-                this.setJobUpdateResults(oToolResponse.jobUpdateResults)
+                this.showResultDialog(oToolResponse.jobUpdateResults)
             }
         } else {
             this.setError(response.error!)
@@ -392,5 +409,9 @@ export class ConfigStore {
 
     get selectedConfigId(): string {
         return this._selectedConfigId
+    }
+
+    get resultDialogOpen(): boolean {
+        return this._resultDialogOpen
     }
 }

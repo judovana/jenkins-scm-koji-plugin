@@ -53,16 +53,11 @@ const ConfigForm: React.FC = () => {
         )
 
         const snackbarState: SnackbarState | undefined =
-            (configError && {
+            configError && {
                 open: true,
                 message: configError,
                 actions: [okButton]
-            }) ||
-            (jobUpdateResults && {
-                open: true,
-                message: "Done, see console output",
-                actions: [okButton]
-            })
+            } || undefined
 
         const renderForm = () => {
             switch (selectedConfigGroupId) {

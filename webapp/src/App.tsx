@@ -2,6 +2,7 @@ import React from "react"
 import Header from "./components/Header"
 import ConfigForm from "./components/configForms/ConfigForm"
 import ConfirmDialog from "./components/ConfirmDialog"
+import ResultDialog from "./components/ResultDialog"
 import { useObserver } from "mobx-react"
 
 import { Grid } from "@material-ui/core"
@@ -34,6 +35,7 @@ const App: React.FC = () => {
                 </Grid>
             </Grid>
             <ConfirmDialog />
+            <ResultDialog />
         </React.Fragment>
     )
 }
