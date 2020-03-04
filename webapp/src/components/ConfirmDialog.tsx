@@ -31,7 +31,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = () => {
         }
         return (
             <Dialog onEnter={onEnter} open={dialog.open} onClose={closeDialog}>
-                <DialogTitle>Are you sure?</DialogTitle>
+                <DialogTitle>{dialog.label}</DialogTitle>
                 <DialogActions>
                     <Button onClick={onYesClick} ref={yesButton}>
                         yes

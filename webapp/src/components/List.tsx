@@ -87,11 +87,9 @@ const List: React.FC = () => {
                                                 </IconButton>
                                                 <DeleteButton
                                                     onClick={() =>
-                                                        viewStore.confirm(() =>
-                                                            deleteConfig(
-                                                                selectedConfigGroupId,
-                                                                id
-                                                            )
+                                                        deleteConfig(
+                                                            selectedConfigGroupId,
+                                                            id
                                                         )
                                                     } />
                                             </TableCell>

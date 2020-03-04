@@ -11,7 +11,7 @@ interface DeleteButtonProps {
 const DeleteButton: React.FC<DeleteButtonProps> = ({ onClick }) => {
     const { viewStore } = useStores()
     const { confirm } = viewStore
-    const _onClick = () => confirm(onClick)
+    const _onClick = () => confirm("Are you sure to delete?", onClick)
     return (
         <IconButton onClick={_onClick}>
             <Delete />

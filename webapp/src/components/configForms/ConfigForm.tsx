@@ -103,7 +103,7 @@ const ConfigForm: React.FC = () => {
                     {renderForm()}
                     <Button
                         disabled={configState === "pending"}
-                        onClick={() => viewStore.confirm(submit)}
+                        onClick={() => viewStore.confirm("Are you sure?", submit)}
                         variant="contained">
                         {(configState === "edit" && "Edit") ||
                             (configState === "new" && "Create") ||

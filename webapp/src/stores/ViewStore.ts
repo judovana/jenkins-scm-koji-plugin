@@ -92,7 +92,8 @@ export class ViewStore {
     @observable
     private _dialog = {
         action: () => {},
-        open: false,
+        label: "",
+        open: false
     }
 
     @observable
@@ -156,8 +157,9 @@ export class ViewStore {
     }
 
     @action
-    public confirm = (action: () => void) => {
+    public confirm = (label: string, action: () => void) => {
         this._dialog.open = true
+        this._dialog.label = label
         this._dialog.action = action
     }
 
