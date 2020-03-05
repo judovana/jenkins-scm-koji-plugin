@@ -192,7 +192,7 @@ export class ConfigStore {
             const config = group.configs[configId]
             if (config) {
                 this._selectedGroupId = configGroupId
-                this._editedConfig = { ...config }
+                this._editedConfig = JSON.parse(JSON.stringify(config))
                 this._configValidator = validators[configGroupId]
                 this._configState = "edit"
                 return
