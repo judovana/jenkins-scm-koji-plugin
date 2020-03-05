@@ -102,4 +102,9 @@ public class JDKTestProjectManager implements Manager<JDKTestProject> {
         }
         return sum;
     }
+
+    @Override
+    public boolean contains(String id) {
+        return storage.contains(id);
+    }
 }

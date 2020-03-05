@@ -60,4 +60,8 @@ public class PlatformManager implements Manager<Platform> {
         throw new ManagementException("Not supported");
     }
 
+    @Override
+    public boolean contains(String id) {
+        return storage.contains(id);
+    }
 }

@@ -48,4 +48,9 @@ public class JDKVersionManager implements Manager<JDKVersion> {
     public ManagementResult delete(String id) throws StorageException, ManagementException {
         return null;
     }
+
+    @Override
+    public boolean contains(String id) {
+        return storage.contains(id);
+    }
 }

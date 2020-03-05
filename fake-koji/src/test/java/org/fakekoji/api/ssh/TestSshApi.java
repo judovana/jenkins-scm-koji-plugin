@@ -2215,7 +2215,7 @@ public class TestSshApi {
 
     final private static String RELEASE = RELEASE_1 + '.' + PROJECT_NAME_U;
     final private static String NVR = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE;
-    final private static String ARCHIVE = HOTSPOT + '.' + FASTDEBUG + '.' + RHEL_7_X64;
+    final private static String ARCHIVE = FASTDEBUG + '.' + HOTSPOT + '.' + RHEL_7_X64;
     final private static String RELEASE_CHAOS = RELEASE_1 + ".C.H.A.O.S." + PROJECT_NAME_U;
     final private static String NVR_CHAOS = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_CHAOS;
 

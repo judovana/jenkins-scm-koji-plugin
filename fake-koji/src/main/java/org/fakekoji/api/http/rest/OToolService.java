@@ -47,6 +47,7 @@ public class OToolService {
     private static final String JDK_PROJECT = JDK_PROJECTS + CONFIG_ID;
     private static final String JDK_TEST_PROJECTS = "/jdkTestProjects";
     private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
+    private static final String GET = "get";
 
     private static final String MISC = "misc";
     private static final String REGENERATE_ALL = "regenerateAll";
@@ -170,8 +171,8 @@ public class OToolService {
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
             app.get(BUILD_PROVIDERS, context -> context.json(buildProviderManager.readAll()));
 
-            final JDKVersionManager JDKVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
-            app.get(JDK_VERSIONS, context -> context.json(JDKVersionManager.readAll()));
+            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
+            app.get(JDK_VERSIONS, context -> context.json(jdkVersionManager.readAll()));
 
             final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
             app.get(PLATFORMS, context -> context.json(platformManager.readAll()));
@@ -285,6 +286,13 @@ public class OToolService {
                     context.status(500).result(e.toString());
                 }
             });
+            path(GET, new GetterAPI(
+                    settings,
+                    jdkProjectManager,
+                    jdkTestProjectManager,
+                    jdkVersionManager,
+                    taskVariantManager
+            ));
         });
     }
 

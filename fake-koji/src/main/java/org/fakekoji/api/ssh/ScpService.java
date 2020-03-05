@@ -23,6 +23,32 @@
  */
 package org.fakekoji.api.ssh;
 
+import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import org.apache.sshd.common.config.keys.KeyUtils;
+import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
+import org.apache.sshd.common.scp.ScpFileOpener;
+import org.apache.sshd.common.scp.ScpSourceStreamResolver;
+import org.apache.sshd.common.scp.ScpTargetStreamResolver;
+import org.apache.sshd.common.scp.ScpTimestamp;
+import org.apache.sshd.common.session.Session;
+import org.apache.sshd.server.SshServer;
+import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.server.scp.ScpCommandFactory;
+import org.apache.sshd.server.session.ServerSession;
+import org.fakekoji.core.FakeKojiDB;
+import org.fakekoji.core.utils.OToolParser;
+import org.fakekoji.functional.Result;
+import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolArchive;
+import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariant;
+import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -43,42 +69,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.apache.sshd.common.SshException;
-import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
-import org.apache.sshd.common.config.keys.KeyUtils;
-import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
-import org.apache.sshd.common.scp.ScpFileOpener;
-import org.apache.sshd.common.scp.ScpSourceStreamResolver;
-import org.apache.sshd.common.scp.ScpTargetStreamResolver;
-import org.apache.sshd.common.scp.ScpTimestamp;
-import org.apache.sshd.common.session.Session;
-import org.apache.sshd.server.SshServer;
-import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
-import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.server.scp.ScpCommandFactory;
-import org.apache.sshd.server.session.ServerSession;
-
-import org.fakekoji.core.FakeKojiDB;
-import org.fakekoji.core.utils.OToolArchiveParser;
-import org.fakekoji.jobmanager.ConfigManager;
-import org.fakekoji.jobmanager.model.JDKProject;
-import org.fakekoji.model.OToolArchive;
-import org.fakekoji.storage.StorageException;
-import org.fakekoji.xmlrpc.server.JavaServerConstants;
-
 /**
  * In all cases, garbage prefixing NVRA on server is ignored.
- *
+ * <p>
  * Supported cases for NVRA:
- *
+ * <p>
  * where the paths may be absolute or relative or nothing
  * <ul>
  * <li>scp any/file user@host:any/path/nvra</li>
@@ -97,10 +100,10 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
  * <li>scp any/path/NVRA1 any/path/NVRA2 user@host</li>
  * <li>scp user@host:NVRA1 user@host:NVRA2 dir</li>
  * </ul>
- *
+ * <p>
  * Supported cases for data (files shared by all builds, sources and
  * architectures):
- *
+ * <p>
  * where the paths may be absolute or relative or nothing
  * <ul>
  * <li>scp any/file user@host:any/path/nvra/data</li>
@@ -120,7 +123,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
  * Supported cases for logs - logs of all sources and builds are kept arch by
  * arch For comaptibility reasons, you can use both "nvra/log/filename" and
  * "nvra/data/log/filename"
- *
+ * <p>
  * where the paths may be absolute or relative or nothing
  * <ul>
  * <li>scp any/file user@host:any/path/nvra/log</li>
@@ -156,7 +159,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
  * </ul>
  * where path is new name for fileName unlike directory
  * Name/Version/Release/arch/any/path already existed, which is unlikely
- *
+ * <p>
  * The recursive uplaods of binaries, logs and data should work as expected:
  * <ul>
  * <li>heaving dir with nvra1 and nvra2 (even in subdirs) then scp -r dir
@@ -184,7 +187,6 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
  * SHoudl gave you all data for given NVR and all logs of all A for given
  * NVR(A)</li>
  * </ul>
- *
  *
  * @author jvanek
  */
@@ -227,8 +229,7 @@ public class ScpService {
     public int getPort() {
         return port;
     }
-    
-    
+
 
     public void stop() throws IOException {
         if (sshServer != null) {
@@ -609,10 +610,23 @@ public class ScpService {
 
     private NVRA parseNVRA(String fileName) {
         final List<JDKProject> jdkProjects;
+        final List<JDKVersion> jdkVersions;
+        final List<TaskVariant> buildVariants;
         try {
-            jdkProjects = ConfigManager.create(configsRoot.getAbsolutePath())
-                .getJdkProjectStorage()
-                .loadAll(JDKProject.class);
+            final ConfigManager configManager = ConfigManager.create(configsRoot.getAbsolutePath());
+            jdkProjects = configManager
+                    .getJdkProjectStorage()
+                    .loadAll(JDKProject.class);
+            jdkVersions = configManager
+                    .getJdkVersionStorage()
+                    .loadAll(JDKVersion.class);
+            buildVariants = configManager
+                    .getTaskVariantStorage()
+                    .loadAll(TaskVariant.class)
+                    .stream()
+                    .filter(variant -> variant.getType() == Task.Type.BUILD)
+                    .sorted(TaskVariant::compareTo)
+                    .collect(Collectors.toList());
         } catch (StorageException e) {
                 LOGGER.severe(e.getMessage());
                 throw new NvraParsingException(fileName, e);
@@ -630,13 +644,14 @@ public class ScpService {
             name = Arrays.stream(split).limit(3).collect(Collectors.joining("-"));
             version = split[split.length - 2];
             suffix = releaseArchSuffix[releaseArchSuffix.length - 1];
-            final Optional<OToolArchive> archiveOptional = new OToolArchiveParser(jdkProjects).parse(fileName);
+            final Result<OToolArchive, String> parseResult = new OToolParser(jdkProjects, jdkVersions, buildVariants)
+                    .parseArchive(fileName);
             if (FakeKojiDB.isOkForOldApi(fileName)) {
                 arch = releaseArchSuffix[releaseArchSuffix.length - 2];
                 release = split[split.length - 1].replace("." + arch + "." + suffix, "");
-            } else if (archiveOptional.isPresent()) {
-                final OToolArchive archive = archiveOptional.get();
-                arch = archive.getArchive();
+            } else if (!parseResult.isError()) {
+                final OToolArchive archive = parseResult.getValue();
+                arch = archive.getDirectoryName();
                 release = archive.getRelease();
             } else {
                 throw new NvraParsingException(fileName);

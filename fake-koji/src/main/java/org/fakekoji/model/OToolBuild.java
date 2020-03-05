@@ -68,8 +68,12 @@ public class OToolBuild {
 
     @Override
     public String toString() {
-        return packageName + '-' +
-                version + '-' +
-                getRelease();
+        return "OToolBuild{" +
+                "packageName='" + packageName + '\'' +
+                ", version='" + version + '\'' +
+                ", changeSet='" + changeSet + '\'' +
+                ", garbage='" + garbage + '\'' +
+                ", projectName='" + projectName + '\'' +
+                '}';
     }
 }
