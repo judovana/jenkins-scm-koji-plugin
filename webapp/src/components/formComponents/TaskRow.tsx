@@ -1,6 +1,6 @@
 import React from "react"
 import { useObserver } from "mobx-react"
-import { Tooltip, IconButton, TableCell, TableRow } from "@material-ui/core"
+import { Tooltip, IconButton, TableRow } from "@material-ui/core"
 import { Add } from "@material-ui/icons"
 
 import { TaskConfig, TaskType, ProjectType } from "../../stores/model"
@@ -9,6 +9,7 @@ import useStores from "../../hooks/useStores"
 import VariantRow from "./VariantRow"
 import createTaskVariantsMap from "../../utils/createVariantMap";
 import DeleteButton from "../DeleteButton"
+import TableCell from "../TableCell"
 
 type TaskRowProps = {
     id: string

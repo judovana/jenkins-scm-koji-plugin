@@ -1,6 +1,6 @@
 import React from "react"
 import { useObserver } from "mobx-react"
-import { TableCell, TableRow, IconButton, Tooltip } from "@material-ui/core"
+import { TableRow, IconButton, Tooltip } from "@material-ui/core"
 import { Add } from "@material-ui/icons"
 
 import { PlatformConfig, TaskType, ProjectType } from "../../stores/model"
@@ -11,6 +11,7 @@ import VariantRow from "./VariantRow"
 import Select from "./Select"
 import createTaskVariantsMap from "../../utils/createVariantMap";
 import DeleteButton from "../DeleteButton"
+import TableCell from "../TableCell"
 
 type PlatformRowProps = {
     config: PlatformConfig
