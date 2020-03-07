@@ -210,7 +210,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     @Override
     public PollingResult compareRemoteRevisionWith(Job<?, ?> project, Launcher launcher, FilePath workspace, TaskListener listener, SCMRevisionState baseline) throws IOException, InterruptedException {
         currentListener = listener;
-        log("Comparing remote revision with: {}", baseline);
+        log("Comparing remote revision with: " + baseline);
         if (!(baseline instanceof KojiRevisionState)) {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
@@ -231,8 +231,8 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         if (build != null) {
-            log("Got new remote build: {}", build);
-            log("Saving {} to {}", build, BUILD_XML);
+            log("Got new remote build: " + build);
+            log("Saving " + build + " to " + new File(project.getRootDir(), BUILD_XML).getAbsolutePath() + "");
             new BuildsSerializer().write(build, new File(project.getRootDir(), BUILD_XML));
             return new PollingResult(baseline, new KojiRevisionState(build), PollingResult.Change.INCOMPARABLE);
         }
