@@ -395,7 +395,7 @@ public class GetterAPI implements EndpointGroup {
 
             @Override
             public String about() {
-                return "/paths?root=[" + String.join("|",
+                return "/path?root=[" + String.join("|",
                         BUILDS, CONFIGS, JENKINS_JOBS, JENKINS_JOB_ARCHIVE, REPOS
                         ) + "]";
             }
