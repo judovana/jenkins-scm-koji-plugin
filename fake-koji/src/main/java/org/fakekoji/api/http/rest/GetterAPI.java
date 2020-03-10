@@ -4,25 +4,35 @@ import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
+import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
+import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
+import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,7 +52,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String JDK_VERSION = "jdkVersion";
     private static final String JENKINS_JOBS = "jenkinsJobs";
     private static final String JENKINS_JOB_ARCHIVE = "jenkinsJobArchive";
-    private static final String JOBS = "jobs"; // TODO
+    private static final String JOBS = "jobs";
     private static final String PATH = "path";
     private static final String PORT = "port";
     private static final String PORTS = "ports"; // TODO
@@ -86,6 +96,120 @@ public class GetterAPI implements EndpointGroup {
         return Optional.ofNullable(paramsMap.get(param))
                 .filter(list -> list.size() == 1)
                 .map(list -> list.get(0));
+    }
+
+
+    private QueryHandler getJobsHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> paramsMap) throws StorageException, ManagementException {
+                final Optional<String> allInJenkinsOpt = extractParamValue(paramsMap, "allJenkins");
+                final Optional<String> allInOtoolOpt = extractParamValue(paramsMap, "allOtool");
+                final Optional<String> urlParam = extractParamValue(paramsMap, "URL");
+                final Optional<String> orphansOnJenkinsParam = extractParamValue(paramsMap, "orphansJenkins");
+                final Optional<String> orphansOnOtoolParam = extractParamValue(paramsMap, "orphansOtool");
+                final Optional<String> testParam = extractParamValue(paramsMap, "jdkTestProjects");
+                final Optional<String> jdkParam = extractParamValue(paramsMap, "jdkProjects");
+                final Optional<String> excludeParam = extractParamValue(paramsMap, "exclude");
+                final Optional<String> includeParam = extractParamValue(paramsMap, "include");
+
+                final String url = urlParam.orElse("");
+
+                List<String> onJenkins = new ArrayList<>();
+                List<String> testProjects = new ArrayList<>();
+                List<String> jdkProjects = new ArrayList<>();
+
+                if (allInJenkinsOpt.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
+                    try {
+                        String[] tr = JenkinsCliWrapper.getCli().listJobsToArray();
+                        for (String s : tr) {
+                            onJenkins.add(s);
+                        }
+                        Collections.sort(onJenkins);
+                    } catch (Throwable e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                if (allInOtoolOpt.isPresent() || testParam.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
+                    final JDKProjectParser jdkProjectParser = new JDKProjectParser(
+                            ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                            settings.getLocalReposRoot(),
+                            settings.getScriptsRoot()
+                    );
+                    for (final JDKTestProject jdkTestProject : jdkTestProjectManager.readAll()) {
+                        Set<Job> tr = jdkProjectParser.parse(jdkTestProject);
+                        for (Job j : tr) {
+                            testProjects.add(j.getName());
+                        }
+                    }
+                    Collections.sort(testProjects);
+                }
+
+                if (allInOtoolOpt.isPresent() || jdkParam.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
+                    final JDKProjectParser jdkProjectParser = new JDKProjectParser(
+                            ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                            settings.getLocalReposRoot(),
+                            settings.getScriptsRoot()
+                    );
+                    for (final JDKProject jdkProject : jdkProjectManager.readAll()) {
+                        Set<Job> tr = jdkProjectParser.parse(jdkProject);
+                        for (Job j : tr) {
+                            jdkProjects.add(j.getName());
+                        }
+                    }
+                    Collections.sort(jdkProjects);
+                }
+
+                if (excludeParam.isPresent()) {
+                    onJenkins = onJenkins.stream().filter(new BlacklistPredicate(excludeParam.get())).collect(Collectors.toList());
+                    jdkProjects = jdkProjects.stream().filter(new BlacklistPredicate(excludeParam.get())).collect(Collectors.toList());
+                    testProjects = testProjects.stream().filter(new BlacklistPredicate(excludeParam.get())).collect(Collectors.toList());
+                }
+
+                if (includeParam.isPresent()) {
+                    onJenkins = onJenkins.stream().filter(new BlacklistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
+                    jdkProjects = jdkProjects.stream().filter(new BlacklistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
+                    testProjects = testProjects.stream().filter(new BlacklistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
+                }
+
+                if (allInJenkinsOpt.isPresent()) {
+                    return Result.ok(String.join("\n", onJenkins.stream().map(c -> url + c).collect(Collectors.toList())));
+                }
+                if (jdkParam.isPresent()) {
+                    return Result.ok(String.join("\n", jdkProjects.stream().map(c -> url + c).collect(Collectors.toList())));
+                }
+                if (testParam.isPresent()) {
+                    return Result.ok(String.join("\n", testProjects.stream().map(c -> url + c).collect(Collectors.toList())));
+                }
+                if (allInOtoolOpt.isPresent()) {
+                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).map(c -> url + c).collect(Collectors.toList())));
+                }
+                if (orphansOnJenkinsParam.isPresent()) {
+                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).filter(new RemoveIfFound(onJenkins)).collect(Collectors.toList())));
+                }
+                if (orphansOnOtoolParam.isPresent()) {
+                    return Result.ok(String.join("\n", onJenkins.stream().filter(new RemoveIfFound(Stream.concat(testProjects.stream(), jdkProjects.stream()).collect(Collectors.toList()))).collect(Collectors.toList())));
+                }
+                return Result.err("Wrong/missing parameters");
+            }
+
+            @Override
+            public String about() {
+                return "/jobs?[one of:[" + String.join(
+                        "|",
+                        "allJenkins /*all jobs on jenkins*/", //all on jenkins
+                        "orphansJenkins /*jobs missing on jenkins*/", //ison jenkins, not in otool
+                        "orphansOtool /*jobs redundant on jekins*/", //is on otool, not in jenkins
+                        "allOtool /*all jobs possible by curent setup of jenkins*/", //all otooled (comb of two below)
+                        "jdkTestProjects",
+                        "jdkProjects] + one times optionally",
+                        "URL=<prefix>",
+                        "exclude=<regex1>,<regex2>...",
+                        "include=<regex1>,<regex2>..."
+                ) + "]";
+            }
+        };
     }
 
     private QueryHandler getJDKVersionHandler() {
@@ -404,6 +528,7 @@ public class GetterAPI implements EndpointGroup {
 
     private Map<String, QueryHandler> getHandlers() {
         return Collections.unmodifiableMap(new HashMap<String, QueryHandler>() {{
+            put(JOBS, getJobsHandler());
             put(JDK_VERSION, getJDKVersionHandler());
             put(JDK_VERSIONS, getJDKVersionsHandler());
             put(PORT, getPortHandler());
@@ -444,5 +569,44 @@ public class GetterAPI implements EndpointGroup {
         ) throws StorageException, ManagementException;
 
         String about();
+    }
+
+    private class BlacklistPredicate implements Predicate<String> {
+        List<Pattern> patterns = new ArrayList<>();
+
+        public BlacklistPredicate(String s) {
+            String[] q = s.split(",");
+            for(String regex: q){
+                patterns.add(Pattern.compile(regex));
+            }
+        }
+
+        @Override
+        public boolean test(String o) {
+            for (Pattern p: patterns){
+                if (p.matcher(o).matches()){
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
+    private class RemoveIfFound implements Predicate<String> {
+        private final List<String> anotherList;
+
+        public RemoveIfFound(List<String> anotherList) {
+            this.anotherList=anotherList;
+        }
+
+        @Override
+        public boolean test(String o) {
+            for (String s: anotherList){
+                if (Objects.equals(o, s)){
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }
