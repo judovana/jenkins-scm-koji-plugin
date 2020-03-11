@@ -148,11 +148,12 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         }
 
         File checkoutBuildFile = new File(run.getParent().getRootDir(), BUILD_XML);
+        final Build storedBuild = new BuildsSerializer().read(checkoutBuildFile);
         KojiBuildDownloader downloadWorker = new KojiBuildDownloader(
                 kojiBuildProviders,
                 kojiXmlRpcApi,
                 createNotProcessedNvrPredicate(run.getParent()),
-                new BuildsSerializer().read(checkoutBuildFile),
+                storedBuild,
                 downloadDir,
                 maxPreviousBuilds,
                 cleanDownloadDir,
@@ -169,6 +170,10 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
         final Build build = downloadResult.getBuild();
         log("Checkout downloaded build: {}", build);
+
+        if (storedBuild == null) {
+            storeBuild(build, run.getParent().getRootDir());
+        }
 
         String displayName = build.getVersion() + "-" + build.getRelease();
         log("Updating the build name to: {}", displayName);
@@ -207,6 +212,12 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
                 StandardOpenOption.APPEND, StandardOpenOption.CREATE);
     }
 
+    private void storeBuild(final Build build, final File dir) {
+        final File file = new File(dir, BUILD_XML);
+        log("Saving " + build + " to " + file.getAbsolutePath() + "");
+        new BuildsSerializer().write(build, file);
+    }
+
     @Override
     public PollingResult compareRemoteRevisionWith(Job<?, ?> project, Launcher launcher, FilePath workspace, TaskListener listener, SCMRevisionState baseline) throws IOException, InterruptedException {
         currentListener = listener;
@@ -232,8 +243,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
         if (build != null) {
             log("Got new remote build: " + build);
-            log("Saving " + build + " to " + new File(project.getRootDir(), BUILD_XML).getAbsolutePath() + "");
-            new BuildsSerializer().write(build, new File(project.getRootDir(), BUILD_XML));
+            storeBuild(build, project.getRootDir());
             return new PollingResult(baseline, new KojiRevisionState(build), PollingResult.Change.INCOMPARABLE);
         }
         // if we are still here - no remote changes:
