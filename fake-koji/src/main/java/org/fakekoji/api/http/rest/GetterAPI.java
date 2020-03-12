@@ -112,8 +112,9 @@ public class GetterAPI implements EndpointGroup {
                 final Optional<String> jdkParam = extractParamValue(paramsMap, "jdkProjects");
                 final Optional<String> excludeParam = extractParamValue(paramsMap, "exclude");
                 final Optional<String> includeParam = extractParamValue(paramsMap, "include");
+                final Optional<String> projectParam = extractParamValue(paramsMap, "project");
 
-                final String url = urlParam.orElse("");
+                final String url = urlParam.orElse("http://hydra.brq.redhat.com:8080/job/");
 
                 List<String> onJenkins = new ArrayList<>();
                 List<String> testProjects = new ArrayList<>();
@@ -138,9 +139,11 @@ public class GetterAPI implements EndpointGroup {
                             settings.getScriptsRoot()
                     );
                     for (final JDKTestProject jdkTestProject : jdkTestProjectManager.readAll()) {
-                        Set<Job> tr = jdkProjectParser.parse(jdkTestProject);
-                        for (Job j : tr) {
-                            testProjects.add(j.getName());
+                        if (checkProjectName(jdkTestProject.getId(), projectParam)) {
+                            Set<Job> tr = jdkProjectParser.parse(jdkTestProject);
+                            for (Job j : tr) {
+                                testProjects.add(j.getName());
+                            }
                         }
                     }
                     Collections.sort(testProjects);
@@ -153,9 +156,11 @@ public class GetterAPI implements EndpointGroup {
                             settings.getScriptsRoot()
                     );
                     for (final JDKProject jdkProject : jdkProjectManager.readAll()) {
-                        Set<Job> tr = jdkProjectParser.parse(jdkProject);
-                        for (Job j : tr) {
-                            jdkProjects.add(j.getName());
+                        if (checkProjectName(jdkProject.getId(), projectParam)) {
+                            Set<Job> tr = jdkProjectParser.parse(jdkProject);
+                            for (Job j : tr) {
+                                jdkProjects.add(j.getName());
+                            }
                         }
                     }
                     Collections.sort(jdkProjects);
@@ -174,24 +179,32 @@ public class GetterAPI implements EndpointGroup {
                 }
 
                 if (allInJenkinsOpt.isPresent()) {
-                    return Result.ok(String.join("\n", onJenkins.stream().map(c -> url + c).collect(Collectors.toList())));
+                    return Result.ok(String.join("\n", onJenkins.stream().map(c -> url + c).collect(Collectors.toList()))+"\n");
                 }
                 if (jdkParam.isPresent()) {
-                    return Result.ok(String.join("\n", jdkProjects.stream().map(c -> url + c).collect(Collectors.toList())));
+                    return Result.ok(String.join("\n", jdkProjects.stream().map(c -> url + c).collect(Collectors.toList()))+"\n");
                 }
                 if (testParam.isPresent()) {
-                    return Result.ok(String.join("\n", testProjects.stream().map(c -> url + c).collect(Collectors.toList())));
+                    return Result.ok(String.join("\n", testProjects.stream().map(c -> url + c).collect(Collectors.toList()))+"\n");
                 }
                 if (allInOtoolOpt.isPresent()) {
-                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).map(c -> url + c).collect(Collectors.toList())));
+                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).map(c -> url + c).collect(Collectors.toList()))+"\n");
                 }
                 if (orphansOnJenkinsParam.isPresent()) {
-                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).filter(new RemoveIfFound(onJenkins)).collect(Collectors.toList())));
+                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).filter(new RemoveIfFound(onJenkins)).collect(Collectors.toList()))+"\n");
                 }
                 if (orphansOnOtoolParam.isPresent()) {
-                    return Result.ok(String.join("\n", onJenkins.stream().filter(new RemoveIfFound(Stream.concat(testProjects.stream(), jdkProjects.stream()).collect(Collectors.toList()))).collect(Collectors.toList())));
+                    return Result.ok(String.join("\n", onJenkins.stream().filter(new RemoveIfFound(Stream.concat(testProjects.stream(), jdkProjects.stream()).collect(Collectors.toList()))).collect(Collectors.toList()))+"\n");
                 }
                 return Result.err("Wrong/missing parameters");
+            }
+
+            private boolean checkProjectName(String id, Optional<String> projectParam) {
+                if (projectParam.isPresent()){
+                    return id.equals(projectParam.get());
+                } else {
+                    return true;
+                }
             }
 
             @Override
@@ -203,10 +216,11 @@ public class GetterAPI implements EndpointGroup {
                         "orphansOtool /*jobs redundant on jekins*/", //is on otool, not in jenkins
                         "allOtool /*all jobs possible by curent setup of jenkins*/", //all otooled (comb of two below)
                         "jdkTestProjects",
-                        "jdkProjects] + one times optionally",
+                        "jdkProjects] + one times optionalls[",
                         "URL=<prefix>",
                         "exclude=<regex1>,<regex2>...",
-                        "include=<regex1>,<regex2>..."
+                        "include=<regex1>,<regex2>...",
+                        "project=<projectName>]"
                 ) + "]";
             }
         };
