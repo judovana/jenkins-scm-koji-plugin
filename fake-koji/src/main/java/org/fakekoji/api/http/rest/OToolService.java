@@ -64,6 +64,8 @@ public class OToolService {
         return ""
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_TEST_PROJECTS + "\n"
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
+                + "                optional argument project=         \n"
+                + "                to regenerate only single project  \n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
                 + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
@@ -114,11 +116,13 @@ public class OToolService {
                 }));
                 path(REGENERATE_ALL, () -> {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
-                        JobUpdateResults r1 = jdkTestProjectManager.regenerateAll();
+                        String project = context.queryParam("project");
+                        JobUpdateResults r1 = jdkTestProjectManager.regenerateAll(project);
                         context.status(200).json(r1);
                     }));
                     get(JDK_PROJECTS, wrapper.wrap(context -> {
-                        JobUpdateResults r2 = jdkProjectManager.regenerateAll();
+                        String project = context.queryParam("project");
+                        JobUpdateResults r2 = jdkProjectManager.regenerateAll(project);
                         context.status(200).json(r2);
                     }));
                 });

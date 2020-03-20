@@ -36,8 +36,8 @@ public class JDKTestProjectManagerTest {
         JDKTestProjectManager tpm = new JDKTestProjectManager(cm.getJdkTestProjectStorage(), new JenkinsJobUpdater(DataGenerator.getSettings(folderHolder)));
         JenkinsCliWrapper.killCli();
         try {
-            JobUpdateResults r1 = tpm.regenerateAll();//create all
-            JobUpdateResults r2 = tpm.regenerateAll();//re create all
+            JobUpdateResults r1 = tpm.regenerateAll(null);//create all
+            JobUpdateResults r2 = tpm.regenerateAll(null);//re create all
             Assert.assertEquals(0, r1.jobsRewritten.size());
             //Assert.assertNotEquals(0, r1.jobsCreated.size()); todo fix when generator generates test only jobs
             //Assert.assertNotEquals(0, r2.jobsRewritten.size()); todo fix when generator generates test only jobs
