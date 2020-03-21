@@ -102,7 +102,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     private Consumer<BuildPlatformConfig> getBuildPlatformConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (BuildPlatformConfig config) -> {
-                    jobBuilder.setPlatform(config.getId());
+                    jobBuilder.setPlatform(config.getId(), "");
                     config.getVariants().forEach(getVariantsConsumer());
                     jobBuilder.resetPlatform();
                 }
@@ -112,8 +112,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     private Consumer<PlatformConfig> getPlatformsConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (PlatformConfig platformConfig) -> {
-                    jobBuilder.setPlatformProvider(platformConfig.getProvider());
-                    jobBuilder.setPlatform(platformConfig.getId());
+                    jobBuilder.setPlatform(platformConfig.getId(), platformConfig.getProvider());
                     platformConfig.getTasks().forEach(getTasksConsumer());
                     jobBuilder.resetPlatform();
                 }
@@ -157,7 +156,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private JDKVersion jdkVersion;
         private Product product;
         private Set<BuildProvider> buildProviders;
-        private String platformProvider;
+        private String buildPlatformProvider;
+        private String testPlatformProvider;
         private Platform buildPlatform;
         private Task buildTask;
         private Map<TaskVariant, TaskVariantValue> buildVariants;
@@ -229,7 +229,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
 
         private void buildBuildJob() {
             buildJob = new BuildJob(
-                    platformProvider,
+                    buildPlatformProvider,
                     projectName,
                     product,
                     jdkVersion,
@@ -246,7 +246,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private void buildTestJob() {
             final TestJob tj = (buildJob == null) ?
                     new TestJob(
-                            platformProvider,
+                            testPlatformProvider,
                             projectName,
                             Project.ProjectType.JDK_TEST_PROJECT,
                             product,
@@ -263,7 +263,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                             projectVariables
                     ) :
                     new TestJob(
-                            platformProvider,
+                            testPlatformProvider,
                             buildJob,
                             testTask,
                             testPlatform,
@@ -285,13 +285,15 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Resetting platform error");
         }
 
-        public void setPlatform(String id) {
+        void setPlatform(final String platformId, final String platformProvider) {
             if (buildPlatform == null) {
-                buildPlatform = platformsMap.get(id);
+                buildPlatform = platformsMap.get(platformId);
+                buildPlatformProvider = platformProvider;
                 return;
             }
             if (testPlatform == null) {
-                testPlatform = platformsMap.get(id);
+                testPlatform = platformsMap.get(platformId);
+                testPlatformProvider = platformProvider;
                 return;
             }
             throw new RuntimeException("Setting platform error");
@@ -371,11 +373,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Setting platform error");
         }
 
-        void setPlatformProvider(String platformProvider) {
-            this.platformProvider = platformProvider;
-        }
-
-        public void setProjectVariables(List<OToolVariable> variables) {
+        void setProjectVariables(List<OToolVariable> variables) {
             this.projectVariables = variables;
         }
     }
