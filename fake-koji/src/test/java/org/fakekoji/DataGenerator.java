@@ -735,8 +735,29 @@ public class DataGenerator {
                                                                 )
                                                         )
                                                 )
+                                        ),
+                                        new TaskConfig(
+                                                BUILD,
+                                                Collections.singletonList(
+                                                        getBuildVariantConfig(
+                                                                getBuildVariantsMap(ZERO, RELEASE),
+                                                                Arrays.asList(
+                                                                        new PlatformConfig(
+                                                                                RHEL_7_X64,
+                                                                                Arrays.asList(
+                                                                                        new TaskConfig(
+                                                                                                TCK,
+                                                                                                Collections.singletonList(
+                                                                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
+                                                                                                )
+                                                                                        )
+                                                                                ), BEAKER
+                                                                        )
+                                                                )
+                                                        )
+                                                )
                                         )
-                                ), VAGRANT
+                                ), BEAKER
 
                         )))
                 ),
