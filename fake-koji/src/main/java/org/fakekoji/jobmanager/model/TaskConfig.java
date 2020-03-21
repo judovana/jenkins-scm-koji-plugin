@@ -6,14 +6,21 @@ import java.util.Objects;
 
 public class TaskConfig {
 
+    private final String id;
     private final List<VariantsConfig> variants;
 
     public TaskConfig() {
+        id = null;
         variants = Collections.emptyList();
     }
 
-    public TaskConfig(List<VariantsConfig> variants) {
+    public TaskConfig(final String id, List<VariantsConfig> variants) {
+        this.id = id;
         this.variants = variants != null ? variants : Collections.emptyList();
+    }
+
+    public String getId() {
+        return id;
     }
 
     public List<VariantsConfig> getVariants() {
@@ -25,11 +32,12 @@ public class TaskConfig {
         if (this == o) return true;
         if (!(o instanceof TaskConfig)) return false;
         TaskConfig that = (TaskConfig) o;
-        return Objects.equals(variants, that.variants);
+        return Objects.equals(id, that.id) &&
+                Objects.equals(variants, that.variants);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(variants);
+        return Objects.hash(id, variants);
     }
 }

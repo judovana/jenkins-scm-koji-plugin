@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -119,10 +118,10 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         );
     }
 
-    private BiConsumer<String, TaskConfig> getTasksConsumer() {
-        return ManagementUtils.managementBiConsumerWrapper(
-                (String taskId, TaskConfig taskConfig) -> {
-                    jobBuilder.setTask(taskId);
+    private Consumer<TaskConfig> getTasksConsumer() {
+        return ManagementUtils.managementConsumerWrapper(
+                (TaskConfig taskConfig) -> {
+                    jobBuilder.setTask(taskConfig.getId());
                     taskConfig.getVariants().forEach(getVariantsConsumer());
                     jobBuilder.resetTask();
                 }

@@ -42,8 +42,8 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
         if (!platform) {
             return null
         }
-        const onTaskDelete = (id: string): void => {
-            delete config.tasks![id]
+        const onTaskDelete = (index: number): void => {
+            config.tasks!.splice(index, 1)
         }
 
         const onVariantDelete = (index: number) => {
@@ -51,7 +51,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
         }
 
         const onTaskAdd = (id: string) => {
-            config.tasks![id] = { variants: [] }
+            config.tasks!.push({ id, variants: [] })
         }
 
         const onVariantAdd = () => {
@@ -65,7 +65,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
         }
 
         const unselectedTasks = taskConfigs && configStore.tasks
-            .filter(task => task.type === type && !taskConfigs[task.id])
+            .filter(task => task.type === type && !taskConfigs.find(_task => task.id === _task.id))
 
         const cell: JSX.Element = (
             <span>
@@ -107,13 +107,12 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                         <DeleteButton onClick={onDelete} />
                     </TableCell>
                 </TableRow>
-                {(taskConfigs && Object.entries(taskConfigs).map(([id, config]) =>
+                {(taskConfigs && taskConfigs.map((config, index) =>
                     <TaskRow
                         config={config}
-                        id={id}
-                        key={treeID + id}
-                        treeID={treeID + id}
-                        onDelete={onTaskDelete}
+                        key={treeID + config.id}
+                        treeID={treeID + config.id}
+                        onDelete={() => onTaskDelete(index)}
                         projectType={projectType}
                         type={type} />))
                     ||

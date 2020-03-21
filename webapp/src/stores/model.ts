@@ -44,12 +44,13 @@ export interface JobConfig {
 
 export interface PlatformConfig {
     id: string
-    tasks?: { [id: string]: TaskConfig }
+    tasks?: TaskConfig[]
     provider?: string
     variants?: VariantsConfig[]
 }
 
 export interface TaskConfig {
+    id: string
     variants: VariantsConfig[];
 }
 

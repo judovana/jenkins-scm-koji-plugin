@@ -12,10 +12,9 @@ import DeleteButton from "../DeleteButton"
 import TableCell from "../TableCell"
 
 type TaskRowProps = {
-    id: string
     config: TaskConfig
     treeID: string
-    onDelete: (id: string) => void
+    onDelete: () => void
     projectType: ProjectType
     type: TaskType
 }
@@ -42,7 +41,7 @@ const TaskRow: React.FC<TaskRowProps> = props => {
 
     return useObserver(() => {
 
-        const { config, id, treeID, onDelete, projectType, type } = props
+        const { config, treeID, onDelete, projectType, type } = props
 
         const taskVariants = config.variants
 
@@ -58,7 +57,7 @@ const TaskRow: React.FC<TaskRowProps> = props => {
 
         const cell: JSX.Element = (
             <span>
-                {id}
+                {config.id}
                 <Tooltip title={`Add ${type.toLowerCase()} variant`}>
                     <IconButton onClick={onAdd}>
                         <Add />
@@ -78,14 +77,14 @@ const TaskRow: React.FC<TaskRowProps> = props => {
                     <TableCell>{type === "TEST" && cell}</TableCell>
                     <TableCell></TableCell>
                     <TableCell>
-                        <DeleteButton onClick={() => { onDelete(id) }} />
+                        <DeleteButton onClick={onDelete} />
                     </TableCell>
                 </TableRow>
                 {taskVariants.map((taskVariant, index) =>
                     <VariantRow
                         config={taskVariant}
-                        key={treeID + index}
-                        treeID={treeID + index}
+                        key={treeID + config.id}
+                        treeID={treeID + config.id}
                         onDelete={() => taskVariants.splice(index, 1)}
                         projectType={projectType}
                         type={type} />)}

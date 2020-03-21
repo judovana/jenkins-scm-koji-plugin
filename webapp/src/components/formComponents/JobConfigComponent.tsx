@@ -27,7 +27,7 @@ const JobConfigComponent: React.FC<Props> = props => {
 
         const onPlatformAdd = (id: string) => {
             if (projectType === "JDK_PROJECT") {
-                platformConfigs.push({ id, tasks: {} })
+                platformConfigs.push({ id, tasks: [] })
             } else if (projectType === "JDK_TEST_PROJECT") {
                 platformConfigs.push({ id, variants: [] })
             }

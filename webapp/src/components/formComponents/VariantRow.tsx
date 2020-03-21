@@ -66,7 +66,7 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                             if (!config.platforms) {
                                 config.platforms = []
                             }
-                            config.platforms.push({ id, tasks: {} })
+                            config.platforms.push({ id, tasks: [] })
                         }} />
                 }
             </div>
@@ -86,12 +86,12 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                         <DeleteButton onClick={onDelete} />
                     </TableCell>
                 </TableRow>
-                {type === "BUILD" && config.platforms && Object.entries(config.platforms)
-                    .map(([id, config], index) =>
+                {type === "BUILD" && config.platforms && config.platforms
+                    .map((config, index) =>
                         <PlatformRow
                             config={config}
-                            key={treeID + id}
-                            treeID={treeID + id}
+                            key={treeID + config.id}
+                            treeID={treeID + config.id}
                             onDelete={() => onPlatformDelete(index)}
                             projectType={projectType}
                             type="TEST"
