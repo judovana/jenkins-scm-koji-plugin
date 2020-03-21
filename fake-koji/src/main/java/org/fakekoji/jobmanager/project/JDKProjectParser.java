@@ -102,7 +102,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     private Consumer<BuildPlatformConfig> getBuildPlatformConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (BuildPlatformConfig config) -> {
-                    jobBuilder.setPlatform(config.getId(), "");
+                    jobBuilder.setPlatform(config);
                     config.getVariants().forEach(getVariantsConsumer());
                     jobBuilder.resetPlatform();
                 }
@@ -112,7 +112,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     private Consumer<PlatformConfig> getPlatformsConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (PlatformConfig platformConfig) -> {
-                    jobBuilder.setPlatform(platformConfig.getId(), platformConfig.getProvider());
+                    jobBuilder.setPlatform(platformConfig);
                     platformConfig.getTasks().forEach(getTasksConsumer());
                     jobBuilder.resetPlatform();
                 }
@@ -285,15 +285,19 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Resetting platform error");
         }
 
-        void setPlatform(final String platformId, final String platformProvider) {
+        void setPlatform(final BuildPlatformConfig buildPlatformConfig) {
+            buildPlatform = platformsMap.get(buildPlatformConfig.getId());
+        }
+
+        void setPlatform(final PlatformConfig platformConfig) {
             if (buildPlatform == null) {
-                buildPlatform = platformsMap.get(platformId);
-                buildPlatformProvider = platformProvider;
+                buildPlatform = platformsMap.get(platformConfig.getId());
+                buildPlatformProvider = platformConfig.getProvider();
                 return;
             }
             if (testPlatform == null) {
-                testPlatform = platformsMap.get(platformId);
-                testPlatformProvider = platformProvider;
+                testPlatform = platformsMap.get(platformConfig.getId());
+                testPlatformProvider = platformConfig.getProvider();
                 return;
             }
             throw new RuntimeException("Setting platform error");
