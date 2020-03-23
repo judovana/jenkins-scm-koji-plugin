@@ -19,9 +19,7 @@
     %{TRIGGER}
     <concurrentBuild>false</concurrentBuild>
     <builders>
-        <hudson.tasks.Shell>
-            %{SHELL_SCRIPT}
-        </hudson.tasks.Shell>
+    %{BUILDER}
     </builders>
     <publishers>
 %{VM_POST_BUILD_TASK}

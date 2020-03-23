@@ -864,8 +864,12 @@ public class JenkinsJobTemplateBuilderTest {
                 "    </triggers>\n" +
                 "    <concurrentBuild>false</concurrentBuild>\n" +
                 "    <builders>\n" +
-                "        <hudson.tasks.Shell>\n" +
-                "            <command>\n" +
+                "        <hudson.plugins.build__timeout.BuildStepWithTimeout plugin=\"build-timeout@1.19\">\n" +
+                "            <strategy class=\"hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy\">\n" +
+                "                <timeoutMinutes>600</timeoutMinutes>\n" +
+                "            </strategy>\n" +
+                "            <buildStep class=\"hudson.tasks.Shell\">\n" +
+                "                <command>\n" +
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
@@ -885,8 +889,12 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
                 "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
-                "</command>\n" +
-                "        </hudson.tasks.Shell>\n" +
+                "    </command>\n" +
+                "            </buildStep>\n" +
+                "            <operationList>\n" +
+                "                <hudson.plugins.build__timeout.operations.AbortOperation/>\n" +
+                "            </operationList>\n" +
+                "        </hudson.plugins.build__timeout.BuildStepWithTimeout>\n" +
                 "    </builders>\n" +
                 "    <publishers>\n" +
                 "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +

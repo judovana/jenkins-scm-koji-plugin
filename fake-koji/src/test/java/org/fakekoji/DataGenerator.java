@@ -474,7 +474,8 @@ public class DataGenerator {
                         Collections.emptyList(),
                         Collections.emptyList()
                 ),
-                Collections.emptyList()
+                Collections.emptyList(),
+                0
         );
     }
 
@@ -503,7 +504,8 @@ public class DataGenerator {
                                 "subpackageD"
                         )
                 ),
-                Collections.emptyList()
+                Collections.emptyList(),
+                0
         );
     }
 
@@ -526,7 +528,8 @@ public class DataGenerator {
                         Collections.emptyList(),
                         Collections.emptyList()
                 ),
-                Collections.emptyList()
+                Collections.emptyList(),
+                0
         );
     }
 
@@ -549,7 +552,8 @@ public class DataGenerator {
                         Collections.emptyList(),
                         Collections.emptyList()
                 ),
-                Collections.emptyList()
+                Collections.emptyList(),
+                10
         );
     }
 
@@ -572,7 +576,8 @@ public class DataGenerator {
                         Collections.emptyList(),
                         Collections.emptyList()
                 ),
-                Collections.emptyList()
+                Collections.emptyList(),
+                0
         );
     }
 
@@ -605,7 +610,8 @@ public class DataGenerator {
                 ),
                 Arrays.asList(
                         new OToolVariable(AGENT, LINUX)
-                )
+                ),
+                0
         );
     }
 

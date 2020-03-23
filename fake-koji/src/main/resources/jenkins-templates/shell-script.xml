@@ -1,5 +1,7 @@
+<hudson.tasks.Shell>
 <command>
 #!/bin/bash&#13;
 %{EXPORTED_VARIABLES}
 bash %{RUN_SCRIPT} &apos;%{TASK_SCRIPT}&apos;&#13;
 </command>
+</hudson.tasks.Shell>

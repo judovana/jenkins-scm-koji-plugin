@@ -18,6 +18,7 @@ public class Task implements  Comparable<Task> {
     private final String xmlTemplate;
     private final RpmLimitation rpmLimitation;
     private final List<OToolVariable> variables;
+    private final Integer timeoutInHours;
 
     public Task() {
         id = null;
@@ -31,6 +32,7 @@ public class Task implements  Comparable<Task> {
         xmlTemplate = null;
         rpmLimitation = null;
         variables = null;
+        timeoutInHours = null;
     }
 
     public Task(
@@ -44,7 +46,8 @@ public class Task implements  Comparable<Task> {
             FileRequirements fileRequirements,
             String xmlTemplate,
             RpmLimitation rpmLimitation,
-            List<OToolVariable> variables
+            List<OToolVariable> variables,
+            Integer timeoutInHours
     ) {
         this.id = id;
         this.script = script;
@@ -57,6 +60,7 @@ public class Task implements  Comparable<Task> {
         this.xmlTemplate = xmlTemplate;
         this.rpmLimitation = rpmLimitation;
         this.variables = variables;
+        this.timeoutInHours = timeoutInHours;
     }
 
     public String getId() {
@@ -118,7 +122,8 @@ public class Task implements  Comparable<Task> {
                 Objects.equals(fileRequirements, task.fileRequirements) &&
                 Objects.equals(xmlTemplate, task.xmlTemplate) &&
                 Objects.equals(rpmLimitation, task.rpmLimitation) &&
-                Objects.equals(variables, task.variables);
+                Objects.equals(variables, task.variables) &&
+                Objects.equals(timeoutInHours, task.timeoutInHours);
     }
 
     @Override
@@ -134,13 +139,22 @@ public class Task implements  Comparable<Task> {
                 fileRequirements,
                 xmlTemplate,
                 rpmLimitation,
-                variables
+                variables,
+                timeoutInHours
         );
     }
 
     @Override
     public int compareTo(@NotNull Task task) {
         return this.getId().compareTo(task.getId());
+    }
+
+    public int getTimeoutInHours() {
+        if (timeoutInHours == null){
+            return 0;
+        } else {
+            return timeoutInHours;
+        }
     }
 
     public static class FileRequirements {

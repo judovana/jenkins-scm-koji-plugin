@@ -1,0 +1,15 @@
+<hudson.plugins.build__timeout.BuildStepWithTimeout plugin="build-timeout@1.19">
+  <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+    <timeoutMinutes>%{TIMEOUT_MINUTES}</timeoutMinutes>
+  </strategy>
+  <buildStep class="hudson.tasks.Shell">
+    <command>
+#!/bin/bash&#13;
+%{EXPORTED_VARIABLES}
+bash %{RUN_SCRIPT} &apos;%{TASK_SCRIPT}&apos;&#13;
+    </command>
+  </buildStep>
+  <operationList>
+    <hudson.plugins.build__timeout.operations.AbortOperation/>
+  </operationList>
+</hudson.plugins.build__timeout.BuildStepWithTimeout>
