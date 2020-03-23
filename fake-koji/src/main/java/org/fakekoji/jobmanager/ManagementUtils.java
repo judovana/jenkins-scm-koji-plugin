@@ -19,16 +19,6 @@ public class ManagementUtils {
         }
     }
 
-    public static <T, U> BiConsumer<T, U> managementBiConsumerWrapper(ManagementBiConsumer<T, U> consumer) {
-        return (key, value) -> {
-            try {
-                consumer.accept(key, value);
-            } catch (ManagementException e) {
-                throw new RuntimeException(e);
-            }
-        };
-    }
-
     public static <T> Consumer<T> managementConsumerWrapper(ManagementConsumer<T> consumer) {
         return i -> {
             try {
@@ -37,11 +27,6 @@ public class ManagementUtils {
                 throw new RuntimeException(e);
             }
         };
-    }
-
-    public interface ManagementBiConsumer<T, U> {
-
-        void accept(T t, U u) throws ManagementException;
     }
 
     public interface ManagementConsumer<T> {

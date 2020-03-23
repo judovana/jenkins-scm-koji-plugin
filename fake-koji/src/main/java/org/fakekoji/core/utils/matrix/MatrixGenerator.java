@@ -361,11 +361,11 @@ public class MatrixGenerator {
                 TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
                 List<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
                 for (BuildPlatformConfig bpce : buildPlatformConfig) {
-                    TaskConfig tc = new TaskConfig(bpce.getVariants());
-                    Map<String, TaskConfig> taskConfigs = new HashMap<>();
-                    taskConfigs.put(null, tc);
-                    for (Map.Entry<String, TaskConfig> btce : taskConfigs.entrySet()) {
-                        for (VariantsConfig bvc : btce.getValue().getVariants()) {
+                    TaskConfig tc = new TaskConfig(null, bpce.getVariants());
+                    List<TaskConfig> taskConfigs = new ArrayList<>();
+                    taskConfigs.add(tc);
+                    for (TaskConfig btce : taskConfigs) {
+                        for (VariantsConfig bvc : btce.getVariants()) {
                             checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), null, btce, bvc);
                         }
                     }
@@ -373,8 +373,8 @@ public class MatrixGenerator {
             } else if (project instanceof JDKProject) {
                 JobConfiguration jc = ((JDKProject) project).getJobConfiguration();
                 for (PlatformConfig bpce : jc.getPlatforms()) {
-                    for (Map.Entry<String, TaskConfig> btce : bpce.getTasks().entrySet()) {
-                        for (VariantsConfig bvc : btce.getValue().getVariants()) {
+                    for (TaskConfig btce : bpce.getTasks()) {
+                        for (VariantsConfig bvc : btce.getVariants()) {
                             checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), bpce.getProvider(), btce, bvc);
                         }
                     }
@@ -386,11 +386,11 @@ public class MatrixGenerator {
         return counter;
     }
 
-    private void checkAndIterateBuild(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce,
+    private void checkAndIterateBuild(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, TaskConfig btce,
             VariantsConfig bvc) {
         //builds must be counted here, otherwise they a) multiply b) do not exists for project less leaves(so building wthout testing)
         String[] buildOsAarch = buildArchOs.split("\\.");
-        String btask = btce.getKey(); //always build
+        String btask = btce.getId(); //always build
         String platformVersion = project.getProduct().getJdk();
         String projectName = project.getId();
         Collection<String> buildVars = bvc.getMap().values();
@@ -421,14 +421,14 @@ public class MatrixGenerator {
         }
     }
 
-    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, Map.Entry<String, TaskConfig> btce,
+    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, TaskConfig btce,
             VariantsConfig bvc, String tmpBuildIdForSimpleTextIdentification) {
         for (PlatformConfig tpce : bvc.getPlatforms()) {
-            for (Map.Entry<String, TaskConfig> ttce : tpce.getTasks().entrySet()) {
-                for (VariantsConfig tvc : ttce.getValue().getVariants()) {
+            for (TaskConfig ttce : tpce.getTasks()) {
+                for (VariantsConfig tvc : ttce.getVariants()) {
                     String[] testOsAarch = tpce.getId().split("\\.");
                     String testProvider = tpce.getProvider();
-                    String ttask = ttce.getKey();
+                    String ttask = ttce.getId();
                     Collection<String> testVars = tvc.getMap().values();
                     String fullTest = "" +
                             testOsAarch[0] + "." + testOsAarch[1] + "." + testProvider + "-" +

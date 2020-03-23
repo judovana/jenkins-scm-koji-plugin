@@ -1,24 +1,24 @@
 package org.fakekoji.jobmanager.model;
 
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 
 public class PlatformConfig {
 
     private final String id;
-    private final Map<String, TaskConfig> tasks;
+    private final List<TaskConfig> tasks;
     private final String provider;
 
     public PlatformConfig() {
         id = null;
-        tasks = Collections.emptyMap();
+        tasks = Collections.emptyList();
         provider = null;
     }
 
-    public PlatformConfig(String id, Map<String, TaskConfig> tasks, String provider) {
+    public PlatformConfig(String id, List<TaskConfig> tasks, String provider) {
         this.id = id;
-        this.tasks = tasks != null ? tasks : Collections.emptyMap();
+        this.tasks = tasks != null ? tasks : Collections.emptyList();
         this.provider = provider;
     }
 
@@ -26,7 +26,7 @@ public class PlatformConfig {
         return id;
     }
 
-    public Map<String, TaskConfig> getTasks() {
+    public List<TaskConfig> getTasks() {
         return tasks;
     }
 
