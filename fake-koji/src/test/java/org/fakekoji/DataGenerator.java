@@ -350,6 +350,14 @@ public class DataGenerator {
         );
     }
 
+    public static Platform.Provider getBeakerProvider() {
+        return new Platform.Provider(
+                "beaker",
+                Arrays.asList("a", "b"),
+                Arrays.asList("c", "d")
+        );
+    }
+
     public static Platform getRHEL7x64() {
         return Platform.create(new Platform(
                 null,
@@ -358,7 +366,7 @@ public class DataGenerator {
                 "7",
                 "x86_64",
                 null,
-                Arrays.asList(getProvider()),
+                Arrays.asList(getProvider(), getBeakerProvider()),
                 "rhel-x64",
                 Platform.TestStableYZupdates.NaN,
                 Platform.TestStableYZupdates.NaN,
@@ -708,7 +716,7 @@ public class DataGenerator {
                                 RHEL_7_X64,
                                 Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
                                     put(BUILD, new TaskConfig(
-                                            Collections.singletonList(
+                                           Arrays.asList(
                                                     getBuildVariantConfig(
                                                             getBuildVariantsMap(HOTSPOT, RELEASE),
                                                             Arrays.asList(
@@ -723,10 +731,25 @@ public class DataGenerator {
                                                                             }}), VAGRANT
                                                                     )
                                                             )
-                                                    )
+                                                    ),
+                                                   getBuildVariantConfig(
+                                                           getBuildVariantsMap(ZERO, RELEASE),
+                                                           Arrays.asList(
+                                                                   new PlatformConfig(
+                                                                           RHEL_7_X64,
+                                                                           Collections.unmodifiableMap(new HashMap<String, TaskConfig>() {{
+                                                                               put(TCK, new TaskConfig(
+                                                                                       Collections.singletonList(
+                                                                                               new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
+                                                                                       )
+                                                                               ));
+                                                                           }}), BEAKER
+                                                                   )
+                                                           )
+                                                   )
                                             )
                                     ));
-                                }}), VAGRANT
+                                }}), BEAKER
 
                         )))
                 ),
