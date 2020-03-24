@@ -42,6 +42,13 @@ const requiredStringListValidator = stringListValidator(true)
 const optionalStringListValidator = stringListValidator(false)
 
 const numericStringValidator = (value: string): BasicValidation => {
+    //unluckily 0 is null for js/type script
+    //unluckily, 0 is still number
+    //this validator do not eat null as 0
+    if (value == null) {
+        return "invalid"
+    }
+    value = value.toString();
     const firstValidation = requiredStringValidator(value)
     if (firstValidation !== "ok") {
         return firstValidation
