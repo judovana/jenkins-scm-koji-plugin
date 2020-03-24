@@ -150,7 +150,7 @@ public class Task implements  Comparable<Task> {
     }
 
     public int getTimeoutInHours() {
-        if (timeoutInHours == null){
+        if (timeoutInHours == null) {
             return 0;
         } else {
             return timeoutInHours;

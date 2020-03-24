@@ -66,7 +66,7 @@ const TaskForm: React.FC<TaskFormProps> = props => {
             variables
         } = task
 
-        const { id: idValidation, script: scriptValidation , timeoutInHours: timeoutInHoursValidation} =
+        const { id: idValidation, script: scriptValidation, timeoutInHours: timeoutInHoursValidation } =
             validation || ({} as TaskValidation)
 
         const variablesValidation = setDefaultValidations<VariableValidation>(
