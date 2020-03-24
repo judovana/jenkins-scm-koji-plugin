@@ -285,7 +285,7 @@ public class JenkinsJobTemplateBuilder {
         exportedVariables.add(new OToolVariable(OS_VERSION_VAR, platform.getVersionNumber()));
         exportedVariables.add(new OToolVariable(ARCH_VAR, platform.getArchitecture()));
         String usedBuilder;
-        if (task.getTimeoutInHours() <= 3 /*from help on this field*/) {
+        if (task.getTimeoutInHours() <= 0 /*from help on this field, minimal timeout is 3 minutes. We are in hours here*/) {
             usedBuilder = loadTemplate(JenkinsTemplate.PLAINSHELL_SCRIPT_TEMPLATE);
         } else {
             usedBuilder = loadTemplate(JenkinsTemplate.TIMEOUTSHELL_SCRIPT_TEMPLATE);

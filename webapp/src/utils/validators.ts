@@ -160,7 +160,7 @@ const platformValidator = ({
     vmName: requiredStringValidator(vmName)
 })
 
-const taskValidator = ({ id, script, variables }: Task) => ({
+const taskValidator = ({ id, script, variables, timeoutInHours }: Task) => ({
     fileRequirements: "ok",
     id: requiredStringValidator(id),
     machinePreference: "ok",
@@ -171,7 +171,8 @@ const taskValidator = ({ id, script, variables }: Task) => ({
     script: requiredStringValidator(script),
     type: "ok",
     variables: variablesValidator(variables),
-    xmlTemplate: "ok"
+    xmlTemplate: "ok",
+    timeoutInHours: numericStringValidator(timeoutInHours),
 })
 
 export const validators: { [id in ConfigGroupId]: ConfigValidator } = {
