@@ -74,6 +74,7 @@ const createDefaultTask = (): Task => ({
     script: "",
     type: "TEST",
     xmlTemplate: "",
+    timeoutInHours: "0",
     variables: []
 })
 

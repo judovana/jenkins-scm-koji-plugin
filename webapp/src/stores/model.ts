@@ -69,6 +69,7 @@ export interface Task extends Item {
     fileRequirements: FileRequirements;
     xmlTemplate: string;
     rpmLimitation: RPMLimitation;
+    timeoutInHours: string;
     variables: Variable[]
 }
 

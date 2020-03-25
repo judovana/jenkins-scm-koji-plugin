@@ -28,6 +28,10 @@ const TaskForm: React.FC<TaskFormProps> = props => {
     return useObserver(() => {
         const { config: task, validation } = props
 
+        const onTimeoutInHours = (value: string) => {
+            task.timeoutInHours = value
+        }
+
         const onIdChange = (value: string) => {
             task.id = value
         }
@@ -58,10 +62,11 @@ const TaskForm: React.FC<TaskFormProps> = props => {
             platformLimitation,
             productLimitation,
             rpmLimitation,
+            timeoutInHours,
             variables
         } = task
 
-        const { id: idValidation, script: scriptValidation } =
+        const { id: idValidation, script: scriptValidation, timeoutInHours: timeoutInHoursValidation } =
             validation || ({} as TaskValidation)
 
         const variablesValidation = setDefaultValidations<VariableValidation>(
@@ -98,6 +103,12 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                     validation={scriptValidation}
                     value={task.script}
                     onChange={onScriptChange}
+                />
+                 <TextInput
+                    label={"timeoutInHours"}
+                    validation={timeoutInHoursValidation}
+                    value={task.timeoutInHours.toString()}
+                    onChange={onTimeoutInHours}
                 />
                 <LimitationForm
                     label={"platform limitations"}

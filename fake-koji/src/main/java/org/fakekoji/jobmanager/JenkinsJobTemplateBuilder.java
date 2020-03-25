@@ -59,10 +59,11 @@ public class JenkinsJobTemplateBuilder {
     static final String VM_POST_BUILD_TASK = "%{VM_POST_BUILD_TASK}";
     static final String POST_BUILD_TASKS = "%{POST_BUILD_TASKS}";
     static final String NODES = "%{NODES}";
-    static final String SHELL_SCRIPT = "%{SHELL_SCRIPT}";
+    static final String BUILDER_SCRIPT = "%{BUILDER}";
     static final String TASK_SCRIPT = "%{TASK_SCRIPT}";
     static final String RUN_SCRIPT = "%{RUN_SCRIPT}";
     static final String EXPORTED_VARIABLES = "%{EXPORTED_VARIABLES}";
+    static final String TIMEOUT_MINUTES = "%{TIMEOUT_MINUTES}";
     static final String SHUTDOWN_VARIABLES = "%{SHUTDOWN_VARIABLES}";
     static final String PLATFORM_NAME = "%{PLATFORM_NAME}";
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
@@ -283,12 +284,19 @@ public class JenkinsJobTemplateBuilder {
         exportedVariables.add(new OToolVariable(OS_NAME_VAR, platform.getOs()));
         exportedVariables.add(new OToolVariable(OS_VERSION_VAR, platform.getVersionNumber()));
         exportedVariables.add(new OToolVariable(ARCH_VAR, platform.getArchitecture()));
+        final String usedBuilder;
+        if (task.getTimeoutInHours() <= 0 /*from help on this field, minimal timeout is 3 minutes. We are in hours here*/) {
+            usedBuilder = loadTemplate(JenkinsTemplate.PLAINSHELL_SCRIPT_TEMPLATE);
+        } else {
+            usedBuilder = loadTemplate(JenkinsTemplate.TIMEOUTSHELL_SCRIPT_TEMPLATE);
+        }
         template = template
                 .replace(NODES, String.join(" ", nodes))
-                .replace(SHELL_SCRIPT, loadTemplate(JenkinsTemplate.SHELL_SCRIPT_TEMPLATE))
+                .replace(BUILDER_SCRIPT, usedBuilder)
                 .replace(TASK_SCRIPT, task.getScript())
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
-                .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables));
+                .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables))
+                .replace(TIMEOUT_MINUTES, ""+(task.getTimeoutInHours()*60));
         if (!vmName.equals(LOCAL)) {
             List<OToolVariable> shutdownVars = Collections.singletonList(
                     new OToolVariable(
@@ -395,7 +403,8 @@ public class JenkinsJobTemplateBuilder {
         FAKEKOJI_XML_RPC_API_TEMPLATE("fakekoji-xml-rpc-api"),
         KOJI_XML_RPC_API_TEMPLATE("koji-xml-rpc-api"),
         PULL_JOB_TEMPLATE("pull-job"),
-        SHELL_SCRIPT_TEMPLATE("shell-script"),
+        PLAINSHELL_SCRIPT_TEMPLATE("shell-script"),
+        TIMEOUTSHELL_SCRIPT_TEMPLATE("timeoutedshell-script"),
         TASK_JOB_TEMPLATE("task-job"),
         TRIGGER("trigger"),
         VM_POST_BUILD_TASK_TEMPLATE("vm-post-build-task");
