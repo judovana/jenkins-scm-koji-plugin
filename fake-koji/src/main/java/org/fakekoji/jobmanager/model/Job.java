@@ -6,9 +6,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR;
 
 public abstract class Job implements NamesProvider {
 
@@ -16,10 +19,19 @@ public abstract class Job implements NamesProvider {
     public static final String VARIANTS_DELIMITER = ".";
     public static final int MAX_JOBNAME_LENGTH = 59;
 
+    private final String projectName;
     private final List<OToolVariable> projectVariables;
 
-    protected Job(List<OToolVariable> projectVariables) {
+    protected Job(
+            final String projectName,
+            List<OToolVariable> projectVariables
+    ) {
+        this.projectName = projectName;
         this.projectVariables = projectVariables;
+    }
+
+    public String getProjectName() {
+        return projectName;
     }
 
     public List<OToolVariable> getProjectVariables() {
@@ -100,5 +112,9 @@ public abstract class Job implements NamesProvider {
 
     }
 
-    abstract List<OToolVariable> getExportedVariables();
+    List<OToolVariable> getExportedVariables() {
+        return Arrays.asList(
+                new OToolVariable(PROJECT_NAME_VAR, projectName)
+        );
+    }
 }
