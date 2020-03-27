@@ -40,4 +40,12 @@ public class TaskConfig {
     public int hashCode() {
         return Objects.hash(id, variants);
     }
+
+    @Override
+    public String toString() {
+        return "TaskConfig{" +
+                "id='" + id + '\'' +
+                ", variants=" + variants +
+                '}';
+    }
 }

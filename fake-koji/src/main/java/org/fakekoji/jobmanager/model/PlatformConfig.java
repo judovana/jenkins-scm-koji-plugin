@@ -48,4 +48,13 @@ public class PlatformConfig {
     public int hashCode() {
         return Objects.hash(id, tasks, provider);
     }
+
+    @Override
+    public String toString() {
+        return "PlatformConfig{" +
+                "id='" + id + '\'' +
+                ", tasks=" + tasks +
+                ", provider='" + provider + '\'' +
+                '}';
+    }
 }

@@ -46,4 +46,12 @@ public class VariantsConfig {
     public int hashCode() {
         return Objects.hash(map, platforms);
     }
+
+    @Override
+    public String toString() {
+        return "VariantsConfig{" +
+                "map=" + map +
+                ", platforms=" + platforms +
+                '}';
+    }
 }
