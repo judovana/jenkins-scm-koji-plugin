@@ -122,48 +122,18 @@ public class GetterAPI implements EndpointGroup {
 
                 if (allInJenkinsOpt.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
                     try {
-                        String[] tr = JenkinsCliWrapper.getCli().listJobsToArray();
-                        for (String s : tr) {
-                            onJenkins.add(s);
-                        }
-                        Collections.sort(onJenkins);
+                       onJenkins = getAllJenkinsJobs();
                     } catch (Throwable e) {
                         throw new RuntimeException(e);
                     }
                 }
 
                 if (allInOtoolOpt.isPresent() || testParam.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
-                    final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                            ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                            settings.getLocalReposRoot(),
-                            settings.getScriptsRoot()
-                    );
-                    for (final JDKTestProject jdkTestProject : jdkTestProjectManager.readAll()) {
-                        if (checkProjectName(jdkTestProject.getId(), projectParam)) {
-                            Set<Job> tr = jdkProjectParser.parse(jdkTestProject);
-                            for (Job j : tr) {
-                                testProjects.add(j.getName());
-                            }
-                        }
-                    }
-                    Collections.sort(testProjects);
+                    testProjects = getAllJdkTestJobs(settings, jdkTestProjectManager, projectParam);
                 }
 
                 if (allInOtoolOpt.isPresent() || jdkParam.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
-                    final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                            ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                            settings.getLocalReposRoot(),
-                            settings.getScriptsRoot()
-                    );
-                    for (final JDKProject jdkProject : jdkProjectManager.readAll()) {
-                        if (checkProjectName(jdkProject.getId(), projectParam)) {
-                            Set<Job> tr = jdkProjectParser.parse(jdkProject);
-                            for (Job j : tr) {
-                                jdkProjects.add(j.getName());
-                            }
-                        }
-                    }
-                    Collections.sort(jdkProjects);
+                    jdkProjects = getAllJdkJobs(settings, jdkProjectManager, projectParam);
                 }
 
                 if (excludeParam.isPresent()) {
@@ -199,14 +169,6 @@ public class GetterAPI implements EndpointGroup {
                 return Result.err("Wrong/missing parameters");
             }
 
-            private boolean checkProjectName(String id, Optional<String> projectParam) {
-                if (projectParam.isPresent()){
-                    return id.equals(projectParam.get());
-                } else {
-                    return true;
-                }
-            }
-
             @Override
             public String about() {
                 return "/jobs?[one of:[" + String.join(
@@ -224,6 +186,67 @@ public class GetterAPI implements EndpointGroup {
                 ) + "]";
             }
         };
+    }
+
+    private static boolean checkProjectName(String id, Optional<String> projectParam) {
+        if (projectParam.isPresent()){
+            return id.equals(projectParam.get());
+        } else {
+            return true;
+        }
+    }
+
+    public static List<String> getAllJdkTestJobs(AccessibleSettings settings, JDKTestProjectManager jdkTestProjectManager, Optional<String> projectFilter) throws StorageException, ManagementException {
+        List<String> testProjects = new ArrayList<>();
+        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
+                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                settings.getLocalReposRoot(),
+                settings.getScriptsRoot()
+        );
+        for (final JDKTestProject jdkTestProject : jdkTestProjectManager.readAll()) {
+            if (checkProjectName(jdkTestProject.getId(), projectFilter)) {
+                Set<Job> tr = jdkProjectParser.parse(jdkTestProject);
+                for (Job j : tr) {
+                    testProjects.add(j.getName());
+                }
+            }
+        }
+        Collections.sort(testProjects);
+        return testProjects;
+    }
+
+    public static List<String> getAllJdkJobs(AccessibleSettings settings, JDKProjectManager jdkProjectManager, Optional<String> projectFilter) throws StorageException, ManagementException {
+        List<String> jdkProjects = new ArrayList<>();
+        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
+                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                settings.getLocalReposRoot(),
+                settings.getScriptsRoot()
+        );
+        for (final JDKProject jdkProject : jdkProjectManager.readAll()) {
+            if (checkProjectName(jdkProject.getId(), projectFilter)) {
+                Set<Job> tr = jdkProjectParser.parse(jdkProject);
+                for (Job j : tr) {
+                    jdkProjects.add(j.getName());
+                }
+            }
+        }
+        Collections.sort(jdkProjects);
+        return jdkProjects;
+    }
+
+
+    public static List<String> getAllJenkinsJobs() throws Exception {
+        try {
+            List<String> onJenkins = new ArrayList<>();
+            String[] tr = JenkinsCliWrapper.getCli().listJobsToArray();
+            for (String s : tr) {
+                onJenkins.add(s);
+            }
+            Collections.sort(onJenkins);
+            return onJenkins;
+        } catch (Throwable e) {
+            throw new Exception(e);
+        }
     }
 
     private QueryHandler getJDKVersionHandler() {

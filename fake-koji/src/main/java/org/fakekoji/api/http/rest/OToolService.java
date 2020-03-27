@@ -20,8 +20,10 @@ import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -50,6 +52,15 @@ public class OToolService {
     private static final String GET = "get";
 
     private static final String MISC = "misc";
+    private static final String VIEWS = "views";
+    private static final String VIEWS_LIST_OTOOL = "list";
+    private static final String VIEWS_DETAILS= "details";
+    private static final String VIEWS_MATCHES= "matches";
+    private static final String VIEWS_MATCHES_JENKINS= "jenkins";
+    private static final String VIEWS_XMLS= "xmls";
+    private static final String VIEWS_CREATE = "create";
+    private static final String VIEWS_REMOVE = "remove";
+    private static final String VIEWS_UPDATE = "update";
     private static final String REGENERATE_ALL = "regenerateAll";
     private static final String MATRIX = "matrix";
     private static final String MATRIX_ORIENTATION = "orientation";
@@ -66,6 +77,8 @@ public class OToolService {
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
                 + "                optional argument project=         \n"
                 + "                to regenerate only single project  \n"
+                + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL+","+VIEWS_DETAILS+","+VIEWS_XMLS+","+ VIEWS_CREATE+","+ VIEWS_REMOVE+","+ VIEWS_UPDATE+","+VIEWS_MATCHES+","+VIEWS_MATCHES_JENKINS+ "}\n"
+                + "                will affect jenkins views\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
                 + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
@@ -109,11 +122,161 @@ public class OToolService {
                     settings.getLocalReposRoot(),
                     settings.getScriptsRoot()
             );
+            final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
+            final TaskManager taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
 
             path(MISC, () -> {
                 get("help", wrapper.wrap(context -> {
                     context.status(200).result(getMiscHelp());
                 }));
+                path(VIEWS, () -> {
+                    try {
+                        List<JDKTestProject> l1 = jdkTestProjectManager.readAll();
+                        List<JDKProject> l2 = jdkProjectManager.readAll();
+                        List<Platform> l3 = platformManager.readAll();
+                        List<Task> l4 = taskManager.readAll();
+                        List<String> projects = new ArrayList<>();
+                        for (JDKTestProject p : l1) {
+                            projects.add(p.getId());
+                        }
+                        for (JDKProject p : l2) {
+                            projects.add(p.getId());
+                        }
+                        Set<String> ossesSet = new HashSet<>();
+                        Set<String> ossesVersionedSet = new HashSet<>();
+                        Set<String> archesSet = new HashSet<>();
+                        for (Platform p : l3) {
+                            ossesSet.add(p.getOs());
+                            ossesVersionedSet.add(p.getOs() + p.getVersion());
+                            archesSet.add(p.getArchitecture());
+                        }
+                        //jenkins will resort any way, however..
+                        Collections.sort(projects);
+                        Collections.sort(l4, new Comparator<Task>() {
+                            @Override
+                            public int compare(Task o1, Task o2) {
+                                return o1.getId().compareTo(o2.getId());
+                            }
+                        });
+                        Collections.sort(l3, new Comparator<Platform>() {
+                            @Override
+                            public int compare(Platform o1, Platform o2) {
+                                return o1.getId().compareTo(o2.getId());
+                            }
+                        });
+                        List<String> osses = new ArrayList<>(ossesSet);
+                        List<String> ossesVersioned = new ArrayList<>(ossesVersionedSet);
+                        List<String> arches = new ArrayList<>(archesSet);
+                        Collections.sort(osses);
+                        Collections.sort(ossesVersioned);
+                        Collections.sort(arches);
+                        List<List<String>> subArches = Arrays.asList(osses, ossesVersioned, arches);
+                        List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
+                        jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("update", Optional.empty(), Optional.empty(), Optional.of(l3)));
+                        jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(l3)));
+                        for (Task p : l4) {
+                            jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.empty(), Optional.of(l3)));
+                        }
+                        for (String p : projects) {
+                            jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.empty(), Optional.of(l3)));
+                        }
+                        for (Platform p : l3) {
+                            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(p.getId(), l3));
+                        }
+                        for (Platform platform : l3) {
+                            for (Task p : l4) {
+                                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.of(platform.getId()), Optional.of(l3)));
+                            }
+                            for (String p : projects) {
+                                jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(platform.getId()), Optional.of(l3)));
+                            }
+                        }
+                        for (List<String> subArch : subArches) {
+                            for (String s : subArch) {
+                                for (Task p : l4) {
+                                    jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.of(s), Optional.of(l3)));
+                                }
+                                for (String p : projects) {
+                                    jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(s), Optional.of(l3)));
+                                }
+                            }
+                        }
+                        get(VIEWS_LIST_OTOOL, wrapper.wrap(context -> {
+                                    context.status(200).result(String.join("\n", jvt) + "\n");
+                                }
+                        ));
+                        get(VIEWS_DETAILS, wrapper.wrap(context -> {
+                                    List<String> jjobs = GetterAPI.getAllJenkinsJobs();
+                                    Collections.sort(jjobs);
+                                    List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
+                                    jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
+                                    Collections.sort(jobs);
+                                    StringBuilder sb = new StringBuilder();
+                                    for (JenkinsViewTemplateBuilder j : jvt) {
+                                        Pattern p = j.getRegex();
+                                        int jobCounter = 0;
+                                        for (String job : jobs) {
+                                            if (((Pattern) p).matcher(job).matches()) {
+                                                jobCounter++;
+                                            }
+                                        }
+                                        int jjobCounter = 0;
+                                        for (String jjob : jjobs) {
+                                            if (((Pattern) p).matcher(jjob).matches()) {
+                                                jjobCounter++;
+                                            }
+                                        }
+                                        sb.append(j.getName() + " (" + jobCounter + ") (" + jjobCounter + ") " + j.getRegex() + "\n");
+                                    }
+                                    context.status(200).result(sb.toString());
+                                }
+                        ));
+                        get(VIEWS_XMLS, wrapper.wrap(context -> {
+                                    StringBuilder sb = new StringBuilder();
+                                    for (JenkinsViewTemplateBuilder j : jvt) {
+                                        sb.append("  ***  " + j.getName() + "  ***  \n");
+                                        sb.append(j.expand() + "\n");
+                                    }
+                                    context.status(200).result(sb.toString());
+                                }
+                        ));
+                        get(VIEWS_MATCHES, wrapper.wrap(context -> {
+                                    List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
+                                    jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
+                                    Collections.sort(jobs);
+                                    StringBuilder sb = new StringBuilder();
+                                    for (JenkinsViewTemplateBuilder j : jvt) {
+                                        sb.append(j.getName() + "\n");
+                                        Pattern p = j.getRegex();
+                                        for (String job : jobs) {
+                                            if (((Pattern) p).matcher(job).matches()) {
+                                                sb.append("  " + job + "\n");
+                                            }
+                                        }
+                                    }
+                                    context.status(200).result(sb.toString());
+                                }
+                        ));
+                        get(VIEWS_MATCHES_JENKINS, wrapper.wrap(context -> {
+                                    List<String> jobs = GetterAPI.getAllJenkinsJobs();
+                                    Collections.sort(jobs);
+                                    StringBuilder sb = new StringBuilder();
+                                    for (JenkinsViewTemplateBuilder j : jvt) {
+                                        sb.append(j.getName() + "\n");
+                                        Pattern p = j.getRegex();
+                                        for (String job : jobs) {
+                                            if (((Pattern) p).matcher(job).matches()) {
+                                                sb.append("  " + job + "\n");
+                                            }
+                                        }
+                                    }
+                                    context.status(200).result(sb.toString());
+                                }
+                        ));
+                    } catch (Exception ex) {
+                        throw new RuntimeException((ex));
+                    }
+                });
                 path(REGENERATE_ALL, () -> {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
@@ -178,7 +341,6 @@ public class OToolService {
             final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
             app.get(JDK_VERSIONS, context -> context.json(jdkVersionManager.readAll()));
 
-            final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
             app.get(PLATFORMS, context -> context.json(platformManager.readAll()));
             app.post(PLATFORMS, context -> {
                 try {
@@ -215,7 +377,6 @@ public class OToolService {
                 }
             });
 
-            final TaskManager taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
             app.post(TASKS, context -> {
                 try {
                     final Task task = context.bodyValidator(Task.class).get();
@@ -334,7 +495,7 @@ public class OToolService {
     }
 
     interface OToolHandler {
-        void handle(Context context) throws ManagementException, StorageException;
+        void handle(Context context) throws Exception;
     }
 
     interface OToolHandlerWrapper {

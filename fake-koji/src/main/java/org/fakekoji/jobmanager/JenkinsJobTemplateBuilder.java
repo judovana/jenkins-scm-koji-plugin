@@ -38,10 +38,10 @@ import java.util.stream.Collectors;
 
 public class JenkinsJobTemplateBuilder {
 
-    private static final String NEW_LINE = System.getProperty("line.separator");
+    static final String NEW_LINE = System.getProperty("line.separator");
     public static final String XML_DECLARATION = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n";
 
-    private static final String JENKINS_TEMPLATES = "jenkins-templates";
+    static final String JENKINS_TEMPLATES = "jenkins-templates";
 
     static final String BUILD_PROVIDER_TOP_URL = "%{BUILD_PROVIDER_TOP_URL}";
     static final String BUILD_PROVIDER_DOWNLOAD_URL = "%{BUILD_PROVIDER_DOWNLOAD_URL}";
@@ -365,6 +365,10 @@ public class JenkinsJobTemplateBuilder {
     }
 
     public String prettyPrint() {
+        return prettyPrint(template);
+    }
+
+    public static String prettyPrint(String template) {
         try {
             final Transformer transformer = TransformerFactory.newInstance().newTransformer();
             final Document document = DocumentBuilderFactory.newInstance()
@@ -407,7 +411,9 @@ public class JenkinsJobTemplateBuilder {
         TIMEOUTSHELL_SCRIPT_TEMPLATE("timeoutedshell-script"),
         TASK_JOB_TEMPLATE("task-job"),
         TRIGGER("trigger"),
-        VM_POST_BUILD_TASK_TEMPLATE("vm-post-build-task");
+        VM_POST_BUILD_TASK_TEMPLATE("vm-post-build-task"),
+        VIEW("view"),
+        VIEW_DEFAULT_COLUMNS("view-columns");
 
         private final String value;
 

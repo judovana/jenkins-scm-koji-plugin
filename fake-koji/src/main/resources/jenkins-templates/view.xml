@@ -1,0 +1,15 @@
+<hudson.model.ListView>
+      <name>%{VIEW_NAME}</name>
+      <filterExecutors>true</filterExecutors>
+      <filterQueue>true</filterQueue>
+      <properties class="hudson.model.View$PropertyList"/>
+      <jobNames>
+            <comparator class="hudson.util.CaseInsensitiveComparator"/>
+      </jobNames>
+      <jobFilters/>
+      <columns>
+     %{COLUMNS}
+      </columns>
+      <includeRegex>%{VIEW_REGEX}</includeRegex>
+      <recurse>false</recurse>
+</hudson.model.ListView>

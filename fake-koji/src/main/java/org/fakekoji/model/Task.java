@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class Task implements  Comparable<Task> {
 
@@ -105,6 +106,10 @@ public class Task implements  Comparable<Task> {
 
     public List<OToolVariable> getVariables() {
         return variables;
+    }
+
+    public Optional<String> getViewColumnsAsOptional() {
+        return  Optional.empty();
     }
 
     @Override
