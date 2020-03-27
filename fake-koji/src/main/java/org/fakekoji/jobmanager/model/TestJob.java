@@ -244,6 +244,18 @@ public class TestJob extends TaskJob {
         return buildVariants;
     }
 
+    public List<String> getProjectSubpackageBlacklist() {
+        return projectSubpackageBlacklist;
+    }
+
+    public List<String> getProjectSubpackageWhitelist() {
+        return projectSubpackageWhitelist;
+    }
+
+    public Project.ProjectType getProjectType() {
+        return projectType;
+    }
+
     @Override
     public String getName() {
         return Job.sanitizeNames(String.join(
