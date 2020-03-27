@@ -156,32 +156,6 @@ public class JDKProjectParserTest {
                         jdkVersion,
                         buildProviders,
                         tckTask,
-                        rhel7x64,
-                        Collections.unmodifiableMap(
-                                new HashMap<TaskVariant, TaskVariantValue>() {{
-                                    put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
-                                    put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getXServerVariant());
-                                }}
-                        ),
-                        rhel7x64,
-                        Collections.unmodifiableMap(
-                                new HashMap<TaskVariant, TaskVariantValue>() {{
-                                    put(DataGenerator.getDebugModeVariant(), DataGenerator.getSlowdebugVariant());
-                                }}
-                        ),
-                        blacklist,
-                        whitelist,
-                        scriptsRoot,
-                        Collections.emptyList()
-                ),
-                new TestJob(
-                        VAGRANT,
-                        TEST_PROJECT_NAME,
-                        Project.ProjectType.JDK_TEST_PROJECT,
-                        DataGenerator.getJDK8Product(),
-                        jdkVersion,
-                        buildProviders,
-                        tckTask,
                         f29x64,
                         Collections.unmodifiableMap(
                                 new HashMap<TaskVariant, TaskVariantValue>() {{
