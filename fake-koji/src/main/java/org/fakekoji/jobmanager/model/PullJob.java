@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.PULL_JOB_TEMPLATE;
@@ -23,7 +25,6 @@ public class PullJob extends Job {
 
     public static final String PULL = "pull";
 
-    private final String projectName;
     private final Product product;
     private final JDKVersion jdkVersion;
     private final File repositoriesRoot;
@@ -37,8 +38,7 @@ public class PullJob extends Job {
             File scriptsRoot,
             List<OToolVariable> projectVariables
     ) {
-        super(projectVariables);
-        this.projectName = projectName;
+        super(projectName, projectVariables);
         this.product = product;
         this.jdkVersion = jdkVersion;
         this.repositoriesRoot = repositoriesRoot;
@@ -59,8 +59,7 @@ public class PullJob extends Job {
         if (this == o) return true;
         if (!(o instanceof PullJob)) return false;
         PullJob pullJob = (PullJob) o;
-        return Objects.equals(projectName, pullJob.projectName) &&
-                Objects.equals(product, pullJob.product) &&
+        return Objects.equals(product, pullJob.product) &&
                 Objects.equals(jdkVersion, pullJob.jdkVersion) &&
                 Objects.equals(repositoriesRoot, pullJob.repositoriesRoot) &&
                 Objects.equals(scriptsRoot, pullJob.scriptsRoot);
@@ -70,7 +69,6 @@ public class PullJob extends Job {
     public int hashCode() {
         return Objects.hash(
                 super.hashCode(),
-                projectName,
                 product,
                 jdkVersion,
                 repositoriesRoot,
@@ -85,7 +83,7 @@ public class PullJob extends Job {
                 Arrays.asList(
                         PULL,
                         product.getJdk(),
-                        projectName
+                        getProjectName()
                 )
         ));
     }
@@ -102,20 +100,25 @@ public class PullJob extends Job {
 
     @Override
     List<OToolVariable> getExportedVariables() {
-       return Arrays.asList(
-                new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
-                new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
-                new OToolVariable(PROJECT_NAME_VAR, projectName),
-                new OToolVariable(PROJECT_PATH_VAR, Paths.get(repositoriesRoot.getAbsolutePath(), projectName).toString()),
-                new OToolVariable(
-                        NO_CHANGE_RETURN_VAR,
-                        "-1",
-                        "any negative is enforcing pull even without changes detected",
-                        false,
-                        true,
-                        true
+        return Stream.concat(
+                super.getExportedVariables().stream(),
+                Stream.of(
+                        new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
+                        new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
+                        new OToolVariable(
+                                PROJECT_PATH_VAR,
+                                Paths.get(repositoriesRoot.getAbsolutePath(), getProjectName()).toString()
+                        ),
+                        new OToolVariable(
+                                NO_CHANGE_RETURN_VAR,
+                                "-1",
+                                "any negative is enforcing pull even without changes detected",
+                                false,
+                                true,
+                                true
+                        )
+                        //not propagaing project specific vars right now
                 )
-               //not propagaing project specific vars right now
-        );
+        ).collect(Collectors.toList());
     }
 }
