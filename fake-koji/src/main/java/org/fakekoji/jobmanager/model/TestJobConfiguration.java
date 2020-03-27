@@ -32,4 +32,11 @@ public class TestJobConfiguration {
     public int hashCode() {
         return Objects.hash(platforms);
     }
+
+    @Override
+    public String toString() {
+        return "TestJobConfiguration{" +
+                "platforms=" + platforms +
+                '}';
+    }
 }
