@@ -25,7 +25,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
 
     private final String name;
     private final String columns;
-    private final String regex;
+    private final Pattern regex;
     private final String template;
 
     public String getName() {
@@ -33,7 +33,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     }
 
     public Pattern getRegex() {
-        return Pattern.compile(regex);
+        return regex;
     }
 
     private static String getMajorDelimiter() {
@@ -64,7 +64,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     public JenkinsViewTemplateBuilder(String name, String columns, String regex, String template) {
         this.name = name;
         this.columns = columns;
-        this.regex = regex;
+        this.regex = Pattern.compile(regex);
         this.template = template;
     }
 
@@ -163,7 +163,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return JenkinsJobTemplateBuilder.prettyPrint(template
                 .replace(VIEW_NAME, name)
                 .replace(COLUMNS, columns)
-                .replace(VIEW_REGEX, regex));
+                .replace(VIEW_REGEX, regex.toString()));
     }
 
     public InputStream expandToStream() {
