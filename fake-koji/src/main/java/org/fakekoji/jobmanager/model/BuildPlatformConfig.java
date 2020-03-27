@@ -40,4 +40,12 @@ public class BuildPlatformConfig {
     public int hashCode() {
         return Objects.hash(id, variants);
     }
+
+    @Override
+    public String toString() {
+        return "BuildPlatformConfig{" +
+                "id='" + id + '\'' +
+                ", variants=" + variants +
+                '}';
+    }
 }

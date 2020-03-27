@@ -33,4 +33,10 @@ public class JobConfiguration {
         return Objects.hash(platforms);
     }
 
+    @Override
+    public String toString() {
+        return "JobConfiguration{" +
+                "platforms=" + platforms +
+                '}';
+    }
 }
