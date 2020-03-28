@@ -207,11 +207,11 @@ public class MatrixGenerator {
     }
 
     static String fill(String s, int l, String by) {
-        StringBuilder sb = new StringBuilder(s);
-        while (sb.length() < l) {
-            sb.append(by);
+        StringBuilder filledString = new StringBuilder(s);
+        while (filledString.length() < l) {
+            filledString.append(by);
         }
-        return sb.toString();
+        return filledString.toString();
     }
 
 
@@ -247,23 +247,23 @@ public class MatrixGenerator {
             List<List<Leaf>> row = matrix.get(i);
             for (int j = 0; j < row.size(); j++) {
                 List<Leaf> cel = row.get(j);
-                String s;
+                String cellContent;
                 if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
-                    s = cel.get(0).toString();
+                    cellContent = cel.get(0).toString();
                 } else {
-                    s = "" + cel.size();
+                    cellContent = "" + cel.size();
                     total += cel.size();
                 }
                 int align = lcol;
                 if (j == 0 || j == row.size() - 1) {
                     align = lrow;
                 }
-                if (s.isEmpty()) {
+                if (cellContent.isEmpty()) {
                     //filing by soething, as leading spaces can be trimmed on the fly
-                    p.print(fill(s, align - 1, "-"));
+                    p.print(fill(cellContent, align - 1, "-"));
                     p.print(" ");
                 } else {
-                    p.print(fill(s, align, " "));
+                    p.print(fill(cellContent, align, " "));
                 }
             }
             p.println();

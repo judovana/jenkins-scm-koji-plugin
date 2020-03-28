@@ -104,8 +104,8 @@ public class XmlRpcHelperTest {
     @Test
     public void tryConnectionWorks() throws IOException {
         int port;
-        try (ServerSocket s = new ServerSocket(0)) {
-            port = s.getLocalPort();
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            port = serverSocket.getLocalPort();
         }
         Object result;
         TimeoutingXmlRpcServer w = new TimeoutingXmlRpcServer(port, 1);
@@ -123,8 +123,8 @@ public class XmlRpcHelperTest {
     @Test
     public void tryConnectionNotTimeouts() throws IOException {
         int port;
-        try (ServerSocket s = new ServerSocket(0)) {
-            port = s.getLocalPort();
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            port = serverSocket.getLocalPort();
         }
         Object result;
         TimeoutingXmlRpcServer w = new TimeoutingXmlRpcServer(port, 1000);
@@ -142,8 +142,8 @@ public class XmlRpcHelperTest {
     @Test
     public void tryConnectionTimeouts() throws IOException {
         int port;
-        try (ServerSocket s = new ServerSocket(0)) {
-            port = s.getLocalPort();
+        try (ServerSocket serverSocket = new ServerSocket(0)) {
+            port = serverSocket.getLocalPort();
         }
         Object result = null;
         Exception thrown = null;

@@ -189,7 +189,7 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private static boolean checkProjectName(String id, Optional<String> projectParam) {
-        if (projectParam.isPresent()){
+        if (projectParam.isPresent()) {
             return id.equals(projectParam.get());
         } else {
             return true;
@@ -205,8 +205,8 @@ public class GetterAPI implements EndpointGroup {
         );
         for (final JDKTestProject jdkTestProject : jdkTestProjectManager.readAll()) {
             if (checkProjectName(jdkTestProject.getId(), projectFilter)) {
-                Set<Job> tr = jdkProjectParser.parse(jdkTestProject);
-                for (Job j : tr) {
+                Set<Job> testJobsSet = jdkProjectParser.parse(jdkTestProject);
+                for (Job j : testJobsSet) {
                     testProjects.add(j.getName());
                 }
             }

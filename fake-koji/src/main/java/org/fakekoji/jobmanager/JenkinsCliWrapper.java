@@ -195,11 +195,11 @@ public class JenkinsCliWrapper {
         if (r.remoteCommandreturnValue != 0) {
             throw new IOException("ssh returned " + r.remoteCommandreturnValue);
         }
-        String[] s = r.sout.split("\\s+");
-        for (int i = 0; i < s.length; i++) {
-            s[i] = s[i].trim();
+        String[] resultListOfJobs = r.sout.split("\\s+");
+        for (int i = 0; i < resultListOfJobs.length; i++) {
+            resultListOfJobs[i] = resultListOfJobs[i].trim();
         }
-        return s;
+        return resultListOfJobs;
     }
 
     public ClientResponse createJob(String name, InputStream config) {

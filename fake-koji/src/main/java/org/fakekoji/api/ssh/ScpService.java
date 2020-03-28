@@ -681,12 +681,12 @@ public class ScpService {
     }
 
     private static String tail(int index, String[] parts) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder tail = new StringBuilder();
         for (int i = index; i < parts.length; i++) {
             String part = parts[i];
-            sb.append("/").append(part);
+            tail.append("/").append(part);
         }
-        return sb.toString();
+        return tail.toString();
     }
 
     private static class NvraParsingException extends RuntimeException {

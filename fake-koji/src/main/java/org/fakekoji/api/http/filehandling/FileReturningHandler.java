@@ -176,24 +176,24 @@ public class FileReturningHandler implements HttpHandler {
     }
 
     private static StringBuilder generateHtmlFromFileList(final String requestedFile, final File f, Comparator c) throws IOException {
-        final StringBuilder sb = new StringBuilder();
+        final StringBuilder resultHtml = new StringBuilder();
         final InfoProvider provider = (InfoProvider) c;
-        sb.append("  <h2>").append(requestedFile);
-        sb.append(provider.getTitle());
-        sb.append("</h2>\n");
-        sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
-        sb.append("..");
-        sb.append("    </a><br/>\n");
+        resultHtml.append("  <h2>").append(requestedFile);
+        resultHtml.append(provider.getTitle());
+        resultHtml.append("</h2>\n");
+        resultHtml.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
+        resultHtml.append("..");
+        resultHtml.append("    </a><br/>\n");
         List<FileInfo> fileList = getRecursiveFileList(requestedFile, f);
         Collections.sort(fileList, c);
         for (FileInfo file : fileList) {
-            sb.append("    <a href=\"").append(file.getPath()).append("\">");
-            sb.append(file.getFileChunk());
-            sb.append("    </a>");
-            sb.append(provider.getInfo(file));
-            sb.append("<br/>\n");
+            resultHtml.append("    <a href=\"").append(file.getPath()).append("\">");
+            resultHtml.append(file.getFileChunk());
+            resultHtml.append("    </a>");
+            resultHtml.append(provider.getInfo(file));
+            resultHtml.append("<br/>\n");
         }
-        return sb;
+        return resultHtml;
     }
 
     private static void sentFile(File f, HttpExchange t) throws IOException {
@@ -226,8 +226,8 @@ public class FileReturningHandler implements HttpHandler {
     private void sentDirListing(File f, String requestedFile, HttpExchange t) throws IOException {
         LOGGER.info(f.getAbsolutePath() + " listing directory!");
         String[] files = f.list();
-        ArrayList<FileInfo> s = new ArrayList();
-        s.add(0, new FileInfo("ALL", "ALL", new File(root + "/" + requestedFile + "/" + "ALL").toPath()));
+        ArrayList<FileInfo> fileInfoList = new ArrayList();
+        fileInfoList.add(0, new FileInfo("ALL", "ALL", new File(root + "/" + requestedFile + "/" + "ALL").toPath()));
         for (int i = 0; i < files.length; i++) {
             String fileChunk = files[i];
             long lastModifiedDirContent = 0;
@@ -237,13 +237,13 @@ public class FileReturningHandler implements HttpHandler {
                     lastModifiedDirContent = getNewestDateIn(file).getTime();
                 }
             }
-            s.add(new FileInfo(fileChunk, fileChunk, file.toPath(), lastModifiedDirContent));
+            fileInfoList.add(new FileInfo(fileChunk, fileChunk, file.toPath(), lastModifiedDirContent));
         }
         String init = "<html>\n  <body>\n";
 
-        StringBuilder sb1 = generateHtmlFromList(requestedFile, s, new ComparatorByVersion());
-        StringBuilder sb2 = generateHtmlFromList(requestedFile, s, new ComparatorByLastModified());
-        StringBuilder sb3 = generateHtmlFromList(requestedFile, s, new ComparatorByLastModifiedDirContent());
+        StringBuilder sb1 = generateHtmlFromList(requestedFile, fileInfoList, new ComparatorByVersion());
+        StringBuilder sb2 = generateHtmlFromList(requestedFile, fileInfoList, new ComparatorByLastModified());
+        StringBuilder sb3 = generateHtmlFromList(requestedFile, fileInfoList, new ComparatorByLastModifiedDirContent());
         String close = "  </body>\n</html>\n";
         String result = init + sb1.toString() + "<hr/>" + sb2.toString() + "<hr/>" + sb3.toString() + close;
         long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
@@ -293,25 +293,25 @@ public class FileReturningHandler implements HttpHandler {
     }
 
     private StringBuilder generateHtmlFromList(String requestedFile, ArrayList<FileInfo> s, Comparator c) throws IOException {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder resultHtml = new StringBuilder();
         InfoProvider provider = (InfoProvider) c;
-        sb.append("  <h2>").append(requestedFile);
-        sb.append(provider.getTitle());
-        sb.append("</h2>\n");
-        sb.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
-        sb.append("..");
-        sb.append("    </a><br/>\n");
+        resultHtml.append("  <h2>").append(requestedFile);
+        resultHtml.append(provider.getTitle());
+        resultHtml.append("</h2>\n");
+        resultHtml.append("    <a href=\"").append(new File(requestedFile).getParent()).append("\">");
+        resultHtml.append("..");
+        resultHtml.append("    </a><br/>\n");
         sortFileList(s, c);
         for (FileInfo file : s) {
             String path = "/" + requestedFile + "/" + file.getFileChunk();
             path = path.replaceAll("/+", "/");
-            sb.append("    <a href=\"").append(path).append("\">");
-            sb.append(file.getFileChunk());
-            sb.append("    </a>");
-            sb.append(provider.getInfo(file));
-            sb.append("<br/>\n");
+            resultHtml.append("    <a href=\"").append(path).append("\">");
+            resultHtml.append(file.getFileChunk());
+            resultHtml.append("    </a>");
+            resultHtml.append(provider.getInfo(file));
+            resultHtml.append("<br/>\n");
         }
-        return sb;
+        return resultHtml;
     }
 
     private static Date getNewestDateIn(File root) throws IOException {

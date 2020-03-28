@@ -242,18 +242,18 @@ class ResponseContainer {
 
         @Override
         public String respond() {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder helpString = new StringBuilder();
             Set<String> keys = responseMap.keySet();
             keys.forEach((key) -> {
-                sb.append(key);
+                helpString.append(key);
                 String help = responseMap.get(key).help();
                 if (help != null) {
-                    sb.append(": ").append(help);
+                    helpString.append(": ").append(help);
                 }
-                sb.append('\n');
+                helpString.append('\n');
             });
 
-            return sb.toString();
+            return helpString.toString();
         }
 
         @Override
