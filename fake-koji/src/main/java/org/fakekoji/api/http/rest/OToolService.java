@@ -179,7 +179,6 @@ public class OToolService {
                         Collections.sort(arches);
                         List<List<String>> subArches = Arrays.asList(osses, ossesVersioned, arches);
                         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
-                        jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("update", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
                         jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
                         for (Task p : allTasks) {
                             jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.empty(), Optional.of(allPlatforms)));
