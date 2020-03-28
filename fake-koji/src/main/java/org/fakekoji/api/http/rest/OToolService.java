@@ -152,10 +152,12 @@ public class OToolService {
                         Set<String> ossesSet = new HashSet<>();
                         Set<String> ossesVersionedSet = new HashSet<>();
                         Set<String> archesSet = new HashSet<>();
+                        Set<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatformsSet = new HashSet<>();
                         for (Platform p : allPlatforms) {
                             ossesSet.add(p.getOs());
                             ossesVersionedSet.add(p.getOs() + p.getVersion());
                             archesSet.add(p.getArchitecture());
+                            versionlessPlatformsSet.add(new JenkinsViewTemplateBuilder.VersionlessPlatform(p.getOs(), p.getArchitecture()));
                         }
                         //jenkins will resort any way, however..
                         Collections.sort(projects);
@@ -174,9 +176,11 @@ public class OToolService {
                         List<String> osses = new ArrayList<>(ossesSet);
                         List<String> ossesVersioned = new ArrayList<>(ossesVersionedSet);
                         List<String> arches = new ArrayList<>(archesSet);
+                        List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms= new ArrayList<>(versionlessPlatformsSet);
                         Collections.sort(osses);
                         Collections.sort(ossesVersioned);
                         Collections.sort(arches);
+                        Collections.sort(versionlessPlatforms);
                         List<List<String>> subArches = Arrays.asList(osses, ossesVersioned, arches);
                         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
                         jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
@@ -189,12 +193,28 @@ public class OToolService {
                         for (Platform p : allPlatforms) {
                             jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(p.getId(), allPlatforms));
                         }
+                        for (JenkinsViewTemplateBuilder.VersionlessPlatform p : versionlessPlatforms) {
+                            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(p));
+                        }
+                        for (List<String> subArch : subArches) {
+                            for (String s : subArch) {
+                                jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(s, allPlatforms));
+                            }
+                        }
                         for (Platform platform : allPlatforms) {
                             for (Task p : allTasks) {
                                 jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.of(platform.getId()), Optional.of(allPlatforms)));
                             }
                             for (String p : projects) {
                                 jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(platform.getId()), Optional.of(allPlatforms)));
+                            }
+                        }
+                        for (JenkinsViewTemplateBuilder.VersionlessPlatform platform : versionlessPlatforms) {
+                            for (Task p : allTasks) {
+                                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), platform));
+                            }
+                            for (String p : projects) {
+                                jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, platform));
                             }
                         }
                         for (List<String> subArch : subArches) {

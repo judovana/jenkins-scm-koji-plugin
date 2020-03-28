@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,62 @@ import java.util.regex.Pattern;
     <!-- .*-ojdk11~shenandoah~upstream~cpu-.*|pull-.*-ojdk11~shenandoah~upstream~cpu -->
  */
 public class JenkinsViewTemplateBuilder implements CharSequence {
+
+    public static class VersionlessPlatform implements CharSequence, Comparable<VersionlessPlatform> {
+        private final String os;
+        private final String arch;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            VersionlessPlatform that = (VersionlessPlatform) o;
+            return Objects.equals(os, that.os) &&
+                    Objects.equals(arch, that.arch);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(os, arch);
+        }
+
+        public VersionlessPlatform(String os, String arch) {
+            this.os = os;
+            this.arch = arch;
+        }
+
+        public String getOs() {
+            return os;
+        }
+
+        public String getArch() {
+            return arch;
+        }
+
+        public String getId() {
+            return os + getMinorDelimiter() + arch;
+        }
+
+        @Override
+        public int length() {
+            return getId().length();
+        }
+
+        @Override
+        public char charAt(int index) {
+            return getId().charAt(index);
+        }
+
+        @Override
+        public CharSequence subSequence(int start, int end) {
+            return getId().subSequence(start, end);
+        }
+
+        @Override
+        public int compareTo(@NotNull VersionlessPlatform o) {
+            return getId().compareTo(o.getId());
+        }
+    }
 
     static final String VIEW_NAME = "%{VIEW_NAME}";
     static final String COLUMNS = "%{COLUMNS}";
@@ -68,6 +125,18 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         this.template = template;
     }
 
+    public static JenkinsViewTemplateBuilder getPlatformTemplate(VersionlessPlatform platform) throws IOException {
+        return new JenkinsViewTemplateBuilder(
+                getPlatformmViewName(platform.getId()),
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                getPlatformViewRegex(platform),
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+    }
+
+    private static String getPlatformViewRegex(VersionlessPlatform platform) {
+        return ".*" + getEscapedMajorDelimiter() + platform.os + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.arch + "(" + getEscapedMajorDelimiter() + "|" + getEscapedMinorDelimiter() + ")" + ".*";
+    }
+
     public static JenkinsViewTemplateBuilder getPlatformTemplate(String platform, List<Platform> platforms) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getPlatformmViewName(platform),
@@ -96,6 +165,18 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
             }
         }
         return viewName + " Is strange as was not found";
+    }
+
+    public static JenkinsViewTemplateBuilder getProjectTemplate(String project, VersionlessPlatform platform) throws IOException {
+        return new JenkinsViewTemplateBuilder(
+                getProjectViewName(project, Optional.of(platform.getId())),
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                getProjectViewRegex(project, platform),
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+    }
+
+    private static String getProjectViewRegex(String project, VersionlessPlatform platform) {
+        return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(platform) + "|" + pull(project);
     }
 
     public static JenkinsViewTemplateBuilder getProjectTemplate(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
@@ -129,6 +210,18 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     @NotNull
     private static String pull(String viewName) {
         return "pull" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + viewName;
+    }
+
+    public static JenkinsViewTemplateBuilder getTaskTemplate(String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
+        return new JenkinsViewTemplateBuilder(
+                getTaskViewName(task, Optional.of(platform.getId())),
+                columns.orElse(JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS)),
+                getTaskViewRegex(task, platform),
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+    }
+
+    private static String getTaskViewRegex(String task, VersionlessPlatform platform) {
+        return task + getEscapedMajorDelimiter() + getPlatformViewRegex(platform);
     }
 
     public static JenkinsViewTemplateBuilder getTaskTemplate(String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
