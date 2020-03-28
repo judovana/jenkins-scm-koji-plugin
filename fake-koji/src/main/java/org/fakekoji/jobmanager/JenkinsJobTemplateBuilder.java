@@ -413,7 +413,8 @@ public class JenkinsJobTemplateBuilder {
         TRIGGER("trigger"),
         VM_POST_BUILD_TASK_TEMPLATE("vm-post-build-task"),
         VIEW("view"),
-        VIEW_DEFAULT_COLUMNS("view-columns");
+        VIEW_DEFAULT_COLUMNS("view-columns"),
+        UPDATE_VM_JOB("update-vm-job");
 
         private final String value;
 

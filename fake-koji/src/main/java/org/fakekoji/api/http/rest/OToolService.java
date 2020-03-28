@@ -59,6 +59,12 @@ public class OToolService {
     private static final String GET = "get";
 
     private static final String MISC = "misc";
+    private static final String UPDATE_JOBS = "updateJobs";
+    private static final String UPDATE_JOBS_LIST = "list";
+    private static final String UPDATE_JOBS_XMLS = "xmls";
+    private static final String UPDATE_JOBS_CREATE = "create";
+    private static final String UPDATE_JOBS_REMOVE = "remove";
+    private static final String UPDATE_JOBS_UPDATE = "update";
     private static final String VIEWS = "views";
     private static final String VIEWS_LIST_OTOOL = "list";
     private static final String VIEWS_DETAILS= "details";
@@ -84,6 +90,8 @@ public class OToolService {
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
                 + "                optional argument project=         \n"
                 + "                to regenerate only single project  \n"
+                + MISC + "/" + UPDATE_JOBS+ "/{" + UPDATE_JOBS_LIST+","+UPDATE_JOBS_XMLS+","+UPDATE_JOBS_CREATE+","+ UPDATE_JOBS_REMOVE+","+ UPDATE_JOBS_UPDATE+"}\n"
+                + "                will affect update machines jobs\n"
                 + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL+","+VIEWS_DETAILS+","+VIEWS_XMLS+","+ VIEWS_CREATE+","+ VIEWS_REMOVE+","+ VIEWS_UPDATE+","+VIEWS_MATCHES+","+VIEWS_MATCHES_JENKINS+ "}\n"
                 + "                will affect jenkins views\n"
                 + MISC + "/" + MATRIX + "\n"
@@ -136,6 +144,52 @@ public class OToolService {
                 get("help", wrapper.wrap(context -> {
                     context.status(200).result(getMiscHelp());
                 }));
+                path(UPDATE_JOBS, () -> {
+                    try {
+                        List<Platform> platforms = platformManager.readAll();
+                        List<JenkinsUpdateVmTemplateBuilder> vagrantVmUpdates = new ArrayList<>(platforms.size());
+                        List<JenkinsUpdateVmTemplateBuilder> vagrantHwUpdates = new ArrayList<>(platforms.size());
+                        for (Platform platform : platforms) {
+                            for (Platform.Provider provider : platform.getProviders()) {
+                                //todo, make configurable?
+                                String currentlyOnlyUpdateAbleProvidr = "vagrant";
+                                if (provider.getId().equals(currentlyOnlyUpdateAbleProvidr)) {
+                                    for (String vmProvider : provider.getVmNodes()) {
+                                        String name = "update-" + platform.getId() + "(" + vmProvider + ")";
+                                        JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
+                                                name, vmProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), platform.getVmName());
+                                        vagrantVmUpdates.add(juvt);
+                                    }
+                                    for (String hwProvider : provider.getHwNodes()) {
+                                        String name = "update-" + hwProvider + "(" + platform.getId() + ")";
+                                        JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
+                                                name, hwProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), "local");
+                                        vagrantHwUpdates.add(juvt);
+                                    }
+                                }
+                            }
+                        }
+                        List<JenkinsUpdateVmTemplateBuilder> allUpdates = new ArrayList<>(vagrantVmUpdates.size() + vagrantHwUpdates.size());
+                        allUpdates.addAll(vagrantVmUpdates);
+                        allUpdates.addAll(vagrantHwUpdates);
+                        get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
+                                    String s1 = String.join("\n", allUpdates);
+                                    context.status(200).result(s1 + "\n");
+                                }
+                        ));
+                        get(UPDATE_JOBS_XMLS, wrapper.wrap(context -> {
+                                    StringBuilder list = new StringBuilder();
+                                    for (JenkinsUpdateVmTemplateBuilder update : allUpdates) {
+                                        list.append(" #### " + update.getName() + " ####\n");
+                                        list.append(update.expand() + "\n");
+                                    }
+                                    context.status(200).result(list.toString());
+                                }
+                        ));
+                    } catch (Exception ex) {
+                        throw new RuntimeException((ex));
+                    }
+                });
                 path(VIEWS, () -> {
                     try {
                         List<JDKTestProject> jdkTestProjecs = jdkTestProjectManager.readAll();
