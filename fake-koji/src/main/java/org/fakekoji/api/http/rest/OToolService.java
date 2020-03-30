@@ -236,6 +236,7 @@ public class OToolService {
                                             xmlsToPrint.append(j.expand() + "\n");
                                         }
                                     }
+                                    context.status(200).result(xmlsToPrint.toString());
                                 } else {
                                     StringBuilder xmlsToPrint = new StringBuilder();
                                     for (JenkinsViewTemplateBuilder j : jvt) {
