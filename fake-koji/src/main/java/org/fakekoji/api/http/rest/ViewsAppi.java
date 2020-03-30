@@ -1,5 +1,6 @@
 package org.fakekoji.api.http.rest;
 
+import io.javalin.http.Context;
 import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
@@ -14,11 +15,22 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ViewsAppi {
 
+    private final boolean skipEmpty;
+    private final Pattern filter;
+
+    ViewsAppi(Context context) {
+        this.filter = Pattern.compile(context.queryParam(OToolService.FILTER) == null ? ".*" : context.queryParam(OToolService.FILTER));
+        this.skipEmpty = OToolService.notNullBoolean(context, OToolService.SKIP_EMPTY, false);
+    }
+
     @NotNull
-    static  List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager) throws StorageException, IOException {
+    List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager) throws StorageException, IOException {
         List<JDKTestProject> jdkTestProjecs = jdkTestProjectManager.readAll();
         List<JDKProject> jdkProjects = jdkProjectManager.readAll();
         List<Platform> allPlatforms = platformManager.readAll();
@@ -57,7 +69,7 @@ public class ViewsAppi {
         List<String> osses = new ArrayList<>(ossesSet);
         List<String> ossesVersioned = new ArrayList<>(ossesVersionedSet);
         List<String> arches = new ArrayList<>(archesSet);
-        List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms= new ArrayList<>(versionlessPlatformsSet);
+        List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms = new ArrayList<>(versionlessPlatformsSet);
         Collections.sort(osses);
         Collections.sort(ossesVersioned);
         Collections.sort(arches);
@@ -108,6 +120,22 @@ public class ViewsAppi {
                 }
             }
         }
-        return jvt;
+        return jvt.stream().filter(jvtb -> filter.matcher(jvtb.getName()).matches()).collect(Collectors.toList());
     }
+
+    public String getMatches(List<String> jobs, JenkinsViewTemplateBuilder j) {
+        StringBuilder viewsAndMatchesToPrint = new StringBuilder();
+        Pattern pattern = j.getRegex();
+        for (String job : jobs) {
+            if (((Pattern) pattern).matcher(job).matches()) {
+                viewsAndMatchesToPrint.append("  " + job + "\n");
+            }
+        }
+        return viewsAndMatchesToPrint.toString();
+    }
+
+    public boolean isSkipEmpty() {
+        return skipEmpty;
+    }
+
 }
