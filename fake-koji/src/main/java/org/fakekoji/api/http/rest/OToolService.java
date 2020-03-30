@@ -20,14 +20,9 @@ import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -145,217 +140,101 @@ public class OToolService {
                     context.status(200).result(getMiscHelp());
                 }));
                 path(UPDATE_JOBS, () -> {
-                    try {
-                        List<Platform> platforms = platformManager.readAll();
-                        List<JenkinsUpdateVmTemplateBuilder> vagrantVmUpdates = new ArrayList<>(platforms.size());
-                        List<JenkinsUpdateVmTemplateBuilder> vagrantHwUpdates = new ArrayList<>(platforms.size());
-                        for (Platform platform : platforms) {
-                            for (Platform.Provider provider : platform.getProviders()) {
-                                //todo, make configurable?
-                                String currentlyOnlyUpdateAbleProvidr = "vagrant";
-                                if (provider.getId().equals(currentlyOnlyUpdateAbleProvidr)) {
-                                    for (String vmProvider : provider.getVmNodes()) {
-                                        String name = "update-" + platform.getId() + "(" + vmProvider + ")";
-                                        JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
-                                                name, vmProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), platform.getVmName());
-                                        vagrantVmUpdates.add(juvt);
-                                    }
-                                    for (String hwProvider : provider.getHwNodes()) {
-                                        String name = "update-" + hwProvider + "(" + platform.getId() + ")";
-                                        JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
-                                                name, hwProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), "local");
-                                        vagrantHwUpdates.add(juvt);
-                                    }
-                                }
+                    get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
+                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = UpdateVmsApi.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
+                                String s1 = String.join("\n", allUpdates);
+                                context.status(200).result(s1 + "\n");
                             }
-                        }
-                        List<JenkinsUpdateVmTemplateBuilder> allUpdates = new ArrayList<>(vagrantVmUpdates.size() + vagrantHwUpdates.size());
-                        allUpdates.addAll(vagrantVmUpdates);
-                        allUpdates.addAll(vagrantHwUpdates);
-                        get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
-                                    String s1 = String.join("\n", allUpdates);
-                                    context.status(200).result(s1 + "\n");
+                    ));
+                    get(UPDATE_JOBS_XMLS, wrapper.wrap(context -> {
+                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = UpdateVmsApi.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
+                                StringBuilder list = new StringBuilder();
+                                for (JenkinsUpdateVmTemplateBuilder update : allUpdates) {
+                                    list.append(" #### " + update.getName() + " ####\n");
+                                    list.append(update.expand() + "\n");
                                 }
-                        ));
-                        get(UPDATE_JOBS_XMLS, wrapper.wrap(context -> {
-                                    StringBuilder list = new StringBuilder();
-                                    for (JenkinsUpdateVmTemplateBuilder update : allUpdates) {
-                                        list.append(" #### " + update.getName() + " ####\n");
-                                        list.append(update.expand() + "\n");
-                                    }
-                                    context.status(200).result(list.toString());
-                                }
-                        ));
-                    } catch (Exception ex) {
-                        throw new RuntimeException((ex));
-                    }
+                                context.status(200).result(list.toString());
+                            }
+                    ));
                 });
                 path(VIEWS, () -> {
-                    try {
-                        List<JDKTestProject> jdkTestProjecs = jdkTestProjectManager.readAll();
-                        List<JDKProject> jdkProjects = jdkProjectManager.readAll();
-                        List<Platform> allPlatforms = platformManager.readAll();
-                        List<Task> allTasks = taskManager.readAll();
-                        List<String> projects = new ArrayList<>();
-                        for (JDKTestProject p : jdkTestProjecs) {
-                            projects.add(p.getId());
-                        }
-                        for (JDKProject p : jdkProjects) {
-                            projects.add(p.getId());
-                        }
-                        Set<String> ossesSet = new HashSet<>();
-                        Set<String> ossesVersionedSet = new HashSet<>();
-                        Set<String> archesSet = new HashSet<>();
-                        Set<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatformsSet = new HashSet<>();
-                        for (Platform p : allPlatforms) {
-                            ossesSet.add(p.getOs());
-                            ossesVersionedSet.add(p.getOs() + p.getVersion());
-                            archesSet.add(p.getArchitecture());
-                            versionlessPlatformsSet.add(new JenkinsViewTemplateBuilder.VersionlessPlatform(p.getOs(), p.getArchitecture()));
-                        }
-                        //jenkins will resort any way, however..
-                        Collections.sort(projects);
-                        Collections.sort(allTasks, new Comparator<Task>() {
-                            @Override
-                            public int compare(Task o1, Task o2) {
-                                return o1.getId().compareTo(o2.getId());
+                    get(VIEWS_LIST_OTOOL, wrapper.wrap(context -> {
+                                List<JenkinsViewTemplateBuilder> jvt = ViewsAppi.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                context.status(200).result(String.join("\n", jvt) + "\n");
                             }
-                        });
-                        Collections.sort(allPlatforms, new Comparator<Platform>() {
-                            @Override
-                            public int compare(Platform o1, Platform o2) {
-                                return o1.getId().compareTo(o2.getId());
-                            }
-                        });
-                        List<String> osses = new ArrayList<>(ossesSet);
-                        List<String> ossesVersioned = new ArrayList<>(ossesVersionedSet);
-                        List<String> arches = new ArrayList<>(archesSet);
-                        List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms= new ArrayList<>(versionlessPlatformsSet);
-                        Collections.sort(osses);
-                        Collections.sort(ossesVersioned);
-                        Collections.sort(arches);
-                        Collections.sort(versionlessPlatforms);
-                        List<List<String>> subArches = Arrays.asList(osses, ossesVersioned, arches);
-                        List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
-                        jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
-                        for (Task p : allTasks) {
-                            jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.empty(), Optional.of(allPlatforms)));
-                        }
-                        for (String p : projects) {
-                            jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.empty(), Optional.of(allPlatforms)));
-                        }
-                        for (Platform p : allPlatforms) {
-                            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(p.getId(), allPlatforms));
-                        }
-                        for (JenkinsViewTemplateBuilder.VersionlessPlatform p : versionlessPlatforms) {
-                            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(p));
-                        }
-                        for (List<String> subArch : subArches) {
-                            for (String s : subArch) {
-                                jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(s, allPlatforms));
-                            }
-                        }
-                        for (Platform platform : allPlatforms) {
-                            for (Task p : allTasks) {
-                                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.of(platform.getId()), Optional.of(allPlatforms)));
-                            }
-                            for (String p : projects) {
-                                jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(platform.getId()), Optional.of(allPlatforms)));
-                            }
-                        }
-                        for (JenkinsViewTemplateBuilder.VersionlessPlatform platform : versionlessPlatforms) {
-                            for (Task p : allTasks) {
-                                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), platform));
-                            }
-                            for (String p : projects) {
-                                jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, platform));
-                            }
-                        }
-                        for (List<String> subArch : subArches) {
-                            for (String s : subArch) {
-                                for (Task p : allTasks) {
-                                    jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), p.getViewColumnsAsOptional(), Optional.of(s), Optional.of(allPlatforms)));
-                                }
-                                for (String p : projects) {
-                                    jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(s), Optional.of(allPlatforms)));
-                                }
-                            }
-                        }
-                        get(VIEWS_LIST_OTOOL, wrapper.wrap(context -> {
-                                    context.status(200).result(String.join("\n", jvt) + "\n");
-                                }
-                        ));
-                        get(VIEWS_DETAILS, wrapper.wrap(context -> {
-                                    List<String> allJenkinsJobs = GetterAPI.getAllJenkinsJobs();
-                                    Collections.sort(allJenkinsJobs);
-                                    List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
-                                    jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
-                                    Collections.sort(jobs);
-                                    StringBuilder detailsToPrint = new StringBuilder();
-                                    for (JenkinsViewTemplateBuilder j : jvt) {
-                                        Pattern pattern = j.getRegex();
-                                        int jobCounter = 0;
-                                        for (String job : jobs) {
-                                            if (((Pattern) pattern).matcher(job).matches()) {
-                                                jobCounter++;
-                                            }
-                                        }
-                                        int jenkinsJobCounter = 0;
-                                        for (String jjob : allJenkinsJobs) {
-                                            if (((Pattern) pattern).matcher(jjob).matches()) {
-                                                jenkinsJobCounter++;
-                                            }
-                                        }
-                                        detailsToPrint.append(j.getName() + " (" + jobCounter + ") (" + jenkinsJobCounter + ") " + j.getRegex() + "\n");
-                                    }
-                                    context.status(200).result(detailsToPrint.toString());
-                                }
-                        ));
-                        get(VIEWS_XMLS, wrapper.wrap(context -> {
-                                    StringBuilder xmlsToPrint = new StringBuilder();
-                                    for (JenkinsViewTemplateBuilder j : jvt) {
-                                        xmlsToPrint.append("  ***  " + j.getName() + "  ***  \n");
-                                        xmlsToPrint.append(j.expand() + "\n");
-                                    }
-                                    context.status(200).result(xmlsToPrint.toString());
-                                }
-                        ));
-                        get(VIEWS_MATCHES, wrapper.wrap(context -> {
-                                    List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
-                                    jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
-                                    Collections.sort(jobs);
-                                    StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-                                    for (JenkinsViewTemplateBuilder j : jvt) {
-                                        viewsAndMatchesToPrint.append(j.getName() + "\n");
-                                        Pattern pattern = j.getRegex();
-                                        for (String job : jobs) {
-                                            if (((Pattern) pattern).matcher(job).matches()) {
-                                                viewsAndMatchesToPrint.append("  " + job + "\n");
-                                            }
+                    ));
+                    get(VIEWS_DETAILS, wrapper.wrap(context -> {
+                                List<JenkinsViewTemplateBuilder> jvt = ViewsAppi.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<String> allJenkinsJobs = GetterAPI.getAllJenkinsJobs();
+                                Collections.sort(allJenkinsJobs);
+                                List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
+                                jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
+                                Collections.sort(jobs);
+                                StringBuilder detailsToPrint = new StringBuilder();
+                                for (JenkinsViewTemplateBuilder j : jvt) {
+                                    Pattern pattern = j.getRegex();
+                                    int jobCounter = 0;
+                                    for (String job : jobs) {
+                                        if (((Pattern) pattern).matcher(job).matches()) {
+                                            jobCounter++;
                                         }
                                     }
-                                    context.status(200).result(viewsAndMatchesToPrint.toString());
-                                }
-                        ));
-                        get(VIEWS_MATCHES_JENKINS, wrapper.wrap(context -> {
-                                    List<String> jobs = GetterAPI.getAllJenkinsJobs();
-                                    Collections.sort(jobs);
-                                    StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-                                    for (JenkinsViewTemplateBuilder j : jvt) {
-                                        viewsAndMatchesToPrint.append(j.getName() + "\n");
-                                        Pattern pattern = j.getRegex();
-                                        for (String job : jobs) {
-                                            if (((Pattern) pattern).matcher(job).matches()) {
-                                                viewsAndMatchesToPrint.append("  " + job + "\n");
-                                            }
+                                    int jenkinsJobCounter = 0;
+                                    for (String jjob : allJenkinsJobs) {
+                                        if (((Pattern) pattern).matcher(jjob).matches()) {
+                                            jenkinsJobCounter++;
                                         }
                                     }
-                                    context.status(200).result(viewsAndMatchesToPrint.toString());
+                                    detailsToPrint.append(j.getName() + " (" + jobCounter + ") (" + jenkinsJobCounter + ") " + j.getRegex() + "\n");
                                 }
-                        ));
-                    } catch (Exception ex) {
-                        throw new RuntimeException((ex));
-                    }
+                                context.status(200).result(detailsToPrint.toString());
+                            }
+                    ));
+                    get(VIEWS_XMLS, wrapper.wrap(context -> {
+                                List<JenkinsViewTemplateBuilder> jvt = ViewsAppi.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                StringBuilder xmlsToPrint = new StringBuilder();
+                                for (JenkinsViewTemplateBuilder j : jvt) {
+                                    xmlsToPrint.append("  ***  " + j.getName() + "  ***  \n");
+                                    xmlsToPrint.append(j.expand() + "\n");
+                                }
+                                context.status(200).result(xmlsToPrint.toString());
+                            }
+                    ));
+                    get(VIEWS_MATCHES, wrapper.wrap(context -> {
+                                List<JenkinsViewTemplateBuilder> jvt = ViewsAppi.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
+                                jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
+                                Collections.sort(jobs);
+                                StringBuilder viewsAndMatchesToPrint = new StringBuilder();
+                                for (JenkinsViewTemplateBuilder j : jvt) {
+                                    viewsAndMatchesToPrint.append(j.getName() + "\n");
+                                    Pattern pattern = j.getRegex();
+                                    for (String job : jobs) {
+                                        if (((Pattern) pattern).matcher(job).matches()) {
+                                            viewsAndMatchesToPrint.append("  " + job + "\n");
+                                        }
+                                    }
+                                }
+                                context.status(200).result(viewsAndMatchesToPrint.toString());
+                            }
+                    ));
+                    get(VIEWS_MATCHES_JENKINS, wrapper.wrap(context -> {
+                                List<JenkinsViewTemplateBuilder> jvt = ViewsAppi.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<String> jobs = GetterAPI.getAllJenkinsJobs();
+                                Collections.sort(jobs);
+                                StringBuilder viewsAndMatchesToPrint = new StringBuilder();
+                                for (JenkinsViewTemplateBuilder j : jvt) {
+                                    viewsAndMatchesToPrint.append(j.getName() + "\n");
+                                    Pattern pattern = j.getRegex();
+                                    for (String job : jobs) {
+                                        if (((Pattern) pattern).matcher(job).matches()) {
+                                            viewsAndMatchesToPrint.append("  " + job + "\n");
+                                        }
+                                    }
+                                }
+                                context.status(200).result(viewsAndMatchesToPrint.toString());
+                            }
+                    ));
                 });
                 path(REGENERATE_ALL, () -> {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
