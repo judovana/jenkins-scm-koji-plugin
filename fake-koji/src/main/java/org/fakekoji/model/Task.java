@@ -17,6 +17,7 @@ public class Task implements  Comparable<Task> {
     private final Limitation<String> platformLimitation;
     private final FileRequirements fileRequirements;
     private final String xmlTemplate;
+    private final String xmlViewTemplate;
     private final RpmLimitation rpmLimitation;
     private final List<OToolVariable> variables;
     private final Integer timeoutInHours;
@@ -31,6 +32,7 @@ public class Task implements  Comparable<Task> {
         platformLimitation = null;
         fileRequirements = null;
         xmlTemplate = null;
+        xmlViewTemplate = null;
         rpmLimitation = null;
         variables = null;
         timeoutInHours = null;
@@ -46,6 +48,7 @@ public class Task implements  Comparable<Task> {
             Limitation<String> platformLimitation,
             FileRequirements fileRequirements,
             String xmlTemplate,
+            String xmlViewTemplate,
             RpmLimitation rpmLimitation,
             List<OToolVariable> variables,
             Integer timeoutInHours
@@ -59,6 +62,7 @@ public class Task implements  Comparable<Task> {
         this.platformLimitation = platformLimitation;
         this.fileRequirements = fileRequirements;
         this.xmlTemplate = xmlTemplate;
+        this.xmlViewTemplate = xmlViewTemplate;
         this.rpmLimitation = rpmLimitation;
         this.variables = variables;
         this.timeoutInHours = timeoutInHours;
@@ -100,6 +104,10 @@ public class Task implements  Comparable<Task> {
         return xmlTemplate;
     }
 
+    public String getXmlViewTemplate() {
+        return xmlViewTemplate;
+    }
+
     public RpmLimitation getRpmLimitation() {
         return rpmLimitation;
     }
@@ -108,10 +116,14 @@ public class Task implements  Comparable<Task> {
         return variables;
     }
 
-    public Optional<String> getViewColumnsAsOptional() {
-        return  Optional.empty();
+    public static Optional<String> getViewColumnsAsOptional(Task t) {
+        if (t.xmlViewTemplate == null || t.xmlViewTemplate.trim().isEmpty()){
+            return Optional.empty();
+        } else {
+            return Optional.of(t.xmlViewTemplate);
+        }
     }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -126,6 +138,7 @@ public class Task implements  Comparable<Task> {
                 Objects.equals(platformLimitation, task.platformLimitation) &&
                 Objects.equals(fileRequirements, task.fileRequirements) &&
                 Objects.equals(xmlTemplate, task.xmlTemplate) &&
+                Objects.equals(xmlViewTemplate, task.xmlViewTemplate) &&
                 Objects.equals(rpmLimitation, task.rpmLimitation) &&
                 Objects.equals(variables, task.variables) &&
                 Objects.equals(timeoutInHours, task.timeoutInHours);
@@ -143,6 +156,7 @@ public class Task implements  Comparable<Task> {
                 platformLimitation,
                 fileRequirements,
                 xmlTemplate,
+                xmlViewTemplate,
                 rpmLimitation,
                 variables,
                 timeoutInHours

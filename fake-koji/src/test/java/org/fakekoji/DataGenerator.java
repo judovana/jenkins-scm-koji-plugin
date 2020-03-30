@@ -478,6 +478,7 @@ public class DataGenerator {
                         Task.BinaryRequirements.NONE
                 ),
                 BUILD_POST_BUILD_TASK,
+                null,
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
@@ -502,6 +503,7 @@ public class DataGenerator {
                         Task.BinaryRequirements.BINARY
                 ),
                 TEST_POST_BUILD_TASK,
+                "",
                 new Task.RpmLimitation(
                         Arrays.asList(
                                 "subpackageA",
@@ -532,6 +534,7 @@ public class DataGenerator {
                         Task.BinaryRequirements.BINARY
                 ),
                 TEST_POST_BUILD_TASK,
+                "",
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
@@ -556,6 +559,7 @@ public class DataGenerator {
                         Task.BinaryRequirements.BINARY
                 ),
                 TEST_POST_BUILD_TASK,
+                "some weird column",
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
@@ -580,6 +584,7 @@ public class DataGenerator {
                         Task.BinaryRequirements.BINARIES
                 ),
                 TEST_POST_BUILD_TASK,
+                "",
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()
@@ -612,6 +617,7 @@ public class DataGenerator {
                         Task.BinaryRequirements.BINARY
                 ),
                 TEST_POST_BUILD_TASK,
+                "another weird column",
                 new Task.RpmLimitation(
                         Collections.emptyList(),
                         Collections.emptyList()

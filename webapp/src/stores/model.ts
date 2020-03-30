@@ -68,6 +68,7 @@ export interface Task extends Item {
     platformLimitation: Limitation;
     fileRequirements: FileRequirements;
     xmlTemplate: string;
+    xmlViewTemplate: string;
     rpmLimitation: RPMLimitation;
     timeoutInHours: string;
     variables: Variable[]

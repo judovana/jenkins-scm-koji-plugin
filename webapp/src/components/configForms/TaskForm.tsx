@@ -56,6 +56,10 @@ const TaskForm: React.FC<TaskFormProps> = props => {
             task.xmlTemplate = value
         }
 
+        const onXmlViewTemplateChange = (value: string) => {
+            task.xmlViewTemplate = value
+        }
+
         const {
             id,
             fileRequirements,
@@ -126,6 +130,12 @@ const TaskForm: React.FC<TaskFormProps> = props => {
                     onChange={onXmlTemplateChange}
                     placeholder={"Enter xml template for post build tasks"}
                     value={task.xmlTemplate}
+                />
+                <TextArea
+                    label={"xml VIEW columns template"}
+                    onChange={onXmlViewTemplateChange}
+                    placeholder={"Enter xml view columns template for post build tasks"}
+                    value={task.xmlViewTemplate}
                 />
                 <RPMLimitationForm rpmLimitation={rpmLimitation} />
                 <FormList
