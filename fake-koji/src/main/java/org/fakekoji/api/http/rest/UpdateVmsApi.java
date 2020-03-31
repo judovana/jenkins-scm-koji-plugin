@@ -42,7 +42,7 @@ public class UpdateVmsApi {
                 String currentlyOnlyUpdateAbleProvidr = "vagrant";
                 if (provider.getId().equals(currentlyOnlyUpdateAbleProvidr)) {
                     for (String vmProvider : provider.getVmNodes()) {
-                        String name = "update-" + platform.getVmName() + "(" + vmProvider + ")";
+                        String name = "update-" + platform.getVmName() + "~" + vmProvider;
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
                                     name, vmProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), platform.getVmName());
@@ -54,7 +54,7 @@ public class UpdateVmsApi {
                         }
                     }
                     for (String hwProvider : provider.getHwNodes()) {
-                        String name = "update-" + hwProvider + "(" + platform.getVmName() + ")";
+                        String name = "update-" + hwProvider + "~" + platform.getVmName();
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
                                     name, hwProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), "local");
