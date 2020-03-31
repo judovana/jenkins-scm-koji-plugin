@@ -2,6 +2,7 @@ package org.fakekoji.api.http.rest;
 
 import io.javalin.http.Context;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JenkinsUpdateVmTemplateBuilder;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.model.Platform;
@@ -46,9 +47,7 @@ public class UpdateVmsApi {
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
                                     name, vmProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), platform.getVmName());
-                            if (vagrantVmUpdates.contains(juvt)){
-                                System.out.println("skip");
-                            } else {
+                            if (!vagrantVmUpdates.contains(juvt)){
                                 vagrantVmUpdates.add(juvt);
                             }
                         }
@@ -58,9 +57,7 @@ public class UpdateVmsApi {
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
                                     name, hwProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), "local");
-                            if (vagrantHwUpdates.contains(juvt)){
-                                System.out.println("skip");
-                            } else {
+                            if (!vagrantHwUpdates.contains(juvt)){
                                 vagrantHwUpdates.add(juvt);
                             }
                         }
@@ -91,5 +88,32 @@ public class UpdateVmsApi {
 
     public String getList(List<JenkinsUpdateVmTemplateBuilder> allUpdates) {
         return String.join("\n", allUpdates);
+    }
+
+    public String create(List<JenkinsUpdateVmTemplateBuilder> updateJobs){
+        StringBuilder sb = new StringBuilder();
+        for(JenkinsUpdateVmTemplateBuilder  juvt: updateJobs) {
+            JenkinsCliWrapper.ClientResponse result = JenkinsCliWrapper.getCli().createUpdateJob(juvt);
+            sb.append("creating: " + juvt.getName() + " - " + result.simpleVerdict() + " (" + result.toString() + ")\n");
+        }
+        return sb.toString();
+    }
+
+    public String update(List<JenkinsUpdateVmTemplateBuilder> updateJobs){
+        StringBuilder sb = new StringBuilder();
+        for(JenkinsUpdateVmTemplateBuilder  juvt: updateJobs) {
+            JenkinsCliWrapper.ClientResponse result = JenkinsCliWrapper.getCli().updateUpdateJob(juvt);
+            sb.append("updating: " + juvt.getName() + " - " + result.simpleVerdict() + " (" + result.toString() + ")\n");
+        }
+        return sb.toString();
+    }
+
+    public String remvoe(List<JenkinsUpdateVmTemplateBuilder> updateJobs){
+        StringBuilder sb = new StringBuilder();
+        for(JenkinsUpdateVmTemplateBuilder  juvt: updateJobs) {
+            JenkinsCliWrapper.ClientResponse result = JenkinsCliWrapper.getCli().deleteUpdateJob(juvt);
+            sb.append("removing: " + juvt.getName() + " - " + result.simpleVerdict() + " (" + result.toString() + ")\n");
+        }
+        return sb.toString();
     }
 }

@@ -160,6 +160,24 @@ public class OToolService {
                                 context.status(200).result(ua.getXmls(allUpdates));
                             }
                     ));
+                    get(UPDATE_JOBS_CREATE, wrapper.wrap(context -> {
+                                UpdateVmsApi ua = new UpdateVmsApi(context);
+                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
+                                context.status(200).result(ua.create(allUpdates));
+                            }
+                    ));
+                    get(UPDATE_JOBS_UPDATE, wrapper.wrap(context -> {
+                                UpdateVmsApi ua = new UpdateVmsApi(context);
+                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
+                                context.status(200).result(ua.update(allUpdates));
+                            }
+                    ));
+                    get(UPDATE_JOBS_REMOVE, wrapper.wrap(context -> {
+                                UpdateVmsApi ua = new UpdateVmsApi(context);
+                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
+                                context.status(200).result(ua.remvoe(allUpdates));
+                            }
+                    ));
                 });
                 path(VIEWS, () -> {
                     get(VIEWS_CREATE, wrapper.wrap(context -> {

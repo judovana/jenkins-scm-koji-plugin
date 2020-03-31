@@ -85,7 +85,17 @@ public class JenkinsCliWrapper {
             }
         }
 
+        public boolean simpleVerdict() {
+            if (sshEngineExeption != null) {
+                return false;
+            }
+            if (remoteCommandreturnValue != 0) {
+                return false;
+            }
+            return true;
+        }
     }
+
 
     public static JenkinsCliWrapper getCli() {
         return Singleton.client;
@@ -121,7 +131,7 @@ public class JenkinsCliWrapper {
 
         @Override
         ClientResponse syncSshExec(String cmd, InputStream is) throws IOException, InterruptedException {
-            return new ClientResponse(0, "noop", "nobody", null, "noop'");
+            return new ClientResponse(0, "no-sout", "no-ser", null, cmd);
         }
 
     }
@@ -334,5 +344,17 @@ public class JenkinsCliWrapper {
         } catch (IOException | InterruptedException ex) {
             return new ClientResponse(-1, "", "", ex, cmd);
         }
+    }
+
+    public ClientResponse createUpdateJob(JenkinsUpdateVmTemplateBuilder j) {
+        return createJob(j.getName(), j.expandToStream());
+    }
+
+    public ClientResponse deleteUpdateJob(JenkinsUpdateVmTemplateBuilder j) {
+        return deleteJobs(j.getName());
+    }
+
+    public ClientResponse updateUpdateJob(JenkinsUpdateVmTemplateBuilder j) {
+        return updateJob(j.getName(), j.expandToStream());
     }
 }
