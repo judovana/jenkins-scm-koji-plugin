@@ -34,24 +34,35 @@ public class UpdateVmsApi {
         List<JenkinsUpdateVmTemplateBuilder> vagrantVmUpdates = new ArrayList<>(platforms.size());
         List<JenkinsUpdateVmTemplateBuilder> vagrantHwUpdates = new ArrayList<>(platforms.size());
         for (Platform platform : platforms) {
+            if (platform == null || platform.getVmName() == null || platform.getVmName().trim().isEmpty() || platform.getVmName().equals("noVm")){
+                continue;
+            }
             for (Platform.Provider provider : platform.getProviders()) {
                 //todo, make configurable?
                 String currentlyOnlyUpdateAbleProvidr = "vagrant";
                 if (provider.getId().equals(currentlyOnlyUpdateAbleProvidr)) {
                     for (String vmProvider : provider.getVmNodes()) {
-                        String name = "update-" + platform.getId() + "(" + vmProvider + ")";
+                        String name = "update-" + platform.getVmName() + "(" + vmProvider + ")";
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
                                     name, vmProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), platform.getVmName());
-                            vagrantVmUpdates.add(juvt);
+                            if (vagrantVmUpdates.contains(juvt)){
+                                System.out.println("skip");
+                            } else {
+                                vagrantVmUpdates.add(juvt);
+                            }
                         }
                     }
                     for (String hwProvider : provider.getHwNodes()) {
-                        String name = "update-" + hwProvider + "(" + platform.getId() + ")";
+                        String name = "update-" + hwProvider + "(" + platform.getVmName() + ")";
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
                                     name, hwProvider, currentlyOnlyUpdateAbleProvidr, settings.getScriptsRoot(), "local");
-                            vagrantHwUpdates.add(juvt);
+                            if (vagrantHwUpdates.contains(juvt)){
+                                System.out.println("skip");
+                            } else {
+                                vagrantHwUpdates.add(juvt);
+                            }
                         }
                     }
                 }

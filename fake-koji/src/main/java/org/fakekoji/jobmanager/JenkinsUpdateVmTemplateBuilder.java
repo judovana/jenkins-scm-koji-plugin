@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public class JenkinsUpdateVmTemplateBuilder implements CharSequence {
 
@@ -43,6 +44,27 @@ public class JenkinsUpdateVmTemplateBuilder implements CharSequence {
 
     public String getName() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        JenkinsUpdateVmTemplateBuilder that = (JenkinsUpdateVmTemplateBuilder) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(node, that.node) &&
+                Objects.equals(provider, that.provider) &&
+                Objects.equals(scriptsRoot, that.scriptsRoot) &&
+                Objects.equals(shutdownVariables, that.shutdownVariables) &&
+                Objects.equals(destroyScript, that.destroyScript) &&
+                Objects.equals(platformName, that.platformName) &&
+                Objects.equals(template, that.template) &&
+                Objects.equals(postTask, that.postTask);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, node, provider, scriptsRoot, shutdownVariables, destroyScript, platformName, template, postTask);
     }
 
     public static JenkinsUpdateVmTemplateBuilder getUpdateTemplate(
