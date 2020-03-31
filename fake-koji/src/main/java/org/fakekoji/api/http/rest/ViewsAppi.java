@@ -1,6 +1,8 @@
 package org.fakekoji.api.http.rest;
 
+import io.javalin.Javalin;
 import io.javalin.http.Context;
+import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
@@ -218,5 +220,64 @@ public class ViewsAppi {
 
     public String list(List<JenkinsViewTemplateBuilder> jvt) {
         return String.join("\n", jvt) + "\n";
+    }
+
+    private interface WorkingFunction{
+        JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j);
+    }
+
+    private class CreateFnction implements WorkingFunction {
+
+        @Override
+        public JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j) {
+            return JenkinsCliWrapper.getCli().createView(j);
+        }
+    }
+    private class RemoveFnction implements WorkingFunction {
+
+        @Override
+        public JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j) {
+            return JenkinsCliWrapper.getCli().deleteView(j);
+        }
+    }
+
+    private class UpdateFnction implements WorkingFunction {
+
+        @Override
+        public JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j) {
+            return JenkinsCliWrapper.getCli().updateView(j);
+        }
+    }
+
+    private String jenkinsWork(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs, WorkingFunction operation) {
+        StringBuilder viewsAndMatchesToPrint = new StringBuilder();
+        for (JenkinsViewTemplateBuilder j : jvt) {
+            String matches = this.getMatches(jobs, j);
+            if (this.isSkipEmpty()) {
+                if (!matches.isEmpty()) {
+                    actOnHit(operation, viewsAndMatchesToPrint, j);
+                }
+            } else {
+                actOnHit(operation, viewsAndMatchesToPrint, j);
+            }
+        }
+        return viewsAndMatchesToPrint.toString();
+    }
+
+    private void actOnHit(WorkingFunction operation, StringBuilder viewsAndMatchesToPrint, JenkinsViewTemplateBuilder j) {
+        JenkinsCliWrapper.ClientResponse result = operation.work(j);
+        viewsAndMatchesToPrint.append(j.getName() + " - " + result + "\n");
+    }
+
+    public String create(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
+        return jenkinsWork(jvt, jobs, new CreateFnction());
+    }
+
+    public String delete(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
+        return jenkinsWork(jvt, jobs, new RemoveFnction());
+    }
+
+    public String update(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
+        return jenkinsWork(jvt, jobs, new UpdateFnction());
     }
 }

@@ -305,4 +305,34 @@ public class JenkinsCliWrapper {
             return new ClientResponse(-1, "", "", ex, cmd);
         }
     }
+
+    public ClientResponse createView(JenkinsViewTemplateBuilder j) {
+        String cmd = "create-view";
+        try {
+            ClientResponse r = syncSshExec(cmd, j.expandToStream());
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
+
+    public ClientResponse deleteView(JenkinsViewTemplateBuilder j) {
+        String cmd = "delete-view "+j.getName();
+        try {
+            ClientResponse r = syncSshExec(cmd);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
+
+    public ClientResponse updateView(JenkinsViewTemplateBuilder j) {
+        String cmd = "update-view "+j.getName();
+        try {
+            ClientResponse r = syncSshExec(cmd, j.expandToStream());
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
 }

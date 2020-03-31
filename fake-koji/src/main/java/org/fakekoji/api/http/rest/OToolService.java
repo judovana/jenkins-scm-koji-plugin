@@ -162,6 +162,30 @@ public class OToolService {
                     ));
                 });
                 path(VIEWS, () -> {
+                    get(VIEWS_CREATE, wrapper.wrap(context -> {
+                                ViewsAppi va = new ViewsAppi(context);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                String results= va.create(jvt, jobs);
+                                context.status(200).result(results);
+                            }
+                    ));
+                    get(VIEWS_REMOVE, wrapper.wrap(context -> {
+                                ViewsAppi va = new ViewsAppi(context);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                String results= va.delete(jvt, jobs);
+                                context.status(200).result(results);
+                            }
+                    ));
+                    get(VIEWS_UPDATE, wrapper.wrap(context -> {
+                                ViewsAppi va = new ViewsAppi(context);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                String results= va.update(jvt, jobs);
+                                context.status(200).result(results);
+                            }
+                    ));
                     get(VIEWS_LIST_OTOOL, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
