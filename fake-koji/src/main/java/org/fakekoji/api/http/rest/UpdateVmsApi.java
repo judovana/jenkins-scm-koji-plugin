@@ -68,4 +68,17 @@ public class UpdateVmsApi {
         allUpdates.addAll(vagrantHwUpdates);
         return allUpdates;
     }
+
+    public String getXmls(List<JenkinsUpdateVmTemplateBuilder> allUpdates ) {
+        StringBuilder list = new StringBuilder();
+        for (JenkinsUpdateVmTemplateBuilder update : allUpdates) {
+            list.append(" #### " + update.getName() + " ####\n");
+            list.append(update.expand() + "\n");
+        }
+        return list.toString();
+    }
+
+    public String getList(List<JenkinsUpdateVmTemplateBuilder> allUpdates) {
+        return String.join("\n", allUpdates);
+    }
 }

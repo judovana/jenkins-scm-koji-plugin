@@ -19,6 +19,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -148,19 +149,15 @@ public class OToolService {
                 }));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
-                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = new UpdateVmsApi(context).getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
-                                String s1 = String.join("\n", allUpdates);
-                                context.status(200).result(s1 + "\n");
+                                UpdateVmsApi ua = new UpdateVmsApi(context);
+                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
+                                context.status(200).result(ua.getList(allUpdates) + "\n");
                             }
                     ));
                     get(UPDATE_JOBS_XMLS, wrapper.wrap(context -> {
-                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = new UpdateVmsApi(context).getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
-                                StringBuilder list = new StringBuilder();
-                                for (JenkinsUpdateVmTemplateBuilder update : allUpdates) {
-                                    list.append(" #### " + update.getName() + " ####\n");
-                                    list.append(update.expand() + "\n");
-                                }
-                                context.status(200).result(list.toString());
+                                UpdateVmsApi ua = new UpdateVmsApi(context);
+                                List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
+                                context.status(200).result(ua.getXmls(allUpdates));
                             }
                     ));
                 });
@@ -169,20 +166,12 @@ public class OToolService {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 if (va.isSkipEmpty()) {
-                                    List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
-                                    jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
-                                    Collections.sort(jobs);
-                                    StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-                                    for (JenkinsViewTemplateBuilder j : jvt) {
-                                        String name = j.getName() + "\n";
-                                        String matches = va.getMatches(jobs, j);
-                                        if (!matches.isEmpty()) {
-                                            viewsAndMatchesToPrint.append(name);
-                                        }
-                                    }
-                                    context.status(200).result(viewsAndMatchesToPrint.toString());
+                                    List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                    String viewsAndMatchesToPrint= va.listNonEmpty(jvt, jobs);
+                                    context.status(200).result(viewsAndMatchesToPrint);
                                 } else {
-                                    context.status(200).result(String.join("\n", jvt) + "\n");
+                                    String viewsAndMatchesToPrint= va.list(jvt);
+                                    context.status(200).result(viewsAndMatchesToPrint);
                                 }
                             }
                     ));
@@ -191,81 +180,27 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> allJenkinsJobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(allJenkinsJobs);
-                                List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
-                                jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
-                                Collections.sort(jobs);
-                                StringBuilder detailsToPrint = new StringBuilder();
-                                for (JenkinsViewTemplateBuilder j : jvt) {
-                                    Pattern pattern = j.getRegex();
-                                    int jobCounter = 0;
-                                    for (String job : jobs) {
-                                        if (((Pattern) pattern).matcher(job).matches()) {
-                                            jobCounter++;
-                                        }
-                                    }
-                                    int jenkinsJobCounter = 0;
-                                    for (String jjob : allJenkinsJobs) {
-                                        if (((Pattern) pattern).matcher(jjob).matches()) {
-                                            jenkinsJobCounter++;
-                                        }
-                                    }
-                                    if (va.isSkipEmpty()) {
-                                        if (jobCounter > 0 && jenkinsJobCounter >= 0) {
-                                            detailsToPrint.append(j.getName() + " (" + jobCounter + ") (" + jenkinsJobCounter + ") " + j.getRegex() + "\n");
-                                        }
-                                    } else {
-                                        detailsToPrint.append(j.getName() + " (" + jobCounter + ") (" + jenkinsJobCounter + ") " + j.getRegex() + "\n");
-                                    }
-                                }
-                                context.status(200).result(detailsToPrint.toString());
+                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                String details = va.getDetails(jvt, allJenkinsJobs, jobs);
+                                context.status(200).result(details);
                             }
                     ));
                     get(VIEWS_XMLS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 if (va.isSkipEmpty()) {
-                                    List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
-                                    jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
-                                    Collections.sort(jobs);
-                                    StringBuilder xmlsToPrint = new StringBuilder();
-                                    for (JenkinsViewTemplateBuilder j : jvt) {
-                                        String name = "  ***  " + j.getName() + "  ***  \n";
-                                        String matches = va.getMatches(jobs, j);
-                                        if (!matches.isEmpty()) {
-                                            xmlsToPrint.append(name);
-                                            xmlsToPrint.append(j.expand() + "\n");
-                                        }
-                                    }
-                                    context.status(200).result(xmlsToPrint.toString());
+                                    List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                    context.status(200).result(va.getNonEmptyXmls(jvt, jobs));
                                 } else {
-                                    StringBuilder xmlsToPrint = new StringBuilder();
-                                    for (JenkinsViewTemplateBuilder j : jvt) {
-                                        xmlsToPrint.append("  ***  " + j.getName() + "  ***  \n");
-                                        xmlsToPrint.append(j.expand() + "\n");
-                                    }
-                                    context.status(200).result(xmlsToPrint.toString());
+                                    context.status(200).result(va.getXmls(jvt));
                                 }
                             }
                     ));
                     get(VIEWS_MATCHES, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
-                                List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
-                                jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
-                                Collections.sort(jobs);
-                                StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-                                for (JenkinsViewTemplateBuilder j : jvt) {
-                                    String name = j.getName() + "\n";
-                                    String matches = va.getMatches(jobs, j);
-                                    if (va.isSkipEmpty()) {
-                                        if (!matches.isEmpty()) {
-                                            viewsAndMatchesToPrint.append(name + matches);
-                                        }
-                                    } else {
-                                        viewsAndMatchesToPrint.append(name + matches);
-                                    }
-                                }
-                                context.status(200).result(viewsAndMatchesToPrint.toString());
+                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                context.status(200).result(va.printMatches(jvt, jobs));
                             }
                     ));
                     get(VIEWS_MATCHES_JENKINS, wrapper.wrap(context -> {
@@ -273,19 +208,7 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(jobs);
-                                StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-                                for (JenkinsViewTemplateBuilder j : jvt) {
-                                    String name = j.getName() + "\n";
-                                    String matches = va.getMatches(jobs, j);
-                                    if (va.isSkipEmpty()) {
-                                        if (!matches.isEmpty()) {
-                                            viewsAndMatchesToPrint.append(name + matches);
-                                        }
-                                    } else {
-                                        viewsAndMatchesToPrint.append(name + matches);
-                                    }
-                                }
-                                context.status(200).result(viewsAndMatchesToPrint.toString());
+                                context.status(200).result(va.printMatches(jvt, jobs));
                             }
                     ));
                 });
@@ -471,6 +394,14 @@ public class OToolService {
                     taskVariantManager
             ));
         });
+    }
+
+    @NotNull
+    private static List<String> getAllOtoolJobs(AccessibleSettings settings, JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager) throws StorageException, ManagementException {
+        List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
+        jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
+        Collections.sort(jobs);
+        return jobs;
     }
 
     private String notNullMessage(Exception e) {
