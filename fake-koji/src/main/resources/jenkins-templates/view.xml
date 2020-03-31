@@ -1,5 +1,12 @@
 <hudson.model.ListView>
       <name>%{VIEW_NAME}</name>
+<!--<description>
+according to http://radargun.github.io/radargun/measuring_performance/understanding_results.html&#xd;
+SOME results are  bigger==better bot OTHER TWO are smaller==better&#xd;
+namely:&#xd;
+  LATENCY - bigger = worse&#xd;
+  OTHERS  - bigger = better&#xd;
+</description> -->
       <filterExecutors>true</filterExecutors>
       <filterQueue>true</filterQueue>
       <properties class="hudson.model.View$PropertyList"/>
