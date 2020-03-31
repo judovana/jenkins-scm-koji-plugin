@@ -1,6 +1,5 @@
 package org.fakekoji.api.http.rest;
 
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
@@ -17,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -224,28 +222,44 @@ public class ViewsAppi {
 
     private interface WorkingFunction{
         JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j);
+        String getOp();
     }
 
-    private class CreateFnction implements WorkingFunction {
+    private class CreateFunction implements WorkingFunction {
 
         @Override
         public JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j) {
             return JenkinsCliWrapper.getCli().createView(j);
         }
+
+        @Override
+        public String getOp(){
+            return "creating";
+        }
     }
-    private class RemoveFnction implements WorkingFunction {
+    private class RemoveFunction implements WorkingFunction {
 
         @Override
         public JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j) {
             return JenkinsCliWrapper.getCli().deleteView(j);
         }
+
+        @Override
+        public String getOp(){
+            return "remving";
+        }
     }
 
-    private class UpdateFnction implements WorkingFunction {
+    private class UpdateFunction implements WorkingFunction {
 
         @Override
         public JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j) {
             return JenkinsCliWrapper.getCli().updateView(j);
+        }
+
+        @Override
+        public String getOp(){
+            return "updating";
         }
     }
 
@@ -266,18 +280,18 @@ public class ViewsAppi {
 
     private void actOnHit(WorkingFunction operation, StringBuilder viewsAndMatchesToPrint, JenkinsViewTemplateBuilder j) {
         JenkinsCliWrapper.ClientResponse result = operation.work(j);
-        viewsAndMatchesToPrint.append(j.getName() + " - " + result + "\n");
+        viewsAndMatchesToPrint.append(operation.getOp() + ": " + j.getName() + " - " + result.simpleVerdict() + " (" + result.toString() + ")\n");
     }
 
     public String create(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
-        return jenkinsWork(jvt, jobs, new CreateFnction());
+        return jenkinsWork(jvt, jobs, new CreateFunction());
     }
 
     public String delete(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
-        return jenkinsWork(jvt, jobs, new RemoveFnction());
+        return jenkinsWork(jvt, jobs, new RemoveFunction());
     }
 
     public String update(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
-        return jenkinsWork(jvt, jobs, new UpdateFnction());
+        return jenkinsWork(jvt, jobs, new UpdateFunction());
     }
 }
