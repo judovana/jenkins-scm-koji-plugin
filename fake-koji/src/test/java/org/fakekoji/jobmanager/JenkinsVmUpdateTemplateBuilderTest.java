@@ -35,8 +35,8 @@ public class JenkinsVmUpdateTemplateBuilderTest {
                 "                # ALLOW_ALPHAREPO shold be run for el 6.y.z and 7.y.z only (keep it in mind&#13;\n" +
                 "                # ALLOW_ALPHAREPO=true looks like not working on rhel8&#13;\n" +
                 "                export VM_J_ID=os.arch&#13;\n" +
-                "                JOB_NAME=$VM_J_ID-provider sh /some/path/jenkins/provider/updateBox.sh $VM_J_ID \\&#13;\n" +
-                "                \"sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=true  bash /mnt/shared/TckScripts/jenkins/provider/update/update-command.sh\"&#13;\n" +
+                "                sh /some/path/jenkins/provider/updateBox.sh $VM_J_ID \\&#13;\n" +
+                "                \"sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/provider/update/update-command.sh\"&#13;\n" +
                 "                #\"sudo dnf -y install kernel-modules-extra &amp;&amp; sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/vagrant/update/update-command.sh\"&#13;\n" +
                 "                #\"sudo dnf -y --enablerepo=rhel-8-buildroot upgrade libstdc++-static giflib-devel &amp;&amp; sudo  EXCLUDE_KERNEL=true  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/vagrant/update/update-command.sh\"&#13;\n" +
                 "                #\"echo just repack\"&#13;\n" +
@@ -99,8 +99,8 @@ public class JenkinsVmUpdateTemplateBuilderTest {
                 "                # ALLOW_ALPHAREPO shold be run for el 6.y.z and 7.y.z only (keep it in mind&#13;\n" +
                 "                # ALLOW_ALPHAREPO=true looks like not working on rhel8&#13;\n" +
                 "                export VM_J_ID=local&#13;\n" +
-                "                JOB_NAME=$VM_J_ID-provider sh /some/path/jenkins/provider/updateBox.sh $VM_J_ID \\&#13;\n" +
-                "                \"sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=true  bash /mnt/shared/TckScripts/jenkins/provider/update/update-command.sh\"&#13;\n" +
+                "                sh /some/path/jenkins/provider/updateBox.sh $VM_J_ID \\&#13;\n" +
+                "                \"sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/provider/update/update-command.sh\"&#13;\n" +
                 "                #\"sudo dnf -y install kernel-modules-extra &amp;&amp; sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/vagrant/update/update-command.sh\"&#13;\n" +
                 "                #\"sudo dnf -y --enablerepo=rhel-8-buildroot upgrade libstdc++-static giflib-devel &amp;&amp; sudo  EXCLUDE_KERNEL=true  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/vagrant/update/update-command.sh\"&#13;\n" +
                 "                #\"echo just repack\"&#13;\n" +
