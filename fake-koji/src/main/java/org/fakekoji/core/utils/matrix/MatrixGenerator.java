@@ -455,14 +455,14 @@ public class MatrixGenerator {
         }
         List<Leaf> counter = new ArrayList<>();
         //do not optimise, will break the compression of attributes
-        for (Project project : concateProjects(cache.jdkProjectManagerReadAll(), cache.jdkTestProjectManagerReadAll()))
+        for (Project project : concateProjects(cache.jdkProjectManagerReadAll(), cache.jdkTestProjectManagerReadAll())) {
             if (matchProject(project.getId())) {
                 if (project instanceof JDKTestProject) {
                     TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
-                    List<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
+                    Set<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
                     for (BuildPlatformConfig bpce : buildPlatformConfig) {
                         TaskConfig tc = new TaskConfig(null, bpce.getVariants());
-                        List<TaskConfig> taskConfigs = new ArrayList<>();
+                        Set<TaskConfig> taskConfigs = new HashSet<>();
                         taskConfigs.add(tc);
                         for (TaskConfig btce : taskConfigs) {
                             for (VariantsConfig bvc : btce.getVariants()) {
