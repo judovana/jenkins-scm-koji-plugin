@@ -359,10 +359,10 @@ public class MatrixGenerator {
         for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll())) {
             if (project instanceof JDKTestProject) {
                 TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
-                List<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
+                Set<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
                 for (BuildPlatformConfig bpce : buildPlatformConfig) {
                     TaskConfig tc = new TaskConfig(null, bpce.getVariants());
-                    List<TaskConfig> taskConfigs = new ArrayList<>();
+                    Set<TaskConfig> taskConfigs = new HashSet<>();
                     taskConfigs.add(tc);
                     for (TaskConfig btce : taskConfigs) {
                         for (VariantsConfig bvc : btce.getVariants()) {

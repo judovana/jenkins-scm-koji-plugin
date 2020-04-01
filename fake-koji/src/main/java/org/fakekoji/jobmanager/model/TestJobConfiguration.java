@@ -1,22 +1,24 @@
 package org.fakekoji.jobmanager.model;
 
+import org.fakekoji.Utils;
+
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class TestJobConfiguration {
 
-    private final List<BuildPlatformConfig> platforms;
+    private final Set<BuildPlatformConfig> platforms;
 
     public TestJobConfiguration() {
-        platforms = Collections.emptyList();
+        platforms = Collections.emptySet();
     }
 
-    public TestJobConfiguration(List<BuildPlatformConfig> platforms) {
-        this.platforms = platforms != null ? platforms : Collections.emptyList();
+    public TestJobConfiguration(Set<BuildPlatformConfig> platforms) {
+        this.platforms = platforms != null ? platforms : Collections.emptySet();
     }
 
-    public List<BuildPlatformConfig> getPlatforms() {
+    public Set<BuildPlatformConfig> getPlatforms() {
         return platforms;
     }
 
@@ -25,7 +27,7 @@ public class TestJobConfiguration {
         if (this == o) return true;
         if (!(o instanceof TestJobConfiguration)) return false;
         TestJobConfiguration that = (TestJobConfiguration) o;
-        return Objects.equals(platforms, that.platforms);
+        return Utils.areEqual(platforms, that.platforms);
     }
 
     @Override
