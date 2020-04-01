@@ -163,7 +163,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
                 return ".*" + getEscapedMajorDelimiter() + viewName + getEscapedMinorDelimiter()+"[0-9a-zA-Z]{2,8}"/*arch*/+suffix + ".*";
             } else if (orig.getOs().equals(viewName)) {
                 //this may be naive, but afaik ncessary, otherwise el, f, w  would match everything
-                return ".*" + getEscapedMajorDelimiter() + viewName + "[0-9]{1,6}"+"[0-9a-zA-Z]{1,5}" + getEscapedMinorDelimiter()+"[0-9a-zA-Z]{2,8}"/*arch*/+suffix + ".*";
+                return ".*" + getEscapedMajorDelimiter() + viewName + "[0-9]{1,1}"+"[0-9a-zA-Z]{0,5}" + getEscapedMinorDelimiter()+"[0-9a-zA-Z]{2,8}"/*arch*/+suffix + ".*";
             }
         }
         return viewName + " Is strange as was not found";
