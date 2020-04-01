@@ -1,29 +1,32 @@
 package org.fakekoji.jobmanager.model;
 
+import org.fakekoji.Utils;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class BuildPlatformConfig {
 
     private final String id;
-    private final List<VariantsConfig> variants;
+    private final Set<VariantsConfig> variants;
 
     public BuildPlatformConfig() {
         id = null;
-        variants = Collections.emptyList();
+        variants = Collections.emptySet();
     }
 
-    public BuildPlatformConfig(String id, List<VariantsConfig> variants) {
+    public BuildPlatformConfig(String id, Set<VariantsConfig> variants) {
         this.id = id;
-        this.variants = variants != null ? variants : Collections.emptyList();
+        this.variants = variants != null ? variants : Collections.emptySet();
     }
 
     public String getId() {
         return id;
     }
 
-    public List<VariantsConfig> getVariants() {
+    public Set<VariantsConfig> getVariants() {
         return variants;
     }
 
@@ -33,7 +36,7 @@ public class BuildPlatformConfig {
         if (!(o instanceof BuildPlatformConfig)) return false;
         BuildPlatformConfig that = (BuildPlatformConfig) o;
         return Objects.equals(id, that.id) &&
-                Objects.equals(variants, that.variants);
+                Utils.areEqual(variants, that.variants);
     }
 
     @Override

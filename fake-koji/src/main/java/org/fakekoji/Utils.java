@@ -20,11 +20,24 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class Utils {
+
+    public static <T> boolean areEqual(Set<T> a, Set<T> b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (final T t : a) {
+            if (b.stream().noneMatch(t::equals)) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
