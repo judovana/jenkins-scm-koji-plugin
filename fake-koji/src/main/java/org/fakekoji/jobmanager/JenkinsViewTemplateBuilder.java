@@ -17,6 +17,8 @@ import java.util.regex.Pattern;
      <!-- ~ojdk11~shenandoah~upstream~cpu-otherStuf -->
     <!-- mind the dashes, mind the pull!-->
     <!-- .*-ojdk11~shenandoah~upstream~cpu-.*|pull-.*-ojdk11~shenandoah~upstream~cpu -->
+    <!-- mind the dashes, mind the build!-->
+    <!-- .*-ojdk11~shenandoah~upstream~cpu-.*  instead of .*-ojdk11~shenandoah~upstream~cpu-.*-.*
  */
 public class JenkinsViewTemplateBuilder implements CharSequence {
 
@@ -129,19 +131,23 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return new JenkinsViewTemplateBuilder(
                 getPlatformmViewName(platform.getId()),
                 JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
-                getPlatformViewRegex(false, platform),
+                getPlatformViewRegex(false, platform, false),
                 JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
     }
 
-    private static String getPlatformViewRegex(boolean isBuild, VersionlessPlatform platform) {
-        return ".*" + getEscapedMajorDelimiter() + platform.os + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.arch + getPlatformSuffixRegexString(isBuild)+ ".*";
+    private static String getPlatformViewRegex(boolean isBuild, VersionlessPlatform platform, boolean isForBuild) {
+        String prefix = ".*" + getEscapedMajorDelimiter();
+        if (isForBuild) {
+            prefix = "";
+        }
+        return prefix + platform.os + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.arch + getPlatformSuffixRegexString(isBuild) + ".*";
     }
 
     public static JenkinsViewTemplateBuilder getPlatformTemplate(String platform, List<Platform> platforms) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getPlatformmViewName(platform),
                 JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
-                getPlatformViewRegex(false, platform, platforms),
+                getPlatformViewRegex(false, platform, platforms, false),
                 JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
     }
 
@@ -150,27 +156,32 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     }
 
 
-    private static String getPlatformViewRegex(boolean isBuild, String viewName, List<Platform> platforms) {
+    private static String getPlatformViewRegex(boolean isBuild, String platformPart, List<Platform> platforms, boolean isForBuild) {
         //.provider x -wahtever?
         //thsi is tricky and bug-prone
         String suffix = getPlatformSuffixRegexString(isBuild);
+        String prefix = ".*" + getEscapedMajorDelimiter();
+        if (isForBuild) {
+            prefix = "";
+        }
         for (Platform orig : platforms) {
-            if (orig.getId().equals(viewName)) {
-                return ".*" + getEscapedMajorDelimiter() + viewName + suffix + ".*";
-            } else if (orig.getArchitecture().equals(viewName)) {
-                return ".*" + getEscapedMinorDelimiter() + viewName + suffix + ".*";
-            } else if ((orig.getOs() + orig.getVersion()).equals(viewName)) {
-                return ".*" + getEscapedMajorDelimiter() + viewName + getEscapedMinorDelimiter()+"[0-9a-zA-Z_]{2,8}"/*arch*/+suffix + ".*";
-            } else if (orig.getOs().equals(viewName)) {
+            if (orig.getId().equals(platformPart)) {
+                return prefix + platformPart + suffix + ".*";
+            } else if (orig.getArchitecture().equals(platformPart)) {
+                //ignoring prefix, we are behind os anyway
+                return ".*" + getEscapedMinorDelimiter() + platformPart + suffix + ".*";
+            } else if ((orig.getOs() + orig.getVersion()).equals(platformPart)) {
+                return prefix + platformPart + getEscapedMinorDelimiter() + "[0-9a-zA-Z_]{2,8}"/*arch*/ + suffix + ".*";
+            } else if (orig.getOs().equals(platformPart)) {
                 //this may be naive, but afaik ncessary, otherwise el, f, w  would match everything
-                return ".*" + getEscapedMajorDelimiter() + viewName + "[0-9]{1,1}"+"[0-9a-zA-Z]{0,5}" + getEscapedMinorDelimiter()+"[0-9a-zA-Z_]{2,8}"/*arch*/+suffix + ".*";
+                return prefix + platformPart + "[0-9]{1,1}" + "[0-9a-zA-Z]{0,5}" + getEscapedMinorDelimiter() + "[0-9a-zA-Z_]{2,8}"/*arch*/ + suffix + ".*";
             }
         }
-        return viewName + " Is strange as was not found";
+        return platformPart + " Is strange as was not found";
     }
 
     private static String getPlatformSuffixRegexString(boolean isBuild) {
-        if (isBuild){
+        if (isBuild) {
             //if it is build platform, then it is blah-os.arch-something
             return getEscapedMajorDelimiter();
         } else {
@@ -190,7 +201,9 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     }
 
     private static String getProjectViewRegex(String project, VersionlessPlatform platform) {
-        return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform) + "|" + pull(project);
+        return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform, false) + "|"
+                + "build" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform, true) + "|"
+                + pull(project);
     }
 
     public static JenkinsViewTemplateBuilder getProjectTemplate(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
@@ -209,21 +222,26 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         }
     }
 
-    private static String getProjectViewRegex(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) {
+    private static String getProjectViewRegex(String project, Optional<String> platform, Optional<List<Platform>> platforms) {
         if (!platform.isPresent()) {
-            return ".*" + getEscapedMajorDelimiter() + viewName + getEscapedMajorDelimiter() + ".*|" + pull(viewName);
+            return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + ".*" + "|"
+                    + pull(project);
         } else {
             if (platforms.isPresent()) {
-                return ".*" + getEscapedMajorDelimiter() + viewName + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get()) + "|" + pull(viewName);
+                return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get(), false) + "|" +
+                        "build" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get(), true) + "|"
+                        + pull(project);
+
             } else {
-                return ".*" + getEscapedMajorDelimiter() + viewName + getEscapedMajorDelimiter() + ".*" + platform.get() + ".*|" + pull(viewName);
+                return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + ".*" + platform.get() + ".*" + "|"
+                        + pull(project);
             }
         }
     }
 
     @NotNull
-    private static String pull(String viewName) {
-        return "pull" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + viewName;
+    private static String pull(String project) {
+        return "pull" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project;
     }
 
     public static JenkinsViewTemplateBuilder getTaskTemplate(String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
@@ -235,7 +253,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     }
 
     private static String getTaskViewRegex(String task, VersionlessPlatform platform) {
-        return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform);
+        return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform, false);
     }
 
     public static JenkinsViewTemplateBuilder getTaskTemplate(String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
@@ -254,14 +272,14 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         }
     }
 
-    private static String getTaskViewRegex(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) {
+    private static String getTaskViewRegex(String task, Optional<String> platform, Optional<List<Platform>> platforms) {
         if (!platform.isPresent()) {
-            return viewName + getEscapedMajorDelimiter() + ".*";
+            return task + getEscapedMajorDelimiter() + ".*";
         } else {
             if (platforms.isPresent()) {
-                return viewName + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get());
+                return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get(), false);
             } else {
-                return viewName + getEscapedMajorDelimiter() + ".*" + platform.get() + ".*|";
+                return task + getEscapedMajorDelimiter() + ".*" + platform.get() + ".*";
             }
         }
     }

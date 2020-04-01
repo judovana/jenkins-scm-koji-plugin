@@ -19,6 +19,13 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>~" + name + "</name>\n" +
+                "    <!--<description>\n" +
+                "according to http://radargun.github.io/radargun/measuring_performance/understanding_results.html&#xd;\n" +
+                "SOME results are  bigger==better bot OTHER TWO are smaller==better&#xd;\n" +
+                "namely:&#xd;\n" +
+                "  LATENCY - bigger = worse&#xd;\n" +
+                "  OTHERS  - bigger = better&#xd;\n" +
+                "</description> -->\n" +
                 "    <filterExecutors>true</filterExecutors>\n" +
                 "    <filterQueue>true</filterQueue>\n" +
                 "    <properties class=\"hudson.model.View$PropertyList\"/>\n" +
@@ -51,6 +58,13 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>" + name + "</name>\n" +
+                "    <!--<description>\n" +
+                "according to http://radargun.github.io/radargun/measuring_performance/understanding_results.html&#xd;\n" +
+                "SOME results are  bigger==better bot OTHER TWO are smaller==better&#xd;\n" +
+                "namely:&#xd;\n" +
+                "  LATENCY - bigger = worse&#xd;\n" +
+                "  OTHERS  - bigger = better&#xd;\n" +
+                "</description> -->\n" +
                 "    <filterExecutors>true</filterExecutors>\n" +
                 "    <filterQueue>true</filterQueue>\n" +
                 "    <properties class=\"hudson.model.View$PropertyList\"/>\n" +
@@ -82,7 +96,14 @@ public class JenkinsViewTemplateBuilderTest {
         JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getTaskTemplate(name, Optional.of("<myColumn/>"), Optional.empty(), Optional.empty());
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
-                "    <name>" + name + "</name>\n" +
+                "    <name>jcstress</name>\n" +
+                "    <!--<description>\n" +
+                "according to http://radargun.github.io/radargun/measuring_performance/understanding_results.html&#xd;\n" +
+                "SOME results are  bigger==better bot OTHER TWO are smaller==better&#xd;\n" +
+                "namely:&#xd;\n" +
+                "  LATENCY - bigger = worse&#xd;\n" +
+                "  OTHERS  - bigger = better&#xd;\n" +
+                "</description> -->\n" +
                 "    <filterExecutors>true</filterExecutors>\n" +
                 "    <filterQueue>true</filterQueue>\n" +
                 "    <properties class=\"hudson.model.View$PropertyList\"/>\n" +
@@ -93,7 +114,7 @@ public class JenkinsViewTemplateBuilderTest {
                 "    <columns>\n" +
                 "        <myColumn/>\n" +
                 "    </columns>\n" +
-                "    <includeRegex>" + name + "-.*</includeRegex>\n" +
+                "    <includeRegex>jcstress-.*</includeRegex>\n" +
                 "    <recurse>false</recurse>\n" +
                 "</hudson.model.ListView>\n";
 
@@ -114,6 +135,13 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>." + name + "</name>\n" +
+                "    <!--<description>\n" +
+                "according to http://radargun.github.io/radargun/measuring_performance/understanding_results.html&#xd;\n" +
+                "SOME results are  bigger==better bot OTHER TWO are smaller==better&#xd;\n" +
+                "namely:&#xd;\n" +
+                "  LATENCY - bigger = worse&#xd;\n" +
+                "  OTHERS  - bigger = better&#xd;\n" +
+                "</description> -->\n" +
                 "    <filterExecutors>true</filterExecutors>\n" +
                 "    <filterQueue>true</filterQueue>\n" +
                 "    <properties class=\"hudson.model.View$PropertyList\"/>\n" +
@@ -130,7 +158,7 @@ public class JenkinsViewTemplateBuilderTest {
                 "        <hudson.views.LastDurationColumn/>\n" +
                 "        <hudson.views.BuildButtonColumn/>\n" +
                 "    </columns>\n" +
-                "    <includeRegex>.*-" + name + "(-|\\.).*</includeRegex>\n" +
+                "    <includeRegex>.*-" + name + "\\..*</includeRegex>\n" +
                 "    <recurse>false</recurse>\n" +
                 "</hudson.model.ListView>\n";
 
@@ -150,6 +178,13 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>." + name + "</name>\n" +
+                "    <!--<description>\n" +
+                "according to http://radargun.github.io/radargun/measuring_performance/understanding_results.html&#xd;\n" +
+                "SOME results are  bigger==better bot OTHER TWO are smaller==better&#xd;\n" +
+                "namely:&#xd;\n" +
+                "  LATENCY - bigger = worse&#xd;\n" +
+                "  OTHERS  - bigger = better&#xd;\n" +
+                "</description> -->\n" +
                 "    <filterExecutors>true</filterExecutors>\n" +
                 "    <filterQueue>true</filterQueue>\n" +
                 "    <properties class=\"hudson.model.View$PropertyList\"/>\n" +
