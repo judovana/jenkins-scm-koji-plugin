@@ -54,6 +54,8 @@ public class GetterAPI implements EndpointGroup {
     private static final String PROJECT = "project";
     private static final String PROJECTS = "projects";
     private static final String PLATFORMS = "platforms";
+    private static final String PLATFORMS_DETAILS = "platformDetails";
+    private static final String PLATFORM_ID = "id";
     private static final String KOJI_ARCHES = "kojiArches";
     private static final String REPOS = "repos";
     private static final String ROOT = "root";
@@ -561,13 +563,40 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getPlatformDetailsHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                final Optional<String> id = extractParamValue(queryParams, PLATFORM_ID);
+                List<Platform> platforms = platformManager.readAll();
+                String kojiArches = platforms.stream()
+                        .filter(platform -> {
+                            if (id.isPresent()){
+                                return platform.getId().equals(id.get());
+                            } else {
+                                return true;
+                            }
+                        })
+                        .map(platform -> platform.toString("\n"))
+                        .sorted()
+                        .collect(Collectors.joining("\n"));
+                return Result.ok(kojiArches + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/platformDetails?id=optionalSelecto";
+            }
+        };
+    }
+
     private QueryHandler getPlatformsHandler() {
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
                 List<Platform> platforms = platformManager.readAll();
                 String kojiArches = platforms.stream()
-                        .map(platform -> platform.toString("\n"))
+                        .map(platform -> platform.getId())
                         .sorted()
                         .collect(Collectors.joining("\n"));
                 return Result.ok(kojiArches + "\n");
@@ -612,6 +641,7 @@ public class GetterAPI implements EndpointGroup {
             put(PROJECTS, getProjectsHandler());
             put(PROJECT, getProjectHandler());
             put(PATH, getPathHandler());
+            put(PLATFORMS_DETAILS, getPlatformDetailsHandler());
             put(PLATFORMS, getPlatformsHandler());
             put(KOJI_ARCHES, getKojiArchesHandler());
         }});
