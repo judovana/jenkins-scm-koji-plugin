@@ -433,7 +433,8 @@ public class OToolService {
                     jdkProjectManager,
                     jdkTestProjectManager,
                     jdkVersionManager,
-                    taskVariantManager
+                    taskVariantManager,
+                    platformManager
             ));
         });
     }
