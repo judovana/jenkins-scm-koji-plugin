@@ -32,6 +32,8 @@ public class TestJob extends TaskJob {
 
     private final Project.ProjectType projectType;
     private final Platform buildPlatform;
+    private final String buildPlatformProvider;
+    private final Task buildTask;
     private final Map<TaskVariant, TaskVariantValue> buildVariants;
     private final List<String> projectSubpackageBlacklist;
     private final List<String> projectSubpackageWhitelist;
@@ -47,6 +49,8 @@ public class TestJob extends TaskJob {
             Platform platform,
             Map<TaskVariant, TaskVariantValue> variants,
             Platform buildPlatform,
+            String buildPlatformProvider,
+            Task buildTask,
             Map<TaskVariant, TaskVariantValue> buildVariants,
             List<String> projectSubpackageBlacklist,
             List<String> projectSubpackageWhitelist,
@@ -56,6 +60,8 @@ public class TestJob extends TaskJob {
         super(platformProvider, projectName, product, jdkVersion, buildProviders, task, platform, variants, scriptsRoot, projectVariables);
         this.projectType = projectType;
         this.buildPlatform = buildPlatform;
+        this.buildPlatformProvider = buildPlatformProvider;
+        this.buildTask = buildTask;
         this.buildVariants = buildVariants;
         this.projectSubpackageBlacklist = projectSubpackageBlacklist;
         this.projectSubpackageWhitelist = projectSubpackageWhitelist;
@@ -87,6 +93,8 @@ public class TestJob extends TaskJob {
                 platform,
                 variants,
                 buildPlatform,
+                null,
+                null,
                 buildVariants,
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -101,8 +109,7 @@ public class TestJob extends TaskJob {
             BuildJob buildJob,
             Task task,
             Platform platform,
-            Map<TaskVariant, TaskVariantValue> variants,
-            List<OToolVariable> projectVariables
+            Map<TaskVariant, TaskVariantValue> variants
     ) {
         this(
                 testPlatformProvider,
@@ -115,9 +122,13 @@ public class TestJob extends TaskJob {
                 platform,
                 variants,
                 buildJob.getPlatform(),
+                buildJob.getPlatformProvider(),
+                buildJob.getTask(),
                 buildJob.getVariants(),
+                null,
+                null,
                 buildJob.getScriptsRoot(),
-                projectVariables
+                buildJob.getProjectVariables()
         );
     }
 
@@ -264,6 +275,14 @@ public class TestJob extends TaskJob {
         return projectType;
     }
 
+    public String getBuildPlatformProvider() {
+        return buildPlatformProvider;
+    }
+
+    public Task getBuildTask() {
+        return buildTask;
+    }
+
     @Override
     public String getName() {
         return Job.sanitizeNames(String.join(
@@ -329,6 +348,8 @@ public class TestJob extends TaskJob {
         TestJob testJob = (TestJob) o;
         return projectType == testJob.projectType &&
                 Objects.equals(buildPlatform, testJob.buildPlatform) &&
+                Objects.equals(buildPlatformProvider, testJob.buildPlatformProvider) &&
+                Objects.equals(buildTask, testJob.buildTask) &&
                 Objects.equals(buildVariants, testJob.buildVariants) &&
                 Objects.equals(projectSubpackageBlacklist, testJob.projectSubpackageBlacklist) &&
                 Objects.equals(projectSubpackageWhitelist, testJob.projectSubpackageWhitelist);
@@ -340,6 +361,8 @@ public class TestJob extends TaskJob {
                 super.hashCode(),
                 projectType,
                 buildPlatform,
+                buildPlatformProvider,
+                buildTask,
                 buildVariants,
                 projectSubpackageBlacklist,
                 projectSubpackageWhitelist

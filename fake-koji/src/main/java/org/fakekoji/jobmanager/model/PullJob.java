@@ -25,6 +25,7 @@ public class PullJob extends Job {
 
     public static final String PULL = "pull";
 
+    private final String repoUrl;
     private final Product product;
     private final JDKVersion jdkVersion;
     private final File repositoriesRoot;
@@ -32,6 +33,7 @@ public class PullJob extends Job {
 
     public PullJob(
             String projectName,
+            String repoUrl,
             Product product,
             JDKVersion jdkVersion,
             File repositoriesRoot,
@@ -39,6 +41,7 @@ public class PullJob extends Job {
             List<OToolVariable> projectVariables
     ) {
         super(projectName, projectVariables);
+        this.repoUrl = repoUrl;
         this.product = product;
         this.jdkVersion = jdkVersion;
         this.repositoriesRoot = repositoriesRoot;
@@ -60,15 +63,33 @@ public class PullJob extends Job {
         if (!(o instanceof PullJob)) return false;
         PullJob pullJob = (PullJob) o;
         return Objects.equals(product, pullJob.product) &&
+                Objects.equals(repoUrl, pullJob.repoUrl) &&
                 Objects.equals(jdkVersion, pullJob.jdkVersion) &&
                 Objects.equals(repositoriesRoot, pullJob.repositoriesRoot) &&
                 Objects.equals(scriptsRoot, pullJob.scriptsRoot);
+    }
+
+    public String getRepoUrl() {
+        return repoUrl;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public JDKVersion getJdkVersion() {
+        return jdkVersion;
+    }
+
+    public File getScriptsRoot() {
+        return scriptsRoot;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
                 super.hashCode(),
+                repoUrl,
                 product,
                 jdkVersion,
                 repositoriesRoot,
