@@ -1254,17 +1254,17 @@ public class JenkinsJobTemplateBuilderTest {
         OToolVariable v1 = new OToolVariable("myVar", "myVal");
         Assert.assertEquals(
                 "export OTOOL_myVar=myVal" + XML_NEW_LINE,
-                JenkinsJobTemplateBuilder.getVariableString(v1, XML_NEW_LINE)
+                v1.getVariableString(XML_NEW_LINE)
         );
         v1 = new OToolVariable("myVar", "myVal", "comment", false, true, true);
         Assert.assertEquals(
                 "#export myVar=myVal # comment" + XML_NEW_LINE,
-                JenkinsJobTemplateBuilder.getVariableString(v1, XML_NEW_LINE)
+                v1.getVariableString(XML_NEW_LINE)
         );
         v1 = new OToolVariable("myVar", "myVal", "comment", false, true, false);
         Assert.assertEquals(
                 "#myVar=myVal # comment" + XML_NEW_LINE,
-                JenkinsJobTemplateBuilder.getVariableString(v1, XML_NEW_LINE)
+                v1.getVariableString(XML_NEW_LINE)
         );
     }
 }

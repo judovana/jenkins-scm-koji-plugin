@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class Platform implements  Comparable<Platform> {
 
@@ -151,17 +152,21 @@ public class Platform implements  Comparable<Platform> {
 
     @Override
     public String toString() {
-        return "Platform{" +
-                "os='" + os + '\'' +
-                ", version='" + version + '\'' +
-                ", versionNumber='" + versionNumber + '\'' +
-                ", architecture='" + architecture + '\'' +
-                ", providers='" + providers + '\'' +
-                ", vmName='" + vmName + '\'' +
-                ", tags=" + tags +
-                ", stableZstream=" + stableZstream +
-                ", testingYstream=" + testingYstream +
-                ", variables=" + variables +
+        return toString("");
+    }
+    public String toString(String tail) {
+        return "Platform{" + tail +
+                "os='" + os + '\'' + tail +
+                ", version='" + version + '\'' + tail +
+                ", versionNumber='" + versionNumber + '\'' + tail +
+                ", architecture='" + architecture + '\'' + tail +
+                ", kojiArch='" + getKojiArch() + '\'' + tail +
+                ", providers='" + providers.stream().map(provider -> provider.toString(tail)).collect(Collectors.joining("\n")) + '\'' + tail +
+                ", vmName='" + vmName + '\'' + tail +
+                ", tags=" + tags + tail +
+                ", stableZstream=" + stableZstream + tail +
+                ", testingYstream=" + testingYstream + tail +
+                ", variables=" + variables + tail +
                 '}';
     }
 
@@ -236,10 +241,14 @@ public class Platform implements  Comparable<Platform> {
 
         @Override
         public String toString() {
-            return "Provider{" +
-                    "id='" + id + '\'' +
-                    ", hwNodes=" + hwNodes +
-                    ", vmNodes=" + vmNodes +
+            return toString("");
+        }
+
+        public String toString(String tail) {
+            return "Provider{" + tail +
+                    "id='" + id + '\'' + tail +
+                    ", hwNodes=" + hwNodes + tail +
+                    ", vmNodes=" + vmNodes + tail +
                     '}';
         }
     }

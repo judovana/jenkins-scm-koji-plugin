@@ -1,5 +1,7 @@
 package org.fakekoji.model;
 
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -7,6 +9,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class OToolVariable {
+
+    public static final String EXPORT = "export";
+
     private final String comment;
     private final boolean commentedOut;
     private final boolean exported;
@@ -94,5 +99,21 @@ public class OToolVariable {
     @Override
     public int hashCode() {
         return Objects.hash(comment, commentedOut, exported, defaultPrefix, name, value);
+    }
+
+    @Override
+    public String toString() {
+        return getVariableString("");
+    }
+
+    public String getVariableString(final String terminal) {
+        final String name = (this.isDefaultPrefix() ? JenkinsJobTemplateBuilder.OTOOL_BASH_VAR_PREFIX : "") + this.getName();
+        return (this.isCommentedOut() ? '#' : "") +
+                (this.isExported() ? EXPORT + ' ' : "") +
+                name +
+                '=' +
+                this.getValue() +
+                this.getComment().map(comment -> " # " + comment).orElse("") +
+                terminal;
     }
 }

@@ -74,7 +74,6 @@ public class JenkinsJobTemplateBuilder {
     static final String XML_NEW_LINE = "&#13;";
     static final String XML_APOS = "&apos;";
     static final String LOCAL = "local";
-    static final String EXPORT = "export";
     static final String O_TOOL = "otool";
     static final String VAGRANT = "vagrant";
     static final String PULL_SCRIPT_NAME = "pull.sh";
@@ -85,7 +84,7 @@ public class JenkinsJobTemplateBuilder {
 
     static final String JENKINS = "jenkins";
 
-    static final String OTOOL_BASH_VAR_PREFIX = "OTOOL_";
+    public static final String OTOOL_BASH_VAR_PREFIX = "OTOOL_";
     static final String VM_NAME_OR_LOCAL_VAR = "VM_NAME_OR_LOCAL";
     public static final String PROJECT_PATH_VAR = "PROJECT_PATH";
     static final String ARCH_VAR = "ARCH";
@@ -344,21 +343,11 @@ public class JenkinsJobTemplateBuilder {
     private String getExportedVariablesString(final List<OToolVariable> exportedVariables, String terminal) {
         return exportedVariables
                 .stream()
-                .map(var -> getVariableString(var, terminal))
+                .map(var -> var.getVariableString(terminal))
                 .sorted()
                 .collect(Collectors.joining());
     }
 
-    static String getVariableString(final OToolVariable variable, final String terminal) {
-        final String name = (variable.isDefaultPrefix() ? OTOOL_BASH_VAR_PREFIX : "") + variable.getName();
-        return (variable.isCommentedOut() ? '#' : "") +
-                (variable.isExported() ? EXPORT + ' ' : "") +
-                name +
-                '=' +
-                variable.getValue() +
-                variable.getComment().map(comment -> " # " + comment).orElse("") +
-                terminal;
-    }
 
     String getTemplate() {
         return template;

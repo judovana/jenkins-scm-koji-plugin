@@ -8,6 +8,7 @@ import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
+import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
@@ -19,18 +20,10 @@ import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
-import org.fakekoji.storage.Storage;
+import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -60,6 +53,8 @@ public class GetterAPI implements EndpointGroup {
     private static final String PRODUCTS = "products";
     private static final String PROJECT = "project";
     private static final String PROJECTS = "projects";
+    private static final String PLATFORMS = "platforms";
+    private static final String KOJI_ARCHES = "kojiArches";
     private static final String REPOS = "repos";
     private static final String ROOT = "root";
     private static final String ROOTS = "roots"; // TODO
@@ -77,19 +72,22 @@ public class GetterAPI implements EndpointGroup {
     private final JDKTestProjectManager jdkTestProjectManager;
     private final JDKVersionManager jdkVersionManager;
     private final TaskVariantManager taskVariantManager;
+    private   final PlatformManager platformManager;
 
     public GetterAPI(
             final AccessibleSettings settings,
             final JDKProjectManager jdkProjectManager,
             final JDKTestProjectManager jdkTestProjectManager,
             final JDKVersionManager jdkVersionManager,
-            final TaskVariantManager taskVariantManager
+            final TaskVariantManager taskVariantManager,
+            final PlatformManager platformManager
     ) {
         this.settings = settings;
         this.jdkProjectManager = jdkProjectManager;
         this.jdkTestProjectManager = jdkTestProjectManager;
         this.jdkVersionManager = jdkVersionManager;
         this.taskVariantManager = taskVariantManager;
+        this.platformManager = platformManager;
     }
 
     private Optional<String> extractParamValue(Map<String, List<String>> paramsMap, String param) {
@@ -563,6 +561,46 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getPlatformsHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                List<Platform> platforms = platformManager.readAll();
+                String kojiArches = platforms.stream()
+                        .map(platform -> platform.toString("\n"))
+                        .sorted()
+                        .collect(Collectors.joining("\n"));
+                return Result.ok(kojiArches + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/platforms";
+            }
+        };
+    }
+
+    private QueryHandler getKojiArchesHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                List<Platform> platforms = platformManager.readAll();
+                String kojiArches = platforms.stream()
+                        .map(platform -> platform.getKojiArch().orElse(platform.getArchitecture()))
+                        .distinct()
+                        .sorted()
+                        .collect(Collectors.joining("\n"));
+
+                return Result.ok(kojiArches + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/kojiArches";
+            }
+        };
+    }
+
     private Map<String, QueryHandler> getHandlers() {
         return Collections.unmodifiableMap(new HashMap<String, QueryHandler>() {{
             put(JOBS, getJobsHandler());
@@ -574,6 +612,8 @@ public class GetterAPI implements EndpointGroup {
             put(PROJECTS, getProjectsHandler());
             put(PROJECT, getProjectHandler());
             put(PATH, getPathHandler());
+            put(PLATFORMS, getPlatformsHandler());
+            put(KOJI_ARCHES, getKojiArchesHandler());
         }});
     }
 
