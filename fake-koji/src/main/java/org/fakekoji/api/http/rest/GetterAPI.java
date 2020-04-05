@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
+import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 
 public class GetterAPI implements EndpointGroup {
 
@@ -91,13 +92,6 @@ public class GetterAPI implements EndpointGroup {
         this.taskVariantManager = taskVariantManager;
         this.platformManager = platformManager;
     }
-
-    private Optional<String> extractParamValue(Map<String, List<String>> paramsMap, String param) {
-        return Optional.ofNullable(paramsMap.get(param))
-                .filter(list -> list.size() == 1)
-                .map(list -> list.get(0));
-    }
-
 
     private QueryHandler getJobsHandler() {
         return new QueryHandler() {

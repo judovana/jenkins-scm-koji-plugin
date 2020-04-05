@@ -14,6 +14,7 @@ import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
+import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
@@ -46,7 +47,7 @@ public class OToolService {
     private static final String BUILD_PROVIDER = BUILD_PROVIDERS + CONFIG_ID;
     private static final String JDK_VERSIONS = "/jdkVersions";
     private static final String JDK_VERSION = JDK_VERSIONS + CONFIG_ID;
-    private static final String PLATFORMS = "/platforms";
+    static final String PLATFORMS = "/platforms";
     private static final String PLATFORM = PLATFORMS + CONFIG_ID;
     private static final String TASKS = "/tasks";
     private static final String TASK = TASKS + CONFIG_ID;
@@ -57,7 +58,7 @@ public class OToolService {
     private static final String JDK_TEST_PROJECTS = "/jdkTestProjects";
     private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
     private static final String GET = "get";
-
+    private static final String BUMP = "bump";
     private static final String MISC = "misc";
     private static final String HELP = "help";
     static final String FILTER = "filter";
@@ -417,6 +418,18 @@ public class OToolService {
                     jdkTestProjectManager,
                     jdkVersionManager,
                     taskVariantManager,
+                    platformManager
+            ));
+            final JDKProjectParser parser = new JDKProjectParser(
+                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                    settings.getLocalReposRoot(),
+                    settings.getScriptsRoot()
+            );
+            path(BUMP, new BumperAPI(
+                    jenkinsJobUpdater,
+                    parser,
+                    jdkProjectManager,
+                    jdkTestProjectManager,
                     platformManager
             ));
         });
