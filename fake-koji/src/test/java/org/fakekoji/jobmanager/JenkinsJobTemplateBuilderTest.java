@@ -37,6 +37,7 @@ import static org.fakekoji.DataGenerator.BUILD_PROVIDER_2_DOWNLOAD_URL;
 import static org.fakekoji.DataGenerator.BUILD_PROVIDER_2_TOP_URL;
 import static org.fakekoji.DataGenerator.HOTSPOT;
 import static org.fakekoji.DataGenerator.PROJECT_NAME;
+import static org.fakekoji.DataGenerator.PROJECT_URL;
 import static org.fakekoji.DataGenerator.RELEASE;
 import static org.fakekoji.DataGenerator.SCP_POLL_SCHEDULE;
 import static org.fakekoji.DataGenerator.TEST_PROJECT_NAME;
@@ -1121,6 +1122,7 @@ public class JenkinsJobTemplateBuilderTest {
 
         final PullJob pullJob = new PullJob(
                 PROJECT_NAME,
+                PROJECT_URL,
                 DataGenerator.getJDK8Product(),
                 jdk8,
                 reposRoot,
@@ -1170,6 +1172,8 @@ public class JenkinsJobTemplateBuilderTest {
                 testPlatform,
                 testVariants,
                 buildPlatform,
+                null,
+                null,
                 buildVariants,
                 blacklist,
                 whitelist,
