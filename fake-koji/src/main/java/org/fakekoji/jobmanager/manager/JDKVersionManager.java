@@ -1,7 +1,6 @@
 package org.fakekoji.jobmanager.manager;
 
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.storage.Storage;
@@ -18,7 +17,7 @@ public class JDKVersionManager implements Manager<JDKVersion> {
     }
 
     @Override
-    public ManagementResult create(JDKVersion jdkVersion) throws StorageException, ManagementException {
+    public JDKVersion create(JDKVersion jdkVersion) throws StorageException, ManagementException {
         if (storage.contains(jdkVersion.getId())) {
             throw new ManagementException("JDK version with id " + jdkVersion.getId() + " already exists");
         }
@@ -40,12 +39,12 @@ public class JDKVersionManager implements Manager<JDKVersion> {
     }
 
     @Override
-    public ManagementResult update(String id, JDKVersion product) throws StorageException, ManagementException {
+    public JDKVersion update(String id, JDKVersion product) throws StorageException, ManagementException {
         return null;
     }
 
     @Override
-    public ManagementResult delete(String id) throws StorageException, ManagementException {
+    public JDKVersion delete(String id) throws StorageException, ManagementException {
         return null;
     }
 
