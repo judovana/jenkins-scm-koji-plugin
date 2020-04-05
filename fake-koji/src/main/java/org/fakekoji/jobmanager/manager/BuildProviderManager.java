@@ -1,7 +1,6 @@
 package org.fakekoji.jobmanager.manager;
 
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.storage.Storage;
@@ -18,7 +17,7 @@ public class BuildProviderManager implements Manager<BuildProvider> {
     }
 
     @Override
-    public ManagementResult create(BuildProvider buildProvider) throws StorageException, ManagementException {
+    public BuildProvider create(BuildProvider buildProvider) throws StorageException, ManagementException {
         if (storage.contains(buildProvider.getId())) {
             throw new ManagementException("Build provider with id " + buildProvider.getId() + " already exists");
         }
@@ -40,12 +39,12 @@ public class BuildProviderManager implements Manager<BuildProvider> {
     }
 
     @Override
-    public ManagementResult update(String id, BuildProvider platform) throws StorageException, ManagementException {
+    public BuildProvider update(String id, BuildProvider platform) throws StorageException, ManagementException {
         return null;
     }
 
     @Override
-    public ManagementResult delete(String id) throws StorageException, ManagementException {
+    public BuildProvider delete(String id) throws StorageException, ManagementException {
         return null;
     }
 

@@ -21,7 +21,7 @@ public class TaskVariantManager implements Manager<TaskVariant> {
     }
 
     @Override
-    public ManagementResult create(TaskVariant taskVariant) throws StorageException, ManagementException {
+    public TaskVariant create(TaskVariant taskVariant) throws StorageException, ManagementException {
         if (storage.contains(taskVariant.getId())) {
             throw new ManagementException("Task variant with id " + taskVariant.getId() + " already exists");
         }
@@ -45,12 +45,12 @@ public class TaskVariantManager implements Manager<TaskVariant> {
     }
 
     @Override
-    public ManagementResult update(String id, TaskVariant taskVariant) throws StorageException, ManagementException {
+    public TaskVariant update(String id, TaskVariant taskVariant) throws StorageException, ManagementException {
         return null;
     }
 
     @Override
-    public ManagementResult delete(String id) throws StorageException, ManagementException {
+    public TaskVariant delete(String id) throws StorageException, ManagementException {
         return null;
     }
 
