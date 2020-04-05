@@ -2,6 +2,7 @@ package org.fakekoji.jobmanager;
 
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
@@ -174,13 +175,13 @@ public class JenkinsJobUpdater implements JobUpdater {
             if (!whitelistPattern.matcher(job.getName()).matches()){
                 continue;
             }
-            if (archivedJobs.contains(job.toString()) && existingJobs.contains(job.toString())){
+            if (archivedJobs.contains(job.toString()) && existingJobs.contains(job.toString())) {
                 ///very wierd!
-                jobsRewritten .add(rewriteFunction.apply(job));
+                jobsRewritten.add(rewriteFunction.apply(job));
             } else if (archivedJobs.contains(job.toString())) {
                 jobsRevived.add(reviveFunction.apply(job));
-            } else  if (existingJobs.contains(job.toString())) {
-                jobsRewritten .add(rewriteFunction.apply(job));
+            } else if (existingJobs.contains(job.toString())) {
+                jobsRewritten.add(rewriteFunction.apply(job));
             } else {
                 jobsCreated.add(createFunction.apply(job));
             }
@@ -240,7 +241,18 @@ public class JenkinsJobUpdater implements JobUpdater {
         );
     }
 
-    private Function<Job, JobUpdateResult> jobUpdateFunctionWrapper(JobUpdateFunction updateFunction) {
+    public JobUpdateResults bump(final Set<Tuple<Job, Job>> jobTuples) {
+        return new JobUpdateResults(
+                jobTuples.stream()
+                        .map(jobUpdateFunctionWrapper(getBumpFunction()))
+                        .collect(Collectors.toList()),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
+
+    private <T> Function<T, JobUpdateResult> jobUpdateFunctionWrapper(JobUpdateFunction<T> updateFunction) {
         return job -> {
             try {
                 return updateFunction.apply(job);
@@ -251,7 +263,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         };
     }
 
-    private JobUpdateFunction getCreateFunction() {
+    private JobUpdateFunction<Job> getCreateFunction() {
         return job -> {
             final String jobName = job.toString();
             LOGGER.info("Creating job " + jobName);
@@ -275,7 +287,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         };
     }
 
-    private JobUpdateFunction getReviveFunction() {
+    private JobUpdateFunction<Job> getReviveFunction() {
         return job -> {
             final String jobName = job.toString();
             final File src = Paths.get(settings.getJenkinsJobArchiveRoot().getAbsolutePath(), job.toString()).toFile();
@@ -296,7 +308,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         };
     }
 
-    private JobUpdateFunction getArchiveFunction() {
+    private JobUpdateFunction<Job> getArchiveFunction() {
         return job -> {
             final String jobName = job.toString();
             final File src = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), job.toString()).toFile();
@@ -310,7 +322,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         };
     }
 
-    private JobUpdateFunction getRewriteFunction() {
+    private JobUpdateFunction<Job> getRewriteFunction() {
         return job -> {
             final String jobName = job.toString();
             final File jobConfig = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), jobName, JENKINS_JOB_CONFIG_FILE).toFile();
@@ -325,6 +337,28 @@ public class JenkinsJobUpdater implements JobUpdater {
         };
     }
 
+    private JobUpdateFunction<Tuple<Job, Job>> getBumpFunction() {
+        final File jobsRoot = settings.getJenkinsJobsRoot();
+        return jobTuple -> {
+            final Job original = jobTuple.x;
+            final Job transformed = jobTuple.y;
+            final String originalName = original.getName();
+            final File originalDir = Paths.get(jobsRoot.getAbsolutePath(), originalName).toFile();
+            final String transformedName = transformed.getName();
+            final File transformedDir = Paths.get(jobsRoot.getAbsolutePath(), transformedName).toFile();
+            LOGGER.info("Bumping job " + originalName + " to " + transformedName);
+            LOGGER.info("Moving directory " + originalDir.getAbsolutePath() + " to " + transformedDir.getAbsolutePath());
+            Utils.moveDir(originalDir, transformedDir);
+            final File jobConfig = Paths.get(transformedDir.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE).toFile();
+            LOGGER.info("Rewriting config of " + transformedName);
+            return new PrimaryExceptionThrower<>(
+                    () -> Utils.writeToFile(jobConfig, transformed.generateTemplate()),
+                    () -> updateManuallyUpdatedJob(transformedName),
+                    new JobUpdateResult(transformedName, true, "bumped from " + originalName)
+            ).call();
+        };
+    }
+
     private void createManuallyUploadedJob(final String jobName) throws Exception {
         JenkinsCliWrapper.getCli().createManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();
         ;
@@ -335,9 +369,9 @@ public class JenkinsJobUpdater implements JobUpdater {
         ;
     }
 
-    private static interface JobUpdateFunction {
+    private interface JobUpdateFunction <T> {
 
-        JobUpdateResult apply(Job job) throws Exception;
+        JobUpdateResult apply(T t) throws Exception;
     }
 
     static interface Rummable {
