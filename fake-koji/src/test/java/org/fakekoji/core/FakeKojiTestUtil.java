@@ -111,6 +111,11 @@ public class FakeKojiTestUtil {
 
         String suffix = ".tarxz";
         String suffixZip = ".zip";
+        String suffixRpm = ".rpm";
+
+        String v2 = "jdk8u999";
+        String r21 = "1.slowdebug.fc24";
+        String r22 = "1.fc24";
 
         String buildCommon = n + "-" + v + "-" + rbase;
         String build11 = buildCommon + ".upstream." + a1 + suffix;
@@ -129,6 +134,18 @@ public class FakeKojiTestUtil {
         String build34 = buildCommon + ".whatever.static." + allArch + suffixZip;
         String build35 = buildCommon + ".exojdk.static." + allArch + suffixZip;
         String build36 = buildCommon + ".exojfx.static." + allArch + suffixZip;
+
+        String build221 = n + "-" + v2 + "-" + r21 +"."+a2+ suffixRpm;
+        String build222 = n + "-" + v2 + "-" + r22 +"."+a2+ suffixRpm;
+        String build223 = n + "-" + v2 + "-" + r21 +"."+a1+ suffixRpm;
+        String build224 = n + "-" + v2 + "-" + r22 +"."+a1+ suffixRpm;
+
+        //two rpms
+        generateBuilds(localBuilds, n, v2, r21, a2, build221);
+        generateBuilds(localBuilds, n, v2, r22, a2, build222);
+        generateBuilds(localBuilds, n, v2, r21, a1, build223);
+        generateBuilds(localBuilds, n, v2, r22, a2, build224);
+
 
         /* upstream builds */
         generateBuilds(localBuilds, n, v, r1, a1, build11);
@@ -152,6 +169,13 @@ public class FakeKojiTestUtil {
 
         File expectedArches = new File(localBuilds, "java-1.8.0-openjdk-arches-expected");
         createFile(expectedArches, a2 + " " + a3 + " " + a4 + "\n");
+
+        File ad1 = new File(localBuilds+"/"+n+"/"+v2+"/"+r21+"/"+"data");
+        File ad2 = new File(localBuilds+"/"+n+"/"+v2+"/"+r22+"/"+"data");
+        File expectedArchesRpm1 = new File(ad1, "arches-expected");
+        File expectedArchesRpm2 = new File(ad2, "arches-expected");
+        createFile(expectedArchesRpm1, a2 + "\n");
+        createFile(expectedArchesRpm2, a2 + "\n");
 
         generateUpstreamRepo(upstreamRepos, "java-1.8.0-openjdk-dev");
         

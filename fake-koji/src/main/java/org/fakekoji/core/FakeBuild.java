@@ -436,27 +436,6 @@ public class FakeBuild {
                 }
             }
             if (allBuilt) {
-                List<File> files = getNonLogs();
-                for (File file : files) {
-                    if (file.getAbsolutePath().contains("fastdebug")) {
-                        String[] nwTags = new String[connectedTags.length];
-                        for (int i = 0; i < connectedTags.length; i++) {
-                            nwTags[i] = "fastdebug-" + connectedTags[i];
-
-                        }
-                        return nwTags;
-                    }
-                }
-                for (File file : files) {
-                    if (file.getAbsolutePath().contains("slowdebug")) {
-                        String[] nwTags = new String[connectedTags.length];
-                        for (int i = 0; i < connectedTags.length; i++) {
-                            nwTags[i] = "slowdebug-" + connectedTags[i];
-
-                        }
-                        return nwTags;
-                    }
-                }
                 return connectedTags;
             } else {
                 return tags.toArray(new String[0]);
@@ -550,60 +529,14 @@ public class FakeBuild {
         }
     }
 
-    //FIXME - read from DB!
     public static final String HOTSPOT = "hotspot";
     public static final String ZERO = "zero";
     public static final String OPENJ9 = "openj9";
 
-    public static boolean isValidVm(String s) {
-        return (s.equals(ZERO) || s.equals(HOTSPOT) || s.equals(OPENJ9));
-    }
 
-
-    public String getJvm() {
-        if (nvr.contains(HOTSPOT)) {
-            return HOTSPOT;
-        } else if (nvr.contains(ZERO)) {
-            return ZERO;
-        } else if (nvr.contains(OPENJ9)) {
-            return OPENJ9;
-        } else {
-            return HOTSPOT;
-        }
-    }
-
-
-    //FIXME - read from DB!
     public static final String RELEASE = "release";
     public static final String FASTDEBUG = "fastdebug";
     public static final String SLOWDEBUG = "slowdebug";
 
-    public static boolean isValidBuildVariant(String s) {
-        return (s.equals(RELEASE) || s.equals(FASTDEBUG) || s.equals(SLOWDEBUG));
-    }
 
-    public String getDebugMode() {
-        if (nvr.contains(RELEASE)) {
-            return RELEASE;
-        } else if (nvr.contains(FASTDEBUG)) {
-            return FASTDEBUG;
-        } else if (nvr.contains(SLOWDEBUG)) {
-            return SLOWDEBUG;
-        } else {
-            return RELEASE;
-        }
-    }
-
-    public String getRepoOfOriginProject() throws ProjectMappingExceptions.ProjectMappingException {
-        return projectMapping.getProjectOfNvra(getNVR()/*+".arch.sufix"?*/);
-    }
-
-    public boolean haveSrcs() {
-        File srcDir = new File(dir, JenkinsJobTemplateBuilder.SOURCES);
-        if (srcDir.exists() && srcDir.isDirectory()) {
-            File[] content = srcDir.listFiles();
-            return content.length > 0 && content[0].getName().length() >= 5 && content[0].length() > 5;
-        }
-        return false;
-    }
 }
