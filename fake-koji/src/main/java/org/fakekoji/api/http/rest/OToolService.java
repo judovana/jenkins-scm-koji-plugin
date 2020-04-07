@@ -81,6 +81,38 @@ public class OToolService {
     private static final String MATRIX_BREGEX = "buildRegex";
     private static final String MATRIX_TREGEX = "testRegex";
 
+    private static final String ARCHES_EXPECTED= "archesExpected"; //will show or generate arches_expected for NVR. No param - deduct from c
+    private static final String ARCHES_EXPECTED_LIST= "list"; //show arches expected for nvr. If no nvr, then list possible arches (from platform's koji arches)
+    private static final String ARCHES_EXPECTED_ARCHES= "set"; //coma separated list of arches to put in, note that here we are on  old api only, so koji-arches can be suggested
+    private static final String ARCHES_EXPECTED_LIST_NVR= "nvr"; //optional target for list, mandatory target for set; on new api error
+
+    private static final String REDEPLOY = "re";
+    private static final String REDEPLOY_TEST = "test";
+    private static final String REDEPLOY_BUILD = "build"; //only jdkProject in addtion to removal VR from processed.txt, it cleans  FAILED, ERROR and smaller then 4bytes files from local-builds
+    private static final String REDEPLOY_LIST = "list"; //only show what will be done
+    private static final String REDEPLOY_DO = "do"; //will do the real work
+    //all can be coma separated?
+    private static final String REDEPLOY_TYPE = "type"; //jdkProject | jdkTestProject
+    private static final String REDEPLOY_PROJECT = "project";
+    private static final String REDEPLOY_NVR = "project"; //for jdkProject it shows also type and project, however, can be ommiteed
+    //other details for selection
+    private static final String REDEPLOY_os = "os";
+    private static final String REDEPLOY_arch = "arch";
+    private static final String REDEPLOY_version = "version";
+    private static final String REDEPLOY_jp = "jp";
+    private static final String REDEPLOY_task = "task";
+    private static final String REDEPLOY_variants = "variants"; //coma separated list of test variants
+    private static final String REDEPLOY_provider = "provider"; //coma separated? list ?of test providers?
+    //sometimes we need also build arch to judge
+    private static final String REDEPLOY_bos = "bos";
+    private static final String REDEPLOY_barch = "barch";
+    private static final String REDEPLOY_bversion = "bversion";
+    private static final String REDEPLOY_bvariants = "bvariants"; //coma separated list of build variants; for build we do not care about provider?
+    private static final String REDEPLOY_bprovider = "bprovider"; //coma separated? list ?of test providers?
+    //is needed at the end?
+    private static final String REDEPLOY_regex = "regex";
+
+
     private final int port;
     private final Javalin app;
     private final JobUpdater jenkinsJobUpdater;
