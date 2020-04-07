@@ -88,10 +88,14 @@ public class OToolArchive extends OToolBuild {
 
     @Override
     public String toString() {
-        return "OToolArchive{" +
-                "buildVariants=" + buildVariants +
-                ", platform='" + platform + '\'' +
-                ", suffix='" + suffix + '\'' +
-                "} " + super.toString();
+        return toString("");
+    }
+
+    public String toString(String delimiter) {
+        return "OToolArchive{" + delimiter +
+                "buildVariants=" + buildVariants + delimiter +
+                ", platform='" + platform + '\'' + delimiter +
+                ", suffix='" + suffix + '\'' + delimiter +
+                "} " +  delimiter + super.toString(delimiter);
     }
 }

@@ -59,6 +59,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String PRODUCTS = "products";
     private static final String PROJECT = "project";
     private static final String PROJECTS = "projects";
+    private static final String FILENAME_PARSER = "filenameParser";
     private static final String PLATFORMS = "platforms";
     private static final String PLATFORMS_DETAILS = "platformDetails";
     private static final String PLATFORM_ID = "id";
@@ -474,6 +475,43 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getFileNameParserHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                final Optional<String> archiveOpt = extractParamValue(queryParams, ARCHIVE);
+                final Optional<String> buildOpt = extractParamValue(queryParams, BUILD);
+                final OToolParser parser = new OToolParser(
+                        jdkProjectManager.readAll(),
+                        jdkVersionManager.readAll(),
+                        taskVariantManager.getBuildVariants()
+                );
+
+                if (archiveOpt.isPresent()) {
+                    final String archive = archiveOpt.get();
+                    Result<String, String> r = parser.parseArchive(archive).map(oToolArchive -> oToolArchive.toString("\n"));
+                    return r;
+                }
+
+                if (buildOpt.isPresent()) {
+                    final String build = buildOpt.get();
+                    Result<String, String> r = parser.parseBuild(build).map(oToolBuild -> oToolBuild.toString("\n"));
+                    return r;
+                }
+                return Result.err(ERROR_PARAMETERS_EXPECTED);
+            }
+
+            @Override
+            public String about() {
+                return "/filenameParser?[" + String.join(
+                        "|",
+                        ARCHIVE + "=<NVRA>",
+                        BUILD + "=<NVR>"
+                ) + "]";
+            }
+        };
+    }
+
     private QueryHandler getProjectsHandler() {
         return new QueryHandler() {
             @Override
@@ -742,6 +780,7 @@ public class GetterAPI implements EndpointGroup {
             put(PLATFORMS, getPlatformsHandler());
             put(KOJI_ARCHES, getKojiArchesHandler());
             put(BUILDS, getBuildsHandler());
+            put(FILENAME_PARSER, getFileNameParserHandler());
         }});
     }
 
