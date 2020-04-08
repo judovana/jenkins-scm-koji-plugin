@@ -9,6 +9,7 @@ import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
+import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
@@ -17,10 +18,7 @@ import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
-import org.fakekoji.model.JDKVersion;
-import org.fakekoji.model.OToolArchive;
-import org.fakekoji.model.OToolBuild;
-import org.fakekoji.model.Platform;
+import org.fakekoji.model.*;
 import org.fakekoji.storage.StorageException;
 
 import java.io.IOException;
@@ -52,6 +50,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String JENKINS_JOBS = "jenkinsJobs";
     private static final String JENKINS_JOB_ARCHIVE = "jenkinsJobArchive";
     private static final String JOBS = "jobs";
+    private static final String TASKS = "tasks";
     private static final String PATH = "path";
     private static final String PORT = "port";
     private static final String PORTS = "ports"; // TODO
@@ -82,6 +81,7 @@ public class GetterAPI implements EndpointGroup {
     private final JDKVersionManager jdkVersionManager;
     private final TaskVariantManager taskVariantManager;
     private final PlatformManager platformManager;
+    private final TaskManager taskManager;
 
     public GetterAPI(
             final AccessibleSettings settings,
@@ -89,7 +89,8 @@ public class GetterAPI implements EndpointGroup {
             final JDKTestProjectManager jdkTestProjectManager,
             final JDKVersionManager jdkVersionManager,
             final TaskVariantManager taskVariantManager,
-            final PlatformManager platformManager
+            final PlatformManager platformManager,
+            final TaskManager taskManager
     ) {
         this.settings = settings;
         this.jdkProjectManager = jdkProjectManager;
@@ -97,6 +98,7 @@ public class GetterAPI implements EndpointGroup {
         this.jdkVersionManager = jdkVersionManager;
         this.taskVariantManager = taskVariantManager;
         this.platformManager = platformManager;
+        this.taskManager = taskManager;
     }
 
     private Optional<String> extractParamValue(Map<String, List<String>> paramsMap, String param) {
@@ -634,6 +636,25 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getTasksHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                List<Task> tasks = taskManager.readAll();
+                String kojiArches = tasks.stream()
+                        .map(task-> task.getId())
+                        .sorted()
+                        .collect(Collectors.joining("\n"));
+                return Result.ok(kojiArches + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/tasks";
+            }
+        };
+    }
+
     private QueryHandler getPlatformsHandler() {
         return new QueryHandler() {
             @Override
@@ -781,6 +802,7 @@ public class GetterAPI implements EndpointGroup {
             put(KOJI_ARCHES, getKojiArchesHandler());
             put(BUILDS, getBuildsHandler());
             put(FILENAME_PARSER, getFileNameParserHandler());
+            put(TASKS, getTasksHandler());
         }});
     }
 
