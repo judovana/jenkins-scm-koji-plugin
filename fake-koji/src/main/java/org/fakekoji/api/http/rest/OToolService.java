@@ -80,6 +80,7 @@ public class OToolService {
     private static final String MATRIX_ORIENTATION = "orientation";
     private static final String MATRIX_BREGEX = "buildRegex";
     private static final String MATRIX_TREGEX = "testRegex";
+    private static final String PROJECT = "project";
 
     private static final String ARCHES_EXPECTED= "archesExpected"; //will show or generate arches_expected for NVR. No param - deduct from c
     private static final String ARCHES_EXPECTED_LIST= "list"; //show arches expected for nvr. If no nvr, then list possible arches (from platform's koji arches)
@@ -133,7 +134,7 @@ public class OToolService {
                 + "  where parameters for matrix are (with defaults):\n"
                 + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
-                + "  dropRows=true dropColumns=true \n";
+                + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n";
     }
 
     public OToolService(AccessibleSettings settings) {
@@ -314,9 +315,10 @@ public class OToolService {
                     boolean bvars = notNullBoolean(context, "bvars", false);
                     boolean dropRows = notNullBoolean(context, "dropRows", true);
                     boolean dropColumns = notNullBoolean(context, "dropColumns", true);
+                    String project = context.queryParam(PROJECT);
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
-                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf);
+                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf, project==null?new String[0]:project.split(","));
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));

@@ -43,20 +43,21 @@ public class MatrixGenerator {
     private final BuildEqualityFilter buildFilter;
     private final Pattern testRegex;
     private final Pattern buildRgex;
+    private final String[] project;
 
 
-    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager) {
-        this(settings, configManager, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter);
+    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String[] project) {
+        this(settings, configManager, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
-    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex) {
-        this(settings, configManager, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter);
+    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, String[] project) {
+        this(settings, configManager, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
     public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter,
-            BuildEqualityFilter buildEqualityFilter) {
+            BuildEqualityFilter buildEqualityFilter, String[] project) {
 
         final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
 
@@ -71,6 +72,7 @@ public class MatrixGenerator {
         jDKVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
         taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
 
+        this.project = project;
 
         jdkTestProjectManager = new JDKTestProjectManager(
                 configManager.getJdkTestProjectStorage(),
@@ -130,21 +132,34 @@ public class MatrixGenerator {
         List<BuildSpec> r = new ArrayList<>();
         for (Platform platform : platformManager.readAll()) {
             for (Platform.Provider provider : platform.getProviders()) {
-                for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll())) {
-                    Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(taskVariantManager.readAll(), Task.Type.BUILD));
-                    for (Collection<TaskVariantValue> tvvs : variants) {
-                        BuildSpec b = new BuildSpec(platform, provider, project, buildFilter);
-                        for (TaskVariantValue tv : tvvs) {
-                            b.addVariant(tv);
-                        }
-                        if (buildRgex.matcher(b.toString()).matches()) {
-                            r.add(b);
+                for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll()))
+                    if (matchProject(project.getId())) {
+                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(taskVariantManager.readAll(), Task.Type.BUILD));
+                        for (Collection<TaskVariantValue> tvvs : variants) {
+                            BuildSpec b = new BuildSpec(platform, provider, project, buildFilter);
+                            for (TaskVariantValue tv : tvvs) {
+                                b.addVariant(tv);
+                            }
+                            if (buildRgex.matcher(b.toString()).matches()) {
+                                r.add(b);
+                            }
                         }
                     }
-                }
             }
         }
         return (List<BuildSpec>) filterByToString(r);
+    }
+
+    private boolean matchProject(String project) {
+        if (this.project == null || this.project.length == 0) {
+            return true;
+        }
+        for (String p : this.project) {
+            if (p.equals(project)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Collection<TaskVariantValue>[] getTasksSets(List<TaskVariant> taskVars, Task.Type build) {
@@ -184,7 +199,7 @@ public class MatrixGenerator {
         return ret;
     }
 
-    private List<Project> concateProjects(List<? extends Project>... list) {
+    public static List<Project> concateProjects(List<? extends Project>... list) {
         List<Project> r = new ArrayList<>();
         for (List<? extends Project> l : list) {
             r.addAll(l);
@@ -356,33 +371,34 @@ public class MatrixGenerator {
         }
         List<Leaf> counter = new ArrayList<>();
         //do not optimise, will break the compression of attributes
-        for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll())) {
-            if (project instanceof JDKTestProject) {
-                TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
-                List<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
-                for (BuildPlatformConfig bpce : buildPlatformConfig) {
-                    TaskConfig tc = new TaskConfig(null, bpce.getVariants());
-                    List<TaskConfig> taskConfigs = new ArrayList<>();
-                    taskConfigs.add(tc);
-                    for (TaskConfig btce : taskConfigs) {
-                        for (VariantsConfig bvc : btce.getVariants()) {
-                            checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), null, btce, bvc);
+        for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll()))
+            if (matchProject(project.getId())) {
+                if (project instanceof JDKTestProject) {
+                    TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
+                    List<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
+                    for (BuildPlatformConfig bpce : buildPlatformConfig) {
+                        TaskConfig tc = new TaskConfig(null, bpce.getVariants());
+                        List<TaskConfig> taskConfigs = new ArrayList<>();
+                        taskConfigs.add(tc);
+                        for (TaskConfig btce : taskConfigs) {
+                            for (VariantsConfig bvc : btce.getVariants()) {
+                                checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), null, btce, bvc);
+                            }
                         }
                     }
-                }
-            } else if (project instanceof JDKProject) {
-                JobConfiguration jc = ((JDKProject) project).getJobConfiguration();
-                for (PlatformConfig bpce : jc.getPlatforms()) {
-                    for (TaskConfig btce : bpce.getTasks()) {
-                        for (VariantsConfig bvc : btce.getVariants()) {
-                            checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), bpce.getProvider(), btce, bvc);
+                } else if (project instanceof JDKProject) {
+                    JobConfiguration jc = ((JDKProject) project).getJobConfiguration();
+                    for (PlatformConfig bpce : jc.getPlatforms()) {
+                        for (TaskConfig btce : bpce.getTasks()) {
+                            for (VariantsConfig bvc : btce.getVariants()) {
+                                checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), bpce.getProvider(), btce, bvc);
+                            }
                         }
                     }
+                } else {
+                    throw new ManagementException("Unknow project type " + project.getClass());
                 }
-            } else {
-                throw new ManagementException("Unknow project type " + project.getClass());
             }
-        }
         return counter;
     }
 
