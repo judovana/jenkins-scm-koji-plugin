@@ -57,7 +57,7 @@ public class MatrixGenerator {
     }
 
     public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter,
-            BuildEqualityFilter buildEqualityFilter, String[] project) {
+                           BuildEqualityFilter buildEqualityFilter, String[] project) {
 
         final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
 
@@ -89,7 +89,8 @@ public class MatrixGenerator {
 
     public List<TestSpec> getTests() throws StorageException {
         List<TestSpec> r = new ArrayList<>();
-        for (Platform platform : platformManager.readAll()) {
+        for (Platform origPlatform : platformManager.readAll()) {
+            Platform platform = clonePlatformForProviders(origPlatform);
             for (Platform.Provider provider : platform.getProviders()) {
                 for (Task task : taskManager.readAll()) {
                     if (!task.getType().equals(Task.Type.TEST)) {
@@ -115,6 +116,37 @@ public class MatrixGenerator {
         return (List<TestSpec>) filterByToString(r);
     }
 
+    private Platform clonePlatformForProviders(Platform origPlatform) {
+        if (origPlatform.getProviders().isEmpty()) {
+            return new Platform(
+                    origPlatform.getId(),
+                    origPlatform.getOs(),
+                    origPlatform.getVersion(),
+                    origPlatform.getVersionNumber(),
+                    origPlatform.getArchitecture(),
+                    origPlatform.getKojiArch().orElse(null),
+                    createNoneProviderList(),
+                    origPlatform.getVmName(),
+                    origPlatform.getTestingYstream(),
+                    origPlatform.getStableZstream(),
+                    origPlatform.getTags(),
+                    origPlatform.getVariables());
+        } else {
+            return origPlatform;
+        }
+    }
+
+    private List<Platform.Provider> createNoneProviderList() {
+        return Arrays.asList(createNoneProvider());
+    }
+
+    private Platform.Provider createNoneProvider() {
+        return new Platform.Provider(
+                "noProvider",
+                Collections.emptyList(),
+                Collections.emptyList());
+    }
+
     private List<? extends Spec> filterByToString(List<? extends Spec> r) {
         for (int i = 0; i < r.size(); i++) {
             for (int j = i + 1; j < r.size(); j++) {
@@ -130,7 +162,8 @@ public class MatrixGenerator {
 
     public List<BuildSpec> getBuilds() throws StorageException {
         List<BuildSpec> r = new ArrayList<>();
-        for (Platform platform : platformManager.readAll()) {
+        for (Platform origPlatform : platformManager.readAll()) {
+            Platform platform = clonePlatformForProviders(origPlatform);
             for (Platform.Provider provider : platform.getProviders()) {
                 for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll()))
                     if (matchProject(project.getId())) {
@@ -403,7 +436,7 @@ public class MatrixGenerator {
     }
 
     private void checkAndIterateBuild(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, TaskConfig btce,
-            VariantsConfig bvc) {
+                                      VariantsConfig bvc) {
         //builds must be counted here, otherwise they a) multiply b) do not exists for project less leaves(so building wthout testing)
         String[] buildOsAarch = buildArchOs.split("\\.");
         String btask = btce.getId(); //always build
@@ -438,7 +471,7 @@ public class MatrixGenerator {
     }
 
     private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, TaskConfig btce,
-            VariantsConfig bvc, String tmpBuildIdForSimpleTextIdentification) {
+                                            VariantsConfig bvc, String tmpBuildIdForSimpleTextIdentification) {
         for (PlatformConfig tpce : bvc.getPlatforms()) {
             for (TaskConfig ttce : tpce.getTasks()) {
                 for (VariantsConfig tvc : ttce.getVariants()) {
