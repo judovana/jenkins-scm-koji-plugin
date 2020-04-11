@@ -7,6 +7,7 @@ import io.javalin.plugin.json.JavalinJackson;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
+import org.fakekoji.core.utils.matrix.TableFormatter;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
 import org.fakekoji.jobmanager.*;
 import org.fakekoji.jobmanager.manager.*;
@@ -80,6 +81,7 @@ public class OToolService {
     private static final String MATRIX_ORIENTATION = "orientation";
     private static final String MATRIX_BREGEX = "buildRegex";
     private static final String MATRIX_TREGEX = "testRegex";
+    private static final String MATRIX_FORMAT = "format";
     private static final String PROJECT = "project";
 
     private static final String ARCHES_EXPECTED= "archesExpected"; //will show or generate arches_expected for NVR. No param - deduct from c
@@ -132,7 +134,7 @@ public class OToolService {
                 + "                params: "+FILTER+"=regex "+SKIP_EMPTY+"=true/false\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
-                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* "+MATRIX_FORMAT+"=html/plain\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n";
     }
@@ -302,6 +304,7 @@ public class OToolService {
                 get(MATRIX, wrapper.wrap(context -> {
                     String trex = context.queryParam(MATRIX_TREGEX);
                     String brex = context.queryParam(MATRIX_BREGEX);
+                    String format = context.queryParam(MATRIX_FORMAT);
                     boolean tos = notNullBoolean(context, "tos", true);
                     boolean tarch = notNullBoolean(context, "tarch", true);
                     boolean tprovider = notNullBoolean(context, "tprovider", false);
@@ -323,7 +326,11 @@ public class OToolService {
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
-                    context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns));
+                    if ("html".equals(format)){
+                        context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter()));
+                    } else {
+                        context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));
+                    }
                 }));
 
             });

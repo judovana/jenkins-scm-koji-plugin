@@ -87,7 +87,7 @@ public class MatrixGenerator {
         );
         try {
             cache = new Cache();
-        }catch (StorageException se){
+        } catch (StorageException se) {
             throw new RuntimeException(se);
         }
 
@@ -122,14 +122,13 @@ public class MatrixGenerator {
         }
 
         List<JDKProject> jdkProjectManagerReadAll() {
-            return  jdkProjectManagerReadAll;
+            return jdkProjectManagerReadAll;
         }
 
         List<JDKTestProject> jdkTestProjectManagerReadAll() {
             return jdkTestProjectManagerReadAll;
         }
     }
-
 
 
     public List<TestSpec> getTests() throws StorageException {
@@ -308,7 +307,7 @@ public class MatrixGenerator {
     }
 
 
-    public String printMatrix(int orientation, boolean dropRows, boolean dropColumns) throws StorageException, ManagementException {
+    public String printMatrix(int orientation, boolean dropRows, boolean dropColumns, TableFormatter tf) throws StorageException, ManagementException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final String utf8 = StandardCharsets.UTF_8.name();
         List<BuildSpec> bs = getBuilds();
@@ -316,11 +315,11 @@ public class MatrixGenerator {
         try {
             try (PrintStream ps = new PrintStream(baos, true, utf8)) {
                 if (orientation <= 0) {
-                    int t1 = printMatrix(ps, bs, ts, dropRows, dropColumns);
+                    int t1 = printMatrix(ps, bs, ts, dropRows, dropColumns, tf);
                     ps.println(t1 + "/" + (bs.size() * ts.size()));
                 }
                 if (orientation >= 0) {
-                    int t2 = printMatrix(ps, ts, bs, dropRows, dropColumns);
+                    int t2 = printMatrix(ps, ts, bs, dropRows, dropColumns, tf);
                     ps.println(t2 + "/" + (bs.size() * ts.size()));
                 }
             }
@@ -330,21 +329,22 @@ public class MatrixGenerator {
         }
     }
 
-    int printMatrix(PrintStream p, Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns) throws ManagementException, StorageException {
+    int printMatrix(PrintStream p, Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns, TableFormatter tf) throws ManagementException, StorageException {
         int lrow = getLongest(rows) + 1;
         int lcol = getLongest(columns) + 1;
         int total = 0;
-
+        p.print(tf.tableStart());
         List<List<List<Leaf>>> matrix = generateMatrix(rows, columns, dropRows, dropColumns);
         for (int i = 0; i < matrix.size(); i++) {
             List<List<Leaf>> row = matrix.get(i);
+            p.print(tf.rowStart());
             for (int j = 0; j < row.size(); j++) {
                 List<Leaf> cel = row.get(j);
                 String cellContent;
                 if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
                     cellContent = cel.get(0).toString();
                 } else {
-                    cellContent = "" + cel.size();
+                    cellContent = tf.getContext(cel);
                     total += cel.size();
                 }
                 int align = lcol;
@@ -353,14 +353,15 @@ public class MatrixGenerator {
                 }
                 if (cellContent.isEmpty()) {
                     //filing by soething, as leading spaces can be trimmed on the fly
-                    p.print(fill(cellContent, align - 1, "-"));
-                    p.print(" ");
+                    p.print(tf.cellStart() + fill(cellContent, align - 1, "-"));
+                    p.print(" " + tf.cellEnd());
                 } else {
-                    p.print(fill(cellContent, align, " "));
+                    p.print(tf.cellStart() + fill(cellContent, align, " ") + tf.cellEnd());
                 }
             }
-            p.println();
+            p.println(tf.rowEnd());
         }
+        p.print(tf.tableEnd());
         return total;
     }
 
