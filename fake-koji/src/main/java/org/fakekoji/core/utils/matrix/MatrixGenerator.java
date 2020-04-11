@@ -44,6 +44,7 @@ public class MatrixGenerator {
     private final Pattern testRegex;
     private final Pattern buildRgex;
     private final String[] project;
+    private final Cache cache;
 
 
     public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String[] project) {
@@ -84,22 +85,66 @@ public class MatrixGenerator {
                 settings.getLocalReposRoot(),
                 settings.getScriptsRoot()
         );
+        try {
+            cache = new Cache();
+        }catch (StorageException se){
+            throw new RuntimeException(se);
+        }
+
     }
+
+    private class Cache {
+
+        private final List<Platform> platformManagerReadAll;
+        private final List<Task> taskManageReadAll;
+        private final List<TaskVariant> taskVariantManagerReadAll;
+        private final List<JDKProject> jdkProjectManagerReadAll;
+        private final List<JDKTestProject> jdkTestProjectManagerReadAll;
+
+        public Cache() throws StorageException {
+            platformManagerReadAll = platformManager.readAll();
+            taskManageReadAll = taskManager.readAll();
+            taskVariantManagerReadAll = taskVariantManager.readAll();
+            jdkProjectManagerReadAll = jdkProjectManager.readAll();
+            jdkTestProjectManagerReadAll = jdkTestProjectManager.readAll();
+        }
+
+        List<Platform> getPlatformManagerReadAll() throws StorageException {
+            return platformManagerReadAll;
+        }
+
+        List<Task> getTaskManagerReadAll() {
+            return taskManageReadAll;
+        }
+
+        List<TaskVariant> getTaskVariantManagerReadAll() {
+            return taskVariantManagerReadAll;
+        }
+
+        List<JDKProject> jdkProjectManagerReadAll() {
+            return  jdkProjectManagerReadAll;
+        }
+
+        List<JDKTestProject> jdkTestProjectManagerReadAll() {
+            return jdkTestProjectManagerReadAll;
+        }
+    }
+
 
 
     public List<TestSpec> getTests() throws StorageException {
         List<TestSpec> r = new ArrayList<>();
-        for (Platform origPlatform : platformManager.readAll()) {
+        for (Platform origPlatform : cache.getPlatformManagerReadAll()) {
             Platform platform = clonePlatformForProviders(origPlatform);
             for (Platform.Provider provider : platform.getProviders()) {
-                for (Task task : taskManager.readAll()) {
+                for (Task task : cache.getTaskManagerReadAll()) {
                     if (!task.getType().equals(Task.Type.TEST)) {
                         TestSpec t = new TestSpec(platform, provider, task, testFilter);
                         if (testRegex.matcher(t.toString()).matches()) {
                             r.add(t);
                         }
                     } else {
-                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(taskVariantManager.readAll(), task.getType()));
+                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(cache.getTaskVariantManagerReadAll(), task.getType()));
                         for (Collection<TaskVariantValue> tvvs : variants) {
                             TestSpec t = new TestSpec(platform, provider, task, testFilter);
                             for (TaskVariantValue tv : tvvs) {
@@ -162,12 +207,12 @@ public class MatrixGenerator {
 
     public List<BuildSpec> getBuilds() throws StorageException {
         List<BuildSpec> r = new ArrayList<>();
-        for (Platform origPlatform : platformManager.readAll()) {
+        for (Platform origPlatform : cache.getPlatformManagerReadAll()) {
             Platform platform = clonePlatformForProviders(origPlatform);
             for (Platform.Provider provider : platform.getProviders()) {
-                for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll()))
+                for (Project project : concateProjects(cache.jdkProjectManagerReadAll(), cache.jdkTestProjectManagerReadAll()))
                     if (matchProject(project.getId())) {
-                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(taskVariantManager.readAll(), Task.Type.BUILD));
+                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(cache.getTaskVariantManagerReadAll(), Task.Type.BUILD));
                         for (Collection<TaskVariantValue> tvvs : variants) {
                             BuildSpec b = new BuildSpec(platform, provider, project, buildFilter);
                             for (TaskVariantValue tv : tvvs) {
@@ -404,7 +449,7 @@ public class MatrixGenerator {
         }
         List<Leaf> counter = new ArrayList<>();
         //do not optimise, will break the compression of attributes
-        for (Project project : concateProjects(jdkProjectManager.readAll(), jdkTestProjectManager.readAll()))
+        for (Project project : concateProjects(cache.jdkProjectManagerReadAll(), cache.jdkTestProjectManagerReadAll()))
             if (matchProject(project.getId())) {
                 if (project instanceof JDKTestProject) {
                     TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
