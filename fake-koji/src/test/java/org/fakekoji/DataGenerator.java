@@ -1130,7 +1130,8 @@ public class DataGenerator {
 
     public static final String VERSION_1 = "version1";
     public static final String VERSION_2 = "version2";
-    public static final String RELEASE_1 = "release1";
+    public static final String RELEASE_1 = "152";
+    public static final String RELEASE_1_BAD = "release2";
     public static final String RELEASE_2 = "re.l.ease.2";
 
     public static final List<String> notBuilt = Arrays.asList(

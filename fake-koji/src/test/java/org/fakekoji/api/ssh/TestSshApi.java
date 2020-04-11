@@ -51,15 +51,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import static org.fakekoji.DataGenerator.FASTDEBUG;
-import static org.fakekoji.DataGenerator.HOTSPOT;
-import static org.fakekoji.DataGenerator.JDK_8_PACKAGE_NAME;
-import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
-import static org.fakekoji.DataGenerator.RELEASE_1;
-import static org.fakekoji.DataGenerator.RHEL_7_X64;
+import static org.fakekoji.DataGenerator.*;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.SOURCES;
-import static org.fakekoji.DataGenerator.SUFFIX;
-import static org.fakekoji.DataGenerator.VERSION_1;
 
 /**
  * Warning - reaming check have missing check on content!
@@ -2214,10 +2207,14 @@ public class TestSshApi {
     */
 
     final private static String RELEASE = RELEASE_1 + '.' + PROJECT_NAME_U;
+    final private static String RELEASE_BAD = RELEASE_1_BAD + '.' + PROJECT_NAME_U;
     final private static String NVR = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE;
+    final private static String NVR_BAD = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_BAD;
     final private static String ARCHIVE = FASTDEBUG + '.' + HOTSPOT + '.' + RHEL_7_X64;
     final private static String RELEASE_CHAOS = RELEASE_1 + ".C.H.A.O.S." + PROJECT_NAME_U;
+    final private static String RELEASE_CHAOS_BAD = RELEASE_1_BAD + ".C.H.A.O.S." + PROJECT_NAME_U;
     final private static String NVR_CHAOS = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_CHAOS;
+    final private static String NVR_CHAOS_BAD = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_CHAOS_BAD;
 
     @Test
     public void uploadBinaryTarball() throws IOException, InterruptedException {
@@ -2233,6 +2230,19 @@ public class TestSshApi {
     }
 
     @Test
+    public void uploadBinaryTarballBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + ARCHIVE + SUFFIX;
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, ARCHIVE, nvra).toFile();
+        checkFileNotExists(remoteFile);
+    }
+
+    @Test
     public void uploadBinaryTarballWithChaos() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR_CHAOS + '.' + ARCHIVE + SUFFIX;
@@ -2243,6 +2253,20 @@ public class TestSshApi {
         Assert.assertEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, ARCHIVE, nvra).toFile();
         checkFileExists(remoteFile);
+    }
+
+
+    @Test
+    public void uploadBinaryTarballWithChaosBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + ARCHIVE + SUFFIX;
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, ARCHIVE, nvra).toFile();
+        checkFileNotExists(remoteFile);
     }
 
     @Test
@@ -2259,6 +2283,19 @@ public class TestSshApi {
     }
 
     @Test
+    public void uploadSrcTarballBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + SOURCES + SUFFIX;
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, SOURCES, nvra).toFile();
+        checkFileNotExists(remoteFile);
+    }
+
+    @Test
     public void uploadSourceTarballWithChaos() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR_CHAOS + '.' + SOURCES + SUFFIX;
@@ -2269,6 +2306,19 @@ public class TestSshApi {
         Assert.assertEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, SOURCES, nvra).toFile();
         checkFileExists(remoteFile);
+    }
+
+    @Test
+    public void uploadSourceTarballWithChaosBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + SOURCES + SUFFIX;
+        final File localFile = new File(sources, nvra);
+        createFile(localFile, nvra);
+        checkFileExists(localFile);
+        int returnCode = scpTo("", localFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, SOURCES, nvra).toFile();
+        checkFileNotExists(remoteFile);
     }
 
     @Test
@@ -2286,6 +2336,20 @@ public class TestSshApi {
     }
 
     @Test
+    public void uploadSrcLogBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, "data", "logs", SOURCES, logName).toFile();
+        checkFileNotExists(remoteLogFile);
+    }
+
+    @Test
     public void uploadSrcLogWithChaos() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR_CHAOS + '.' + SOURCES;
@@ -2297,6 +2361,20 @@ public class TestSshApi {
         Assert.assertEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", SOURCES, logName).toFile();
         checkFileExists(remoteLogFile);
+    }
+
+    @Test
+    public void uploadSrcLogWithChaosAndBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, "data", "logs", SOURCES, logName).toFile();
+        checkFileNotExists(remoteLogFile);
     }
 
     @Test
@@ -2314,6 +2392,20 @@ public class TestSshApi {
     }
 
     @Test
+    public void uploadBinaryLogBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, "data", "logs", ARCHIVE, logName).toFile();
+        checkFileNotExists(remoteLogFile);
+    }
+
+    @Test
     public void uploadBinaryLogWithChaos() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR_CHAOS + '.' + ARCHIVE;
@@ -2325,6 +2417,20 @@ public class TestSshApi {
         Assert.assertEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", ARCHIVE, logName).toFile();
         checkFileExists(remoteLogFile);
+    }
+
+    @Test
+    public void uploadBinaryLogWithChaosBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File logFile = new File(sources, logName);
+        createFile(logFile, logName);
+        checkFileExists(logFile);
+        int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
+        Assert.assertNotEquals(returnCode, 0);
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, "data", "logs", ARCHIVE, logName).toFile();
+        checkFileNotExists(remoteLogFile);
     }
 
     @Test
@@ -2342,6 +2448,20 @@ public class TestSshApi {
     }
 
     @Test
+    public void downloadBinaryTarballBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, SOURCES, nvra).toFile();
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
+        checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localFile);
+    }
+
+    @Test
     public void downloadBinaryTarballWithChaos() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR_CHAOS + '.' + SOURCES + SUFFIX;
@@ -2356,6 +2476,19 @@ public class TestSshApi {
     }
 
     @Test
+    public void downloadBinaryTarballWithChaosBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, SOURCES, nvra).toFile();
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
+        checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localFile);
+    }
+    @Test
     public void downloadSrcTarball() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR + '.' + SOURCES + SUFFIX;
@@ -2367,6 +2500,20 @@ public class TestSshApi {
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
         Assert.assertEquals(returnCode, 0);
         checkFileExists(localFile);
+    }
+
+    @Test
+    public void downloadSrcTarballBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, SOURCES, nvra).toFile();
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
+        checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localFile);
     }
 
     @Test
@@ -2383,6 +2530,19 @@ public class TestSshApi {
         checkFileExists(localFile);
     }
 
+   @Test
+    public void downloadSrcTarballWithChaosBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + SOURCES + SUFFIX;
+        final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, SOURCES, nvra).toFile();
+        remoteFile.getParentFile().mkdirs();
+        createFile(remoteFile, nvra);
+        final File localFile = new File(sources, nvra);
+        checkFileExists(remoteFile);
+        int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localFile);
+    }
     @Test
     public void downloadSrcLog() throws IOException, InterruptedException {
         title(2);
@@ -2395,6 +2555,20 @@ public class TestSshApi {
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
         Assert.assertEquals(returnCode, 0);
         checkFileExists(localLogFile);
+    }
+
+    @Test
+    public void downloadSrcLogBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, "data", "logs", SOURCES, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localLogFile);
     }
 
     @Test
@@ -2412,6 +2586,20 @@ public class TestSshApi {
     }
 
     @Test
+    public void downloadSrcLogWithChaosBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + SOURCES;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, "data", "logs", SOURCES, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localLogFile);
+    }
+
+    @Test
     public void downloadBinaryLog() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR + '.' + ARCHIVE;
@@ -2426,6 +2614,20 @@ public class TestSshApi {
     }
 
     @Test
+    public void downloadBinaryLogBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_BAD + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, "data", "logs", ARCHIVE, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localLogFile);
+    }
+
+    @Test
     public void downloadBinaryLogWithChaos() throws IOException, InterruptedException {
         title(2);
         final String nvra = NVR_CHAOS + '.' + ARCHIVE;
@@ -2437,5 +2639,19 @@ public class TestSshApi {
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
         Assert.assertEquals(returnCode, 0);
         checkFileExists(localLogFile);
+    }
+
+    @Test
+    public void downloadBinaryLogWithChaosBadRelease() throws IOException, InterruptedException {
+        title(2);
+        final String nvra = NVR_CHAOS_BAD + '.' + ARCHIVE;
+        final String logName = nvra + ".log";
+        final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, "data", "logs", ARCHIVE, logName).toFile();
+        remoteLogFile.getParentFile().mkdirs();
+        createFile(remoteLogFile, logName);
+        final File localLogFile = new File(sources, logName);
+        int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
+        Assert.assertNotEquals(returnCode, 0);
+        checkFileNotExists(localLogFile);
     }
 }
