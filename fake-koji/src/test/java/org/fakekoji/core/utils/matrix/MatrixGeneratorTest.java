@@ -40,10 +40,8 @@ public class MatrixGeneratorTest {
         MatrixGenerator m = new MatrixGenerator(settings, cm, new String[0]);
         List<BuildSpec> bs = m.getBuilds();
         List<TestSpec> ts = m.getTests();
-        int t1 = m.printMatrix(System.out, bs, ts, false, false, tf);
-        System.out.println(t1 + "/" + (bs.size() * ts.size()));
-        int t2 = m.printMatrix(System.out, ts, bs, true, true, tf);
-        System.out.println(t2 + "/" + (bs.size() * ts.size()));
+        m.printMatrix(System.out, bs, ts, false, false, tf);
+        m.printMatrix(System.out, ts, bs, true, true, tf);
     }
 
     @Test
@@ -67,8 +65,7 @@ public class MatrixGeneratorTest {
             MatrixGenerator m = new MatrixGenerator(settings, cm, new String[]{project.getId()});
             List<BuildSpec> bs = m.getBuilds();
             List<TestSpec> ts = m.getTests();
-            int t2 = m.printMatrix(System.out, ts, bs, true, true, tf);
-            System.out.println(t2 + "/" + (bs.size() * ts.size()));
+            m.printMatrix(System.out, ts, bs, true, true, tf);
         }
     }
 
@@ -96,8 +93,7 @@ public class MatrixGeneratorTest {
             MatrixGenerator m = new MatrixGenerator(settings, cm, a);
             List<BuildSpec> bs = m.getBuilds();
             List<TestSpec> ts = m.getTests();
-            int t2 = m.printMatrix(System.out, ts, bs, true, true, tf);
-            System.out.println(t2 + "/" + (bs.size() * ts.size()));
+            m.printMatrix(System.out, ts, bs, true, true, tf);
         }
 
 

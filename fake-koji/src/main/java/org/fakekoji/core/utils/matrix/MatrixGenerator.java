@@ -74,6 +74,9 @@ public class MatrixGenerator {
         taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
 
         this.project = project;
+        if (project != null){
+            Arrays.sort(project);
+        }
 
         jdkTestProjectManager = new JDKTestProjectManager(
                 configManager.getJdkTestProjectStorage(),
@@ -315,12 +318,10 @@ public class MatrixGenerator {
         try {
             try (PrintStream ps = new PrintStream(baos, true, utf8)) {
                 if (orientation <= 0) {
-                    int t1 = printMatrix(ps, bs, ts, dropRows, dropColumns, tf);
-                    ps.println(t1 + "/" + (bs.size() * ts.size()));
+                    printMatrix(ps, bs, ts, dropRows, dropColumns, tf);
                 }
                 if (orientation >= 0) {
-                    int t2 = printMatrix(ps, ts, bs, dropRows, dropColumns, tf);
-                    ps.println(t2 + "/" + (bs.size() * ts.size()));
+                    printMatrix(ps, ts, bs, dropRows, dropColumns, tf);
                 }
             }
             return baos.toString(utf8);
@@ -329,7 +330,7 @@ public class MatrixGenerator {
         }
     }
 
-    int printMatrix(PrintStream p, Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns, TableFormatter tf) throws ManagementException, StorageException {
+    void printMatrix(PrintStream p, Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns, TableFormatter tf) throws ManagementException, StorageException {
         int lrow = getLongest(rows) + 1;
         int lcol = getLongest(columns) + 1;
         int total = 0;
@@ -352,18 +353,22 @@ public class MatrixGenerator {
                     align = lrow;
                 }
                 if (cellContent.isEmpty()) {
-                    //filing by soething, as leading spaces can be trimmed on the fly
-                    p.print(tf.cellStart() + fill(cellContent, align - 1, "-"));
-                    p.print(" " + tf.cellEnd());
-                } else {
-                    p.print(tf.cellStart() + fill(cellContent, align, " ") + tf.cellEnd());
+                    if (i == 0 && (j == 0 || j == row.size() - 1)) {
+                        cellContent = tf.initialCell(project);
+                    } else if (i == matrix.size() - 1 && (j == 0 || j == row.size() - 1)) {
+                        cellContent = tf.lastCell(total, rows.size() * columns.size());
+                    } else {
+                        //filing by soething, as leading spaces can be trimmed on the fly
+                        cellContent = fill(cellContent, align - 1, "-") + " ";
+                    }
                 }
+                p.print(tf.cellStart() + fill(cellContent, align, " ") + tf.cellEnd());
             }
             p.println(tf.rowEnd());
         }
         p.print(tf.tableEnd());
-        return total;
     }
+
 
     private List<List<List<Leaf>>> generateMatrix(Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns)
             throws ManagementException, StorageException {

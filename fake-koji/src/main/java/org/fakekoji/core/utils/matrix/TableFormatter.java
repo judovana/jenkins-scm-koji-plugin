@@ -19,9 +19,29 @@ public interface TableFormatter {
 
     String getContext(List<MatrixGenerator.Leaf> l);
 
+    String initialCell(String[] project);
+
+    String lastCell(int total, int i);
+
 
     public static class PlainTextTableFormatter implements TableFormatter {
 
+        @Override
+        public String initialCell(String[] project) {
+            if (project == null || project.length == 0) {
+                return "all projects";
+            }
+            if (project.length == 1) {
+                return project[0];
+            } else {
+                return project.length + " projects";
+            }
+        }
+
+        @Override
+        public String lastCell(int found, int all) {
+            return found + "/" + all;
+        }
 
         @Override
         public String cellStart() {
@@ -99,11 +119,33 @@ public interface TableFormatter {
                 return "0";
             }
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < l.size(); i++){
+            for (int i = 0; i < l.size(); i++) {
                 MatrixGenerator.Leaf leaf = l.get(i);
-                sb.append("<a href=\"http://hydra.brq.redhat.com:8080/job/").append(leaf.toString()).append("\" a>").append("("+(i+1)+")").append("</a>");
+                sb.append("<a href=\"http://hydra.brq.redhat.com:8080/job/").append(leaf.toString()).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
             }
             return sb.toString();
+        }
+
+        @Override
+        public String initialCell(String[] project) {
+            if (project == null || project.length == 0) {
+                return "<a href=\"http://hydra.brq.redhat.com:8080/\" a>all projects</a>";
+            }
+            if (project.length == 1) {
+                return "<a href=\"http://hydra.brq.redhat.com:8080/view/~" + project[0] + "\" a>" + project[0] + "</a>";
+            } else {
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < project.length; i++) {
+                    String leaf = project[i];
+                    sb.append("<a href=\"http://hydra.brq.redhat.com:8080/view/~").append(leaf).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
+                }
+                return sb.toString();
+            }
+        }
+
+        @Override
+        public String lastCell(int found, int all) {
+            return found + "/" + all;
         }
 
 
