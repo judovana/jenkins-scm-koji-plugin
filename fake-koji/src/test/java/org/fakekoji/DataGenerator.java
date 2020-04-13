@@ -1008,120 +1008,247 @@ public class DataGenerator {
         ));
     }
 
-    public static Job get_pull_jdk8_project() {
-        return new PullJob(
+    public static Set<Job> getJDKProjectJobs() {
+        final JDKTestProject jdkTestProject = DataGenerator.getJDKTestProject();
+        final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
+        final JDKVersion jdkVersion = DataGenerator.getJDKVersion8();
+        final Platform rhel7x64 = DataGenerator.getRHEL7x64();
+        final Task tckTask = DataGenerator.getTCK();
+        final Task buildTask = DataGenerator.getBuildTask();
+        final File scriptsRoot = folderHolder.scriptsRoot;
+        final File repositoriesRoot = folderHolder.reposRoot;
+
+        final PullJob pullJob = new PullJob(
                 PROJECT_NAME,
                 PROJECT_URL,
-                getJDK8Product(),
-                getJDKVersion8(),
-                folderHolder.reposRoot,
-                folderHolder.scriptsRoot,
-                Arrays.asList(new OToolVariable("o1", "v1"))
+                DataGenerator.getJDK8Product(),
+                jdkVersion,
+                repositoriesRoot,
+                scriptsRoot,
+                Collections.emptyList()
         );
+        final BuildJob buildJobHotspotRelease = new BuildJob(
+                BEAKER,
+                PROJECT_NAME,
+                DataGenerator.getJDK8Product(),
+                jdkVersion,
+                buildProviders,
+                buildTask,
+                rhel7x64,
+                Collections.unmodifiableMap(
+                        new HashMap<TaskVariant, TaskVariantValue>() {{
+                            put(DataGenerator.getJvmVariant(), DataGenerator.getHotspotVariant());
+                            put(DataGenerator.getDebugModeVariant(), DataGenerator.getReleaseVariant());
+                        }}
+                ),
+                scriptsRoot,
+                Collections.emptyList()
+        );
+        final BuildJob buildJobZeroRelease = new BuildJob(
+                BEAKER,
+                PROJECT_NAME,
+                DataGenerator.getJDK8Product(),
+                jdkVersion,
+                buildProviders,
+                buildTask,
+                rhel7x64,
+                Collections.unmodifiableMap(
+                        new HashMap<TaskVariant, TaskVariantValue>() {{
+                            put(DataGenerator.getJvmVariant(), DataGenerator.getZeroVariant());
+                            put(DataGenerator.getDebugModeVariant(), DataGenerator.getReleaseVariant());
+                        }}
+                ),
+                scriptsRoot,
+                Collections.emptyList()
+        );
+        final TestJob testJobHotspotRelease = new TestJob(
+                VAGRANT,
+                buildJobHotspotRelease,
+                tckTask,
+                rhel7x64,
+                Collections.unmodifiableMap(
+                        new HashMap<TaskVariant, TaskVariantValue>() {{
+                            put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
+                            put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getXServerVariant());
+                        }}
+                )
+        );
+        final TestJob testJobZeroHotspot = new TestJob(
+                BEAKER,
+                buildJobZeroRelease,
+                tckTask,
+                rhel7x64,
+                Collections.unmodifiableMap(
+                        new HashMap<TaskVariant, TaskVariantValue>() {{
+                            put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
+                            put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getXServerVariant());
+                        }}
+                )
+        );
+
+        return new HashSet<>(Arrays.asList(
+                pullJob,
+                buildJobHotspotRelease,
+                buildJobZeroRelease,
+                testJobHotspotRelease,
+                testJobZeroHotspot
+        ));
     }
 
-    public static Job get_build_jdk8_project_el7_x86_64_vagrant_hotspot_release() {
-        return new BuildJob(
-                VAGRANT,
-                PROJECT_NAME,
-                getJDK8Product(),
-                getJDKVersion8(),
-                getBuildProviders(),
-                getBuildTask(),
-                getRHEL7x64(),
-                new HashMap<TaskVariant, TaskVariantValue>() {{
-                    put(getJvmVariant(), getHotspotVariant());
-                    put(getDebugModeVariant(), getReleaseVariant());
-                }},
-                folderHolder.scriptsRoot,
-                Arrays.asList(new OToolVariable("o2", "v2"))
-        );
-    }
+    public static Set<TestJob> getJDKTestProjectJobs() {
+        final JDKTestProject jdkTestProject = DataGenerator.getJDKTestProject();
+        final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
+        final JDKVersion jdkVersion = DataGenerator.getJDKVersion8();
+        final List<String> blacklist = jdkTestProject.getSubpackageBlacklist();
+        final List<String> whitelist = jdkTestProject.getSubpackageWhitelist();
+        final Platform rhel7x64 = DataGenerator.getRHEL7x64();
+        final Platform f29x64 = DataGenerator.getF29x64();
+        final Task tckTask = DataGenerator.getTCK();
+        final Task jtregTask = DataGenerator.getJTREG();
+        final File scriptsRoot = folderHolder.scriptsRoot;
 
-    public static Job get_build_jdk8_project_el7_x86_64_vagrant_hotspot_fastdebug() {
-        return new BuildJob(
-                VAGRANT,
-                PROJECT_NAME,
-                getJDK8Product(),
-                getJDKVersion8(),
-                getBuildProviders(),
-                getBuildTask(),
-                getRHEL7x64(),
-                new HashMap<TaskVariant, TaskVariantValue>() {{
-                    put(getJvmVariant(), getHotspotVariant());
-                    put(getDebugModeVariant(), getFastdebugVariant());
-                }},
-                folderHolder.scriptsRoot,
-                Arrays.asList(new OToolVariable("o3", "v3"))
-        );
-    }
-
-    public static Job get_build_jdk8_project_f29_x86_64_vagrant_hotspot_release() {
-        return new BuildJob(
-                VAGRANT,
-                PROJECT_NAME,
-                getJDK8Product(),
-                getJDKVersion8(),
-                getBuildProviders(),
-                getBuildTask(),
-                getF29x64(),
-                new HashMap<TaskVariant, TaskVariantValue>() {{
-                    put(getJvmVariant(), getHotspotVariant());
-                    put(getDebugModeVariant(), getReleaseVariant());
-                }},
-                folderHolder.scriptsRoot,
-                null
-        );
-    }
-
-    public static Job get_tck_jdk8_project_el7_x86_64_hotspot_release_el7_x86_64_vagrant_shenandoah_xServer() {
-        final Platform platform = getRHEL7x64();
-        return new TestJob(
-                VAGRANT,
-                PROJECT_NAME,
-                Project.ProjectType.JDK_PROJECT,
-                getJDK8Product(),
-                getJDKVersion8(),
-                getBuildProviders(),
-                getTCK(),
-                platform,
-                new HashMap<TaskVariant, TaskVariantValue>() {{
-                    put(getGarbageCollectorCategory(), getShenandoahVariant());
-                    put(getDisplayProtocolCategory(), getXServerVariant());
-                }},
-                platform,
-                new HashMap<TaskVariant, TaskVariantValue>() {{
-                    put(getJvmVariant(), getHotspotVariant());
-                    put(getDebugModeVariant(), getReleaseVariant());
-                }},
-                folderHolder.scriptsRoot,
-                Arrays.asList(new OToolVariable("o4", "v4"))
-        );
-    }
-
-    public static Job get_tck_jdk8_project_el7_x86_64_hotspot_release_el7_x86_64_vagrant_zgc_xServer() {
-        final Platform platform = getRHEL7x64();
-        return new TestJob(
-                VAGRANT,
-                PROJECT_NAME,
-                Project.ProjectType.JDK_PROJECT,
-                getJDK8Product(),
-                getJDKVersion8(),
-                getBuildProviders(),
-                getTCK(),
-                platform,
-                new HashMap<TaskVariant, TaskVariantValue>() {{
-                    put(getGarbageCollectorCategory(), getZGCVariant());
-                    put(getDisplayProtocolCategory(), getXServerVariant());
-                }},
-                platform,
-                new HashMap<TaskVariant, TaskVariantValue>() {{
-                    put(getJvmVariant(), getHotspotVariant());
-                    put(getDebugModeVariant(), getReleaseVariant());
-                }},
-                folderHolder.scriptsRoot,
-                null
-        );
+        return new HashSet<>(Arrays.asList(
+                new TestJob(
+                        VAGRANT,
+                        TEST_PROJECT_NAME,
+                        Project.ProjectType.JDK_TEST_PROJECT,
+                        DataGenerator.getJDK8Product(),
+                        jdkVersion,
+                        buildProviders,
+                        tckTask,
+                        rhel7x64,
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
+                                    put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getXServerVariant());
+                                }}
+                        ),
+                        rhel7x64,
+                        null,
+                        new Task(),
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getDebugModeVariant(), DataGenerator.getSlowdebugVariant());
+                                }}
+                        ),
+                        blacklist,
+                        whitelist,
+                        scriptsRoot,
+                        Collections.emptyList()
+                ),
+                new TestJob(
+                        VAGRANT,
+                        TEST_PROJECT_NAME,
+                        Project.ProjectType.JDK_TEST_PROJECT,
+                        DataGenerator.getJDK8Product(),
+                        jdkVersion,
+                        buildProviders,
+                        tckTask,
+                        rhel7x64,
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
+                                    put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getWaylandVariant());
+                                }}
+                        ),
+                        rhel7x64,
+                        null,
+                        new Task(),
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getDebugModeVariant(), DataGenerator.getSlowdebugVariant());
+                                }}
+                        ),
+                        blacklist,
+                        whitelist,
+                        scriptsRoot,
+                        Collections.emptyList()
+                ),
+                new TestJob(
+                        VAGRANT,
+                        TEST_PROJECT_NAME,
+                        Project.ProjectType.JDK_TEST_PROJECT,
+                        DataGenerator.getJDK8Product(),
+                        jdkVersion,
+                        buildProviders,
+                        jtregTask,
+                        rhel7x64,
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
+                                    put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getXServerVariant());
+                                }}
+                        ),
+                        rhel7x64,
+                        null,
+                        new Task(),
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getDebugModeVariant(), DataGenerator.getSlowdebugVariant());
+                                }}
+                        ),
+                        blacklist,
+                        whitelist,
+                        scriptsRoot,
+                        Collections.emptyList()
+                ),
+                new TestJob(
+                        VAGRANT,
+                        TEST_PROJECT_NAME,
+                        Project.ProjectType.JDK_TEST_PROJECT,
+                        DataGenerator.getJDK8Product(),
+                        jdkVersion,
+                        buildProviders,
+                        tckTask,
+                        f29x64,
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
+                                    put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getWaylandVariant());
+                                }}
+                        ),
+                        rhel7x64,
+                        null,
+                        new Task(),
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getDebugModeVariant(), DataGenerator.getSlowdebugVariant());
+                                }}
+                        ),
+                        blacklist,
+                        whitelist,
+                        scriptsRoot,
+                        Collections.emptyList()
+                ),
+                new TestJob(
+                        VAGRANT,
+                        TEST_PROJECT_NAME,
+                        Project.ProjectType.JDK_TEST_PROJECT,
+                        DataGenerator.getJDK8Product(),
+                        jdkVersion,
+                        buildProviders,
+                        tckTask,
+                        f29x64,
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getGarbageCollectorCategory(), DataGenerator.getShenandoahVariant());
+                                    put(DataGenerator.getDisplayProtocolCategory(), DataGenerator.getXServerVariant());
+                                }}
+                        ),
+                        rhel7x64,
+                        null,
+                        new Task(),
+                        Collections.unmodifiableMap(
+                                new HashMap<TaskVariant, TaskVariantValue>() {{
+                                    put(DataGenerator.getDebugModeVariant(), DataGenerator.getSlowdebugVariant());
+                                }}
+                        ),
+                        blacklist,
+                        whitelist,
+                        scriptsRoot,
+                        Collections.emptyList()
+                )
+        ));
     }
 
     public static final String SUFFIX = ".tarxz";

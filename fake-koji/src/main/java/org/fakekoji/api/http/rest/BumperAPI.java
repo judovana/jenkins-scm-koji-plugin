@@ -18,6 +18,7 @@ import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
+import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 
@@ -39,6 +40,7 @@ public class BumperAPI implements EndpointGroup {
 
     private final JobUpdater jobUpdater;
     private final JDKProjectParser parser;
+    private final ReverseJDKProjectParser reverseParser;
     private final JDKProjectManager jdkProjectManager;
     private final JDKTestProjectManager jdkTestProjectManager;
     private final ConfigReader<Platform> platformConfigReader;
@@ -46,12 +48,14 @@ public class BumperAPI implements EndpointGroup {
     BumperAPI(
             final JobUpdater jobUpdater,
             final JDKProjectParser jdkProjectParser,
+            final ReverseJDKProjectParser reverseParser,
             final JDKProjectManager jdkProjectManager,
             final JDKTestProjectManager jdkTestProjectManager,
             final PlatformManager platformManager
     ) {
         this.jobUpdater = jobUpdater;
         this.parser = jdkProjectParser;
+        this.reverseParser = reverseParser;
         this.jdkProjectManager = jdkProjectManager;
         this.jdkTestProjectManager = jdkTestProjectManager;
         platformConfigReader = new ConfigReader<>(platformManager);
@@ -101,7 +105,7 @@ public class BumperAPI implements EndpointGroup {
                 final Set<Job> finalJobs = jobs.stream()
                         .map(tuple -> tuple.y.orElseGet(() -> tuple.x))
                         .collect(Collectors.toSet());
-                final Result<JDKProject, String> result = parser.parseJDKProjectJobs(finalJobs);
+                final Result<JDKProject, String> result = reverseParser.parseJDKProjectJobs(finalJobs);
                 if (result.isError()) {
                     return Result.err(new OToolError(result.getError(), 400));
                 }
@@ -124,7 +128,7 @@ public class BumperAPI implements EndpointGroup {
                         .filter(job -> job instanceof TestJob)
                         .map(job -> (TestJob) job)
                         .collect(Collectors.toSet());
-                final Result<JDKTestProject, String> result = parser.parseJDKTestProjectJobs(finalJobs);
+                final Result<JDKTestProject, String> result = reverseParser.parseJDKTestProjectJobs(finalJobs);
                 if (result.isError()) {
                     return Result.err(new OToolError(result.getError(), 400));
                 }
