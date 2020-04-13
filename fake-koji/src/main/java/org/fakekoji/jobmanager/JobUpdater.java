@@ -16,6 +16,12 @@ public interface JobUpdater {
 
     JobUpdateResults regenerate(Project project, String whitelist) throws StorageException, ManagementException;
 
+    <T extends Project> JobUpdateResults regenerateAll(
+            String projectId,
+            Manager<T> projectManager,
+            String whitelist
+    ) throws StorageException, ManagementException;
+
     JobUpdateResults update(Platform platform) throws StorageException;
 
     JobUpdateResults update(Task task) throws StorageException;

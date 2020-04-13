@@ -168,8 +168,6 @@ public class OToolService {
             }
         };
 
-        final OTool oTool = new OTool(jenkinsJobUpdater);
-
         app.routes(() -> {
 
             final JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
@@ -298,13 +296,13 @@ public class OToolService {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
                         String whitelist = context.queryParam("whitelist");
-                        JobUpdateResults r1 = oTool.regenerateAll(project, jdkTestProjectManager, whitelist);
+                        JobUpdateResults r1 = jenkinsJobUpdater.regenerateAll(project, jdkTestProjectManager, whitelist);
                         context.status(OK).json(r1);
                     }));
                     get(JDK_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
                         String whitelist = context.queryParam("whitelist");
-                        JobUpdateResults r2 = oTool.regenerateAll(project, jdkProjectManager, whitelist);
+                        JobUpdateResults r2 = jenkinsJobUpdater.regenerateAll(project, jdkProjectManager, whitelist);
                         context.status(OK).json(r2);
 
                     }));
