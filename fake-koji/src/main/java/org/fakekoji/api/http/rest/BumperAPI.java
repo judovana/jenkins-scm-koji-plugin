@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 
 
 import static io.javalin.apibuilder.ApiBuilder.get;
+import static org.fakekoji.api.http.rest.OToolService.BUMP;
+import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValues;
@@ -174,6 +176,11 @@ public class BumperAPI implements EndpointGroup {
                         )
                 )
         );
+    }
+
+    public String getHelp() {
+        return ""
+                + MISC + '/' + BUMP + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2]\n";
     }
 
     @Override
