@@ -187,6 +187,28 @@ public class JenkinsJobUpdater implements JobUpdater {
         );
     }
 
+    /**
+     * Regenerate all jobs. If job is mssing, is (re)created.
+     *
+     * @throws StorageException
+     */
+    public <T extends Project> JobUpdateResults regenerateAll(
+            String projectId,
+            Manager<T> projectManager
+    ) throws StorageException, ManagementException {
+        JobUpdateResults sum = new JobUpdateResults();
+        JenkinsJobUpdater.wakeUpJenkins();
+        final List<T> projects = projectManager.readAll();
+        for (final Project project : projects) {
+            if (projectId == null || project.getId().equals(projectId)) {
+                JobUpdateResults r = regenerate(project);
+                sum = sum.add(r);
+            }
+
+        }
+        return sum;
+    }
+
     JobUpdateResults update(Set<Job> oldJobs, Set<Job> newJobs) {
 
         final Function<Job, JobUpdateResult> rewriteFunction = jobUpdateFunctionWrapper(getRewriteFunction());
