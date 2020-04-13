@@ -91,7 +91,7 @@ public class FakeKojiXmlRpcApi extends KojiXmlRpcApi {
     @Override
     public String toString() {
         return
-                "OTool xml-rpc API:\n" +
+                "OToolUtils xml-rpc API:\n" +
                 "  projectName: " + projectName + '\n' +
                 "  buildVariants: " + buildVariants + '\n' +
                 "  buildPlatform: " + buildPlatform + '\n' +
