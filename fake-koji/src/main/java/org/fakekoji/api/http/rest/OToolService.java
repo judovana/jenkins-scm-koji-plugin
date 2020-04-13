@@ -59,8 +59,8 @@ public class OToolService {
     private static final String JDK_TEST_PROJECTS = "/jdkTestProjects";
     private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
     private static final String GET = "get";
-    private static final String BUMP = "bump";
-    private static final String MISC = "misc";
+    public static final String BUMP = "bump";
+    public static final String MISC = "misc";
     private static final String HELP = "help";
     static final String FILTER = "filter";
     static final String SKIP_EMPTY = "skipEmpty";
@@ -181,9 +181,25 @@ public class OToolService {
             final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
             final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
 
+            final JDKProjectParser parser = new JDKProjectParser(
+                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                    settings.getLocalReposRoot(),
+                    settings.getScriptsRoot()
+            );
+
+            final BumperAPI bumperAPI = new BumperAPI(
+                    jenkinsJobUpdater,
+                    parser,
+                    new ReverseJDKProjectParser(),
+                    jdkProjectManager,
+                    jdkTestProjectManager,
+                    platformManager
+            );
+
             path(MISC, () -> {
+                path(BUMP, bumperAPI);
                 get(HELP, wrapper.wrap(context -> {
-                    context.status(OK).result(getMiscHelp());
+                    context.status(OK).result(getMiscHelp() + bumperAPI.getHelp());
                 }));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
@@ -459,19 +475,6 @@ public class OToolService {
                     taskVariantManager,
                     platformManager,
                     taskManager
-            ));
-            final JDKProjectParser parser = new JDKProjectParser(
-                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                    settings.getLocalReposRoot(),
-                    settings.getScriptsRoot()
-            );
-            path(BUMP, new BumperAPI(
-                    jenkinsJobUpdater,
-                    parser,
-                    new ReverseJDKProjectParser(),
-                    jdkProjectManager,
-                    jdkTestProjectManager,
-                    platformManager
             ));
         });
     }
