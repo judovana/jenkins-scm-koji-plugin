@@ -8,10 +8,7 @@ import org.fakekoji.jobmanager.manager.*;
 import org.fakekoji.jobmanager.model.*;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
-import org.fakekoji.model.Platform;
-import org.fakekoji.model.Task;
-import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantValue;
+import org.fakekoji.model.*;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
@@ -74,7 +71,7 @@ public class MatrixGenerator {
         taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
 
         this.project = project;
-        if (project != null){
+        if (project != null) {
             Arrays.sort(project);
         }
 
@@ -103,6 +100,7 @@ public class MatrixGenerator {
         private final List<TaskVariant> taskVariantManagerReadAll;
         private final List<JDKProject> jdkProjectManagerReadAll;
         private final List<JDKTestProject> jdkTestProjectManagerReadAll;
+        private final List<BuildProvider> buildProviders;
 
         public Cache() throws StorageException {
             platformManagerReadAll = platformManager.readAll();
@@ -110,6 +108,7 @@ public class MatrixGenerator {
             taskVariantManagerReadAll = taskVariantManager.readAll();
             jdkProjectManagerReadAll = jdkProjectManager.readAll();
             jdkTestProjectManagerReadAll = jdkTestProjectManager.readAll();
+            buildProviders = buildProviderManager.readAll();
         }
 
         List<Platform> getPlatformManagerReadAll() throws StorageException {
@@ -494,11 +493,16 @@ public class MatrixGenerator {
         String platformVersion = project.getProduct().getJdk();
         String projectName = project.getId();
         Collection<String> buildVars = bvc.getMap().values();
-        String fullBuild = "" +
-                buildOsAarch[0] + "." + buildOsAarch[1] + "." + buildProvider + "-" +
+        String fullBuild = "" + //warning, is used for job url generation
                 btask + "-" +
                 platformVersion + "-" +
                 projectName + "-" +
+                buildOsAarch[0] + "." + buildOsAarch[1] + "." + buildProvider + "-" +
+                String.join(".", buildVars);
+        String providerLessFutureTaskFullBuild = "" + //warning, is used for job url generation
+                platformVersion + "-" +
+                projectName + "-" +
+                buildOsAarch[0] + "." + buildOsAarch[1] + "-" +
                 String.join(".", buildVars);
         //System.out.println(fullBuild);
         if (ts.getTask().getId().equals("build")) { //where it get from?
@@ -508,17 +512,58 @@ public class MatrixGenerator {
                     if (btask == null) {//test only jobs
                         //we add test only job only in case, it actualy have any test, testonly jobs without tests do not have sense?
                         //but we can see it later in matrix that it do nothave run any tests
-                        counter.add(new Leaf(fullBuild));
+                        if (project instanceof JDKTestProject) {
+                            counter.addAll(createProvidersUrls((JDKTestProject) project, fullBuild));
+                        } else {
+                            counter.add(new Leaf(fullBuild));
+                        }
                     } else {
-                        counter.add(new Leaf(fullBuild));
+                        if (project instanceof JDKTestProject) {
+                            counter.addAll(createProvidersUrls((JDKTestProject) project, fullBuild));
+                        } else {
+                            counter.add(new Leaf(fullBuild));
+                        }
                     }
                 }
             }
         } else {
             if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
-                iterateBuildVariantsConfig(bs, ts, counter, project, buildArchOs, buildProvider, btce, bvc, fullBuild);
+                iterateBuildVariantsConfig(bs, ts, counter, project, buildArchOs, buildProvider, btce, bvc, providerLessFutureTaskFullBuild);
             }
         }
+    }
+
+    private Collection<Leaf> createProvidersUrls(JDKTestProject project, String fallBack) {
+        List<Leaf> r = new ArrayList<>();
+        for (String providerId : project.getBuildProviders()) {
+            BuildProvider buildProvider = getProvider(providerId);
+            if (buildProvider == null) {
+                r.add(new Leaf(fallBack));
+            } else {
+                if (buildProvider.getTopUrl().endsWith("hub") || buildProvider.getTopUrl().endsWith("hub/")) {
+                    String nwTopUrl = buildProvider.getTopUrl();
+                    if (buildProvider.getTopUrl().endsWith("hub")) {
+                        nwTopUrl = nwTopUrl.substring(0, nwTopUrl.length() - 3);
+                    } else if (buildProvider.getTopUrl().endsWith("hub/")) {
+                        nwTopUrl = nwTopUrl.substring(0, nwTopUrl.length() - 4);
+                    }
+                    nwTopUrl = nwTopUrl.replace("hub", "web");
+                    r.add(new Leaf(nwTopUrl + "/search?match=glob&type=package&terms=" + project.getProduct().getPackageName()));
+                } else {
+                    r.add(new Leaf(buildProvider.getDownloadUrl() + "/" + project.getProduct().getPackageName()));
+                }
+            }
+        }
+        return r;
+    }
+
+    private BuildProvider getProvider(String providerId) {
+        for (BuildProvider buildProvider : cache.buildProviders) {
+            if (buildProvider.getId().equals(providerId)) {
+                return buildProvider;
+            }
+        }
+        return null;
     }
 
     private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, TaskConfig btce,
@@ -530,14 +575,11 @@ public class MatrixGenerator {
                     String testProvider = tpce.getProvider();
                     String ttask = ttce.getId();
                     Collection<String> testVars = tvc.getMap().values();
-                    String fullTest = "" +
-                            testOsAarch[0] + "." + testOsAarch[1] + "." + testProvider + "-" +
+                    String full = "" + //warning, is used for job url generation
                             ttask + "-" +
-                            String.join(".", testVars);
-                    //System.out.println(fullTest);
-                    String full = "" +
                             tmpBuildIdForSimpleTextIdentification + "-" +
-                            fullTest;
+                            testOsAarch[0] + "." + testOsAarch[1] + "." + testProvider + "-" +
+                            String.join(".", testVars);
                     if (taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
                         counter.add(new Leaf(full));
                     }

@@ -2,6 +2,8 @@ package org.fakekoji.core.utils.matrix;
 
 import org.fakekoji.core.AccessibleSettings;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.List;
 
 public interface TableFormatter {
@@ -126,7 +128,13 @@ public interface TableFormatter {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < l.size(); i++) {
                 MatrixGenerator.Leaf leaf = l.get(i);
-                sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(leaf.toString()).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
+                String url = leaf.toString();
+                try {
+                    new URL(url);
+                    sb.append("<a href=\"" + url + "\" a>").append("(" + (i + 1) + ")").append("</a>");
+                } catch (MalformedURLException ex) {
+                    sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
+                }
             }
             return sb.toString();
         }
