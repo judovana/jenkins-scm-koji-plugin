@@ -478,6 +478,7 @@ public class MatrixGenerator {
                     throw new ManagementException("Unknow project type " + project.getClass());
                 }
             }
+        }
         return counter;
     }
 
