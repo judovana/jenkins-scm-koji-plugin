@@ -32,7 +32,7 @@ public class JenkinsUpdateVmTemplateBuilder implements CharSequence {
             String name, String node, String provider, String scriptsRoot, String shutdownVariables,
             String destroyScript, String platformName, String template, String postTask) {
         this.name = name;
-        this.node = "StandardIntelVMs".equals(node)?"StandardIntelVMs||Hydra-VmUpdater ":node;
+        this.node = "StandardIntelVMs".equals(node)?"StandardIntelVMs||Hydra-VmUpdater ":node; //FIXME this hardoced list:(
         this.provider = provider;
         this.scriptsRoot = scriptsRoot;
         this.shutdownVariables = shutdownVariables;

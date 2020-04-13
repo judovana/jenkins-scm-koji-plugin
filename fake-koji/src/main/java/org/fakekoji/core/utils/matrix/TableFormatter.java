@@ -1,9 +1,14 @@
 package org.fakekoji.core.utils.matrix;
 
+import org.fakekoji.core.AccessibleSettings;
+
 import java.util.List;
 
 public interface TableFormatter {
 
+
+    String MASTER = AccessibleSettings.master.baseUrl;
+    String JENKINS_PORT = "8080"; //FIXME made accessible
 
     String cellStart();
 
@@ -121,7 +126,7 @@ public interface TableFormatter {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < l.size(); i++) {
                 MatrixGenerator.Leaf leaf = l.get(i);
-                sb.append("<a href=\"http://hydra.brq.redhat.com:8080/job/").append(leaf.toString()).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
+                sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(leaf.toString()).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
             }
             return sb.toString();
         }
@@ -129,15 +134,15 @@ public interface TableFormatter {
         @Override
         public String initialCell(String[] project) {
             if (project == null || project.length == 0) {
-                return "<a href=\"http://hydra.brq.redhat.com:8080/\" a>all projects</a>";
+                return "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/\" a>all projects</a>";
             }
             if (project.length == 1) {
-                return "<a href=\"http://hydra.brq.redhat.com:8080/view/~" + project[0] + "\" a>" + project[0] + "</a>";
+                return "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~" + project[0] + "\" a>" + project[0] + "</a>";
             } else {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < project.length; i++) {
                     String leaf = project[i];
-                    sb.append("<a href=\"http://hydra.brq.redhat.com:8080/view/~").append(leaf).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
+                    sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~").append(leaf).append("\" a>").append("(" + (i + 1) + ")").append("</a>");
                 }
                 return sb.toString();
             }

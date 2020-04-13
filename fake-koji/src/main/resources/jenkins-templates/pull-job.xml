@@ -4,7 +4,7 @@
   <keepDependencies>false</keepDependencies>
   <properties/>
   <scm class="hudson.scm.NullSCM"/>
-  <assignedNode>Hydra</assignedNode>
+  <assignedNode>%{MASTER_LABEL}</assignedNode>
   <canRoam>false</canRoam>
   <disabled>false</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>

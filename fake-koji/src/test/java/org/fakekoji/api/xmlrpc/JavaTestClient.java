@@ -27,6 +27,7 @@ import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
 import org.apache.xmlrpc.XmlRpcException;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.server.JavaServer;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetPackageId;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
@@ -119,6 +120,6 @@ public class JavaTestClient {
     }
 
     protected static Object execute(XmlRpcRequestParams params) {
-        return new XmlRpcHelper.XmlRpcExecutioner("http://hydra.brq.redhat.com:" + JavaServer.DEFAULT_XML_RPC_PORT + "/RPC2").execute(params);
+        return new XmlRpcHelper.XmlRpcExecutioner(AccessibleSettings.master.baseUrl+":" + JavaServer.DEFAULT_XML_RPC_PORT + "/RPC2").execute(params);
     }
 }

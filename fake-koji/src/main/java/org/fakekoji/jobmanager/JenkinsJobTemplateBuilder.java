@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.Utils;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.NamesProvider;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.Platform;
@@ -67,6 +68,7 @@ public class JenkinsJobTemplateBuilder {
     static final String SHUTDOWN_VARIABLES = "%{SHUTDOWN_VARIABLES}";
     static final String PLATFORM_NAME = "%{PLATFORM_NAME}";
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
+    static final String MASTER_LABEL = "%{MASTER_LABEL}";
     static final String DESTROY_SCRIPT = "%{DESTROY_SCRIPT}";
     static final String SCM_POLL_SCHEDULE = "%{SCM_POLL_SCHEDULE}";
     static final String TRIGGER = "%{TRIGGER}";
@@ -121,7 +123,7 @@ public class JenkinsJobTemplateBuilder {
                 PULL_SCRIPT,
                 SHEBANG + XML_NEW_LINE + getExportedVariablesString(exportedVariables) +
                         BASH + " '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'"
-        );
+        ).replace(MASTER_LABEL, AccessibleSettings.master.label);
         return this;
     }
 

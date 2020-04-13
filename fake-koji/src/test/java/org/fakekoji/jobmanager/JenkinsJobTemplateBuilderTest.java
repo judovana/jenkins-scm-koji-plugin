@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.DataGenerator;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.NamesProvider;
 import org.fakekoji.jobmanager.model.Project;
@@ -1050,7 +1051,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <keepDependencies>false</keepDependencies>\n" +
                 "    <properties/>\n" +
                 "    <scm class=\"hudson.scm.NullSCM\"/>\n" +
-                "    <assignedNode>Hydra</assignedNode>\n" +
+                "    <assignedNode>" + AccessibleSettings.master.label + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +

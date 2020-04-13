@@ -39,6 +39,17 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class AccessibleSettings {
 
+    public static class Master {
+        public final String label = "Hydra";
+        public final String machine = "hydra";
+        public final String domain = "brq.redhat.com";
+        public final String fullName = machine+"."+domain;
+        public final String protocol = "http";
+        public final String baseUrl = protocol+"://"+fullName;
+    }
+
+    public static final Master master = new Master();
+
     public static final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new Jdk8Module())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -91,7 +102,7 @@ public class AccessibleSettings {
         String thisMachine = InetAddress.getLocalHost().getHostName();
         this.xmlRpcUrl = new URL("http://" + thisMachine + ":" + this.xmlRpcPort + "/RPC2/");
         this.downloadUrl = new URL("http://" + thisMachine + ":" + this.fileDownloadPort + "/");
-        this.jenkinsUrlString = new URL("http://" + thisMachine + ":" + jenkinsPort + "/");
+        this.jenkinsUrlString = new URL("http://" + thisMachine + ":" + this.jenkinsPort + "/");
     }
 
     /**
@@ -171,6 +182,10 @@ public class AccessibleSettings {
 
     public int getWebappPort() {
         return webappPort;
+    }
+
+    public int getJenkinsPort() {
+        return jenkinsPort;
     }
 
     public URL getXmlRpcUrl() {
