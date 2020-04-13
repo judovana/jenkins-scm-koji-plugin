@@ -17,6 +17,7 @@ import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
+import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -487,6 +487,7 @@ public class OToolService {
             path(BUMP, new BumperAPI(
                     jenkinsJobUpdater,
                     parser,
+                    new ReverseJDKProjectParser(),
                     jdkProjectManager,
                     jdkTestProjectManager,
                     platformManager
