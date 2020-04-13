@@ -107,11 +107,20 @@ public class KojiListBuildsTest {
         );
     }
 
-    RealKojiXmlRpcApi createConfigCustomFedora() {
+    RealKojiXmlRpcApi createConfigCustomFedoraSlowdebug() {
         return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
-                "x86_64,src",
-                "fastdebug-f24.*",
+                "x86_64",
+                "slowdebug-f24-.*",
+                "",
+                null
+        );
+    }
+    RealKojiXmlRpcApi createConfigCustomFedoraRelease() {
+        return new RealKojiXmlRpcApi(
+                "java-1.8.0-openjdk",
+                "x86_64",
+                "f24-.*",
                 "",
                 null
         );
@@ -410,14 +419,25 @@ public class KojiListBuildsTest {
     }
 
     @Test
-    public void testListMatchingBuildsCustomF() throws Exception {
+    public void testListMatchingBuildsCustomFedoraSlowDebug() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(
                 createLocalhostOnlyList(),
-                createConfigCustomFedora(),
+                createConfigCustomFedoraSlowdebug(),
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
         testListMatchingBuildsCustom(worker, true);
+    }
+
+    @Test
+    public void testListMatchingBuildsCustomFedoraRelease() throws Exception {
+        KojiListBuilds worker = new KojiListBuilds(
+                createLocalhostOnlyList(),
+                createConfigCustomFedoraRelease(),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
+        );
+        testListMatchingBuildsCustom(worker, false);
     }
 
     @Test

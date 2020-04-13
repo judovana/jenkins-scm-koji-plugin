@@ -11,11 +11,10 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -150,11 +149,40 @@ public class GetterAPITest {
         response.check(200, projects);
     }
 
+    @Test
+    public void getBuilds() throws IOException {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getResourceAsStream("listing"), "utf-8"))) {
+            while (true) {
+                String s = br.readLine();
+                if (s == null) {
+                    break;
+                }
+                File f = new File(folderHolder.buildsRoot.getAbsoluteFile(), s);
+                f.getParentFile().mkdirs();
+                Files.createFile(f.toPath());
+            }
+        }
+        checkBuildsListing("builds", 100043);
+        checkBuildsListing("builds?type=filenames", 100043);
+        checkBuildsListing("builds?includeData=true", 101408);
+        checkBuildsListing("builds?type=files", 213301);
+        checkBuildsListing("builds?type=dirs", 113124);
+        checkBuildsListing("builds?type=nvras", 93918);
+        checkBuildsListing("builds?type=nvrs", 23026);
+    }
+
+    private void checkBuildsListing(String cmd, int check) throws IOException {
+        final HTTPResponse response = makeHTTPConnection(cmd);
+        Assert.assertEquals(200, response.status);
+        Assert.assertEquals(check, response.body.length());
+    }
+
     private HTTPResponse makeHTTPConnection(final String path) throws IOException {
         final URL url = new URL("http://localhost:8888/get/" + path);
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
+        int timeout = 5000 * 10000;
+        connection.setConnectTimeout(timeout);
+        connection.setReadTimeout(timeout);
         connection.setRequestMethod("GET");
         connection.connect();
         final BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));

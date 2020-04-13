@@ -7,6 +7,7 @@ import io.javalin.plugin.json.JavalinJackson;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
+import org.fakekoji.core.utils.matrix.TableFormatter;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
 import org.fakekoji.jobmanager.*;
 import org.fakekoji.jobmanager.manager.*;
@@ -85,6 +86,40 @@ public class OToolService {
     private static final String MATRIX_ORIENTATION = "orientation";
     private static final String MATRIX_BREGEX = "buildRegex";
     private static final String MATRIX_TREGEX = "testRegex";
+    private static final String MATRIX_FORMAT = "format";
+    private static final String PROJECT = "project";
+
+    private static final String ARCHES_EXPECTED= "archesExpected"; //will show or generate arches_expected for NVR. No param - deduct from c
+    private static final String ARCHES_EXPECTED_LIST= "list"; //show arches expected for nvr. If no nvr, then list possible arches (from platform's koji arches)
+    private static final String ARCHES_EXPECTED_ARCHES= "set"; //coma separated list of arches to put in, note that here we are on  old api only, so koji-arches can be suggested
+    private static final String ARCHES_EXPECTED_LIST_NVR= "nvr"; //optional target for list, mandatory target for set; on new api error
+
+    private static final String REDEPLOY = "re";
+    private static final String REDEPLOY_TEST = "test";
+    private static final String REDEPLOY_BUILD = "build"; //only jdkProject in addtion to removal VR from processed.txt, it cleans  FAILED, ERROR and smaller then 4bytes files from local-builds
+    private static final String REDEPLOY_LIST = "list"; //only show what will be done
+    private static final String REDEPLOY_DO = "do"; //will do the real work
+    //all can be coma separated?
+    private static final String REDEPLOY_TYPE = "type"; //jdkProject | jdkTestProject
+    private static final String REDEPLOY_PROJECT = "project";
+    private static final String REDEPLOY_NVR = "project"; //for jdkProject it shows also type and project, however, can be ommiteed
+    //other details for selection
+    private static final String REDEPLOY_os = "os";
+    private static final String REDEPLOY_arch = "arch";
+    private static final String REDEPLOY_version = "version";
+    private static final String REDEPLOY_jp = "jp";
+    private static final String REDEPLOY_task = "task";
+    private static final String REDEPLOY_variants = "variants"; //coma separated list of test variants
+    private static final String REDEPLOY_provider = "provider"; //coma separated? list ?of test providers?
+    //sometimes we need also build arch to judge
+    private static final String REDEPLOY_bos = "bos";
+    private static final String REDEPLOY_barch = "barch";
+    private static final String REDEPLOY_bversion = "bversion";
+    private static final String REDEPLOY_bvariants = "bvariants"; //coma separated list of build variants; for build we do not care about provider?
+    private static final String REDEPLOY_bprovider = "bprovider"; //coma separated? list ?of test providers?
+    //is needed at the end?
+    private static final String REDEPLOY_regex = "regex";
+
 
     private final int port;
     private final Javalin app;
@@ -104,9 +139,9 @@ public class OToolService {
                 + "                params: "+FILTER+"=regex "+SKIP_EMPTY+"=true/false\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
-                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* \n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* "+MATRIX_FORMAT+"=html/plain\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
-                + "  dropRows=true dropColumns=true \n";
+                + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n";
     }
 
     public OToolService(AccessibleSettings settings) {
@@ -274,6 +309,7 @@ public class OToolService {
                 get(MATRIX, wrapper.wrap(context -> {
                     String trex = context.queryParam(MATRIX_TREGEX);
                     String brex = context.queryParam(MATRIX_BREGEX);
+                    String format = context.queryParam(MATRIX_FORMAT);
                     boolean tos = notNullBoolean(context, "tos", true);
                     boolean tarch = notNullBoolean(context, "tarch", true);
                     boolean tprovider = notNullBoolean(context, "tprovider", false);
@@ -287,14 +323,19 @@ public class OToolService {
                     boolean bvars = notNullBoolean(context, "bvars", false);
                     boolean dropRows = notNullBoolean(context, "dropRows", true);
                     boolean dropColumns = notNullBoolean(context, "dropColumns", true);
+                    String project = context.queryParam(PROJECT);
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
-                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf);
+                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf, project==null?new String[0]:project.split(","));
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
-                    context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns));
+                    if ("html".equals(format)){
+                        context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter()));
+                    } else {
+                        context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));
+                    }
                 }));
 
             });
@@ -418,7 +459,8 @@ public class OToolService {
                     jdkTestProjectManager,
                     jdkVersionManager,
                     taskVariantManager,
-                    platformManager
+                    platformManager,
+                    taskManager
             ));
             final JDKProjectParser parser = new JDKProjectParser(
                     ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),

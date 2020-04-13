@@ -50,7 +50,7 @@ public class OToolParserTest {
     );
 
     private static final String VERSION = "version";
-    private static final String CHANGE_SET = "changeSet";
+    private static final String CHANGE_SET = "152";
     private static final String CHAOS = "CH.AO.S";
     private static final String INVALID_PACKAGE_NAME = "invalidPckgName";
     private static final String SUFFIX = "tgz";

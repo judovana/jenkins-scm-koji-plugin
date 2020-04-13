@@ -6,7 +6,7 @@ public class OToolBuild {
 
     private final String packageName;
     private final String version;
-    private final String changeSet;
+    private final Integer changeSet;
     private final String garbage;
     private final String projectName;
 
@@ -19,7 +19,7 @@ public class OToolBuild {
     ) {
         this.packageName = packageName;
         this.version = version;
-        this.changeSet = changeSet;
+        this.changeSet = Integer.parseInt(changeSet);
         this.garbage = garbage;
         this.projectName = projectName;
     }
@@ -38,7 +38,7 @@ public class OToolBuild {
     }
 
     public String getChangeSet() {
-        return changeSet;
+        return changeSet.toString();
     }
 
     public String getGarbage() {
@@ -68,12 +68,16 @@ public class OToolBuild {
 
     @Override
     public String toString() {
-        return "OToolBuild{" +
-                "packageName='" + packageName + '\'' +
-                ", version='" + version + '\'' +
-                ", changeSet='" + changeSet + '\'' +
-                ", garbage='" + garbage + '\'' +
-                ", projectName='" + projectName + '\'' +
-                '}';
+        return toString("");
+    }
+
+    public String toString(String delimiter) {
+        return "OToolBuild{" + delimiter +
+                "packageName='" + packageName + '\'' + delimiter +
+                ", version='" + version + '\'' + delimiter +
+                ", changeSet='" + changeSet + '\'' + delimiter +
+                ", garbage='" + garbage + '\'' + delimiter +
+                ", projectName='" + projectName + '\'' + delimiter +
+                '}'+  delimiter;
     }
 }

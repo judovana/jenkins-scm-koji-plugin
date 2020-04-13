@@ -9,6 +9,7 @@ import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
+import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
@@ -17,12 +18,15 @@ import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
-import org.fakekoji.model.JDKVersion;
-import org.fakekoji.model.OToolArchive;
-import org.fakekoji.model.OToolBuild;
-import org.fakekoji.model.Platform;
+import org.fakekoji.model.*;
 import org.fakekoji.storage.StorageException;
 
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -47,6 +51,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String JENKINS_JOBS = "jenkinsJobs";
     private static final String JENKINS_JOB_ARCHIVE = "jenkinsJobArchive";
     private static final String JOBS = "jobs";
+    private static final String TASKS = "tasks";
     private static final String PATH = "path";
     private static final String PORT = "port";
     private static final String PORTS = "ports"; // TODO
@@ -54,6 +59,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String PRODUCTS = "products";
     private static final String PROJECT = "project";
     private static final String PROJECTS = "projects";
+    private static final String FILENAME_PARSER = "filenameParser";
     private static final String PLATFORMS = "platforms";
     private static final String PLATFORMS_DETAILS = "platformDetails";
     private static final String PLATFORM_ID = "id";
@@ -75,7 +81,8 @@ public class GetterAPI implements EndpointGroup {
     private final JDKTestProjectManager jdkTestProjectManager;
     private final JDKVersionManager jdkVersionManager;
     private final TaskVariantManager taskVariantManager;
-    private   final PlatformManager platformManager;
+    private final PlatformManager platformManager;
+    private final TaskManager taskManager;
 
     public GetterAPI(
             final AccessibleSettings settings,
@@ -83,7 +90,8 @@ public class GetterAPI implements EndpointGroup {
             final JDKTestProjectManager jdkTestProjectManager,
             final JDKVersionManager jdkVersionManager,
             final TaskVariantManager taskVariantManager,
-            final PlatformManager platformManager
+            final PlatformManager platformManager,
+            final TaskManager taskManager
     ) {
         this.settings = settings;
         this.jdkProjectManager = jdkProjectManager;
@@ -91,6 +99,7 @@ public class GetterAPI implements EndpointGroup {
         this.jdkVersionManager = jdkVersionManager;
         this.taskVariantManager = taskVariantManager;
         this.platformManager = platformManager;
+        this.taskManager = taskManager;
     }
 
     private QueryHandler getJobsHandler() {
@@ -116,7 +125,7 @@ public class GetterAPI implements EndpointGroup {
 
                 if (allInJenkinsOpt.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
                     try {
-                       onJenkins = getAllJenkinsJobs();
+                        onJenkins = getAllJenkinsJobs();
                     } catch (Throwable e) {
                         throw new RuntimeException(e);
                     }
@@ -143,22 +152,22 @@ public class GetterAPI implements EndpointGroup {
                 }
 
                 if (allInJenkinsOpt.isPresent()) {
-                    return Result.ok(String.join("\n", onJenkins.stream().map(c -> url + c).collect(Collectors.toList()))+"\n");
+                    return Result.ok(String.join("\n", onJenkins.stream().map(c -> url + c).collect(Collectors.toList())) + "\n");
                 }
                 if (jdkParam.isPresent()) {
-                    return Result.ok(String.join("\n", jdkProjects.stream().map(c -> url + c).collect(Collectors.toList()))+"\n");
+                    return Result.ok(String.join("\n", jdkProjects.stream().map(c -> url + c).collect(Collectors.toList())) + "\n");
                 }
                 if (testParam.isPresent()) {
-                    return Result.ok(String.join("\n", testProjects.stream().map(c -> url + c).collect(Collectors.toList()))+"\n");
+                    return Result.ok(String.join("\n", testProjects.stream().map(c -> url + c).collect(Collectors.toList())) + "\n");
                 }
                 if (allInOtoolOpt.isPresent()) {
-                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).map(c -> url + c).collect(Collectors.toList()))+"\n");
+                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).map(c -> url + c).collect(Collectors.toList())) + "\n");
                 }
                 if (orphansOnJenkinsParam.isPresent()) {
-                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).filter(new RemoveIfFound(onJenkins)).collect(Collectors.toList()))+"\n");
+                    return Result.ok(String.join("\n", Stream.concat(testProjects.stream(), jdkProjects.stream()).filter(new RemoveIfFound(onJenkins)).collect(Collectors.toList())) + "\n");
                 }
                 if (orphansOnOtoolParam.isPresent()) {
-                    return Result.ok(String.join("\n", onJenkins.stream().filter(new RemoveIfFound(Stream.concat(testProjects.stream(), jdkProjects.stream()).collect(Collectors.toList()))).collect(Collectors.toList()))+"\n");
+                    return Result.ok(String.join("\n", onJenkins.stream().filter(new RemoveIfFound(Stream.concat(testProjects.stream(), jdkProjects.stream()).collect(Collectors.toList()))).collect(Collectors.toList())) + "\n");
                 }
                 return Result.err("Wrong/missing parameters");
             }
@@ -462,6 +471,43 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getFileNameParserHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                final Optional<String> archiveOpt = extractParamValue(queryParams, ARCHIVE);
+                final Optional<String> buildOpt = extractParamValue(queryParams, BUILD);
+                final OToolParser parser = new OToolParser(
+                        jdkProjectManager.readAll(),
+                        jdkVersionManager.readAll(),
+                        taskVariantManager.getBuildVariants()
+                );
+
+                if (archiveOpt.isPresent()) {
+                    final String archive = archiveOpt.get();
+                    Result<String, String> r = parser.parseArchive(archive).map(oToolArchive -> oToolArchive.toString("\n"));
+                    return r;
+                }
+
+                if (buildOpt.isPresent()) {
+                    final String build = buildOpt.get();
+                    Result<String, String> r = parser.parseBuild(build).map(oToolBuild -> oToolBuild.toString("\n"));
+                    return r;
+                }
+                return Result.err(ERROR_PARAMETERS_EXPECTED);
+            }
+
+            @Override
+            public String about() {
+                return "/filenameParser?[" + String.join(
+                        "|",
+                        ARCHIVE + "=<NVRA>",
+                        BUILD + "=<NVR>"
+                ) + "]";
+            }
+        };
+    }
+
     private QueryHandler getProjectsHandler() {
         return new QueryHandler() {
             @Override
@@ -552,7 +598,7 @@ public class GetterAPI implements EndpointGroup {
             public String about() {
                 return "/path?root=[" + String.join("|",
                         BUILDS, CONFIGS, JENKINS_JOBS, JENKINS_JOB_ARCHIVE, REPOS
-                        ) + "]";
+                ) + "]";
             }
         };
     }
@@ -565,7 +611,7 @@ public class GetterAPI implements EndpointGroup {
                 List<Platform> platforms = platformManager.readAll();
                 String kojiArches = platforms.stream()
                         .filter(platform -> {
-                            if (id.isPresent()){
+                            if (id.isPresent()) {
                                 return platform.getId().equals(id.get());
                             } else {
                                 return true;
@@ -580,6 +626,25 @@ public class GetterAPI implements EndpointGroup {
             @Override
             public String about() {
                 return "/platformDetails?id=optionalSelecto";
+            }
+        };
+    }
+
+    private QueryHandler getTasksHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                List<Task> tasks = taskManager.readAll();
+                String kojiArches = tasks.stream()
+                        .map(task-> task.getId())
+                        .sorted()
+                        .collect(Collectors.joining("\n"));
+                return Result.ok(kojiArches + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/tasks";
             }
         };
     }
@@ -624,6 +689,97 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getBuildsHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws IOException {
+                final Optional<String> type = extractParamValue(queryParams, "type");
+                final boolean includeData = Boolean.parseBoolean(extractParamValue(queryParams, "includeData").orElse("false"));
+                Set<String> results = new HashSet<>();
+                Files.walkFileTree(settings.getDbFileRoot().toPath(), new FileVisitor<Path>() {
+                    private String relativize(Path now) {
+                        String relativeFile = now.toFile().getAbsolutePath().replace(settings.getDbFileRoot().getAbsolutePath(), "");
+                        while ((relativeFile.startsWith("/"))) {
+                            relativeFile = relativeFile.substring(1);
+                        }
+                        return relativeFile;
+                    }
+
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        if (includeData) {
+                            if (type.isPresent() && type.get().contains("dirs")) {
+                                results.add(relativize(dir));
+                            }
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            if (dir.toFile().getName().equals("data")) {
+                                return FileVisitResult.SKIP_SUBTREE;
+                            } else {
+                                if (type.isPresent() && type.get().contains("dirs")) {
+                                    results.add(relativize(dir));
+                                }
+                                return FileVisitResult.CONTINUE;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        if (!type.isPresent() || type.get().contains("filenames")) {
+                            results.add(file.toFile().getName());
+                        } else if (type.get().contains("files")) {
+                            results.add(relativize(file));
+                        } else if (type.get().contains("nvras")) {
+                            String name = file.toFile().getName();
+                            int dot = name.lastIndexOf(".");
+                            if (dot > 0) {
+                                name = name.substring(0, dot);
+                                results.add(name);
+                            }
+                        } else if (type.get().contains("nvrs")) {
+                            String name = file.toFile().getName();
+                            int dot = name.lastIndexOf(".");
+                            if (dot > 0) {
+                                name = name.substring(0, dot);
+                                dot = name.lastIndexOf(".");
+                                if (dot > 0) {
+                                    name = name.substring(0, dot);
+                                    dot = name.lastIndexOf(".");
+                                    if (dot > 0) {
+                                        name = name.substring(0, dot);
+                                        results.add(name);
+                                    }
+                                }
+                            }
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+                List<String> r = new ArrayList<>();
+                r.addAll(results);
+                String rs = r.stream().sorted()
+                        .collect(Collectors.joining("\n"));
+                return Result.ok(rs + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/builds?type={filenames,files,dirs,nvras,nvrs}&includeData=true";
+            }
+        };
+    }
+
     private Map<String, QueryHandler> getHandlers() {
         return Collections.unmodifiableMap(new HashMap<String, QueryHandler>() {{
             put(JOBS, getJobsHandler());
@@ -638,6 +794,9 @@ public class GetterAPI implements EndpointGroup {
             put(PLATFORMS_DETAILS, getPlatformDetailsHandler());
             put(PLATFORMS, getPlatformsHandler());
             put(KOJI_ARCHES, getKojiArchesHandler());
+            put(BUILDS, getBuildsHandler());
+            put(FILENAME_PARSER, getFileNameParserHandler());
+            put(TASKS, getTasksHandler());
         }});
     }
 
@@ -667,7 +826,7 @@ public class GetterAPI implements EndpointGroup {
 
         Result<String, String> handle(
                 Map<String, List<String>> queryParams
-        ) throws StorageException, ManagementException;
+        ) throws StorageException, ManagementException, IOException;
 
         String about();
     }
@@ -677,15 +836,15 @@ public class GetterAPI implements EndpointGroup {
 
         public BlacklistPredicate(String s) {
             String[] q = s.split(",");
-            for(String regex: q){
+            for (String regex : q) {
                 patterns.add(Pattern.compile(regex));
             }
         }
 
         @Override
         public boolean test(String o) {
-            for (Pattern p: patterns){
-                if (p.matcher(o).matches()){
+            for (Pattern p : patterns) {
+                if (p.matcher(o).matches()) {
                     return false;
                 }
             }
@@ -697,13 +856,13 @@ public class GetterAPI implements EndpointGroup {
         private final List<String> anotherList;
 
         public RemoveIfFound(List<String> anotherList) {
-            this.anotherList=anotherList;
+            this.anotherList = anotherList;
         }
 
         @Override
         public boolean test(String o) {
-            for (String s: anotherList){
-                if (Objects.equals(o, s)){
+            for (String s : anotherList) {
+                if (Objects.equals(o, s)) {
                     return false;
                 }
             }
