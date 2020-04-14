@@ -339,12 +339,17 @@ public class MatrixGenerator {
             List<List<Leaf>> row = matrix.get(i);
             p.print(tf.rowStart());
             for (int j = 0; j < row.size(); j++) {
+                int maxForSpan = 1;
+                for (int ii = 0; ii < matrix.size(); ii++) {
+                    List<List<Leaf>> rowForSpan = matrix.get(ii);
+                    maxForSpan  = Math.max(rowForSpan.get(j).size(), maxForSpan);
+                }
                 List<Leaf> cel = row.get(j);
                 String cellContent;
                 if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
                     cellContent = cel.get(0).toString();
                 } else {
-                    cellContent = tf.getContext(cel);
+                    cellContent = tf.getContext(cel, maxForSpan);
                     total += cel.size();
                 }
                 int align = lcol;
@@ -361,7 +366,11 @@ public class MatrixGenerator {
                         cellContent = fill(cellContent, align - 1, "-") + " ";
                     }
                 }
-                p.print(tf.cellStart() + fill(cellContent, align, " ") + tf.cellEnd());
+                if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
+                    p.print(tf.cellStart(maxForSpan) + fill(cellContent, align, " ") + tf.cellEnd());
+                } else {
+                    p.print(tf.cellStart() + fill(cellContent, align, " ") + tf.cellEnd());
+                }
             }
             p.println(tf.rowEnd());
         }
