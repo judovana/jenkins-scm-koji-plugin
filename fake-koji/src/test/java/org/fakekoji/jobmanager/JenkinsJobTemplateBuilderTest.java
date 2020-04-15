@@ -535,6 +535,10 @@ public class JenkinsJobTemplateBuilderTest {
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
@@ -635,6 +639,10 @@ public class JenkinsJobTemplateBuilderTest {
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
@@ -751,6 +759,10 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_AGENT=linux" + XML_NEW_LINE +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
                 "export OTOOL_IS_RHEL_Z_STREAM=true" + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
@@ -873,6 +885,10 @@ public class JenkinsJobTemplateBuilderTest {
                 "                <command>\n" +
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
@@ -993,6 +1009,10 @@ public class JenkinsJobTemplateBuilderTest {
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
                 "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
                 "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
                 "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
@@ -1205,6 +1225,10 @@ public class JenkinsJobTemplateBuilderTest {
                         "            <command>\n" +
                         "#!/bin/bash&#13;\n" +
                         "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
+                        "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
+                        "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
+                        "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
+                        "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
                         "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
                         "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
                         "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +

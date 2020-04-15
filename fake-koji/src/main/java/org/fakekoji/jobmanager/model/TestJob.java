@@ -229,10 +229,18 @@ public class TestJob extends TaskJob {
 
         final List<OToolVariable> exportedVariables = super.getExportedVariables();
         final List<OToolVariable> variantVariables = OToolVariable.createDefault(buildVariants);
+        final List<OToolVariable> buildPlatformVars = new ArrayList<>(3);
+        if (buildPlatform!=null){
+            buildPlatformVars.add(new OToolVariable("BUILD_OS", buildPlatform.toOsVar()));
+            buildPlatformVars.add(new OToolVariable("BUILD_OS_NAME", buildPlatform.getOs()));
+            buildPlatformVars.add(new OToolVariable("BUILD_OS_VERSION", buildPlatform.getVersionNumber()));
+            buildPlatformVars.add(new OToolVariable("BUILD_ARCH", buildPlatform.getArchitecture()));
+        }
         return Stream.of(
                 exportedVariables,
                 variantVariables,
-                buildVariables
+                buildVariables,
+                buildPlatformVars
         ).flatMap(List::stream).collect(Collectors.toList());
     }
 
