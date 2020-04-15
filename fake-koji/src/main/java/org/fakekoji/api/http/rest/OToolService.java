@@ -124,8 +124,8 @@ public class OToolService {
         return ""
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_TEST_PROJECTS + "\n"
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
-                + "                optional argument project=         \n"
-                + "                to regenerate only single project  \n"
+                + "                optional argument project=    to regenerate only single project     \n"
+                + "                and whitelist=regec to lmit the search even more  \n"
                 + MISC + "/" + UPDATE_JOBS+ "/{" + UPDATE_JOBS_LIST+","+UPDATE_JOBS_XMLS+","+UPDATE_JOBS_CREATE+","+ UPDATE_JOBS_REMOVE+","+ UPDATE_JOBS_UPDATE+"}\n"
                 + "                will affect update machines jobs\n"
                 + "                params: "+FILTER+"=regex "+ONLY_HW+"=bool "+ONLY_VM+"=bool\n"
@@ -292,12 +292,14 @@ public class OToolService {
                 path(REGENERATE_ALL, () -> {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
-                        JobUpdateResults r1 = jdkTestProjectManager.regenerateAll(project);
+                        String whitelist = context.queryParam("whitelist");
+                        JobUpdateResults r1 = jdkTestProjectManager.regenerateAll(project, whitelist);
                         context.status(200).json(r1);
                     }));
                     get(JDK_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
-                        JobUpdateResults r2 = jdkProjectManager.regenerateAll(project);
+                        String whitelist = context.queryParam("whitelist");
+                        JobUpdateResults r2 = jdkProjectManager.regenerateAll(project, whitelist);
                         context.status(200).json(r2);
                     }));
                 });

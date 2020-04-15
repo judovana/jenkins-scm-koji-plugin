@@ -190,14 +190,14 @@ public class JDKProjectManager implements Manager<JDKProject> {
         return cloningThread;
     }
 
-    public JobUpdateResults regenerateAll(String project) throws ManagementException, StorageException {
+    public JobUpdateResults regenerateAll(String project, String whitelist) throws ManagementException, StorageException {
         JobUpdateResults sum = new JobUpdateResults();
         JenkinsJobUpdater.wakeUpJenkins();
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         final List<JDKProject> jdkProjects = storage.loadAll(JDKProject.class);
         for (final JDKProject jdkProject : jdkProjects) {
             if (project == null || jdkProject.getId().equals(project)) {
-                JobUpdateResults r = jobUpdater.regenerate(jdkProject);
+                JobUpdateResults r = jobUpdater.regenerate(jdkProject, whitelist);
                 sum = sum.add(r);
             }
         }

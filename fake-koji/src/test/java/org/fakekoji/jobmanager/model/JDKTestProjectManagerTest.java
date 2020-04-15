@@ -36,12 +36,30 @@ public class JDKTestProjectManagerTest {
         JDKTestProjectManager tpm = new JDKTestProjectManager(cm.getJdkTestProjectStorage(), new JenkinsJobUpdater(DataGenerator.getSettings(folderHolder)));
         JenkinsCliWrapper.killCli();
         try {
-            JobUpdateResults r1 = tpm.regenerateAll(null);//create all
-            JobUpdateResults r2 = tpm.regenerateAll(null);//re create all
+            JobUpdateResults r1 = tpm.regenerateAll(null, null);//create all
+            JobUpdateResults r2 = tpm.regenerateAll(null, null);//re create all
             Assert.assertEquals(0, r1.jobsRewritten.size());
-            //Assert.assertNotEquals(0, r1.jobsCreated.size()); todo fix when generator generates test only jobs
-            //Assert.assertNotEquals(0, r2.jobsRewritten.size()); todo fix when generator generates test only jobs
+            Assert.assertEquals(5, r1.jobsCreated.size());
+            Assert.assertEquals(5, r2.jobsRewritten.size());
             Assert.assertEquals(0, r2.jobsCreated.size());
+        } finally {
+            JenkinsCliWrapper.reinitCli();
+        }
+    }
+
+    @Test
+    public void regenerateAllJDKTestProjectWithWhitelist() throws IOException, ManagementException, StorageException {
+        DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final ConfigManager cm = ConfigManager.create(folderHolder.configsRoot.getAbsolutePath());
+        JDKTestProjectManager tpm = new JDKTestProjectManager(cm.getJdkTestProjectStorage(), new JenkinsJobUpdater(DataGenerator.getSettings(folderHolder)));
+        JenkinsCliWrapper.killCli();
+        try {
+            JobUpdateResults r1 = tpm.regenerateAll(null, "tck-.*");//create tck
+            JobUpdateResults r2 = tpm.regenerateAll(null, null);//re create rest
+            Assert.assertEquals(0, r1.jobsRewritten.size());
+            Assert.assertEquals(4, r1.jobsCreated.size());
+            Assert.assertEquals(4, r2.jobsRewritten.size());
+            Assert.assertEquals(1,  r2.jobsCreated.size());
         } finally {
             JenkinsCliWrapper.reinitCli();
         }

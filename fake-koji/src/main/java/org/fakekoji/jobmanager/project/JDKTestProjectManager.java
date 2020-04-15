@@ -92,13 +92,13 @@ public class JDKTestProjectManager implements Manager<JDKTestProject> {
      *
      * @throws StorageException
      */
-    public JobUpdateResults regenerateAll(String project) throws StorageException, ManagementException {
+    public JobUpdateResults regenerateAll(String project, String whitelist) throws StorageException, ManagementException {
         JobUpdateResults sum = new JobUpdateResults();
         JenkinsJobUpdater.wakeUpJenkins();
         final List<JDKTestProject> jdkTestProjects = storage.loadAll(JDKTestProject.class);
         for(final JDKTestProject jdkTestProject: jdkTestProjects) {
             if (project == null || jdkTestProject.getId().equals(project)) {
-                JobUpdateResults r = jobUpdater.regenerate(jdkTestProject);
+                JobUpdateResults r = jobUpdater.regenerate(jdkTestProject, whitelist);
                 sum = sum.add(r);
             }
         }

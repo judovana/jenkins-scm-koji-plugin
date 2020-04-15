@@ -31,6 +31,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,14 +47,14 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     @Override
-    public JobUpdateResults regenerate(Project project) throws StorageException, ManagementException {
+    public JobUpdateResults regenerate(Project project, String whitelist) throws StorageException, ManagementException {
         final JDKProjectParser jdkProjectParser = new JDKProjectParser(
                 ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
                 settings.getLocalReposRoot(),
                 settings.getScriptsRoot()
         );
         final Set<Job> jobs = project == null ? Collections.emptySet() : jdkProjectParser.parse(project);
-        return regenerate(jobs);
+        return regenerate(jobs, whitelist);
     }
 
     @Override
@@ -153,7 +154,11 @@ public class JenkinsJobUpdater implements JobUpdater {
      * @param jobs
      * @return
      */
-    JobUpdateResults regenerate(Set<Job> jobs) {
+    JobUpdateResults regenerate(Set<Job> jobs, String whitelist) {
+        if (whitelist == null || whitelist.trim().isEmpty()){
+            whitelist = ".*";
+        }
+        Pattern whitelistPattern = Pattern.compile(whitelist);
         final Function<Job, JobUpdateResult> rewriteFunction = jobUpdateFunctionWrapper(getRewriteFunction());
         final Function<Job, JobUpdateResult> createFunction = jobUpdateFunctionWrapper(getCreateFunction());
         final Function<Job, JobUpdateResult> reviveFunction = jobUpdateFunctionWrapper(getReviveFunction());
@@ -166,6 +171,9 @@ public class JenkinsJobUpdater implements JobUpdater {
         final Set<String> existingJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobsRoot().list())));
 
         for (final Job job : jobs) {
+            if (!whitelistPattern.matcher(job.getName()).matches()){
+                continue;
+            }
             if (archivedJobs.contains(job.toString()) && existingJobs.contains(job.toString())){
                 ///very wierd!
                 jobsRewritten .add(rewriteFunction.apply(job));
