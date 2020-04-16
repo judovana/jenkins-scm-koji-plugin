@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -69,6 +70,8 @@ public class GetterAPI implements EndpointGroup {
     private static final String SERVICE = "service";
     private static final String SSH = "ssh";
     private static final String TYPE = "type";
+    private static final String NVR = "nvr";
+    private static final String AS_REGEX = "asRegex";
     private static final String WEBAPP = "webapp";
     private static final String XML_RPC = "xmlRpc";
 
@@ -123,7 +126,7 @@ public class GetterAPI implements EndpointGroup {
                 final Optional<String> includeParam = extractParamValue(paramsMap, "include");
                 final Optional<String> projectParam = extractParamValue(paramsMap, "project");
 
-                final String url = urlParam.orElse(AccessibleSettings.master.baseUrl+":"+settings.getJenkinsPort()+"/job/");
+                final String url = urlParam.orElse(AccessibleSettings.master.baseUrl + ":" + settings.getJenkinsPort() + "/job/");
 
                 List<String> onJenkins = new ArrayList<>();
                 List<String> testProjects = new ArrayList<>();
@@ -519,6 +522,20 @@ public class GetterAPI implements EndpointGroup {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
                 final Optional<String> typeOpt = extractParamValue(queryParams, TYPE);
+                final Optional<String> nvrOpt = extractParamValue(queryParams, NVR);
+                final boolean asRegex = Boolean.valueOf(extractParamValue(queryParams, AS_REGEX).orElse("false"));
+                final String prep;
+                final String join;
+                final String post;
+                if (asRegex) {
+                    prep = ".*-";
+                    join = "-.*|.*-";
+                    post = "-.*";
+                } else {
+                     prep = "";
+                     join = "\n";
+                     post = "\n";
+                }
                 if (typeOpt.isPresent()) {
                     final String type = typeOpt.get();
                     final Stream<Project> projects;
@@ -536,34 +553,67 @@ public class GetterAPI implements EndpointGroup {
                         default:
                             return Result.err("Unknown project type");
                     }
-                    return Result.ok(projects
+                    return Result.ok(prep + projects
                             .map(Project::getId)
                             .sorted(String::compareTo)
-                            .collect(Collectors.joining("\n"))
+                            .collect(Collectors.joining(join)) + post);
+                } else if (nvrOpt.isPresent()) {
+                    final OToolParser parser = new OToolParser(
+                            jdkProjectManager.readAll(),
+                            jdkVersionManager.readAll(),
+                            taskVariantManager.getBuildVariants()
                     );
+                    final String archive = nvrOpt.get();
+                    Result r;
+                    try {
+                        r = parser.parseArchive(archive).map(oToolArchive -> prep + oToolArchive.getProjectName() + post);
+                    }catch (Exception ex){
+                        //ex.printStackTrace(); we do not care, falling back to
+                        r = Result.err("Not and parse-able project");
+                    }
+                    if (r.isOk()) {
+                        return r;
+                    } else {
+                        //ok, it is not jdkProject, so it must be jdkTestProject
+                        String nv = archive.substring(0, archive.lastIndexOf("-"));
+                        String n = nv.substring(0, nv.lastIndexOf("-"));
+                        List<JDKTestProject> testProjects = jdkTestProjectManager.readAll();
+                        List<String> results = testProjects.stream()
+                                .filter(testproject -> testproject.getProduct().getPackageName().equals(n))
+                                .map(testproject -> testproject.getId())
+                                .sorted()
+                                .collect(Collectors.toList());
+                        if (results.isEmpty()) {
+                            return Result.err("");
+                        } else {
+                            return Result.ok(prep + String.join(join, results) + post);
+                        }
+                    }
+                } else {
+                    final Stream<Project> projects = Stream.of(
+                            jdkProjectManager.readAll(),
+                            jdkTestProjectManager.readAll()
+                    ).flatMap(List::stream);
+                    Optional<String> productOpt = extractParamValue(queryParams, PRODUCT);
+                    if (productOpt.isPresent()) {
+                        final String product = productOpt.get();
+                        return Result.ok(prep + projects
+                                .filter(project -> project.getProduct().getPackageName().equals(product))
+                                .map(Project::getId)
+                                .collect(Collectors.joining(join)) + post);
+                    }
+                    return Result.ok(prep + projects.map(Project::getId)
+                            .sorted(String::compareTo)
+                            .collect(Collectors.joining(join)) + post);
                 }
-                final Stream<Project> projects = Stream.of(
-                        jdkProjectManager.readAll(),
-                        jdkTestProjectManager.readAll()
-                ).flatMap(List::stream);
-                Optional<String> productOpt = extractParamValue(queryParams, PRODUCT);
-                if (productOpt.isPresent()) {
-                    final String product = productOpt.get();
-                    return Result.ok(projects
-                            .filter(project -> project.getProduct().getPackageName().equals(product))
-                            .map(Project::getId)
-                            .collect(Collectors.joining("\n")));
-                }
-                return Result.ok(projects.map(Project::getId)
-                        .sorted(String::compareTo)
-                        .collect(Collectors.joining("\n")));
             }
 
             @Override
             public String about() {
-                return "/projects?[" + String.join("|",
-                        TYPE + "=[" + Project.ProjectType.JDK_PROJECT + "|"
-                                + Project.ProjectType.JDK_TEST_PROJECT + "]") + "]";
+                return "/projects?[ one of \n" +
+                        "\t" + TYPE + "=[" + Project.ProjectType.JDK_PROJECT + "|" + Project.ProjectType.JDK_TEST_PROJECT + "]\n" +
+                        "\t" + NVR + "=nvr with optional asRegex=true\n" +
+                        "]";
             }
         };
     }
@@ -642,7 +692,7 @@ public class GetterAPI implements EndpointGroup {
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
                 List<Task> tasks = taskManager.readAll();
                 String kojiArches = tasks.stream()
-                        .map(task-> task.getId())
+                        .map(task -> task.getId())
                         .sorted()
                         .collect(Collectors.joining("\n"));
                 return Result.ok(kojiArches + "\n");
@@ -824,7 +874,7 @@ public class GetterAPI implements EndpointGroup {
                     .sorted(Comparator.comparing(Map.Entry::getKey))
                     .map(entry -> entry.getValue().about())
                     .collect(Collectors.joining("\n\n"));
-            context.result(help);
+            context.result(help + "\n");
         });
     }
 
