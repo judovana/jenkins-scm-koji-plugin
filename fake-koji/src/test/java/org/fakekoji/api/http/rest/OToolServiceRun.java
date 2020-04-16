@@ -31,6 +31,7 @@ public class OToolServiceRun {
     Map<String, List<String>> winZips = new HashMap<>();
     Map<String, List<String>> rpms = new HashMap<>();
     Map<String, List<String>> containers = new HashMap<>();
+    Map<String, List<String>> portable = new HashMap<>();
 
     List<String> container = Arrays.asList("docker-image-sha256:084490c9716c6e661eabeb78208dfd8124f031f8d7fce066b7f7cca736b22ff6.x86_64.tar.gz");
     List<String> jdk8F30src = Arrays.asList("java-1.8.0-openjdk-1.8.0.242.b08-0.fc30.src.rpm");
@@ -951,6 +952,24 @@ public class OToolServiceRun {
             "java-1.8.0-openjdk-src-debug-1.8.0.242.b08-1.el7.x86_64.rpm",
             "java-1.8.0-openjdk-debuginfo-1.8.0.242.b08-1.el7.x86_64.rpm");
 
+    List<String> portable11src = Arrays.asList("java-11-openjdk-11.0.7.10-0.el6openjdkportable.src.rpm");
+
+    List<String> portable11x64 = Arrays.asList("java-11-openjdk-11.0.7.10-0.el6openjdkportable.x86_64.rpm",
+            "java-11-openjdk-portable-11.0.7.10-0.el6openjdkportable.x86_64.rpm",
+            "java-11-openjdk-portable-debug-11.0.7.10-0.el6openjdkportable.x86_64.rpm",
+            "java-11-openjdk-portable-devel-11.0.7.10-0.el6openjdkportable.x86_64.rpm",
+            "java-11-openjdk-portable-devel-debug-11.0.7.10-0.el6openjdkportable.x86_64.rpm");
+
+
+    List<String> portable8src = Arrays.asList("java-1.8.0-openjdk-1.8.0.252.b09-0.el6openjdkportable.src.rpm");
+
+    List<String> portable8x64 = Arrays.asList("java-1.8.0-openjdk-1.8.0.252.b09-0.el6openjdkportable.x86_64.rpm",
+            "java-1.8.0-openjdk-portable-1.8.0.252.b09-0.el6openjdkportable.x86_64.rpm",
+            "java-1.8.0-openjdk-portable-debug-1.8.0.252.b09-0.el6openjdkportable.x86_64.rpm",
+            "java-1.8.0-openjdk-portable-devel-1.8.0.252.b09-0.el6openjdkportable.x86_64.rpm",
+            "java-1.8.0-openjdk-portable-devel-debug-1.8.0.252.b09-0.el6openjdkportable.x86_64.rpm");
+
+
     private static class BlackWhiteLister {
 
         private final List<String> blackList;
@@ -1056,8 +1075,8 @@ public class OToolServiceRun {
         }
 
         public String listsToString() {
-            return "  B: [" + String.join(" " , blackList) + "]\n"
-                    + "  W: ["  + String.join(" " , whiteList)+ "]";
+            return "  B: [" + String.join(" ", blackList) + "]\n"
+                    + "  W: [" + String.join(" ", whiteList) + "]";
         }
     }
 
@@ -1134,6 +1153,9 @@ public class OToolServiceRun {
         rpms.put("jdk11El8ppc64le", jdk11El8ppc64le);
 
         containers.put("container", container);
+
+        portable.put("portable11x64", portable11x64);
+        portable.put("portable8x64", portable8x64);
     }
 
     BlackWhiteLister sdk = new BlackWhiteLister("sdk",
@@ -1149,13 +1171,17 @@ public class OToolServiceRun {
     BlackWhiteLister release = new BlackWhiteLister("release",
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
             new String[]{""});
+    BlackWhiteLister all = new BlackWhiteLister("all",
+            new String[]{},
+            new String[]{});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
             new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*-fastdebug-.*).*"},
             new String[]{});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*","(?!.*(-slowdebug-|-debug-).*).*"},
+            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-slowdebug-|-debug-).*).*"},
             new String[]{});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
+    BlackWhiteLister portableLists = new BlackWhiteLister("portable", new String[]{}, new String[]{"java-[\\d\\.]{2,5}-openjdk-portable-devel[b\\d\\.\\-ea]{3,}el6openjdkportable.*"});
     BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
     BlackWhiteLister win64ZipsLists = new BlackWhiteLister("win64zips",
             new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", ".*\\.json$", ".*(redhat.windows|windows.redhat).x86.zip$"},
@@ -1166,7 +1192,7 @@ public class OToolServiceRun {
     BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite", new String[]{}, new String[]{});
 
     BlackWhiteLister[] jresdk = new BlackWhiteLister[]{jreHeadless, jre, sdk};
-    BlackWhiteLister[] debugMode = new BlackWhiteLister[]{/*allDebugRelease unused now,*/ release, fasdebug, slowdebug};
+    BlackWhiteLister[] debugMode = new BlackWhiteLister[]{all, release, fasdebug, slowdebug};
     BlackWhiteLister[] suites = new BlackWhiteLister[]{nonDebuginfoSuite, debuginfoSuite};
 
     @Test
@@ -1190,6 +1216,8 @@ public class OToolServiceRun {
         System.out.println(win64ZipsLists.listsToString());
         System.out.println(" ** " + rpmsLists.getName());
         System.out.println(rpmsLists.listsToString());
+        System.out.println(" ** " + portableLists.getName());
+        System.out.println(portableLists.listsToString());
 
     }
 
@@ -1212,7 +1240,11 @@ public class OToolServiceRun {
                     for (BlackWhiteLister s : suites) {
                         BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, win64ZipsLists);
                         List<String> r = checkMatch(bl, e.getValue(), e.getKey());
-                        Assert.assertTrue(r.size() >= 0 && r.size() <= 1);
+                        if (d == all){
+                            //currenlty nothing intereesting
+                        } else {
+                            Assert.assertTrue(r.size() >= 0 && r.size() <= 1);
+                        }
                     }
                 }
             }
@@ -1227,6 +1259,22 @@ public class OToolServiceRun {
                 }
             }
         }
+    }
+
+    @Test
+    public void regexgamePortable() {
+        for (Map.Entry<String, List<String>> e : portable.entrySet()) {
+            for (BlackWhiteLister j : jresdk) {
+                for (BlackWhiteLister d : debugMode) {
+                    for (BlackWhiteLister s : suites) {
+                        BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, portableLists);
+                        checkMatch(bl, e.getValue(), e.getKey());
+                    }
+                }
+            }
+        }
+
+
     }
 
     private List<String> checkMatch(BlackWhiteLister bl, List<String> orig, String id) {
