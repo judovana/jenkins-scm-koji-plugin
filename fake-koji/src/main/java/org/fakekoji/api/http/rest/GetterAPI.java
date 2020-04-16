@@ -72,6 +72,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String TYPE = "type";
     private static final String NVR = "nvr";
     private static final String AS_REGEX = "asRegex";
+    private static final String UNSAFE = "unsafe";
     private static final String WEBAPP = "webapp";
     private static final String XML_RPC = "xmlRpc";
 
@@ -524,6 +525,7 @@ public class GetterAPI implements EndpointGroup {
                 final Optional<String> typeOpt = extractParamValue(queryParams, TYPE);
                 final Optional<String> nvrOpt = extractParamValue(queryParams, NVR);
                 final boolean asRegex = Boolean.valueOf(extractParamValue(queryParams, AS_REGEX).orElse("false"));
+                final boolean unsafe = Boolean.valueOf(extractParamValue(queryParams, UNSAFE).orElse("false"));
                 final String prep;
                 final String join;
                 final String post;
@@ -584,7 +586,16 @@ public class GetterAPI implements EndpointGroup {
                                 .sorted()
                                 .collect(Collectors.toList());
                         if (results.isEmpty()) {
-                            return Result.err("");
+                            if (unsafe){
+                                return Result.ok(prep +
+                                        jdkTestProjectManager.readAll()
+                                                .stream()
+                                                .map(Project::getId)
+                                                .sorted(String::compareTo)
+                                                .collect(Collectors.joining(join)) + post);
+                            } else {
+                                return Result.err("");
+                            }
                         } else {
                             return Result.ok(prep + String.join(join, results) + post);
                         }
@@ -612,7 +623,7 @@ public class GetterAPI implements EndpointGroup {
             public String about() {
                 return "/projects?[ one of \n" +
                         "\t" + TYPE + "=[" + Project.ProjectType.JDK_PROJECT + "|" + Project.ProjectType.JDK_TEST_PROJECT + "]\n" +
-                        "\t" + NVR + "=nvr with optional asRegex=true\n" +
+                        "\t" + NVR + "=nvr with optional asRegex=true and usnafe=true (ill return all testOnly on failure)\n" +
                         "]";
             }
         };
