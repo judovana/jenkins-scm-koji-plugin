@@ -1159,7 +1159,7 @@ public class OToolServiceRun {
     }
 
     BlackWhiteLister sdk = new BlackWhiteLister("sdk",
-            new String[]{".*-jre-.*windows.*"},
+            new String[]{".*-jre-.*windows.*", ".*-portable-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"},
             new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
             new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*"},
@@ -1181,7 +1181,7 @@ public class OToolServiceRun {
             new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-slowdebug-|-debug-).*).*"},
             new String[]{});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
-    BlackWhiteLister portableLists = new BlackWhiteLister("portable", new String[]{}, new String[]{"java-[\\d\\.]{2,5}-openjdk-portable-devel[b\\d\\.\\-ea]{3,}el6openjdkportable.*"});
+    BlackWhiteLister portableLists = new BlackWhiteLister("portable", new String[]{"java-[\\d\\.]{2,5}-openjdk-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"}, new String[]{});
     BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
     BlackWhiteLister win64ZipsLists = new BlackWhiteLister("win64zips",
             new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", ".*\\.json$", ".*(redhat.windows|windows.redhat).x86.zip$"},
