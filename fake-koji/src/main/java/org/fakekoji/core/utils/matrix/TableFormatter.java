@@ -5,6 +5,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -265,7 +266,7 @@ public interface TableFormatter {
             }
             this.jvm = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator + "java";
             File cpBase = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
-            if (!cpBase.isDirectory()){
+            if (!cpBase.isDirectory()) {
                 cpBase = cpBase.getParentFile();
             }
             System.err.println(cpBase);
@@ -290,7 +291,7 @@ public interface TableFormatter {
             ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
                     "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", job, "--return", "DONE");
             LOGGER.log(Level.INFO, pb.command().toString());
-            if (System.getProperty("debugSummaryProcess")!=null) {
+            if (System.getProperty("debugSummaryProcess") != null) {
                 pb.redirectError(ProcessBuilder.Redirect.INHERIT);
                 pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
             }
@@ -335,25 +336,88 @@ public interface TableFormatter {
                 ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
                         "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", projects);
                 LOGGER.log(Level.INFO, pb.command().toString());
-                if (System.getProperty("debugSummaryProcess")!=null) {
+                if (System.getProperty("debugSummaryProcess") != null) {
                     pb.redirectError(ProcessBuilder.Redirect.INHERIT);
                 }
-                String result = "Failed to generate report - "+ pb.command();
+                String result = "Failed to generate report - " + pb.command();
                 try {
                     final Process p = pb.start();
+                    StreamGobbler out = new StreamGobbler(p.getInputStream());
+                    Thread outT = new Thread(out);
+                    outT.start();
+                    if (System.getProperty("debugSummaryProcess") == null) {
+                        StreamLooser err = new StreamLooser(p.getErrorStream());
+                        Thread errT = new Thread(err);
+                        errT.start();
+                    }
+                    while (!out.done) {
+                        Thread.sleep(1000);
+                    }
                     p.waitFor();
-                    try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                        result = br.lines().collect(Collectors.joining("\n"));
+                    result = out.sb.toString();
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                }
+                if (result.trim().isEmpty()) {
+                    result = "Some error to generate report - " + pb.command();
+                }
+                return s + "<hr/>" + result;
+            }
+            return s;
+        }
+
+        class StreamLooser implements Runnable {
+            private InputStream inputStream;
+
+            public StreamLooser(InputStream inputStream) {
+                this.inputStream = inputStream;
+            }
+
+            @Override
+            public void run() {
+                try {
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+                        while (true) {
+                            String l = br.readLine();
+                            if (l == null) {
+                                break;
+                            }
+                        }
                     }
                 } catch (Exception ex) {
                     LOGGER.log(Level.WARNING, ex.getMessage(), ex);
                 }
-                if (result.trim().isEmpty()){
-                    result = "Some error to generate report - "+ pb.command();
-                }
-                return s+"<hr/>"+result;
             }
-            return s;
+        }
+
+        class StreamGobbler implements Runnable {
+            private InputStream inputStream;
+            private final StringBuilder sb = new StringBuilder();
+            private boolean done = false;
+
+            public StreamGobbler(InputStream inputStream) {
+                this.inputStream = inputStream;
+            }
+
+            @Override
+            public void run() {
+                try {
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+                        while (true) {
+                            String l = br.readLine();
+                            if (l == null) {
+                                break;
+                            } else {
+                                sb.append(l).append("\n");
+                            }
+                        }
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                } finally {
+                    done = true;
+                }
+            }
         }
     }
 }
