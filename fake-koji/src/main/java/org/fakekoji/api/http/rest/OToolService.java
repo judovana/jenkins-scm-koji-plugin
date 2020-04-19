@@ -323,15 +323,27 @@ public class OToolService {
                     String project = context.queryParam(PROJECT);
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
-                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf, project==null?new String[0]:project.split(","));
+                    String[] projects = project == null ? new String[0] : project.split(",");
+                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf, projects);
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
-                    if ("htmlspan".equals(format)){
+                    if ("htmlspan".equals(format)) {
                         context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.SpanningHtmlTableFormatter()));
-                    } else if ("html".equals(format)){
+                    } else if ("html".equals(format)) {
                         context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter()));
+                    } else if ("fill".equals(format)) {
+                        String vr = context.queryParam("vr");
+                        String time = context.queryParam("time");
+                        boolean alsoReport = notNullBoolean(context, "alsoReport", false);
+                        if (vr == null || vr.isEmpty()) {
+                            context.status(400).result("nvr=<nvr> necessary");
+                        } else {
+                            context.status(200).result(m.printMatrix(
+                                    orieantaion, dropRows, dropColumns,
+                                    new TableFormatter.SpanningFillingHtmlTableFormatter(vr, settings, time, alsoReport, projects)));
+                        }
                     } else {
                         context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));
                     }

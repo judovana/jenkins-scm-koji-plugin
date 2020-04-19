@@ -241,4 +241,119 @@ public interface TableFormatter {
             return getContextImpl(l, true, maxInColumn);
         }
     }
+
+    public static class SpanningFillingHtmlTableFormatter extends SpanningHtmlTableFormatter {
+
+        private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
+
+        private final String vr;
+        private final String projects;
+        private final String jvm;
+        private final File remoteJar;
+        private static final String remoteJarName = "summary-report-1.0-SNAPSHOT-jar-with-dependencies.jar";
+        private final String url;
+        private final String dir;
+        private final String time;
+        private final boolean alsoReport;
+
+        public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String... projects) {
+            this.vr = nvr;
+            if (projects == null || projects.length == 0) {
+                this.projects = ".*";
+            } else {
+                this.projects = ".*-" + String.join("-.*|.*-", projects) + "-.*";
+            }
+            this.jvm = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+            File cpBase = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
+            if (!cpBase.isDirectory()){
+                cpBase = cpBase.getParentFile();
+            }
+            System.err.println(cpBase);
+            if (System.getProperty("overwriteCpBaseOfSummaryReport") != null) {
+                remoteJar = new File(System.getProperty("overwriteCpBaseOfSummaryReport"), remoteJarName);
+            } else {
+                remoteJar = new File(cpBase, remoteJarName);
+            }
+            url = AccessibleSettings.master.baseUrl + ":" + settings.getJenkinsPort();
+            dir = settings.getJenkinsJobsRoot().getAbsolutePath();
+            if (time == null) {
+                this.time = "1";
+            } else {
+                this.time = time;
+            }
+            this.alsoReport = appendReport;
+
+        }
+
+        @Override
+        protected String openAdd(String job) {
+            ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
+                    "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", job, "--return", "DONE");
+            LOGGER.log(Level.INFO, pb.command().toString());
+            if (System.getProperty("debugSummaryProcess")!=null) {
+                pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+            }
+            //todo execute ones for all jobs, and store in file. save report?
+            int i = 5; //it returns 0green, 1white, 2yellow, 3red, 3< error (4 known 125 unknown..hopefuuly)
+            try {
+                Process p = pb.start();
+                i = p.waitFor();
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            }
+            String color;
+            switch (i) {
+                case (0):
+                    color = "green";
+                    break;
+                case (1):
+                    color = "lightgreen";
+                    break;
+                case (2):
+                    color = "yellow";
+                    break;
+                case (3):
+                    color = "red";
+                    break;
+                default:
+                    color = "orange";
+                    break;
+            }
+            return "<span style=\"background-color: " + color + "; width:100%; display:block; border:solid ; border-width: 1px\">";
+        }
+
+        @Override
+        protected String closeAdd() {
+            return "</span>";
+        }
+
+        @Override
+        public String tableEnd() {
+            String s = super.tableEnd();
+            if (alsoReport) {
+                ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
+                        "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", projects);
+                LOGGER.log(Level.INFO, pb.command().toString());
+                if (System.getProperty("debugSummaryProcess")!=null) {
+                    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+                }
+                String result = "Failed to generate report - "+ pb.command();
+                try {
+                    final Process p = pb.start();
+                    p.waitFor();
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                        result = br.lines().collect(Collectors.joining("\n"));
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                }
+                if (result.trim().isEmpty()){
+                    result = "Some error to generate report - "+ pb.command();
+                }
+                return s+"<hr/>"+result;
+            }
+            return s;
+        }
+    }
 }
