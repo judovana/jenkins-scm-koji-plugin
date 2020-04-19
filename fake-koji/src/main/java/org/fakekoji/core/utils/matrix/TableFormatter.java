@@ -1,11 +1,18 @@
 package org.fakekoji.core.utils.matrix;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public interface TableFormatter {
 
@@ -151,7 +158,7 @@ public interface TableFormatter {
             }
             if (td) {
                 while (l.size() < maxInColumn) {
-                    if (l.size() == 0){
+                    if (l.size() == 0) {
                         l.add(new DummyLeaf("0"));
                     } else {
                         l.add(new DummyLeaf(""));
@@ -183,12 +190,20 @@ public interface TableFormatter {
                 } else
                     try {
                         new URL(url);
-                        sb.append(tdopen + "<a href=\"" + url + "\">").append("[" + (i + 1) + "]").append("</a>" + tdclose);
+                        sb.append(tdopen + openAdd(url) + "<a href=\"" + url + "\">").append("[" + (i + 1) + "]").append("</a>" + closeAdd() + tdclose);
                     } catch (MalformedURLException ex) {
-                        sb.append(tdopen + "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\">").append("[" + (i + 1) + "]").append("</a>" + tdclose);
+                        sb.append(tdopen + openAdd(url) + "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\">").append("[" + (i + 1) + "]").append("</a>" + closeAdd() + tdclose);
                     }
             }
             return sb.toString();
+        }
+
+        protected String openAdd(String job) {
+            return "";
+        }
+
+        protected String closeAdd() {
+            return "";
         }
 
         @Override
@@ -202,7 +217,7 @@ public interface TableFormatter {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < project.length; i++) {
                     String leaf = project[i];
-                    sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~").append(leaf).append("\"").append("[" + (i + 1) + "]").append("</a>");
+                    sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~").append(leaf).append("\">").append("[" + (i + 1) + "]").append("</a>");
                 }
                 return sb.toString();
             }
