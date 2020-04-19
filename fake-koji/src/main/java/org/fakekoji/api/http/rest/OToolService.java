@@ -69,10 +69,10 @@ public class OToolService {
     private static final String UPDATE_JOBS_UPDATE = "update";
     private static final String VIEWS = "views";
     private static final String VIEWS_LIST_OTOOL = "list";
-    private static final String VIEWS_DETAILS= "details";
-    private static final String VIEWS_MATCHES= "matches";
-    private static final String VIEWS_MATCHES_JENKINS= "jenkins";
-    private static final String VIEWS_XMLS= "xmls";
+    private static final String VIEWS_DETAILS = "details";
+    private static final String VIEWS_MATCHES = "matches";
+    private static final String VIEWS_MATCHES_JENKINS = "jenkins";
+    private static final String VIEWS_XMLS = "xmls";
     private static final String VIEWS_CREATE = "create";
     private static final String VIEWS_REMOVE = "remove";
     private static final String VIEWS_UPDATE = "update";
@@ -84,10 +84,10 @@ public class OToolService {
     private static final String MATRIX_FORMAT = "format";
     private static final String PROJECT = "project";
 
-    private static final String ARCHES_EXPECTED= "archesExpected"; //will show or generate arches_expected for NVR. No param - deduct from c
-    private static final String ARCHES_EXPECTED_LIST= "list"; //show arches expected for nvr. If no nvr, then list possible arches (from platform's koji arches)
-    private static final String ARCHES_EXPECTED_ARCHES= "set"; //coma separated list of arches to put in, note that here we are on  old api only, so koji-arches can be suggested
-    private static final String ARCHES_EXPECTED_LIST_NVR= "nvr"; //optional target for list, mandatory target for set; on new api error
+    private static final String ARCHES_EXPECTED = "archesExpected"; //will show or generate arches_expected for NVR. No param - deduct from c
+    private static final String ARCHES_EXPECTED_LIST = "list"; //show arches expected for nvr. If no nvr, then list possible arches (from platform's koji arches)
+    private static final String ARCHES_EXPECTED_ARCHES = "set"; //coma separated list of arches to put in, note that here we are on  old api only, so koji-arches can be suggested
+    private static final String ARCHES_EXPECTED_LIST_NVR = "nvr"; //optional target for list, mandatory target for set; on new api error
 
     private static final String REDEPLOY = "re";
     private static final String REDEPLOY_TEST = "test";
@@ -126,15 +126,15 @@ public class OToolService {
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
                 + "                optional argument project=    to regenerate only single project     \n"
                 + "                and whitelist=regec to lmit the search even more  \n"
-                + MISC + "/" + UPDATE_JOBS+ "/{" + UPDATE_JOBS_LIST+","+UPDATE_JOBS_XMLS+","+UPDATE_JOBS_CREATE+","+ UPDATE_JOBS_REMOVE+","+ UPDATE_JOBS_UPDATE+"}\n"
+                + MISC + "/" + UPDATE_JOBS + "/{" + UPDATE_JOBS_LIST + "," + UPDATE_JOBS_XMLS + "," + UPDATE_JOBS_CREATE + "," + UPDATE_JOBS_REMOVE + "," + UPDATE_JOBS_UPDATE + "}\n"
                 + "                will affect update machines jobs\n"
-                + "                params: "+FILTER+"=regex "+ONLY_HW+"=bool "+ONLY_VM+"=bool\n"
-                + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL+","+VIEWS_DETAILS+","+VIEWS_XMLS+","+ VIEWS_CREATE+","+ VIEWS_REMOVE+","+ VIEWS_UPDATE+","+VIEWS_MATCHES+","+VIEWS_MATCHES_JENKINS+ "}\n"
+                + "                params: " + FILTER + "=regex " + ONLY_HW + "=bool " + ONLY_VM + "=bool\n"
+                + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL + "," + VIEWS_DETAILS + "," + VIEWS_XMLS + "," + VIEWS_CREATE + "," + VIEWS_REMOVE + "," + VIEWS_UPDATE + "," + VIEWS_MATCHES + "," + VIEWS_MATCHES_JENKINS + "}\n"
                 + "                will affect jenkins views\n"
-                + "                params: "+FILTER+"=regex "+SKIP_EMPTY+"=true/false\n"
+                + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
-                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* "+MATRIX_FORMAT+"=htmlspan/html/plain\n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=htmlspan/html/plain/fill (fill requires vr=>nvr time=number alsoReport=false>\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n";
     }
@@ -219,7 +219,7 @@ public class OToolService {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
-                                String results= va.create(jvt, jobs);
+                                String results = va.create(jvt, jobs);
                                 context.status(200).result(results);
                             }
                     ));
@@ -227,7 +227,7 @@ public class OToolService {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
-                                String results= va.delete(jvt, jobs);
+                                String results = va.delete(jvt, jobs);
                                 context.status(200).result(results);
                             }
                     ));
@@ -235,7 +235,7 @@ public class OToolService {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
-                                String results= va.update(jvt, jobs);
+                                String results = va.update(jvt, jobs);
                                 context.status(200).result(results);
                             }
                     ));
@@ -244,10 +244,10 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 if (va.isSkipEmpty()) {
                                     List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
-                                    String viewsAndMatchesToPrint= va.listNonEmpty(jvt, jobs);
+                                    String viewsAndMatchesToPrint = va.listNonEmpty(jvt, jobs);
                                     context.status(200).result(viewsAndMatchesToPrint);
                                 } else {
-                                    String viewsAndMatchesToPrint= va.list(jvt);
+                                    String viewsAndMatchesToPrint = va.list(jvt);
                                     context.status(200).result(viewsAndMatchesToPrint);
                                 }
                             }
