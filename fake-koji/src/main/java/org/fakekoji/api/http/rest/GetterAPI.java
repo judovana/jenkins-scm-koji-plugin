@@ -59,6 +59,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String PRODUCTS = "products";
     private static final String PROJECT = "project";
     private static final String PROJECTS = "projects";
+    private static final String ADDITIONAL_RULES = "rules";
     private static final String FILENAME_PARSER = "filenameParser";
     private static final String PLATFORMS = "platforms";
     private static final String PLATFORMS_DETAILS = "platformDetails";
@@ -524,6 +525,20 @@ public class GetterAPI implements EndpointGroup {
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
                 final Optional<String> typeOpt = extractParamValue(queryParams, TYPE);
                 final Optional<String> nvrOpt = extractParamValue(queryParams, NVR);
+                final Optional<String> rulesOpt = extractParamValue(queryParams, ADDITIONAL_RULES);
+                final List<String[]> rulesPairList;
+                if (rulesOpt.isPresent()) {
+                    String[] rules = rulesOpt.get().split("[\\s,]+");
+                    if (rules.length == 0 || rules.length % 2 == 1) {
+                        return Result.err("if " + ADDITIONAL_RULES + " is used, then it must be >0 and mus be even number of them. You have " + rules.length);
+                    }
+                    rulesPairList = new ArrayList<>(rules.length / 2);
+                    for (int i = 0; i < rules.length; i += 2) {
+                        rulesPairList.add(new String[]{rules[i], rules[i + 1]});
+                    }
+                } else {
+                    rulesPairList = Collections.emptyList();
+                }
                 final String asRegex = extractParamValue(queryParams, AS_REGEX_LIST).orElse(null);
                 final boolean unsafe = Boolean.valueOf(extractParamValue(queryParams, UNSAFE).orElse("false"));
                 final String prep;
@@ -534,13 +549,13 @@ public class GetterAPI implements EndpointGroup {
                     join = "-.*|.*-";
                     post = "-.*";
                 } else if ("list".equals(asRegex)) {
-                        prep = "";
-                        join = ",";
-                        post = "";
+                    prep = "";
+                    join = ",";
+                    post = "";
                 } else {
-                     prep = "";
-                     join = "\n";
-                     post = "\n";
+                    prep = "";
+                    join = "\n";
+                    post = "\n";
                 }
                 if (typeOpt.isPresent()) {
                     final String type = typeOpt.get();
@@ -573,7 +588,7 @@ public class GetterAPI implements EndpointGroup {
                     Result r;
                     try {
                         r = parser.parseArchive(archive).map(oToolArchive -> prep + oToolArchive.getProjectName() + post);
-                    }catch (Exception ex){
+                    } catch (Exception ex) {
                         //ex.printStackTrace(); we do not care, falling back to
                         r = Result.err("Not and parse-able project");
                     }
@@ -583,22 +598,42 @@ public class GetterAPI implements EndpointGroup {
                         //ok, it is not jdkProject, so it must be jdkTestProject
                         String nv = archive.substring(0, archive.lastIndexOf("-"));
                         String n = nv.substring(0, nv.lastIndexOf("-"));
+                        String vr = archive.replaceFirst(n + "-", "");
+                        Pattern tmpRuleMatcher = Pattern.compile(".*");
                         List<JDKTestProject> testProjects = jdkTestProjectManager.readAll();
+                        for (String[] rule : rulesPairList) {
+                            if (vr.matches(rule[0])){
+                                tmpRuleMatcher = Pattern.compile(rule[1]);
+                                break;
+                            }
+                        }
+                        final Pattern ruleMatcher = tmpRuleMatcher;
                         List<String> results = testProjects.stream()
                                 .filter(testproject -> testproject.getProduct().getPackageName().equals(n))
+                                .filter(testproject -> ruleMatcher.matcher(testproject.getId()).matches())
                                 .map(testproject -> testproject.getId())
                                 .sorted()
                                 .collect(Collectors.toList());
                         if (results.isEmpty()) {
-                            if (unsafe){
-                                return Result.ok(prep +
-                                        jdkTestProjectManager.readAll()
+                            if (unsafe) {
+                                results = jdkTestProjectManager.readAll()
                                                 .stream()
+                                                .filter(testproject -> ruleMatcher.matcher(testproject.getId()).matches())
                                                 .map(Project::getId)
                                                 .sorted(String::compareTo)
-                                                .collect(Collectors.joining(join)) + post);
+                                                .collect(Collectors.toList());
+                                if (results.isEmpty()) {
+                                    //without rules
+                                    results = jdkTestProjectManager.readAll()
+                                            .stream()
+                                            .map(Project::getId)
+                                            .sorted(String::compareTo)
+                                            .collect(Collectors.toList());
+
+                                }
+                                return Result.ok(prep + String.join(join, results) + post);
                             } else {
-                                return Result.err("");
+                            return Result.err("");
                             }
                         } else {
                             return Result.ok(prep + String.join(join, results) + post);
@@ -628,6 +663,8 @@ public class GetterAPI implements EndpointGroup {
                 return "/projects?[ one of \n" +
                         "\t" + TYPE + "=[" + Project.ProjectType.JDK_PROJECT + "|" + Project.ProjectType.JDK_TEST_PROJECT + "]\n" +
                         "\t" + NVR + "=nvr with optional as=<regex|list> and usnafe=true (will return all testOnly on failure)\n" +
+                        "\t" + ADDITIONAL_RULES + "=space or comma sepparated list of pairs eg Pa1 Pb1,Pa2 Pb2,...PaN PBn \n" +
+                        "\t" + "each pair is if VR matches Pa then use Pb matching projects. Firs matched, first served \n" +
                         "]";
             }
         };
