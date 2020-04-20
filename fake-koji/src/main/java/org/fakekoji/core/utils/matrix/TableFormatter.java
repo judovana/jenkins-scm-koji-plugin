@@ -148,10 +148,10 @@ public interface TableFormatter {
 
         @Override
         public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
-            return getContextImpl(l, false, maxInColumn);
+            return getContextImpl(l, false, maxInColumn, null);
         }
 
-        protected String getContextImpl(List<MatrixGenerator.Leaf> origL, boolean td, int maxInColumn) {
+        protected String getContextImpl(List<MatrixGenerator.Leaf> origL, boolean td, int maxInColumn, String alsoReportVr) {
             List<MatrixGenerator.Leaf> l = new ArrayList<>(maxInColumn);
             l.addAll(origL);
             if (l.isEmpty() && !td) {
@@ -193,7 +193,11 @@ public interface TableFormatter {
                         new URL(url);
                         sb.append(tdopen + openAdd(url) + "<a href=\"" + url + "\">").append("[" + (i + 1) + "]").append("</a>" + closeAdd() + tdclose);
                     } catch (MalformedURLException ex) {
-                        sb.append(tdopen + openAdd(url) + "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\">").append("[" + (i + 1) + "]").append("</a>" + closeAdd() + tdclose);
+                        String reportHref = "";
+                        if (alsoReportVr != null) {
+                            reportHref = "<a href=\"#" + url + "/" + alsoReportVr + "\">[^]</a>";
+                        }
+                        sb.append(tdopen + openAdd(url) + "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\">").append("[" + (i + 1) + "]").append("</a>" + reportHref + closeAdd() + tdclose);
                     }
             }
             return sb.toString();
@@ -239,7 +243,7 @@ public interface TableFormatter {
 
         @Override
         public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
-            return getContextImpl(l, true, maxInColumn);
+            return getContextImpl(l, true, maxInColumn, null);
         }
     }
 
@@ -284,6 +288,15 @@ public interface TableFormatter {
             }
             this.alsoReport = appendReport;
 
+        }
+
+        @Override
+        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
+            if (alsoReport) {
+                return getContextImpl(l, true, maxInColumn, vr);
+            } else {
+                return getContextImpl(l, true, maxInColumn, null);
+            }
         }
 
         @Override
