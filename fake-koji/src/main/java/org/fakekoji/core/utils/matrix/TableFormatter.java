@@ -318,7 +318,7 @@ public interface TableFormatter {
                     color = "red";
                     break;
                 default:
-                    color = "orange";
+                    color = "grey";
                     break;
             }
             return "<span style=\"background-color: " + color + "; width:100%; display:block; border:solid ; border-width: 1px\">";
