@@ -3,14 +3,13 @@ package org.fakekoji.core.utils.matrix;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -252,7 +251,7 @@ public interface TableFormatter {
         private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
         private final String vr;
-        private final String projects;
+        private final String projectsRegex;
         private final String jvm;
         private final File remoteJar;
         private static final String remoteJarName = "summary-report-1.0-SNAPSHOT-jar-with-dependencies.jar";
@@ -260,13 +259,15 @@ public interface TableFormatter {
         private final String dir;
         private final String time;
         private final boolean alsoReport;
+        private String cachedReport = "Error to cache report";
+        private Map<String, Integer> cachedResults = new HashMap<>(0);
 
         public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String... projects) {
             this.vr = nvr;
             if (projects == null || projects.length == 0) {
-                this.projects = ".*";
+                this.projectsRegex = ".*";
             } else {
-                this.projects = ".*-" + String.join("-.*|.*-", projects) + "-.*";
+                this.projectsRegex = ".*-" + String.join("-.*|.*-", projects) + "-.*";
             }
             this.jvm = System.getProperties().getProperty("java.home") + File.separator + "bin" + File.separator + "java";
             File cpBase = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath());
@@ -291,6 +292,39 @@ public interface TableFormatter {
         }
 
         @Override
+        public String tableStart() {
+            String result = super.tableStart();
+            if (alsoReport) {
+                File f = null;
+                try {
+                    f = File.createTempFile("summaryReport", ".cache");
+                    ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
+                            "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", projectsRegex, "--return", "DONE-" + f.getAbsolutePath());
+                    cachedReport = executeAndWaitForOutput(pb);
+                    cachedResults = new HashMap<>();
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f)))) {
+                        while (true) {
+                            String l = br.readLine();
+                            if (l == null) {
+                                break;
+                            }
+                            String[] keyValue = l.split("\\s+");
+                            cachedResults.put(keyValue[0], Integer.valueOf(keyValue[1]));
+                        }
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.SEVERE, "Failed to cache results", ex);
+                } finally {
+                    if (f != null) {
+                        f.delete();
+                    }
+                }
+
+            }
+            return result;
+        }
+
+        @Override
         public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
             if (alsoReport) {
                 return getContextImpl(l, true, maxInColumn, vr);
@@ -301,20 +335,27 @@ public interface TableFormatter {
 
         @Override
         protected String openAdd(String job) {
-            ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
-                    "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", job, "--return", "DONE");
-            LOGGER.log(Level.INFO, pb.command().toString());
-            if (System.getProperty("debugSummaryProcess") != null) {
-                pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-                pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
-            }
-            //todo execute ones for all jobs, and store in file. save report?
-            int i = 5; //it returns 0green, 1white, 2yellow, 3red, 3< error (4 known 125 unknown..hopefuuly)
-            try {
-                Process p = pb.start();
-                i = p.waitFor();
-            } catch (Exception ex) {
-                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            int i = 5; //it returns 0green, 1white, 2yellow, 3red, 3< error (4 known 125 unknown..hopefuly)
+            if (alsoReport) {
+                //use cached results
+                Integer ii = cachedResults.get(job);
+                if (ii != null) {
+                    i = ii;
+                }
+            } else {
+                ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
+                        "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", job, "--return", "DONE");
+                LOGGER.log(Level.INFO, pb.command().toString());
+                if (System.getProperty("debugSummaryProcess") != null) {
+                    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+                    pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
+                }
+                try {
+                    Process p = pb.start();
+                    i = p.waitFor();
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                }
             }
             String color;
             switch (i) {
@@ -346,37 +387,39 @@ public interface TableFormatter {
         public String tableEnd() {
             String s = super.tableEnd();
             if (alsoReport) {
-                ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
-                        "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", projects);
-                LOGGER.log(Level.INFO, pb.command().toString());
-                if (System.getProperty("debugSummaryProcess") != null) {
-                    pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-                }
-                String result = "Failed to generate report - " + pb.command();
-                try {
-                    final Process p = pb.start();
-                    StreamGobbler out = new StreamGobbler(p.getInputStream());
-                    Thread outT = new Thread(out);
-                    outT.start();
-                    if (System.getProperty("debugSummaryProcess") == null) {
-                        StreamLooser err = new StreamLooser(p.getErrorStream());
-                        Thread errT = new Thread(err);
-                        errT.start();
-                    }
-                    while (!out.done) {
-                        Thread.sleep(1000);
-                    }
-                    p.waitFor();
-                    result = out.sb.toString();
-                } catch (Exception ex) {
-                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
-                }
-                if (result.trim().isEmpty()) {
-                    result = "Some error to generate report - " + pb.command();
-                }
-                return s + "<hr/>" + result;
+                return s + "<hr/>" + cachedReport;
             }
             return s;
+        }
+
+        private String executeAndWaitForOutput(ProcessBuilder pb) {
+            LOGGER.log(Level.INFO, pb.command().toString());
+            if (System.getProperty("debugSummaryProcess") != null) {
+                pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+            }
+            String result = "Failed to generate report - " + pb.command();
+            try {
+                final Process p = pb.start();
+                StreamGobbler out = new StreamGobbler(p.getInputStream());
+                Thread outT = new Thread(out);
+                outT.start();
+                if (System.getProperty("debugSummaryProcess") == null) {
+                    StreamLooser err = new StreamLooser(p.getErrorStream());
+                    Thread errT = new Thread(err);
+                    errT.start();
+                }
+                while (!out.done) {
+                    Thread.sleep(1000);
+                }
+                p.waitFor();
+                result = out.sb.toString();
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            }
+            if (result.trim().isEmpty()) {
+                result = "Some error to generate report - " + pb.command();
+            }
+            return result;
         }
 
         class StreamLooser implements Runnable {
