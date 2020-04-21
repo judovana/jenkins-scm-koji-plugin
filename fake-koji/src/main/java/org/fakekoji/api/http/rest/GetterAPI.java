@@ -61,6 +61,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String PROJECTS = "projects";
     private static final String ADDITIONAL_RULES = "rules";
     private static final String FILENAME_PARSER = "filenameParser";
+    private static final String LEGACY_PARSER = "legacyParser";
     private static final String PLATFORMS = "platforms";
     private static final String PLATFORMS_DETAILS = "platformDetails";
     private static final String PLATFORM_ID = "id";
@@ -602,7 +603,7 @@ public class GetterAPI implements EndpointGroup {
                         Pattern tmpRuleMatcher = Pattern.compile(".*");
                         List<JDKTestProject> testProjects = jdkTestProjectManager.readAll();
                         for (String[] rule : rulesPairList) {
-                            if (vr.matches(rule[0])){
+                            if (vr.matches(rule[0])) {
                                 tmpRuleMatcher = Pattern.compile(rule[1]);
                                 break;
                             }
@@ -617,11 +618,11 @@ public class GetterAPI implements EndpointGroup {
                         if (results.isEmpty()) {
                             if (unsafe) {
                                 results = jdkTestProjectManager.readAll()
-                                                .stream()
-                                                .filter(testproject -> ruleMatcher.matcher(testproject.getId()).matches())
-                                                .map(Project::getId)
-                                                .sorted(String::compareTo)
-                                                .collect(Collectors.toList());
+                                        .stream()
+                                        .filter(testproject -> ruleMatcher.matcher(testproject.getId()).matches())
+                                        .map(Project::getId)
+                                        .sorted(String::compareTo)
+                                        .collect(Collectors.toList());
                                 if (results.isEmpty()) {
                                     //without rules
                                     results = jdkTestProjectManager.readAll()
@@ -633,7 +634,7 @@ public class GetterAPI implements EndpointGroup {
                                 }
                                 return Result.ok(prep + String.join(join, results) + post);
                             } else {
-                            return Result.err("");
+                                return Result.err("");
                             }
                         } else {
                             return Result.ok(prep + String.join(join, results) + post);
@@ -797,6 +798,48 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+
+    private QueryHandler getLegacyParserHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                final Optional<String> nvr = extractParamValue(queryParams, NVR);
+                if (!nvr.isPresent()) {
+                    return Result.err(NVR + "=nvr expected");
+                }
+                final Optional<String> type = extractParamValue(queryParams, TYPE);
+                if (!type.isPresent() || "NVR".equals(type.get())) {
+                    return Result.ok(nvr.get());
+                }
+                String nv = nvr.get().substring(0, nvr.get().lastIndexOf("-"));
+                String n = nv.substring(0, nv.lastIndexOf("-"));
+                String[] vr = nvr.get().replaceFirst(n + "-", "").split("-");
+                String[] splitted = new String[]{n, vr[0], vr[1]};
+                switch (type.get()) {
+                    case "N":
+                        return Result.ok(splitted[0]);
+                    case "V":
+                        return Result.ok(splitted[1]);
+                    case "R":
+                        return Result.ok(splitted[2]);
+                    case "NV":
+                        return Result.ok(splitted[0] + "-" + splitted[1]);
+                    case "VR":
+                        return Result.ok(splitted[1] + "-" + splitted[2]);
+                    case "NR":
+                        return Result.ok(splitted[0] + "-" + splitted[2]);
+                    default:
+                        return Result.err("Unknown type - " + type.get());
+                }
+            }
+
+            @Override
+            public String about() {
+                return "/" + LEGACY_PARSER + " [" + NVR + "=<nvr> + optional " + TYPE + "=<Nand/orVand/orR]";
+            }
+        };
+    }
+
     private QueryHandler getBuildsHandler() {
         return new QueryHandler() {
             @Override
@@ -905,6 +948,7 @@ public class GetterAPI implements EndpointGroup {
             put(BUILDS, getBuildsHandler());
             put(FILENAME_PARSER, getFileNameParserHandler());
             put(TASKS, getTasksHandler());
+            put(LEGACY_PARSER, getLegacyParserHandler());
         }});
     }
 
