@@ -22,12 +22,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Collections;
 
-import static org.fakekoji.DataGenerator.JDK_8_PACKAGE_NAME;
-import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
-import static org.fakekoji.DataGenerator.RELEASE_1;
+import static org.fakekoji.DataGenerator.*;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.SOURCES;
-import static org.fakekoji.DataGenerator.SUFFIX;
-import static org.fakekoji.DataGenerator.VERSION_1;
 import static org.junit.Assert.assertEquals;
 
 public class OToolJenkinsTest {
@@ -74,7 +70,7 @@ public class OToolJenkinsTest {
 
     @Test
     public void testBuildJobSuccess() throws Exception {
-        final String expectedFile = "java-1.8.0-openjdk-version2-release1.uName.src.tarxz";
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_2 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
@@ -85,6 +81,22 @@ public class OToolJenkinsTest {
                 ),
                 shellString,
                 true
+        );
+    }
+
+    @Test
+    public void testBuildJobNotSuccessForBadRelease() throws Exception {
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_2 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
+        String shellString = "find . | grep \"" + expectedFile + "\"\n";
+        runTest(
+                new FakeKojiXmlRpcApi(
+                        PROJECT_NAME_U,
+                        "debugMode=fastdebug jvm=hotspot buildPlatform=f29.x86_64",
+                        "src",
+                        false
+                ),
+                shellString,
+                false
         );
     }
 
@@ -106,7 +118,7 @@ public class OToolJenkinsTest {
 
     @Test
     public void testTestJobSuccess() throws Exception {
-        final String expectedFile = "java-1.8.0-openjdk-version1-release1.uName.fastdebug.hotspot.f29.x86_64.tarxz";
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
@@ -121,9 +133,25 @@ public class OToolJenkinsTest {
     }
 
     @Test
+    public void testTestJobSuccessNotForBadRelease() throws Exception {
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
+        String shellString = "find . | grep \"" + expectedFile + "\"\n";
+        runTest(
+                new FakeKojiXmlRpcApi(
+                        PROJECT_NAME_U,
+                        "debugMode=fastdebug jvm=hotspot",
+                        "f29.x86_64",
+                        true
+                ),
+                shellString,
+                false
+        );
+    }
+
+    @Test
     public void testTestJobWithSourcesSuccess() throws Exception {
-        final String expectedFile = "java-1.8.0-openjdk-version1-release1.uName.fastdebug.hotspot.f29.x86_64.tarxz";
-        final String expectedSourceFile = "java-1.8.0-openjdk-version1-release1.uName.src.tarxz";
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
+        final String expectedSourceFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\nfind . | grep \"" + expectedSourceFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
@@ -134,6 +162,23 @@ public class OToolJenkinsTest {
                 ),
                 shellString,
                 true
+        );
+    }
+
+    @Test
+    public void testTestJobWithSourcesSuccessNotForBAdRelease() throws Exception {
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
+        final String expectedSourceFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
+        String shellString = "find . | grep \"" + expectedFile + "\"\nfind . | grep \"" + expectedSourceFile + "\"\n";
+        runTest(
+                new FakeKojiXmlRpcApi(
+                        PROJECT_NAME_U,
+                        "debugMode=fastdebug jvm=hotspot",
+                        "f29.x86_64 src",
+                        true
+                ),
+                shellString,
+                false
         );
     }
 

@@ -1132,7 +1132,8 @@ public class DataGenerator {
     public static final String VERSION_2 = "version2";
     public static final String RELEASE_1 = "152";
     public static final String RELEASE_1_BAD = "release2";
-    public static final String RELEASE_2 = "re.l.ease.2";
+    public static final String RELEASE_2 = "2.re.l.ease";
+    public static final String RELEASE_2_BAD = "BAD.re.l.ease";
 
     public static final List<String> notBuilt = Arrays.asList(
             "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.fastdebug.hotspot.f29.x86_64.tarxz",
@@ -1140,7 +1141,8 @@ public class DataGenerator {
             "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz",
             "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz",
             "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz",
-            "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz"
+            "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.slowdebug.hotspot.f29.x86_64.tarxz",
+            "java-1.8.0-openjdk-version2-" + RELEASE_2_BAD + ".uName.slowdebug.hotspot.f29.x86_64.tarxz"
     );
 
     public static final String[] versions = new String[]{VERSION_1, VERSION_2};
