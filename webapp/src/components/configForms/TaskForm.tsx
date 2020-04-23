@@ -66,7 +66,6 @@ const TaskForm: React.FC<TaskFormProps> = props => {
             platformLimitation,
             productLimitation,
             rpmLimitation,
-            timeoutInHours,
             variables
         } = task
 
