@@ -4,10 +4,12 @@ import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
+import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
@@ -29,6 +31,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -78,9 +81,54 @@ public class BuildHelper {
         buildVariantString = getBuildVariantString();
     }
 
+    private File getBuildRoot(OToolBuild build) {
+        return Paths.get(
+                buildsRoot.getAbsolutePath(),
+                build.getPackageName(),
+                build.getVersion(),
+                build.getRelease()
+        ).toFile();
+    }
 
     private Comparator<File> getArchiveComparator() {
         return (archive1, archive2) -> Long.compare(archive2.lastModified(), archive1.lastModified());
+    }
+
+    private ArchiveState getArchiveState(final File root) {
+        if (!root.exists()) {
+            return ArchiveState.NOT_BUILT;
+        }
+        if (!root.isDirectory()) {
+            LOGGER.warning(root.getAbsolutePath() + " is not a directory!");
+            return ArchiveState.ERROR;
+        }
+        final File[] files = root.listFiles();
+        if (files == null || files.length == 0) {
+            return ArchiveState.NOT_BUILT;
+        }
+        if (files.length > 1) {
+            LOGGER.warning("More than one file in " + root.getAbsolutePath());
+            return ArchiveState.ERROR;
+        }
+        final File file = files[0];
+        if (file.getName().equals("FAILED")) {
+            LOGGER.info(file.getAbsolutePath() + " is failed");
+            return ArchiveState.FAILED;
+        }
+        if (file.length() < 5) {
+            LOGGER.info(file.getAbsolutePath() + " is less than 5 bytes");
+            return ArchiveState.FAILED;
+        }
+        final Result<OToolArchive, String> result = oToolParser.parseArchive(file.getName());
+        if (result.isOk()) {
+            return ArchiveState.BUILT;
+        }
+        LOGGER.warning(result.getError());
+        return ArchiveState.ERROR;
+    }
+
+    private Predicate<File> getArchiveRootPredicate(final ArchiveState state) {
+        return root -> getArchiveState(root) == state;
     }
 
     public Function<OToolBuild, Optional<Build>> getBuildParser() {
@@ -93,7 +141,7 @@ public class BuildHelper {
             final String nvr = packageName + '-' + version + '-' + release;
 
             // get directory of build: /name/version/release.project
-            final File buildRoot = Paths.get(buildsRoot.getAbsolutePath(), packageName, version, release).toFile();
+            final File buildRoot = getBuildRoot(build);
 
             // get directories where required archives (src, dbg.jvm.os.arch)
             // are stored: /name/version/release.project/*
@@ -103,61 +151,28 @@ public class BuildHelper {
                             archiveName.equals(JenkinsJobTemplateBuilder.SOURCES) ? archiveName : buildVariantString + '.' + archiveName
                     ));
 
-            // check whether root exists and is a directory
-            final Predicate<File> archiveRootFilter = root -> {
-                if (!root.exists()) {
-                    return false;
-                }
-                if (!root.isDirectory()) {
-                    LOGGER.warning(root.getAbsolutePath() + " is not a directory!");
-                    return false;
-                }
-                return true;
-            };
-
-            // if one or more archive directories does not exist or is file (which should never happen),
-            // discard build
-            if (!archiveRootStreamSupplier.get().allMatch(archiveRootFilter)) {
+            // check if all needed archives are built
+            if (!archiveRootStreamSupplier.get().allMatch(getArchiveRootPredicate(ArchiveState.BUILT))) {
                 return Optional.empty();
             }
 
-            final List<File> archiveRoots = archiveRootStreamSupplier.get().collect(Collectors.toList());
-
-            // get archive from archive root:
-            // /name/version/release.project/dbg.jvm.os.arch/name-version-release.project.dbg.jvm.os.arch.suffix
-            final Supplier<Stream<File>> archiveFileStreamSupplier = () -> archiveRoots.stream()
-                    .map(root -> new File(root, nvr + '.' + root.getName() + ".tarxz"));
-
-            // check whether archive exists and is not a directory
-            final Predicate<File> archiveFileFilter = file -> {
-                    if (!file.exists()) {
-                        return false;
-                    }
-                    if (file.isDirectory()) {
-                        LOGGER.warning(file.getAbsolutePath() + " is a directory!");
-                        return false;
-                    }
-                    return true;
-            };
-
-            // discard build if one or more archives don't exist or are directories
-            if (!archiveFileStreamSupplier.get().allMatch(archiveFileFilter)) {
-                return Optional.empty();
-            }
-
-            final List<File> archiveFiles = archiveFileStreamSupplier.get().collect(Collectors.toList());
+            final List<File> archiveFiles = archiveRootStreamSupplier.get()
+                    .map(file -> Objects.requireNonNull(file.listFiles())[0])
+                    .collect(Collectors.toList());
 
             final File newestArchive = archiveFiles.stream().min(getArchiveComparator()).orElse(buildRoot);
 
             final Function<File, RPM> toRPMs = archiveFile -> {
+                final boolean isSource = archiveFile.getParentFile().getName().equals(JenkinsJobTemplateBuilder.SOURCES);
                 final String[] parts = archiveFile.getName().split("\\.");
                 final int length = parts.length;
-                final String platform = parts[length - 3] + '.' + parts[length - 2];
+                //final OToolArchive archive = oToolParser.parseArchive(archiveFile.getName());
+                final String platform = isSource ? parts[length -2] : parts[length - 3] + '.' + parts[length - 2];
                 return new RPM(
                         packageName,
                         version,
                         release,
-                        nvr,
+                        isSource ? nvr : nvr + '.' + buildVariantString,
                         platform,
                         archiveFile.getName(),
                         String.join("/",
@@ -206,22 +221,16 @@ public class BuildHelper {
     public Predicate<OToolBuild> getBuildPlatformPredicate() {
         // if params contains buildPlatform variant in buildVariants field, check whether archive of that platform
         // exists or not depending on params' isBuilt field
+        final String buildPlatform = buildVariantMap.get(buildPlatformVariant);
+        if (buildPlatform == null) {
+            return build -> true;
+        }
+
+        final String requiredFilename = buildVariantString + '.' + buildPlatform;
+        final ArchiveState archiveState = params.isBuilt() ? ArchiveState.BUILT : ArchiveState.NOT_BUILT;
         return build -> {
-            final Optional<String> buildPlatformOptional = Optional.ofNullable(
-                    buildVariantMap.get(buildPlatformVariant)
-            );
-            if (buildPlatformOptional.isPresent()) {
-                final String requiredFilename = buildVariantString + '.' + buildPlatformOptional.get();
-                final File archiveRoot = Paths.get(
-                        buildsRoot.getAbsolutePath(),
-                        build.getPackageName(),
-                        build.getVersion(),
-                        build.getRelease(),
-                        requiredFilename
-                ).toFile();
-                return archiveRoot.exists() == params.isBuilt();
-            }
-            return true;
+            final File archiveRoot = new File(getBuildRoot(build), requiredFilename);
+            return getArchiveRootPredicate(archiveState).test(archiveRoot);
         };
     }
 
@@ -319,5 +328,12 @@ public class BuildHelper {
                 buildPlatformVariant,
                 buildProvider
         );
+    }
+
+    enum ArchiveState {
+        BUILT,
+        ERROR,
+        FAILED,
+        NOT_BUILT,
     }
 }
