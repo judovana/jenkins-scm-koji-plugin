@@ -1,5 +1,7 @@
 package org.fakekoji.model;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 public class OToolBuild {
