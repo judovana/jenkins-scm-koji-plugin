@@ -190,8 +190,9 @@ public class BumperAPI implements EndpointGroup {
             if (result.isError()) {
                 final OToolError error = result.getError();
                 context.result(error.message).status(error.code);
+            } else {
+                context.json(result.getValue());
             }
-            context.json(result.getValue());
         });
     }
 
