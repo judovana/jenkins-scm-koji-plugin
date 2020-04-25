@@ -596,6 +596,28 @@ public class GetterAPI implements EndpointGroup {
                     if (r.isOk()) {
                         return r;
                     } else {
+                        if (unsafe) {
+                            //by longest project, try stupid substring
+                            List<JDKProject> projects = jdkProjectManager.readAll();
+                            Collections.sort(projects, new Comparator<JDKProject>() {
+                                @Override
+                                public int compare(JDKProject o1, JDKProject o2) {
+                                    return o2.getId().length() - o1.getId().length();
+                                }
+
+                            });
+                            for (JDKProject project : projects) {
+                                if (nvrOpt.get().contains("-" + project.getId() + "-") ||
+                                        nvrOpt.get().contains("." + project.getId() + ".") ||
+                                        nvrOpt.get().contains("." + project.getId() + "-") ||
+                                        nvrOpt.get().contains("-" + project.getId() + ".") ||
+                                        nvrOpt.get().endsWith("-" + project.getId()) ||
+                                        nvrOpt.get().endsWith("." + project.getId())) {
+                                    //add also cehck against pkg? Likely not, the src snapshots may not be parseable
+                                    return Result.ok(prep + project.getId() + post);
+                                }
+                            }
+                        }
                         //ok, it is not jdkProject, so it must be jdkTestProject
                         String nv = archive.substring(0, archive.lastIndexOf("-"));
                         String n = nv.substring(0, nv.lastIndexOf("-"));
@@ -663,7 +685,7 @@ public class GetterAPI implements EndpointGroup {
             public String about() {
                 return "/projects?[ one of \n" +
                         "\t" + TYPE + "=[" + Project.ProjectType.JDK_PROJECT + "|" + Project.ProjectType.JDK_TEST_PROJECT + "]\n" +
-                        "\t" + NVR + "=nvr with optional as=<regex|list> and usnafe=true (will return all testOnly on failure)\n" +
+                        "\t" + NVR + "=nvr with optional as=<regex|list> and usnafe=true (will try also longest substring for jdkProjects or return all testOnly on failure)\n" +
                         "\t" + ADDITIONAL_RULES + "=space or comma sepparated list of pairs eg Pa1 Pb1,Pa2 Pb2,...PaN PBn \n" +
                         "\t" + "each pair is if VR matches Pa then use Pb matching projects. Firs matched, first served \n" +
                         "]";
