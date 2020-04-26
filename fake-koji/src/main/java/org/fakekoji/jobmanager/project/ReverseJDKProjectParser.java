@@ -8,6 +8,7 @@ import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobConfiguration;
 import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TaskConfig;
 import org.fakekoji.jobmanager.model.TaskJob;
@@ -31,6 +32,15 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ReverseJDKProjectParser {
+
+    public Result<Project, String> parseJobs(Set<Job> jobs) {
+        if (jobs.stream().allMatch(job -> job instanceof TestJob)) {
+            final Set<TestJob> testJobs = jobs.stream().map(job -> (TestJob) job).collect(Collectors.toSet());
+            return parseJDKTestProjectJobs(testJobs).flatMap(project -> Result.ok(((Project) project)));
+        } else {
+            return parseJDKProjectJobs(jobs).flatMap(project -> Result.ok((Project) project));
+        }
+    }
 
     public Result<JDKProject, String> parseJDKProjectJobs(Set<Job> jobs) {
         final List<PullJob> pullJobs = jobs

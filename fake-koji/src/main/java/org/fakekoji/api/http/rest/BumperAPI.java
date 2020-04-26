@@ -14,7 +14,7 @@ import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
-import org.fakekoji.jobmanager.model.TestJob;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
@@ -24,6 +24,8 @@ import org.fakekoji.storage.StorageException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -63,19 +65,18 @@ public class BumperAPI implements EndpointGroup {
         platformConfigReader = new ConfigReader<>(platformManager);
     }
 
-    private Result<Tuple<List<JDKProject>, List<JDKTestProject>>, OToolError> checkProjectIds(final List<String> projectIds) {
-        final List<JDKProject> jdkProjects = new ArrayList<>();
-        final List<JDKTestProject> jdkTestProjects = new ArrayList<>();
+    private Result<List<Project>, OToolError> checkProjectIds(final List<String> projectIds) {
+        final List<Project> projects = new ArrayList<>();
 
         try {
             for (final String projectId : projectIds) {
 
                 if (jdkProjectManager.contains(projectId)) {
-                    jdkProjects.add(jdkProjectManager.read(projectId));
+                    projects.add(jdkProjectManager.read(projectId));
                     continue;
                 }
                 if (jdkTestProjectManager.contains(projectId)) {
-                    jdkTestProjects.add(jdkTestProjectManager.read(projectId));
+                    projects.add(jdkTestProjectManager.read(projectId));
                     continue;
                 }
                 return Result.err(new OToolError("Unknown project: " + projectId, 400));
@@ -87,69 +88,71 @@ public class BumperAPI implements EndpointGroup {
             return Result.err(new OToolError(e.getMessage(), 400));
         }
 
-        return Result.ok(new Tuple<>(jdkProjects, jdkTestProjects));
+        return Result.ok(projects);
     }
 
-    Result<JobUpdateResults, OToolError> modifyJobs(final Tuple<List<JDKProject>, List<JDKTestProject>> projectsTuple, final JobModifier jobModifier) {
-        final List<JDKProject> jdkProjects = projectsTuple.x;
-        final List<JDKTestProject> jdkTestProjects = projectsTuple.y;
-        final List<JobUpdateResult> jobsBumped = new ArrayList<>();
+    Result<JobUpdateResults, OToolError> modifyJobs(final List<Project> projects, final JobModifier jobModifier) {
+        final Set<Job> jobs = new HashSet<>();
         try {
-            for (final JDKProject jdkProject : jdkProjects) {
-                final Set<Tuple<Job, Optional<Job>>> jobs = parser.parse(jdkProject)
-                        .stream()
-                        .map(jobModifier.getTransformFunction())
-                        .collect(Collectors.toSet());
-                final Set<Tuple<Job, Job>> jobsToBump = jobs.stream()
-                        .filter(jobTuple -> jobTuple.y.isPresent())
-                        .map(jobTuple -> new Tuple<>(jobTuple.x, jobTuple.y.get()))
-                        .collect(Collectors.toSet());
-                final Set<Job> finalJobs = jobs.stream()
-                        .map(tuple -> tuple.y.orElseGet(() -> tuple.x))
-                        .collect(Collectors.toSet());
-                final Result<JDKProject, String> result = reverseParser.parseJDKProjectJobs(finalJobs);
-                if (result.isError()) {
-                    return Result.err(new OToolError(result.getError(), 400));
-                }
-                final JDKProject transformedJDKProject = result.getValue();
-                jdkProjectManager.update(transformedJDKProject.getId(), transformedJDKProject);
-                final JobUpdateResults partialResults = jobUpdater.bump(jobsToBump);
-                jobsBumped.addAll(partialResults.jobsCreated);
+            for (final Project project : projects) {
+                final Set<Job> projectJobs = parser.parse(project);
+                jobs.addAll(projectJobs);
             }
-            for (final JDKTestProject jdkTestProject : jdkTestProjects) {
-                final Set<Tuple<Job, Optional<Job>>> jobs = parser.parse(jdkTestProject)
-                        .stream()
-                        .map(jobModifier.getTransformFunction())
-                        .collect(Collectors.toSet());
-                final Set<Tuple<Job, Job>> jobsToBump = jobs.stream()
-                        .filter(jobTuple -> jobTuple.y.isPresent())
-                        .map(jobTuple -> new Tuple<>(jobTuple.x, jobTuple.y.get()))
-                        .collect(Collectors.toSet());
-                final Set<TestJob> finalJobs = jobs.stream()
-                        .map(tuple -> tuple.y.orElseGet(() -> tuple.x))
-                        .filter(job -> job instanceof TestJob)
-                        .map(job -> (TestJob) job)
-                        .collect(Collectors.toSet());
-                final Result<JDKTestProject, String> result = reverseParser.parseJDKTestProjectJobs(finalJobs);
-                if (result.isError()) {
-                    return Result.err(new OToolError(result.getError(), 400));
-                }
-                final JDKTestProject transformedJDKTestProject = result.getValue();
-                jdkTestProjectManager.update(transformedJDKTestProject.getId(), transformedJDKTestProject);
-                final JobUpdateResults partialResults = jobUpdater.bump(jobsToBump);
-                jobsBumped.addAll(partialResults.jobsCreated);
+            final Set<Tuple<Job, Optional<Job>>> jobTuples = jobs.stream()
+                    .map(jobModifier.getTransformFunction())
+                    .collect(Collectors.toSet());
+            final Set<Tuple<Job, Job>> jobsToBump = jobTuples.stream()
+                    .filter(jobTuple -> jobTuple.y.isPresent())
+                    .map(jobTuple -> new Tuple<>(jobTuple.x, jobTuple.y.get()))
+                    .collect(Collectors.toSet());
+            final List<JobUpdateResult> checkResults = jobUpdater.checkBumpJobs(jobsToBump);
+            if (!checkResults.isEmpty()) {
+                return Result.ok(new JobUpdateResults(
+                        checkResults,
+                        Collections.emptyList(),
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                ));
             }
+            final Set<Job> finalJobs = jobTuples.stream()
+                    .map(tuple -> tuple.y.orElseGet(() -> tuple.x))
+                    .collect(Collectors.toSet());
+            final Map<String, Set<Job>> jobMap = new HashMap<>();
+            for (final Job job : finalJobs) {
+                final String projectName = job.getProjectName();
+                if (!jobMap.containsKey(projectName)) {
+                    jobMap.put(projectName, new HashSet<>());
+                }
+                final Set<Job> projectJobs = jobMap.get(projectName);
+                projectJobs.add(job);
+            }
+            final List<Project> assembledProjects = new ArrayList<>();
+            for (final Set<Job> projectJobs : jobMap.values()) {
+                final Result<Project, String> result = reverseParser.parseJobs(projectJobs);
+                if (result.isError()) {
+                    return Result.err(new OToolError(result.getError(), 500));
+                } else {
+                    assembledProjects.add(result.getValue());
+                }
+            }
+            for (final Project project : assembledProjects) {
+                final String id = project.getId();
+                switch (project.getType()) {
+                    case JDK_PROJECT:
+                        jdkProjectManager.update(id, (JDKProject) project);
+                        break;
+                    case JDK_TEST_PROJECT:
+                        jdkTestProjectManager.update(id, (JDKTestProject) project);
+                        break;
+                }
+            }
+            return Result.ok(jobUpdater.bump(jobsToBump));
+
         } catch (StorageException e) {
             return Result.err(new OToolError(e.getMessage(), 500));
         } catch (ManagementException e) {
             return Result.err(new OToolError(e.getMessage(), 400));
         }
-        return Result.ok(new JobUpdateResults(
-                jobsBumped,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList()
-        ));
     }
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {

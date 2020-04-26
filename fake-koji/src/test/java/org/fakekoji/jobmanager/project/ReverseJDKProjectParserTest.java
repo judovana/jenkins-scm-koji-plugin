@@ -4,6 +4,7 @@ import org.fakekoji.DataGenerator;
 import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.storage.StorageException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,7 +33,7 @@ public class ReverseJDKProjectParserTest {
     @Test
     public void parseJDKTestProjectJobs() {
         final ReverseJDKProjectParser parser = new ReverseJDKProjectParser();
-        final Result<JDKTestProject, String> result = parser.parseJDKTestProjectJobs(DataGenerator.getJDKTestProjectJobs());
+        final Result<Project, String> result = parser.parseJobs(DataGenerator.getJDKTestProjectJobs());
         Assert.assertEquals(
                 DataGenerator.getJDKTestProject(),
                 result.getValue()
@@ -42,7 +43,7 @@ public class ReverseJDKProjectParserTest {
     @Test
     public void parseJDKProjectJobs() {
         final ReverseJDKProjectParser parser = new ReverseJDKProjectParser();
-        final Result<JDKProject, String> result = parser.parseJDKProjectJobs(DataGenerator.getJDKProjectJobs());
+        final Result<Project, String> result = parser.parseJobs(DataGenerator.getJDKProjectJobs());
         Assert.assertEquals(
                 DataGenerator.getJDKProject(),
                 result.getValue()
