@@ -275,6 +275,19 @@ public class JenkinsJobUpdater implements JobUpdater {
         );
     }
 
+    public List<JobUpdateResult> checkBumpJobs(final Set<Tuple<Job, Job>> jobTuples) {
+        final Set<String> jobNames = Stream.of(Objects.requireNonNull(settings.getJenkinsJobsRoot().list()))
+                .collect(Collectors.toSet());
+        return jobTuples.stream()
+                .filter(jobTuple -> jobNames.contains(jobTuple.y.getName()))
+                .map(jobTuple -> new JobUpdateResult(
+                        jobTuple.x.getName() + " => " + jobTuple.y.getName(),
+                        false,
+                        jobTuple.y + " already exists"
+                ))
+                .collect(Collectors.toList());
+    }
+
     private <T> Function<T, JobUpdateResult> jobUpdateFunctionWrapper(JobUpdateFunction<T> updateFunction) {
         return job -> {
             try {

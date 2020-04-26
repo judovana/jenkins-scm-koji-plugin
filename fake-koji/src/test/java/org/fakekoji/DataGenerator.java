@@ -1095,7 +1095,7 @@ public class DataGenerator {
         ));
     }
 
-    public static Set<TestJob> getJDKTestProjectJobs() {
+    public static Set<Job> getJDKTestProjectJobs() {
         final JDKTestProject jdkTestProject = DataGenerator.getJDKTestProject();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final JDKVersion jdkVersion = DataGenerator.getJDKVersion8();
