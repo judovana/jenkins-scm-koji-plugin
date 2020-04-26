@@ -22,13 +22,10 @@ jobs:
         java-version: 1.8
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-    - name: Archive JAR
-      uses: actions/upload-artifact@v1
+    - run: mkdir uploads
+    - run: cp fake-koji/target/fake-koji-2.0-SNAPSHOT-jar-with-dependencies.jar archives/
+    - run: cp jenkins-scm-koji-plugin/target/jenkins-scm-koji-plugin-2.0-SNAPSHOT.hpi archives/
+    - uses: actions/upload-artifact@v1
       with:
-        name: fake-koji-2.0-SNAPSHOT-jar-with-dependencies.jar
-        path: fake-koji/target/fake-koji-2.0-SNAPSHOT-jar-with-dependencies.jar
-    - name: Archive HPI
-      uses: actions/upload-artifact@v1
-      with:
-        name: jenkins-scm-koji-plugin-2.0-SNAPSHOT.hpi
-        path: jenkins-scm-koji-plugin/target/jenkins-scm-koji-plugin-2.0-SNAPSHOT.hpi
+        name: Archives
+        path: uploads
