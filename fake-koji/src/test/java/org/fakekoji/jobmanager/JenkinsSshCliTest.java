@@ -265,7 +265,7 @@ public class JenkinsSshCliTest {
             //mv it out, can not to temp, as it is different volume, Files.move would fail
             File trash = new File(workdir.getParent(), "trash");
             trash.deleteOnExit();
-            Utils.moveDir(manualJob, trash);
+            Utils.moveDirByCopy(manualJob, trash);
             //although the fille is not here
             Assert.assertFalse(manualJob.exists());
             //and is not readable
@@ -295,7 +295,7 @@ public class JenkinsSshCliTest {
             i = Arrays.binarySearch(jobs, manualJobName);
             Assert.assertTrue(i < 0);
             //mv it back
-            Utils.moveDir(trash, manualJob);
+            Utils.moveDirByCopy(trash, manualJob);
             //ensure it is not here
             r3 = JenkinsCliWrapper.getCli().getJob(manualJobName);
             Assert.assertNotEquals(0, r3.remoteCommandreturnValue);
