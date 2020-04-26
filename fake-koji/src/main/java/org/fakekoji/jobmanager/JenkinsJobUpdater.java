@@ -310,7 +310,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             return new PrimaryExceptionThrower<JobUpdateResult>(
                     () -> {
-                        Utils.moveDir(src, dst);
+                        Utils.moveDirByCopy(src, dst);
                         //regenerate conig
                         LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
                         Utils.writeToFile(
@@ -329,7 +329,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File dst = Paths.get(settings.getJenkinsJobArchiveRoot().getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Archiving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
-            Utils.moveDir(src, dst);
+            Utils.moveDirByCopy(src, dst);
             //we delte only if archivation suceed
             JenkinsCliWrapper.getCli().deleteJobs(jobName).throwIfNecessary();
             return new JobUpdateResult(jobName, true);

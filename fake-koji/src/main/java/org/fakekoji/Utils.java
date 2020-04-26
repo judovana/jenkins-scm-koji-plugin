@@ -86,7 +86,11 @@ public class Utils {
         }
     }
 
-    public static void moveDir(File source, File target) throws IOException {
+    public static void moveDir(final File source, final File target) throws IOException {
+        Files.move(source.toPath(), target.toPath());
+    }
+
+    public static void moveDirByCopy(File source, File target) throws IOException {
         // we cannot simply move, because archive can, and likely is, diffferent mount point
         // Files.move(source.toPath(), target.toPath(), REPLACE_EXISTING);
         // we can not use appache commons either, because they are unable to handle broken ysmlinks like lastBuild or so
