@@ -387,6 +387,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             Utils.moveDir(originalDir, transformedDir);
             final File jobConfig = Paths.get(transformedDir.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE).toFile();
             LOGGER.info("Rewriting config of " + transformedName);
+            // FIXME: this won't work, need to call delete(old) and create(new)
             return new PrimaryExceptionThrower<>(
                     () -> Utils.writeToFile(jobConfig, transformed.generateTemplate()),
                     () -> updateManuallyUpdatedJob(transformedName),
