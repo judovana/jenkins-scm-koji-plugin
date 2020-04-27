@@ -21,4 +21,11 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn install
+    - run: mkdir archives
+    - run: cp fake-koji/target/fake-koji-2.0-SNAPSHOT-jar-with-dependencies.jar archives/
+    - run: cp jenkins-scm-koji-plugin/target/jenkins-scm-koji-plugin-2.0-SNAPSHOT.hpi archives/
+    - uses: actions/upload-artifact@v1
+      with:
+        name: Archives
+        path: archives
