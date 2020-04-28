@@ -52,12 +52,10 @@ public class MatrixGeneratorTest {
 
         final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
         JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
-                cm.getJdkTestProjectStorage(),
-                jenkinsJobUpdater
+                cm.getJdkTestProjectStorage()
         );
         JDKProjectManager jdkProjectManager = new JDKProjectManager(
                 cm,
-                jenkinsJobUpdater,
                 settings.getLocalReposRoot(),
                 settings.getScriptsRoot()
         );
@@ -77,12 +75,10 @@ public class MatrixGeneratorTest {
 
         final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
         JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
-                cm.getJdkTestProjectStorage(),
-                jenkinsJobUpdater
+                cm.getJdkTestProjectStorage()
         );
         JDKProjectManager jdkProjectManager = new JDKProjectManager(
                 cm,
-                jenkinsJobUpdater,
                 settings.getLocalReposRoot(),
                 settings.getScriptsRoot()
         );

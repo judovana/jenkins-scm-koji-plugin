@@ -14,6 +14,11 @@ public class ManagementResult <C> {
         this.jobUpdateResults = jobUpdateResults;
     }
 
+    public ManagementResult(C config) {
+        this.config = config;
+        this.jobUpdateResults = new JobUpdateResults();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

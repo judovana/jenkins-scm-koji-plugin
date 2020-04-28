@@ -1,29 +1,31 @@
 package org.fakekoji.jobmanager.model;
 
+import org.fakekoji.Utils;
+
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class TaskConfig {
 
     private final String id;
-    private final List<VariantsConfig> variants;
+    private final Set<VariantsConfig> variants;
 
     public TaskConfig() {
         id = null;
-        variants = Collections.emptyList();
+        variants = Collections.emptySet();
     }
 
-    public TaskConfig(final String id, List<VariantsConfig> variants) {
+    public TaskConfig(final String id, Set<VariantsConfig> variants) {
         this.id = id;
-        this.variants = variants != null ? variants : Collections.emptyList();
+        this.variants = variants != null ? variants : Collections.emptySet();
     }
 
     public String getId() {
         return id;
     }
 
-    public List<VariantsConfig> getVariants() {
+    public Set<VariantsConfig> getVariants() {
         return variants;
     }
 
@@ -33,11 +35,19 @@ public class TaskConfig {
         if (!(o instanceof TaskConfig)) return false;
         TaskConfig that = (TaskConfig) o;
         return Objects.equals(id, that.id) &&
-                Objects.equals(variants, that.variants);
+                Utils.areEqual(variants, that.variants);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id, variants);
+    }
+
+    @Override
+    public String toString() {
+        return "TaskConfig{" +
+                "id='" + id + '\'' +
+                ", variants=" + variants +
+                '}';
     }
 }

@@ -18,11 +18,11 @@ import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.model.BuildProvider;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
-import org.fakekoji.model.OToolVariable;
 import org.fakekoji.storage.StorageException;
 
 import java.io.File;
@@ -86,7 +86,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     private Set<Job> parse(JDKProject project) {
         project.getJobConfiguration().getPlatforms().forEach(getPlatformsConsumer());
 
-        jobBuilder.buildPullJob();
+        jobBuilder.buildPullJob(project.getUrl());
         return jobBuilder.getJobs();
     }
 
@@ -215,9 +215,10 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             this.buildProviders = buildProviders;
         }
 
-        private void buildPullJob() {
+        private void buildPullJob(final String repoUrl) {
             jobs.add(new PullJob(
                     projectName,
+                    repoUrl,
                     product,
                     jdkVersion,
                     repositoriesRoot,
@@ -255,6 +256,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                             testPlatform,
                             testVariants,
                             buildPlatform,
+                            buildPlatformProvider,
+                            buildTask,
                             buildVariants,
                             subpackageBlacklist,
                             subpackageWhitelist,
@@ -266,8 +269,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                             buildJob,
                             testTask,
                             testPlatform,
-                            testVariants,
-                            projectVariables
+                            testVariants
                     );
             jobs.add(tj);
         }
@@ -380,5 +382,4 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             this.projectVariables = variables;
         }
     }
-
 }

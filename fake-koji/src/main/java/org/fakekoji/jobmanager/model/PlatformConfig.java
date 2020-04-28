@@ -1,24 +1,26 @@
 package org.fakekoji.jobmanager.model;
 
+import org.fakekoji.Utils;
+
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class PlatformConfig {
 
     private final String id;
-    private final List<TaskConfig> tasks;
+    private final Set<TaskConfig> tasks;
     private final String provider;
 
     public PlatformConfig() {
         id = null;
-        tasks = Collections.emptyList();
+        tasks = Collections.emptySet();
         provider = null;
     }
 
-    public PlatformConfig(String id, List<TaskConfig> tasks, String provider) {
+    public PlatformConfig(String id, Set<TaskConfig> tasks, String provider) {
         this.id = id;
-        this.tasks = tasks != null ? tasks : Collections.emptyList();
+        this.tasks = tasks != null ? tasks : Collections.emptySet();
         this.provider = provider;
     }
 
@@ -26,7 +28,7 @@ public class PlatformConfig {
         return id;
     }
 
-    public List<TaskConfig> getTasks() {
+    public Set<TaskConfig> getTasks() {
         return tasks;
     }
 
@@ -40,12 +42,21 @@ public class PlatformConfig {
         if (!(o instanceof PlatformConfig)) return false;
         PlatformConfig that = (PlatformConfig) o;
         return Objects.equals(id, that.id) &&
-                Objects.equals(tasks, that.tasks) &&
+                Utils.areEqual(tasks, that.tasks) &&
                 Objects.equals(provider, that.provider);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id, tasks, provider);
+    }
+
+    @Override
+    public String toString() {
+        return "PlatformConfig{" +
+                "id='" + id + '\'' +
+                ", tasks=" + tasks +
+                ", provider='" + provider + '\'' +
+                '}';
     }
 }

@@ -15,7 +15,9 @@ import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
+import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
+import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
@@ -27,7 +29,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -37,13 +38,17 @@ public class OToolService {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
+    private static final int OK = 200;
+    private static final int BAD = 400;
+    private static final int ERROR = 500;
+
     private static final String ID = "id";
     private static final String CONFIG_ID = "/:" + ID;
     private static final String BUILD_PROVIDERS = "/buildProviders";
     private static final String BUILD_PROVIDER = BUILD_PROVIDERS + CONFIG_ID;
     private static final String JDK_VERSIONS = "/jdkVersions";
     private static final String JDK_VERSION = JDK_VERSIONS + CONFIG_ID;
-    private static final String PLATFORMS = "/platforms";
+    static final String PLATFORMS = "/platforms";
     private static final String PLATFORM = PLATFORMS + CONFIG_ID;
     private static final String TASKS = "/tasks";
     private static final String TASK = TASKS + CONFIG_ID;
@@ -54,8 +59,8 @@ public class OToolService {
     private static final String JDK_TEST_PROJECTS = "/jdkTestProjects";
     private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
     private static final String GET = "get";
-
-    private static final String MISC = "misc";
+    public static final String BUMP = "bump";
+    public static final String MISC = "misc";
     private static final String HELP = "help";
     static final String FILTER = "filter";
     static final String SKIP_EMPTY = "skipEmpty";
@@ -153,10 +158,10 @@ public class OToolService {
                 oToolHandler.handle(context);
             } catch (ManagementException e) {
                 LOGGER.log(Level.SEVERE, notNullMessage(e), e);
-                context.status(400).result(notNullMessage(e));
+                context.status(BAD).result(notNullMessage(e));
             } catch (StorageException e) {
                 LOGGER.log(Level.SEVERE, notNullMessage(e), e);
-                context.status(500).result(notNullMessage(e));
+                context.status(ERROR).result(notNullMessage(e));
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, notNullMessage(e), e);
                 context.status(501).result(notNullMessage(e));
@@ -166,51 +171,65 @@ public class OToolService {
         app.routes(() -> {
 
             final JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
-                    configManager.getJdkTestProjectStorage(),
-                    jenkinsJobUpdater
+                    configManager.getJdkTestProjectStorage()
             );
             final JDKProjectManager jdkProjectManager = new JDKProjectManager(
                     configManager,
-                    jenkinsJobUpdater,
                     settings.getLocalReposRoot(),
                     settings.getScriptsRoot()
             );
-            final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
-            final TaskManager taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
+            final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
+            final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
+
+            final JDKProjectParser parser = new JDKProjectParser(
+                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                    settings.getLocalReposRoot(),
+                    settings.getScriptsRoot()
+            );
+
+            final BumperAPI bumperAPI = new BumperAPI(
+                    jenkinsJobUpdater,
+                    parser,
+                    new ReverseJDKProjectParser(),
+                    jdkProjectManager,
+                    jdkTestProjectManager,
+                    platformManager
+            );
 
             path(MISC, () -> {
+                path(BUMP, bumperAPI);
                 get(HELP, wrapper.wrap(context -> {
-                    context.status(200).result(getMiscHelp());
+                    context.status(OK).result(getMiscHelp() + bumperAPI.getHelp());
                 }));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
                                 List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
-                                context.status(200).result(ua.getList(allUpdates) + "\n");
+                                context.status(OK).result(ua.getList(allUpdates) + "\n");
                             }
                     ));
                     get(UPDATE_JOBS_XMLS, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
                                 List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
-                                context.status(200).result(ua.getXmls(allUpdates));
+                                context.status(OK).result(ua.getXmls(allUpdates));
                             }
                     ));
                     get(UPDATE_JOBS_CREATE, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
                                 List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
-                                context.status(200).result(ua.create(allUpdates));
+                                context.status(OK).result(ua.create(allUpdates));
                             }
                     ));
                     get(UPDATE_JOBS_UPDATE, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
                                 List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
-                                context.status(200).result(ua.update(allUpdates));
+                                context.status(OK).result(ua.update(allUpdates));
                             }
                     ));
                     get(UPDATE_JOBS_REMOVE, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
                                 List<JenkinsUpdateVmTemplateBuilder> allUpdates = ua.getJenkinsUpdateVmTemplateBuilders(settings, platformManager);
-                                context.status(200).result(ua.remvoe(allUpdates));
+                                context.status(OK).result(ua.remvoe(allUpdates));
                             }
                     ));
                 });
@@ -220,7 +239,7 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
                                 String results = va.create(jvt, jobs);
-                                context.status(200).result(results);
+                                context.status(OK).result(results);
                             }
                     ));
                     get(VIEWS_REMOVE, wrapper.wrap(context -> {
@@ -228,7 +247,7 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
                                 String results = va.delete(jvt, jobs);
-                                context.status(200).result(results);
+                                context.status(OK).result(results);
                             }
                     ));
                     get(VIEWS_UPDATE, wrapper.wrap(context -> {
@@ -236,7 +255,7 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
                                 String results = va.update(jvt, jobs);
-                                context.status(200).result(results);
+                                context.status(OK).result(results);
                             }
                     ));
                     get(VIEWS_LIST_OTOOL, wrapper.wrap(context -> {
@@ -245,10 +264,10 @@ public class OToolService {
                                 if (va.isSkipEmpty()) {
                                     List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
                                     String viewsAndMatchesToPrint = va.listNonEmpty(jvt, jobs);
-                                    context.status(200).result(viewsAndMatchesToPrint);
+                                    context.status(OK).result(viewsAndMatchesToPrint);
                                 } else {
                                     String viewsAndMatchesToPrint = va.list(jvt);
-                                    context.status(200).result(viewsAndMatchesToPrint);
+                                    context.status(OK).result(viewsAndMatchesToPrint);
                                 }
                             }
                     ));
@@ -259,7 +278,7 @@ public class OToolService {
                                 Collections.sort(allJenkinsJobs);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
                                 String details = va.getDetails(jvt, allJenkinsJobs, jobs);
-                                context.status(200).result(details);
+                                context.status(OK).result(details);
                             }
                     ));
                     get(VIEWS_XMLS, wrapper.wrap(context -> {
@@ -267,9 +286,9 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 if (va.isSkipEmpty()) {
                                     List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
-                                    context.status(200).result(va.getNonEmptyXmls(jvt, jobs));
+                                    context.status(OK).result(va.getNonEmptyXmls(jvt, jobs));
                                 } else {
-                                    context.status(200).result(va.getXmls(jvt));
+                                    context.status(OK).result(va.getXmls(jvt));
                                 }
                             }
                     ));
@@ -277,7 +296,7 @@ public class OToolService {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
-                                context.status(200).result(va.printMatches(jvt, jobs));
+                                context.status(OK).result(va.printMatches(jvt, jobs));
                             }
                     ));
                     get(VIEWS_MATCHES_JENKINS, wrapper.wrap(context -> {
@@ -285,7 +304,7 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> jobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(jobs);
-                                context.status(200).result(va.printMatches(jvt, jobs));
+                                context.status(OK).result(va.printMatches(jvt, jobs));
                             }
                     ));
                 });
@@ -293,14 +312,15 @@ public class OToolService {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
                         String whitelist = context.queryParam("whitelist");
-                        JobUpdateResults r1 = jdkTestProjectManager.regenerateAll(project, whitelist);
-                        context.status(200).json(r1);
+                        JobUpdateResults r1 = jenkinsJobUpdater.regenerateAll(project, jdkTestProjectManager, whitelist);
+                        context.status(OK).json(r1);
                     }));
                     get(JDK_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
                         String whitelist = context.queryParam("whitelist");
-                        JobUpdateResults r2 = jdkProjectManager.regenerateAll(project, whitelist);
-                        context.status(200).json(r2);
+                        JobUpdateResults r2 = jenkinsJobUpdater.regenerateAll(project, jdkProjectManager, whitelist);
+                        context.status(OK).json(r2);
+
                     }));
                 });
                 get(MATRIX, wrapper.wrap(context -> {
@@ -330,9 +350,9 @@ public class OToolService {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
                     if ("htmlspan".equals(format)) {
-                        context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.SpanningHtmlTableFormatter()));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.SpanningHtmlTableFormatter()));
                     } else if ("html".equals(format)) {
-                        context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter()));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter()));
                     } else if ("fill".equals(format)) {
                         String vr = context.queryParam("vr");
                         String time = context.queryParam("time");
@@ -340,12 +360,12 @@ public class OToolService {
                         if (vr == null || vr.isEmpty()) {
                             context.status(400).result("nvr=<nvr> necessary");
                         } else {
-                            context.status(200).result(m.printMatrix(
+                            context.status(OK).result(m.printMatrix(
                                     orieantaion, dropRows, dropColumns,
                                     new TableFormatter.SpanningFillingHtmlTableFormatter(vr, settings, time, alsoReport, projects)));
                         }
                     } else {
-                        context.status(200).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));
                     }
                 }));
 
@@ -353,138 +373,117 @@ public class OToolService {
 
             app.post(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                 final JDKTestProject jdkTestProject = context.bodyValidator(JDKTestProject.class).get();
-                final ManagementResult result = jdkTestProjectManager.create(jdkTestProject);
-                context.status(200).json(result);
+                final JDKTestProject created = jdkTestProjectManager.create(jdkTestProject);
+                final ManagementResult result = new ManagementResult<>(
+                        created,
+                        jenkinsJobUpdater.update(null, jdkTestProject)
+                );
+                context.status(OK).json(result);
             }));
             app.get(JDK_TEST_PROJECTS, wrapper.wrap(context -> context.json(jdkTestProjectManager.readAll())));
             app.put(JDK_TEST_PROJECT, wrapper.wrap(context -> {
                 final JDKTestProject jdkTestProject = context.bodyValidator(JDKTestProject.class).get();
                 final String id = context.pathParam(ID);
-                final ManagementResult result = jdkTestProjectManager.update(id, jdkTestProject);
-                context.status(200).json(result);
+                final JDKTestProject old = jdkTestProjectManager.read(id);
+                final JDKTestProject updated = jdkTestProjectManager.update(id, jdkTestProject);
+                final ManagementResult result = new ManagementResult<>(updated, jenkinsJobUpdater.update(
+                        old,
+                        updated
+                ));
+                context.status(OK).json(result);
             }));
             app.delete(JDK_TEST_PROJECT, wrapper.wrap(context -> {
                 final String id = context.pathParam(ID);
-                final ManagementResult result = jdkTestProjectManager.delete(id);
-                context.status(200).json(result);
+                final JDKTestProject deleted = jdkTestProjectManager.delete(id);
+                context.status(OK).json(jenkinsJobUpdater.update(deleted, null));
             }));
 
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
-            app.get(BUILD_PROVIDERS, context -> context.json(buildProviderManager.readAll()));
+            app.get(BUILD_PROVIDERS, wrapper.wrap(context -> context.json(buildProviderManager.readAll())));
 
             final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
-            app.get(JDK_VERSIONS, context -> context.json(jdkVersionManager.readAll()));
 
-            app.get(PLATFORMS, context -> context.json(platformManager.readAll()));
-            app.post(PLATFORMS, context -> {
-                try {
-                    final Platform platform = context.bodyValidator(Platform.class).get();
-                    final ManagementResult<Platform> result = platformManager.create(platform);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
-            app.put(PLATFORM, context -> {
-                try {
-                    final String id = context.pathParam(ID);
-                    final Platform platform = context.bodyValidator(Platform.class).get();
-                    final ManagementResult<Platform> result = platformManager.update(id, platform);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
-            app.delete(PLATFORM, context -> {
-                try {
-                    final String id = context.pathParam(ID);
-                    final ManagementResult<Platform> result = platformManager.delete(id);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
+            app.get(JDK_VERSIONS, wrapper.wrap(context -> context.json(jdkVersionManager.readAll())));
 
-            app.post(TASKS, context -> {
-                try {
-                    final Task task = context.bodyValidator(Task.class).get();
-                    final ManagementResult<Task> result = taskManager.create(task);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
-            app.get(TASKS, context -> context.json(taskManager.readAll()));
-            app.put(TASK, context -> {
-                try {
-                    final String id = context.pathParam(ID);
-                    final Task task = context.bodyValidator(Task.class).get();
-                    final ManagementResult<Task> result = taskManager.update(id, task);
-                    context.json(result).status(200);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
-            app.delete(TASK, context -> {
-                try {
-                    final String id = context.pathParam(ID);
-                    final ManagementResult<Task> result = taskManager.delete(id);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
+            app.get(PLATFORMS, wrapper.wrap(context -> context.json(platformManager.readAll())));
+            app.post(PLATFORMS, wrapper.wrap(context -> {
+                final Platform platform = context.bodyValidator(Platform.class).get();
+                final Platform created = platformManager.create(platform);
+                final ManagementResult<Platform> result = new ManagementResult<>(created);
+                context.status(OK).json(result);
+            }));
+            app.put(PLATFORM, wrapper.wrap(context -> {
+                final String id = context.pathParam(ID);
+                final Platform platform = context.bodyValidator(Platform.class).get();
+                final Platform updated = platformManager.update(id, platform);
+                final ManagementResult<Platform> result = new ManagementResult<>(
+                        updated,
+                        jenkinsJobUpdater.update(updated)
+                );
+                context.status(OK).json(result);
+            }));
+            app.delete(PLATFORM, wrapper.wrap(context -> {
+                final String id = context.pathParam(ID);
+                final Platform deleted = platformManager.delete(id);
+                final ManagementResult<Platform> result = new ManagementResult<>(deleted);
+                context.status(OK).json(result);
+            }));
+
+            app.post(TASKS, wrapper.wrap(context -> {
+                final Task task = context.bodyValidator(Task.class).get();
+                final Task created = taskManager.create(task);
+                final ManagementResult<Task> result = new ManagementResult<>(created);
+                context.status(OK).json(result);
+            }));
+            app.get(TASKS, wrapper.wrap(context -> context.json(taskManager.readAll())));
+            app.put(TASK, wrapper.wrap(context -> {
+                final String id = context.pathParam(ID);
+                final Task task = context.bodyValidator(Task.class).get();
+                final Task updated = taskManager.update(id, task);
+                final ManagementResult<Task> result = new ManagementResult<>(
+                        updated,
+                        jenkinsJobUpdater.update(updated)
+                );
+                context.json(result).status(OK);
+            }));
+            app.delete(TASK, wrapper.wrap(context -> {
+                final String id = context.pathParam(ID);
+                taskManager.delete(id); // not supported
+            }));
 
             final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
-            app.get(TASK_VARIANTS, context -> context.json(taskVariantManager.readAll()));
+            app.get(TASK_VARIANTS, wrapper.wrap(context -> context.json(taskVariantManager.readAll())));
 
-            app.post(JDK_PROJECTS, context -> {
-                try {
-                    final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
-                    final ManagementResult<JDKProject> result = jdkProjectManager.create(jdkProject);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
-            app.get(JDK_PROJECTS, context -> context.json(jdkProjectManager.readAll()));
-            app.put(JDK_PROJECT, context -> {
-                try {
-                    final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
-                    final String id = context.pathParam(ID);
-                    final ManagementResult<JDKProject> result = jdkProjectManager.update(id, jdkProject);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
-            app.delete(JDK_PROJECT, context -> {
-                try {
-                    final String id = context.pathParam(ID);
-                    final ManagementResult<JDKProject> result = jdkProjectManager.delete(id);
-                    context.status(200).json(result);
-                } catch (ManagementException e) {
-                    context.status(400).result(e.toString());
-                } catch (StorageException e) {
-                    context.status(500).result(e.toString());
-                }
-            });
+            app.post(JDK_PROJECTS, wrapper.wrap(context -> {
+                final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
+                final JDKProject created = jdkProjectManager.create(jdkProject);
+                final ManagementResult<JDKProject> result = new ManagementResult<>(
+                        created,
+                        jenkinsJobUpdater.update(null, created)
+                );
+                context.status(OK).json(result);
+            }));
+            app.get(JDK_PROJECTS, wrapper.wrap(context -> context.json(jdkProjectManager.readAll())));
+            app.put(JDK_PROJECT, wrapper.wrap(context -> {
+                final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
+                final String id = context.pathParam(ID);
+                final JDKProject old = jdkProjectManager.read(id);
+                final JDKProject updated = jdkProjectManager.update(id, jdkProject);
+                final ManagementResult<JDKProject> result = new ManagementResult<>(
+                        updated,
+                        jenkinsJobUpdater.update(old, updated)
+                );
+                context.status(OK).json(result);
+            }));
+            app.delete(JDK_PROJECT, wrapper.wrap(context -> {
+                final String id = context.pathParam(ID);
+                final JDKProject deleted = jdkProjectManager.delete(id);
+                final ManagementResult<JDKProject> result = new ManagementResult<>(
+                        deleted,
+                        jenkinsJobUpdater.update(deleted, null)
+                );
+                context.status(OK).json(result);
+            }));
             path(GET, new GetterAPI(
                     settings,
                     jdkProjectManager,

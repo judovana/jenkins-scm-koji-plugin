@@ -1,13 +1,9 @@
 package org.fakekoji.jobmanager.project;
 
 import org.fakekoji.jobmanager.ConfigManager;
-import org.fakekoji.jobmanager.JobUpdater;
-import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagementResult;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKProject;
-import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
@@ -29,37 +25,29 @@ public class JDKProjectManager implements Manager<JDKProject> {
     private Thread cloningThread;
 
     private final ConfigManager configManager;
-    private final JobUpdater jobUpdater;
     private final File repositoriesRoot;
     private final File scriptsRoot;
 
     public JDKProjectManager(
             final ConfigManager configManager,
-            final JobUpdater jobUpdater,
             final File repositoriesRoot,
             final File scriptsRoot
     ) {
         this.configManager = configManager;
-        this.jobUpdater = jobUpdater;
         this.repositoriesRoot = repositoriesRoot;
         this.scriptsRoot = scriptsRoot;
     }
 
     @Override
-    public ManagementResult<JDKProject> create(JDKProject project) throws StorageException, ManagementException {
+    public JDKProject create(JDKProject project) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         if (storage.contains(project.getId())) {
             throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
         }
-        final JDKProject createdJDKProject = cloneProject(project).config;
+        final JDKProject createdJDKProject = cloneProject(project);
         LOGGER.info("Storing JDK project " + project.getId());
         storage.store(project.getId(), setProjectRepoStatus(project, JDKProject.RepoState.CLONING));
-        LOGGER.info("Creating project's jobs");
-        final JobUpdateResults results = jobUpdater.update(null, project);
-        return new ManagementResult<>(
-                createdJDKProject,
-                results
-        );
+        return createdJDKProject;
     }
 
     @Override
@@ -78,7 +66,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
     }
 
     @Override
-    public ManagementResult<JDKProject> update(String id, JDKProject jdkProject) throws StorageException, ManagementException {
+    public JDKProject update(String id, JDKProject jdkProject) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
@@ -90,16 +78,11 @@ public class JDKProjectManager implements Manager<JDKProject> {
         }
         LOGGER.info("Storing the project");
         storage.store(id, jdkProject);
-        LOGGER.info("Updating the project's jobs");
-        final JobUpdateResults results = jobUpdater.update(oldProject, jdkProject);
-        return new ManagementResult<>(
-                jdkProject,
-                results
-        );
+        return jdkProject;
     }
 
     @Override
-    public ManagementResult<JDKProject> delete(String id) throws StorageException, ManagementException {
+    public JDKProject delete(String id) throws StorageException, ManagementException {
         final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
@@ -107,15 +90,10 @@ public class JDKProjectManager implements Manager<JDKProject> {
         final JDKProject jdkProject = storage.load(id, JDKProject.class);
         LOGGER.info("Deleting JDK project " + jdkProject.getId());
         storage.delete(id);
-        LOGGER.info("Archiving the project's jobs");
-        final JobUpdateResults results = jobUpdater.update(jdkProject, null);
-        return new ManagementResult<>(
-                jdkProject,
-                results
-        );
+        return jdkProject;
     }
 
-    public ManagementResult<JDKProject> cloneProject(final JDKProject jdkProject) throws StorageException, ManagementException {
+    public JDKProject cloneProject(final JDKProject jdkProject) throws StorageException, ManagementException {
         final Storage<JDKVersion> productStorage = configManager.getJdkVersionStorage();
         if (!productStorage.contains(jdkProject.getProduct().getJdk())) {
             throw new ManagementException("Unknown product: " + jdkProject.getProduct());
@@ -123,7 +101,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
         final JDKVersion jdkVersion = productStorage.load(jdkProject.getProduct().getJdk(), JDKVersion.class);
         cloningThread = new Thread(createRepoCloningThread(jdkProject, jdkVersion));
         cloningThread.start();
-        return new ManagementResult<>(setProjectRepoStatus(jdkProject, JDKProject.RepoState.CLONING), null);
+        return setProjectRepoStatus(jdkProject, JDKProject.RepoState.CLONING);
     }
 
     private Runnable createRepoCloningThread(
@@ -188,20 +166,6 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     Thread getCloningThread() {
         return cloningThread;
-    }
-
-    public JobUpdateResults regenerateAll(String project, String whitelist) throws ManagementException, StorageException {
-        JobUpdateResults sum = new JobUpdateResults();
-        JenkinsJobUpdater.wakeUpJenkins();
-        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
-        final List<JDKProject> jdkProjects = storage.loadAll(JDKProject.class);
-        for (final JDKProject jdkProject : jdkProjects) {
-            if (project == null || jdkProject.getId().equals(project)) {
-                JobUpdateResults r = jobUpdater.regenerate(jdkProject, whitelist);
-                sum = sum.add(r);
-            }
-        }
-        return sum;
     }
 
     @Override

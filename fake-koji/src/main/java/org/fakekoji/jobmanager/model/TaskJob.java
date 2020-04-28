@@ -26,7 +26,7 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR
 public abstract class TaskJob extends Job {
 
     private final String platformProvider;
-    private final String projectName;
+
     private final Product product;
     private final JDKVersion jdkVersion;
     private final Set<BuildProvider> buildProviders;
@@ -47,9 +47,8 @@ public abstract class TaskJob extends Job {
             File scriptsRoot,
             List<OToolVariable> projectVariables
     ) {
-        super(projectVariables);
+        super(projectName, projectVariables);
         this.platformProvider = platformProvider;
-        this.projectName = projectName;
         this.product = product;
         this.jdkVersion = jdkVersion;
         this.buildProviders = buildProviders;
@@ -61,10 +60,6 @@ public abstract class TaskJob extends Job {
 
     public String getPlatformProvider() {
         return platformProvider;
-    }
-
-    public String getProjectName() {
-        return projectName;
     }
 
     public Product getProduct() {
@@ -101,7 +96,6 @@ public abstract class TaskJob extends Job {
         if (!(o instanceof TaskJob)) return false;
         TaskJob taskJob = (TaskJob) o;
         return Objects.equals(platformProvider, taskJob.platformProvider) &&
-                Objects.equals(projectName, taskJob.projectName) &&
                 Objects.equals(product, taskJob.product) &&
                 Objects.equals(jdkVersion, taskJob.jdkVersion) &&
                 Objects.equals(buildProviders, taskJob.buildProviders) &&
@@ -117,7 +111,6 @@ public abstract class TaskJob extends Job {
         return Objects.hash(
                 super.hashCode(),
                 platformProvider,
-                projectName,
                 product,
                 jdkVersion,
                 buildProviders,
@@ -129,13 +122,14 @@ public abstract class TaskJob extends Job {
         );
     }
 
+    @Override
     List<OToolVariable> getExportedVariables() {
         final List<OToolVariable> defaultVariables = new ArrayList<>(Arrays.asList(
                 new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
                 new OToolVariable(OJDK_VAR, jdkVersion.getId()),
-                new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
-                new OToolVariable(PROJECT_NAME_VAR, projectName)
+                new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName())
         ));
+        defaultVariables.addAll(super.getExportedVariables());
         getPlatform().addZstreamVar(defaultVariables);
         getPlatform().addYstreamVar(defaultVariables);
         defaultVariables.addAll(getProjectVariables());

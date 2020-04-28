@@ -2,7 +2,6 @@ package org.fakekoji.core.utils.matrix;
 
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
-import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.*;
 import org.fakekoji.jobmanager.model.*;
@@ -57,18 +56,16 @@ public class MatrixGenerator {
     public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter,
                            BuildEqualityFilter buildEqualityFilter, String[] project) {
 
-        final JenkinsJobUpdater jenkinsJobUpdater = new JenkinsJobUpdater(settings);
-
         this.testFilter = testEqualityFilter;
         this.buildFilter = buildEqualityFilter;
         this.testRegex = Pattern.compile(testRegex == null ? defaultRegex : testRegex);
         this.buildRgex = Pattern.compile(buildRegex == null ? defaultRegex : buildRegex);
         buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
-        platformManager = new PlatformManager(configManager.getPlatformStorage(), jenkinsJobUpdater);
+        platformManager = new PlatformManager(configManager.getPlatformStorage());
         //contains both BUILD and TEST variants
         taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
         jDKVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
-        taskManager = new TaskManager(configManager.getTaskStorage(), jenkinsJobUpdater);
+        taskManager = new TaskManager(configManager.getTaskStorage());
 
         this.project = project;
         if (project != null) {
@@ -76,12 +73,10 @@ public class MatrixGenerator {
         }
 
         jdkTestProjectManager = new JDKTestProjectManager(
-                configManager.getJdkTestProjectStorage(),
-                jenkinsJobUpdater
+                configManager.getJdkTestProjectStorage()
         );
         jdkProjectManager = new JDKProjectManager(
                 configManager,
-                jenkinsJobUpdater,
                 settings.getLocalReposRoot(),
                 settings.getScriptsRoot()
         );
@@ -467,10 +462,10 @@ public class MatrixGenerator {
             if (matchProject(project.getId())) {
                 if (project instanceof JDKTestProject) {
                     TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
-                    List<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
+                    Set<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
                     for (BuildPlatformConfig bpce : buildPlatformConfig) {
                         TaskConfig tc = new TaskConfig(null, bpce.getVariants());
-                        List<TaskConfig> taskConfigs = new ArrayList<>();
+                        Set<TaskConfig> taskConfigs = new HashSet<>();
                         taskConfigs.add(tc);
                         for (TaskConfig btce : taskConfigs) {
                             for (VariantsConfig bvc : btce.getVariants()) {
