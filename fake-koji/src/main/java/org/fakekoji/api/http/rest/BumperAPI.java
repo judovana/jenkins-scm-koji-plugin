@@ -3,11 +3,7 @@ package org.fakekoji.api.http.rest;
 import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
-import org.fakekoji.jobmanager.JobModifier;
-import org.fakekoji.jobmanager.JobUpdater;
-import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.Manager;
-import org.fakekoji.jobmanager.PlatformBumper;
+import org.fakekoji.jobmanager.*;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
@@ -22,14 +18,7 @@ import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -38,7 +27,6 @@ import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
-import static org.fakekoji.api.http.rest.RestUtils.extractParamValues;
 
 public class BumperAPI implements EndpointGroup {
 
@@ -146,6 +134,7 @@ public class BumperAPI implements EndpointGroup {
                         break;
                 }
             }
+            JenkinsJobUpdater.wakeUpJenkins();
             return Result.ok(jobUpdater.bump(jobsToBump));
 
         } catch (StorageException e) {
@@ -158,7 +147,7 @@ public class BumperAPI implements EndpointGroup {
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
         final Optional<String> fromOptional = extractParamValue(paramsMap, "from");
         final Optional<String> toOptional = extractParamValue(paramsMap, "to");
-        final Optional<List<String>> projectsOptional = extractParamValues(paramsMap, "projects");
+        final Optional<String> projectsOptional = extractParamValue(paramsMap, "projects");
         if (!fromOptional.isPresent()) {
             return Result.err(new OToolError("Id of 'from' platform is missing", 400));
         }
@@ -166,11 +155,11 @@ public class BumperAPI implements EndpointGroup {
             return Result.err(new OToolError("Id of 'to' platform is missing", 400));
         }
         if (!projectsOptional.isPresent()) {
-            return Result.err(new OToolError("projects and project cannot be set both", 400));
+            return Result.err(new OToolError("projects are mandatory. Use get/projects?as=list to get them all", 400));
         }
         final String fromId = fromOptional.get();
         final String toId = toOptional.get();
-        final List<String> projectIds = projectsOptional.get();
+        final List<String> projectIds = new ArrayList<>(Arrays.asList(projectsOptional.get().split(",")));
         return platformConfigReader.read(fromId).flatMap(fromPlatform ->
                 platformConfigReader.read(toId).flatMap(toPlatform ->
                         checkProjectIds(projectIds).flatMap(projects -> modifyJobs(
@@ -183,7 +172,7 @@ public class BumperAPI implements EndpointGroup {
 
     public String getHelp() {
         return ""
-                + MISC + '/' + BUMP + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2]\n";
+                + MISC + '/' + BUMP + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n";
     }
 
     @Override

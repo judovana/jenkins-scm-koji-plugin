@@ -12,7 +12,4 @@ class RestUtils {
                 .map(list -> list.get(0));
     }
 
-    static Optional<List<String>> extractParamValues(Map<String, List<String>> paramsMap, String param) {
-        return Optional.ofNullable(paramsMap.get(param));
-    }
 }
