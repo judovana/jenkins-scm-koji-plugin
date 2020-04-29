@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager;
 
+import org.eclipse.jetty.util.IO;
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
@@ -152,11 +153,12 @@ public class JenkinsJobUpdater implements JobUpdater {
      * Regenerate job
      * Unlike update, this one do not delete
      * Unlike update, it determines its action based on  jobs, not old projects
+     *
      * @param jobs
      * @return
      */
     JobUpdateResults regenerate(Set<Job> jobs, String whitelist) {
-        if (whitelist == null || whitelist.trim().isEmpty()){
+        if (whitelist == null || whitelist.trim().isEmpty()) {
             whitelist = ".*";
         }
         Pattern whitelistPattern = Pattern.compile(whitelist);
@@ -172,7 +174,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         final Set<String> existingJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobsRoot().list())));
 
         for (final Job job : jobs) {
-            if (!whitelistPattern.matcher(job.getName()).matches()){
+            if (!whitelistPattern.matcher(job.getName()).matches()) {
                 continue;
             }
             if (archivedJobs.contains(job.toString()) && existingJobs.contains(job.toString())) {
@@ -384,15 +386,45 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File transformedDir = Paths.get(jobsRoot.getAbsolutePath(), transformedName).toFile();
             LOGGER.info("Bumping job " + originalName + " to " + transformedName);
             LOGGER.info("Moving directory " + originalDir.getAbsolutePath() + " to " + transformedDir.getAbsolutePath());
-            Utils.moveDir(originalDir, transformedDir);
+            Utils.moveDir(originalDir, transformedDir); //if exception is thrown from here, better to die with it
+            IOException deleteJobException = null;
+            try {
+                JenkinsCliWrapper.getCli().deleteJobs(originalName).throwIfNecessary();
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                deleteJobException = ex;
+            }
             final File jobConfig = Paths.get(transformedDir.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE).toFile();
             LOGGER.info("Rewriting config of " + transformedName);
-            // FIXME: this won't work, need to call delete(old) and create(new)
-            return new PrimaryExceptionThrower<>(
-                    () -> Utils.writeToFile(jobConfig, transformed.generateTemplate()),
-                    () -> updateManuallyUpdatedJob(transformedName),
-                    new JobUpdateResult(transformedName, true, "bumped from " + originalName)
-            ).call();
+            IOException newCfgException = null;
+            try {
+                Utils.writeToFile(jobConfig, transformed.generateTemplate());
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                newCfgException = ex;
+            }
+            IOException createJobException = null;
+            try {
+                JenkinsCliWrapper.getCli().createManuallyUploadedJob(jobsRoot.getAbsoluteFile(),transformedName).throwIfNecessary();
+            } catch (IOException ex) {
+                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+                createJobException = ex;
+            }
+            if (deleteJobException == null && newCfgException == null && createJobException == null) {
+                return new JobUpdateResult(transformedName, true, "bumped from " + originalName + " to " + transformedName);
+            } else {
+                String s = "Exception(s) on the fly:";
+                if (deleteJobException != null) {
+                    s = s + " 1) deleteJobException " + deleteJobException.getMessage();
+                }
+                if (newCfgException != null) {
+                    s = s + " 2) newCfgException " + newCfgException.getMessage();
+                }
+                if (createJobException != null) {
+                    s = s + " 3) createJobException  " + createJobException.getMessage();
+                }
+                return new JobUpdateResult(transformedName, false, "bump from " + originalName + " to " + transformedName + " failed. See logs. " + s);
+            }
         };
     }
 
@@ -406,7 +438,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         ;
     }
 
-    private interface JobUpdateFunction <T> {
+    private interface JobUpdateFunction<T> {
 
         JobUpdateResult apply(T t) throws Exception;
     }
