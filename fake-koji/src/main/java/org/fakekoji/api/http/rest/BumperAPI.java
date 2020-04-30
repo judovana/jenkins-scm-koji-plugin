@@ -4,17 +4,20 @@ import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.*;
+import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
+import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 
@@ -26,7 +29,10 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
+import static org.fakekoji.api.http.rest.OToolService.PRODUCT;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
+import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
+import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
 
 public class BumperAPI implements EndpointGroup {
 
@@ -35,6 +41,7 @@ public class BumperAPI implements EndpointGroup {
     private final ReverseJDKProjectParser reverseParser;
     private final JDKProjectManager jdkProjectManager;
     private final JDKTestProjectManager jdkTestProjectManager;
+    private final ConfigReader<JDKVersion> jdkVersionConfigReader;
     private final ConfigReader<Platform> platformConfigReader;
 
     BumperAPI(
@@ -43,6 +50,7 @@ public class BumperAPI implements EndpointGroup {
             final ReverseJDKProjectParser reverseParser,
             final JDKProjectManager jdkProjectManager,
             final JDKTestProjectManager jdkTestProjectManager,
+            final JDKVersionManager jdkVersionManager,
             final PlatformManager platformManager
     ) {
         this.jobUpdater = jobUpdater;
@@ -50,6 +58,7 @@ public class BumperAPI implements EndpointGroup {
         this.reverseParser = reverseParser;
         this.jdkProjectManager = jdkProjectManager;
         this.jdkTestProjectManager = jdkTestProjectManager;
+        jdkVersionConfigReader = new ConfigReader<>(jdkVersionManager);
         platformConfigReader = new ConfigReader<>(platformManager);
     }
 
@@ -170,6 +179,43 @@ public class BumperAPI implements EndpointGroup {
         );
     }
 
+    private Result<JobUpdateResults, OToolError> bumpProduct(final Map<String, List<String>> paramsMap) {
+        return extractProducts(paramsMap).flatMap(products -> {
+            final Product fromProduct = products.x;
+            final Product toProduct = products.y;
+            return getJDKVersion(fromProduct).flatMap(fromJDK ->
+                    getJDKVersion(toProduct).flatMap(toJDK ->
+                            extractProjectIds(paramsMap).flatMap(projectIds ->
+                                    checkProjectIds(projectIds).flatMap(projects ->
+                                            modifyJobs(
+                                                    projects,
+                                                    new ProductBumper(
+                                                            fromProduct.getPackageName(),
+                                                            toProduct.getPackageName(),
+                                                            fromJDK,
+                                                            toJDK
+                                                    ))
+                                    )
+                            )
+                    )
+            );
+        });
+    }
+
+    Result<JDKVersion, OToolError> getJDKVersion(final Product product) {
+        final String jdkVersionId = product.getJdk();
+        final String packageName = product.getPackageName();
+        return jdkVersionConfigReader.read(jdkVersionId).flatMap(jdkVersion -> {
+            if (!jdkVersion.getPackageNames().contains(packageName)) {
+                return Result.err(new OToolError(
+                        "JDK version " + jdkVersion.getId() + " doesn't contain package name: " + packageName,
+                        400
+                ));
+            }
+            return Result.ok(jdkVersion);
+        });
+    }
+
     public String getHelp() {
         return ""
                 + MISC + '/' + BUMP + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n";
@@ -179,6 +225,15 @@ public class BumperAPI implements EndpointGroup {
     public void addEndpoints() {
         get(PLATFORMS, context -> {
             final Result<JobUpdateResults, OToolError> result = bumpPlatform(context.queryParamMap());
+            if (result.isError()) {
+                final OToolError error = result.getError();
+                context.result(error.message).status(error.code);
+            } else {
+                context.json(result.getValue());
+            }
+        });
+        get(PRODUCT, context -> {
+            final Result<JobUpdateResults, OToolError> result = bumpProduct(context.queryParamMap());
             if (result.isError()) {
                 final OToolError error = result.getError();
                 context.result(error.message).status(error.code);

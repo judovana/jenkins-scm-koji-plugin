@@ -62,6 +62,7 @@ public class OToolService {
     public static final String BUMP = "bump";
     public static final String MISC = "misc";
     private static final String HELP = "help";
+    public static final String PRODUCT = "product";
     static final String FILTER = "filter";
     static final String SKIP_EMPTY = "skipEmpty";
     static final String ONLY_HW = "onlyHW";
@@ -180,6 +181,7 @@ public class OToolService {
             );
             final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
             final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
+            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
 
             final JDKProjectParser parser = new JDKProjectParser(
                     ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
@@ -193,6 +195,7 @@ public class OToolService {
                     new ReverseJDKProjectParser(),
                     jdkProjectManager,
                     jdkTestProjectManager,
+                    jdkVersionManager,
                     platformManager
             );
 
@@ -400,8 +403,6 @@ public class OToolService {
 
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
             app.get(BUILD_PROVIDERS, wrapper.wrap(context -> context.json(buildProviderManager.readAll())));
-
-            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
 
             app.get(JDK_VERSIONS, wrapper.wrap(context -> context.json(jdkVersionManager.readAll())));
 
