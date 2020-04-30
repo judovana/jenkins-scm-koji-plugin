@@ -11,7 +11,6 @@ import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -22,11 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.TASK_JOB_TEMPLATE;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PACKAGE_NAME_VAR;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.RELEASE_SUFFIX_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.XML_DECLARATION;
 
@@ -130,21 +125,8 @@ public class BuildJob extends TaskJob {
                 .map(e -> e.getValue().getId())
                 .collect(Collectors.joining(".")) + '.' + getPlatform().getId();
 
-        final List<OToolVariable> defaultVariables = new ArrayList<>(Arrays.asList(
-                new OToolVariable(JDK_VERSION_VAR, getJdkVersion().getVersion()),
-                new OToolVariable(OJDK_VAR, getProduct().getJdk()),
-                new OToolVariable(PACKAGE_NAME_VAR, getProduct().getPackageName()),
-                new OToolVariable(PROJECT_NAME_VAR, getProjectName()),
-                new OToolVariable(RELEASE_SUFFIX_VAR, releaseSuffix)
-        ));
-        getPlatform().addZstreamVar(defaultVariables);
-        getPlatform().addYstreamVar(defaultVariables);
-        defaultVariables.addAll(getProjectVariables());
-        final List<OToolVariable> variantVariables = OToolVariable.createDefault(getVariants());
-        return Stream.of(
-                defaultVariables,
-                variantVariables
-        ).flatMap(List::stream)
-                .collect(Collectors.toList());
+        final List<OToolVariable> defaultVariables = super.getExportedVariables();
+        defaultVariables.add(new OToolVariable(RELEASE_SUFFIX_VAR, releaseSuffix));
+        return defaultVariables;
     }
 }

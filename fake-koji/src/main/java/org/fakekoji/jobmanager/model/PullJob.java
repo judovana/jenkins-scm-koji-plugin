@@ -13,11 +13,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.PULL_JOB_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.NO_CHANGE_RETURN_VAR;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PACKAGE_NAME_VAR;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_PATH_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.XML_DECLARATION;
 
@@ -26,8 +23,6 @@ public class PullJob extends Job {
     public static final String PULL = "pull";
 
     private final String repoUrl;
-    private final Product product;
-    private final JDKVersion jdkVersion;
     private final File repositoriesRoot;
     private final File scriptsRoot;
 
@@ -40,10 +35,8 @@ public class PullJob extends Job {
             File scriptsRoot,
             List<OToolVariable> projectVariables
     ) {
-        super(projectName, projectVariables);
+        super(projectName, projectVariables, product, jdkVersion);
         this.repoUrl = repoUrl;
-        this.product = product;
-        this.jdkVersion = jdkVersion;
         this.repositoriesRoot = repositoriesRoot;
         this.scriptsRoot = scriptsRoot;
     }
@@ -61,10 +54,9 @@ public class PullJob extends Job {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof PullJob)) return false;
+        if (!super.equals(o)) return false;
         PullJob pullJob = (PullJob) o;
-        return Objects.equals(product, pullJob.product) &&
-                Objects.equals(repoUrl, pullJob.repoUrl) &&
-                Objects.equals(jdkVersion, pullJob.jdkVersion) &&
+        return Objects.equals(repoUrl, pullJob.repoUrl) &&
                 Objects.equals(repositoriesRoot, pullJob.repositoriesRoot) &&
                 Objects.equals(scriptsRoot, pullJob.scriptsRoot);
     }
@@ -73,12 +65,8 @@ public class PullJob extends Job {
         return repoUrl;
     }
 
-    public Product getProduct() {
-        return product;
-    }
-
-    public JDKVersion getJdkVersion() {
-        return jdkVersion;
+    public File getRepositoriesRoot() {
+        return repositoriesRoot;
     }
 
     public File getScriptsRoot() {
@@ -90,8 +78,6 @@ public class PullJob extends Job {
         return Objects.hash(
                 super.hashCode(),
                 repoUrl,
-                product,
-                jdkVersion,
                 repositoriesRoot,
                 scriptsRoot
         );
@@ -103,7 +89,7 @@ public class PullJob extends Job {
                 Job.DELIMITER,
                 Arrays.asList(
                         PULL,
-                        product.getJdk(),
+                        this.getProduct().getJdk(),
                         getProjectName()
                 )
         ));
@@ -124,8 +110,6 @@ public class PullJob extends Job {
         return Stream.concat(
                 super.getExportedVariables().stream(),
                 Stream.of(
-                        new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
-                        new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName()),
                         new OToolVariable(
                                 PROJECT_PATH_VAR,
                                 Paths.get(repositoriesRoot.getAbsolutePath(), getProjectName()).toString()
