@@ -78,7 +78,7 @@ public class OToolService {
     public static final String BUMP = "bump";
     public static final String MISC = "misc";
     private static final String HELP = "help";
-    public static final String PRODUCT = "product";
+    public static final String PRODUCTS = "/products";
     static final String FILTER = "filter";
     static final String SKIP_EMPTY = "skipEmpty";
     static final String ONLY_HW = "onlyHW";

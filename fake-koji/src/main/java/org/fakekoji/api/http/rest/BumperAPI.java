@@ -42,7 +42,7 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
-import static org.fakekoji.api.http.rest.OToolService.PRODUCT;
+import static org.fakekoji.api.http.rest.OToolService.PRODUCTS;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
@@ -230,8 +230,10 @@ public class BumperAPI implements EndpointGroup {
     }
 
     public static String getHelp() {
+        final String prefix = MISC + '/' + BUMP;
         return "\n"
-                + MISC + '/' + BUMP + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n";
+                + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
+                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n";
     }
 
     @Override
@@ -245,7 +247,7 @@ public class BumperAPI implements EndpointGroup {
                 context.json(result.getValue());
             }
         });
-        get(PRODUCT, context -> {
+        get(PRODUCTS, context -> {
             final Result<JobUpdateResults, OToolError> result = bumpProduct(context.queryParamMap());
             if (result.isError()) {
                 final OToolError error = result.getError();
