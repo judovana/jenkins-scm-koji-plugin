@@ -50,6 +50,7 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.LOCAL;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.NO_CHANGE_RETURN_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OTOOL_BASH_VAR_PREFIX;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.O_TOOL;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PACKAGE_NAME_VAR;
@@ -1090,6 +1091,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "#!/bin/sh" + XML_NEW_LINE +
                 "#export " + NO_CHANGE_RETURN_VAR + "=-1 # any negative is enforcing pull even without changes detected" + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + JDK_VERSION_VAR + "=" + jdk8.getVersion() + XML_NEW_LINE +
+                "export " + OTOOL_BASH_VAR_PREFIX + OJDK_VAR + "=" + jdk8.getId() + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PACKAGE_NAME_VAR + "=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_NAME_VAR + "=" + PROJECT_NAME + XML_NEW_LINE +
                 "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_PATH_VAR + "=" + Paths.get(reposRoot.getAbsolutePath(), PROJECT_NAME) + XML_NEW_LINE +
