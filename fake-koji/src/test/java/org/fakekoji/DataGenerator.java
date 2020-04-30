@@ -140,6 +140,10 @@ public class DataGenerator {
         return new Product(JDK_8, JDK_8_PACKAGE_NAME);
     }
 
+    public static Product getJDK11Product() {
+        return new Product(JDK_11, JDK_11_PACKAGE_NAME);
+    }
+
     public static Set<String> getBuildProvidersIds() {
         return new HashSet<>(Arrays.asList(
                 BUILD_PROVIDER_1,
