@@ -3,6 +3,7 @@ package org.fakekoji.api.http.rest;
 import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobModifier;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
@@ -23,6 +24,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
