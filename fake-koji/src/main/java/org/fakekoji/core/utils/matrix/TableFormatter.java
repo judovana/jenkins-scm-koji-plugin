@@ -194,7 +194,7 @@ public interface TableFormatter {
                     } catch (MalformedURLException ex) {
                         String reportHref = "";
                         if (alsoReportVr != null) {
-                            reportHref = "<a href=\"#" + url + "/" + alsoReportVr + "\">[^]</a>";
+                            reportHref = "<a class=\"reportJump\" href=\"#" + url + "/" + alsoReportVr + "\">[^]</a>";
                         }
                         sb.append(tdopen + openAdd(url) + "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\">").append("[" + (i + 1) + "]").append("</a>" + reportHref + closeAdd() + tdclose);
                     }
