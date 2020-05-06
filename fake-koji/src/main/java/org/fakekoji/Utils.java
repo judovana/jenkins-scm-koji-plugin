@@ -1,7 +1,5 @@
 package org.fakekoji;
 
-import jdk.nashorn.api.scripting.URLReader;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,8 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class Utils {
@@ -49,15 +50,40 @@ public class Utils {
     }
 
     public static String readFile(URL url) throws IOException {
-        try (final URLReader urlReader = new URLReader(url);
+        try (final Reader urlReader = new InputStreamReader(url.openStream(), "utf-8");
                 final BufferedReader bufferedReader = new BufferedReader(urlReader)) {
             return readStream(bufferedReader);
         }
 
     }
 
+    public static List<String> readFileToLines(URL url, Function<String, String> cleaner) throws IOException {
+        try (final Reader urlReader = new InputStreamReader(url.openStream(), "utf-8");
+             final BufferedReader bufferedReader = new BufferedReader(urlReader)) {
+            return readStreamToLines(bufferedReader, cleaner);
+        }
+
+    }
     public static String readFile(File file) throws IOException {
         return readFile(file.toURI().toURL());
+    }
+
+    public static List<String> readFileToLines(File file, Function<String, String> cleaner) throws IOException {
+        return readFileToLines(file.toURI().toURL(), cleaner);
+    }
+
+    public static List<String> readProcessedTxt(File file) throws IOException {
+        return readFileToLines(file.toURI().toURL(), new Function<String, String>() {
+            Pattern p = Pattern.compile("#.*");
+            @Override
+            public String apply(String s) {
+                String ss = p.matcher(s).replaceAll("").trim();
+                if (ss.isEmpty()){
+                    return null;
+                }
+                return ss;
+            }
+        });
     }
 
     public static String readStream(Reader in) throws IOException {
@@ -68,6 +94,24 @@ public class Utils {
                 content.append(line).append('\n');
             }
             return content.toString();
+        }
+    }
+
+    public static List<String> readStreamToLines(Reader in, Function<String, String> cleaner) throws IOException {
+        try (final BufferedReader bufferedReader = new BufferedReader(in)) {
+            List<String> r = new ArrayList<>();
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                if (cleaner == null) {
+                    r.add(line);
+                }else {
+                    String s = cleaner.apply(line);
+                    if (s!=null){
+                        r.add(s);
+                    }
+                }
+            }
+            return r;
         }
     }
 

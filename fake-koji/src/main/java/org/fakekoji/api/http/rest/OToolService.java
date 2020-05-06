@@ -1,19 +1,26 @@
 package org.fakekoji.api.http.rest;
 
+import hudson.plugins.scm.koji.Constants;
 import io.javalin.Javalin;
+import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.plugin.json.JavalinJackson;
+import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.core.utils.matrix.TableFormatter;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
+import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.*;
 import org.fakekoji.jobmanager.manager.*;
+import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
@@ -24,11 +31,20 @@ import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -38,7 +54,7 @@ public class OToolService {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
-    private static final int OK = 200;
+    static final int OK = 200;
     private static final int BAD = 400;
     private static final int ERROR = 500;
 
@@ -88,38 +104,6 @@ public class OToolService {
     private static final String MATRIX_TREGEX = "testRegex";
     private static final String MATRIX_FORMAT = "format";
     private static final String PROJECT = "project";
-
-    private static final String ARCHES_EXPECTED = "archesExpected"; //will show or generate arches_expected for NVR. No param - deduct from c
-    private static final String ARCHES_EXPECTED_LIST = "list"; //show arches expected for nvr. If no nvr, then list possible arches (from platform's koji arches)
-    private static final String ARCHES_EXPECTED_ARCHES = "set"; //coma separated list of arches to put in, note that here we are on  old api only, so koji-arches can be suggested
-    private static final String ARCHES_EXPECTED_LIST_NVR = "nvr"; //optional target for list, mandatory target for set; on new api error
-
-    private static final String REDEPLOY = "re";
-    private static final String REDEPLOY_TEST = "test";
-    private static final String REDEPLOY_BUILD = "build"; //only jdkProject in addtion to removal VR from processed.txt, it cleans  FAILED, ERROR and smaller then 4bytes files from local-builds
-    private static final String REDEPLOY_LIST = "list"; //only show what will be done
-    private static final String REDEPLOY_DO = "do"; //will do the real work
-    //all can be coma separated?
-    private static final String REDEPLOY_TYPE = "type"; //jdkProject | jdkTestProject
-    private static final String REDEPLOY_PROJECT = "project";
-    private static final String REDEPLOY_NVR = "project"; //for jdkProject it shows also type and project, however, can be ommiteed
-    //other details for selection
-    private static final String REDEPLOY_os = "os";
-    private static final String REDEPLOY_arch = "arch";
-    private static final String REDEPLOY_version = "version";
-    private static final String REDEPLOY_jp = "jp";
-    private static final String REDEPLOY_task = "task";
-    private static final String REDEPLOY_variants = "variants"; //coma separated list of test variants
-    private static final String REDEPLOY_provider = "provider"; //coma separated? list ?of test providers?
-    //sometimes we need also build arch to judge
-    private static final String REDEPLOY_bos = "bos";
-    private static final String REDEPLOY_barch = "barch";
-    private static final String REDEPLOY_bversion = "bversion";
-    private static final String REDEPLOY_bvariants = "bvariants"; //coma separated list of build variants; for build we do not care about provider?
-    private static final String REDEPLOY_bprovider = "bprovider"; //coma separated? list ?of test providers?
-    //is needed at the end?
-    private static final String REDEPLOY_regex = "regex";
-
 
     private final int port;
     private final Javalin app;
@@ -181,26 +165,20 @@ public class OToolService {
             final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
             final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
 
-            final JDKProjectParser parser = new JDKProjectParser(
+            final JDKProjectParser jdkProjectParser = new JDKProjectParser(
                     ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
                     settings.getLocalReposRoot(),
                     settings.getScriptsRoot()
             );
 
-            final BumperAPI bumperAPI = new BumperAPI(
-                    jenkinsJobUpdater,
-                    parser,
-                    new ReverseJDKProjectParser(),
-                    jdkProjectManager,
-                    jdkTestProjectManager,
-                    platformManager
-            );
-
             path(MISC, () -> {
-                path(BUMP, bumperAPI);
                 get(HELP, wrapper.wrap(context -> {
-                    context.status(OK).result(getMiscHelp() + bumperAPI.getHelp());
+                    context.status(OK).result(getMiscHelp()
+                            + BumperAPI.getHelp()
+                            + RedeployApi.getHelp());
                 }));
+                path(BUMP, new BumperAPI(jenkinsJobUpdater, jdkProjectParser, new ReverseJDKProjectParser(), jdkProjectManager, jdkTestProjectManager, platformManager));
+                path(RedeployApi.REDEPLOY, new RedeployApi(jdkProjectParser, jdkProjectManager, jdkTestProjectManager, settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);

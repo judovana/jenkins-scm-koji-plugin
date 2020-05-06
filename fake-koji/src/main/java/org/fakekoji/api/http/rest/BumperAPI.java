@@ -181,8 +181,8 @@ public class BumperAPI implements EndpointGroup {
         );
     }
 
-    public String getHelp() {
-        return ""
+    public static String getHelp() {
+        return "\n"
                 + MISC + '/' + BUMP + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2]\n";
     }
 
