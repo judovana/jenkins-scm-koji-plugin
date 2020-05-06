@@ -292,7 +292,7 @@ public class JenkinsJobTemplateBuilder {
             usedBuilder = loadTemplate(JenkinsTemplate.TIMEOUTSHELL_SCRIPT_TEMPLATE);
         }
         template = template
-                .replace(NODES, String.join(" ", nodes))
+                .replace(NODES, String.join("||", nodes))
                 .replace(BUILDER_SCRIPT, usedBuilder)
                 .replace(TASK_SCRIPT, task.getScript())
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())

@@ -38,7 +38,6 @@ import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
-import static org.fakekoji.api.http.rest.RestUtils.extractParamValues;
 
 public class BumperAPI implements EndpointGroup {
 
@@ -146,6 +145,7 @@ public class BumperAPI implements EndpointGroup {
                         break;
                 }
             }
+            JenkinsJobUpdater.wakeUpJenkins();
             return Result.ok(jobUpdater.bump(jobsToBump));
 
         } catch (StorageException e) {
@@ -158,7 +158,7 @@ public class BumperAPI implements EndpointGroup {
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
         final Optional<String> fromOptional = extractParamValue(paramsMap, "from");
         final Optional<String> toOptional = extractParamValue(paramsMap, "to");
-        final Optional<List<String>> projectsOptional = extractParamValues(paramsMap, "projects");
+        final Optional<String> projectsOptional = extractParamValue(paramsMap, "projects");
         if (!fromOptional.isPresent()) {
             return Result.err(new OToolError("Id of 'from' platform is missing", 400));
         }
@@ -166,11 +166,11 @@ public class BumperAPI implements EndpointGroup {
             return Result.err(new OToolError("Id of 'to' platform is missing", 400));
         }
         if (!projectsOptional.isPresent()) {
-            return Result.err(new OToolError("projects and project cannot be set both", 400));
+            return Result.err(new OToolError("projects are mandatory. Use get/projects?as=list to get them all", 400));
         }
         final String fromId = fromOptional.get();
         final String toId = toOptional.get();
-        final List<String> projectIds = projectsOptional.get();
+        final List<String> projectIds = new ArrayList<>(Arrays.asList(projectsOptional.get().split(",")));
         return platformConfigReader.read(fromId).flatMap(fromPlatform ->
                 platformConfigReader.read(toId).flatMap(toPlatform ->
                         checkProjectIds(projectIds).flatMap(projects -> modifyJobs(

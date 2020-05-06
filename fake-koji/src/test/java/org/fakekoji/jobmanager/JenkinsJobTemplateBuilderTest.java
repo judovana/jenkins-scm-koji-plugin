@@ -313,7 +313,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", vmPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", vmPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -421,7 +421,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", hwPlatform.getProviders().get(0).getHwNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", hwPlatform.getProviders().get(0).getHwNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -519,7 +519,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getHwNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getHwNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -623,7 +623,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -742,7 +742,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -865,7 +865,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -993,7 +993,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -1212,7 +1212,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "        <dirPerNvr>false</dirPerNvr>\n" +
                         "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                         "    </scm>\n" +
-                        "    <assignedNode>" + String.join(" ", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                        "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
                         "    <canRoam>false</canRoam>\n" +
                         "    <disabled>false</disabled>\n" +
                         "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
