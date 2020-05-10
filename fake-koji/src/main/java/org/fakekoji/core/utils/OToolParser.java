@@ -163,7 +163,7 @@ public class OToolParser {
         )));
     }
 
-    private class PackageNameCut {
+    private static class PackageNameCut {
         final String packageName;
         final String tail;
 
@@ -173,7 +173,7 @@ public class OToolParser {
         }
     }
 
-    private class ChangeSetCut extends PackageNameCut {
+    private static class ChangeSetCut extends PackageNameCut {
         final String version;
         final String changeSet;
 
@@ -188,7 +188,7 @@ public class OToolParser {
         }
     }
 
-    private class BuildTailCut extends ChangeSetCut {
+    private static class BuildTailCut extends ChangeSetCut {
         protected final String garbage;
         protected final String projectName;
 
@@ -199,7 +199,7 @@ public class OToolParser {
         }
     }
 
-    private class ArchiveTailCut extends BuildTailCut {
+    private static class ArchiveTailCut extends BuildTailCut {
         final String suffix;
         final String platform;
         final List<Tuple<String, String>> buildVariants;
@@ -216,4 +216,5 @@ public class OToolParser {
             this.buildVariants = buildVariants;
         }
     }
+
 }
