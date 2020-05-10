@@ -58,7 +58,7 @@ public class OToolParserTest {
     private static final String VALID_NAME_VERSION = String.join("-", JDK_8_PACKAGE_NAME, VERSION);
     private static final String VALID_RELEASE = String.join(".", CHANGE_SET, PROJECT_NAME_U);
     private static final String VALID_RELEASE_WITH_CHAOS = String.join(".", CHANGE_SET, CHAOS, PROJECT_NAME_U);
-    private static final String VALID_ARCHIVE_FULL = String.join(".", RELEASE, HOTSPOT,F_29_X64, SUFFIX);
+    private static final String VALID_ARCHIVE_FULL = String.join(".", RELEASE, HOTSPOT, F_29_X64, SUFFIX);
     private static final String VALID_ARCHIVE_MISSING = String.join(".", FASTDEBUG, F_29_X64, SUFFIX);
 
     @Test
@@ -221,4 +221,57 @@ public class OToolParserTest {
                 result.getValue()
         );
     }
+
+    @Test
+    public void parseLegacyNVR() {
+        OToolParser.LegacyNVR nvr = new OToolParser.LegacyNVR("some-nice-name-some.version-some.release");
+        Assert.assertEquals("some-nice-name", nvr.getN());
+        Assert.assertEquals("some.version", nvr.getV());
+        Assert.assertEquals("some.release", nvr.getR());
+        Assert.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
+        Assert.assertEquals("some-nice-name-some.version", nvr.getNV());
+        Assert.assertEquals("some.version-some.release", nvr.getVR());
+        Assert.assertEquals("some-nice-name-some.release", nvr.getNR());
+        Assert.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
+
+    }
+
+    @Test
+    public void parseLegacyNVRA() {
+        OToolParser.LegacyNVRA nvr = new OToolParser.LegacyNVRA("some-nice-name-some.version-some.release.os.arch");
+        Assert.assertEquals("some-nice-name-some.version-some.release.os.arch", nvr.getNVRA());
+        Assert.assertEquals("os", nvr.getOs());
+        Assert.assertEquals("arch", nvr.getArch());
+        Assert.assertEquals("os.arch", nvr.getA());
+        Assert.assertEquals("some-nice-name", nvr.getN());
+        Assert.assertEquals("some.version", nvr.getV());
+        Assert.assertEquals("some.release", nvr.getR());
+        Assert.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
+        Assert.assertEquals("some-nice-name-some.version", nvr.getNV());
+        Assert.assertEquals("some.version-some.release", nvr.getVR());
+        Assert.assertEquals("some-nice-name-some.release", nvr.getNR());
+        Assert.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
+        Assert.assertEquals("some-nice-name/some.version/some.release.os/arch", nvr.getFullPath());
+    }
+
+    @Test
+    public void parseLegacyNVRAS() {
+        OToolParser.LegacyNVRASuffix nvr = new OToolParser.LegacyNVRASuffix("some-nice-name-some.version-some.release.os.arch.suffix");
+        Assert.assertEquals("some-nice-name-some.version-some.release.os.arch.suffix", nvr.getNvras());
+        Assert.assertEquals("suffix", nvr.getSuffix());
+        Assert.assertEquals("some-nice-name-some.version-some.release.os.arch", nvr.getNVRA());
+        Assert.assertEquals("os", nvr.getOs());
+        Assert.assertEquals("arch", nvr.getArch());
+        Assert.assertEquals("os.arch", nvr.getA());
+        Assert.assertEquals("some-nice-name", nvr.getN());
+        Assert.assertEquals("some.version", nvr.getV());
+        Assert.assertEquals("some.release", nvr.getR());
+        Assert.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
+        Assert.assertEquals("some-nice-name-some.version", nvr.getNV());
+        Assert.assertEquals("some.version-some.release", nvr.getVR());
+        Assert.assertEquals("some-nice-name-some.release", nvr.getNR());
+        Assert.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
+        Assert.assertEquals("some-nice-name/some.version/some.release.os/arch", nvr.getFullPath());
+    }
+
 }

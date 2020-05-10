@@ -217,4 +217,118 @@ public class OToolParser {
         }
     }
 
+    public static class LegacyNVR {
+        private final String n;
+        private final String v;
+        private final String r;
+        private final String nvr;
+
+        public LegacyNVR(String nvr) {
+            String nv = nvr.substring(0, nvr.lastIndexOf("-"));
+            String n = nv.substring(0, nv.lastIndexOf("-"));
+            String[] vr = nvr.replaceFirst(n + "-", "").split("-");
+            String[] splitted = new String[]{n, vr[0], vr[1]};
+            this.nvr = nvr;
+            this.n = n;
+            this.v = vr[0];
+            this.r = vr[1];
+        }
+
+        public String getN() {
+            return n;
+        }
+
+        public String getV() {
+            return v;
+        }
+
+        public String getR() {
+            return r;
+        }
+
+        public String getNV() {
+            return n + "-" + v;
+        }
+
+        public String getVR() {
+            return v + "-" + r;
+        }
+
+        public String getNR() {
+            return n + "-" + r;
+        }
+
+        public String getNVR() {
+            return nvr;
+        }
+        public String getPartialPath() {
+            return n+"/"+v;
+        }
+    }
+
+    public static class LegacyNVRA extends LegacyNVR {
+        private final String arch;
+        private final String os;
+        private final String nvra;
+
+        public LegacyNVRA(String nvra) {
+            super(removeOsArch(nvra));
+            this.nvra = nvra;
+            String oa = nvra.replace(this.getNVR() + ".", "");
+            String[] ooaa = oa.split("\\.");
+            os = ooaa[0];
+            arch = ooaa[1];
+        }
+
+        private static String removeOsArch(String nvroa) {
+            String nvro = nvroa.substring(0, nvroa.lastIndexOf("."));
+            String nvr = nvro.substring(0, nvro.lastIndexOf("."));
+            return nvr;
+        }
+
+        public String getA() {
+            return os + "." + arch;
+        }
+
+        public String getFullR() {
+            return getR()+"."+os;
+        }
+
+        public String getArch() {
+            return arch;
+        }
+
+        public String getOs() {
+            return os;
+        }
+
+        public String getNVRA() {
+            return nvra;
+        }
+
+        public String getFullPath() {
+            return getPartialPath()+"/"+getFullR()+"/"+arch;
+        }
+
+    }
+
+    public static class LegacyNVRASuffix extends LegacyNVRA {
+        private final String nvras;
+        private final String suffix;
+
+        public LegacyNVRASuffix(String nvras) {
+            super(nvras.substring(0, nvras.lastIndexOf(".")));
+            String suffix = nvras.replace(this.getNVRA() + ".", "");
+            this.nvras = nvras;
+            this.suffix = suffix;
+        }
+
+        public String getSuffix() {
+            return suffix;
+        }
+
+        public String getNvras() {
+            return nvras;
+        }
+    }
 }

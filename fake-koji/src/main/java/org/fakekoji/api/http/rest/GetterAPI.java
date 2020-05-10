@@ -827,23 +827,20 @@ public class GetterAPI implements EndpointGroup {
                 if (!type.isPresent() || "NVR".equals(type.get())) {
                     return Result.ok(nvr.get());
                 }
-                String nv = nvr.get().substring(0, nvr.get().lastIndexOf("-"));
-                String n = nv.substring(0, nv.lastIndexOf("-"));
-                String[] vr = nvr.get().replaceFirst(n + "-", "").split("-");
-                String[] splitted = new String[]{n, vr[0], vr[1]};
+              OToolParser.LegacyNVR parsedNvr = new OToolParser.LegacyNVR(nvr.get());
                 switch (type.get()) {
                     case "N":
-                        return Result.ok(splitted[0]);
+                        return Result.ok(parsedNvr.getN());
                     case "V":
-                        return Result.ok(splitted[1]);
+                        return Result.ok(parsedNvr.getV());
                     case "R":
-                        return Result.ok(splitted[2]);
+                        return Result.ok(parsedNvr.getR());
                     case "NV":
-                        return Result.ok(splitted[0] + "-" + splitted[1]);
+                        return Result.ok(parsedNvr.getNV());
                     case "VR":
-                        return Result.ok(splitted[1] + "-" + splitted[2]);
+                        return Result.ok(parsedNvr.getVR());
                     case "NR":
-                        return Result.ok(splitted[0] + "-" + splitted[2]);
+                        return Result.ok(parsedNvr.getNR());
                     default:
                         return Result.err("Unknown type - " + type.get());
                 }
