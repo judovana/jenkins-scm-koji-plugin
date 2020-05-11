@@ -487,7 +487,11 @@ public class FakeBuild {
         System.err.println(Arrays.toString(readArchesFile(new File(arg[0]))));
     }
 
-    private static void generateDefaultArchesFile(File defaultArchesFile) throws IOException {
+    public static void generateDefaultArchesFile(File defaultArchesFile) throws IOException {
+        generateDefaultArchesFile(defaultArchesFile, null);
+    }
+
+    public static void generateDefaultArchesFile(File defaultArchesFile, String arches) throws IOException {
         try (
                 OutputStream outputStream = new FileOutputStream(defaultArchesFile);
                 OutputStreamWriter streamWriter = new OutputStreamWriter(outputStream, Charset.forName("UTF-8"));
@@ -501,6 +505,9 @@ public class FakeBuild {
             bufferedWriter.write("# ############## #\n");
             bufferedWriter.write("# Please always keep comment here describing above.\n");
             bufferedWriter.write("# Generated from: " + System.getProperty("user.dir") + "\n");
+            if (arches != null) {
+                bufferedWriter.write(arches + "\n");
+            }
             bufferedWriter.flush();
 
         }

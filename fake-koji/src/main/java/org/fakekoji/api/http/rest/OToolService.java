@@ -55,8 +55,8 @@ public class OToolService {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     static final int OK = 200;
-    private static final int BAD = 400;
-    private static final int ERROR = 500;
+    public static final int BAD = 400;
+    public static final int ERROR = 500;
 
     private static final String ID = "id";
     private static final String CONFIG_ID = "/:" + ID;
@@ -178,7 +178,7 @@ public class OToolService {
                             + RedeployApi.getHelp());
                 }));
                 path(BUMP, new BumperAPI(jenkinsJobUpdater, jdkProjectParser, new ReverseJDKProjectParser(), jdkProjectManager, jdkTestProjectManager, platformManager));
-                path(RedeployApi.REDEPLOY, new RedeployApi(jdkProjectParser, jdkProjectManager, jdkTestProjectManager, settings));
+                path(RedeployApi.REDEPLOY, new RedeployApi(jdkProjectParser, jdkProjectManager, jdkTestProjectManager, platformManager, settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);

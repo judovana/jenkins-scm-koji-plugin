@@ -264,6 +264,10 @@ public class OToolParser {
         public String getPartialPath() {
             return n+"/"+v;
         }
+
+        public String getFullPath() {
+            return getPartialPath()+"/"+r;
+        }
     }
 
     public static class LegacyNVRA extends LegacyNVR {
@@ -306,6 +310,7 @@ public class OToolParser {
             return nvra;
         }
 
+        @Override
         public String getFullPath() {
             return getPartialPath()+"/"+getFullR()+"/"+arch;
         }
