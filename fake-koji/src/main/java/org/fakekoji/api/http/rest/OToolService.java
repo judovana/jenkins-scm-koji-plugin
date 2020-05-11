@@ -170,6 +170,9 @@ public class OToolService {
                     settings.getLocalReposRoot(),
                     settings.getScriptsRoot()
             );
+            final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
+            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
+            final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
 
             path(MISC, () -> {
                 get(HELP, wrapper.wrap(context -> {
@@ -178,7 +181,7 @@ public class OToolService {
                             + RedeployApi.getHelp());
                 }));
                 path(BUMP, new BumperAPI(jenkinsJobUpdater, jdkProjectParser, new ReverseJDKProjectParser(), jdkProjectManager, jdkTestProjectManager, platformManager));
-                path(RedeployApi.REDEPLOY, new RedeployApi(jdkProjectParser, jdkProjectManager, jdkTestProjectManager, platformManager, settings));
+                path(RedeployApi.REDEPLOY, new RedeployApi(jdkProjectParser, jdkProjectManager, jdkTestProjectManager, platformManager, jdkVersionManager, taskVariantManager, settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
@@ -375,14 +378,8 @@ public class OToolService {
                 final JDKTestProject deleted = jdkTestProjectManager.delete(id);
                 context.status(OK).json(jenkinsJobUpdater.update(deleted, null));
             }));
-
-            final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
             app.get(BUILD_PROVIDERS, wrapper.wrap(context -> context.json(buildProviderManager.readAll())));
-
-            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
-
             app.get(JDK_VERSIONS, wrapper.wrap(context -> context.json(jdkVersionManager.readAll())));
-
             app.get(PLATFORMS, wrapper.wrap(context -> context.json(platformManager.readAll())));
             app.post(PLATFORMS, wrapper.wrap(context -> {
                 final Platform platform = context.bodyValidator(Platform.class).get();
@@ -406,7 +403,6 @@ public class OToolService {
                 final ManagementResult<Platform> result = new ManagementResult<>(deleted);
                 context.status(OK).json(result);
             }));
-
             app.post(TASKS, wrapper.wrap(context -> {
                 final Task task = context.bodyValidator(Task.class).get();
                 final Task created = taskManager.create(task);
@@ -428,10 +424,7 @@ public class OToolService {
                 final String id = context.pathParam(ID);
                 taskManager.delete(id); // not supported
             }));
-
-            final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
             app.get(TASK_VARIANTS, wrapper.wrap(context -> context.json(taskVariantManager.readAll())));
-
             app.post(JDK_PROJECTS, wrapper.wrap(context -> {
                 final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
                 final JDKProject created = jdkProjectManager.create(jdkProject);

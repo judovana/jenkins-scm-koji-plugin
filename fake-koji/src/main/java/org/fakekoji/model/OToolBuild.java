@@ -80,6 +80,10 @@ public class OToolBuild {
                 ", changeSet='" + changeSet + '\'' + delimiter +
                 ", garbage='" + garbage + '\'' + delimiter +
                 ", projectName='" + projectName + '\'' + delimiter +
-                '}'+  delimiter;
+                '}' + delimiter;
+    }
+
+    public String toPathStub() {
+        return packageName + "/" + version + "/" + getRelease();
     }
 }

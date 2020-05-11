@@ -7,8 +7,11 @@ import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeBuild;
 import org.fakekoji.core.utils.OToolParser;
+import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
+import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.Project;
@@ -16,6 +19,7 @@ import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
+import org.fakekoji.model.OToolBuild;
 import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 
@@ -84,18 +88,24 @@ public class RedeployApi implements EndpointGroup {
     private final JDKTestProjectManager jdkTestProjectManager;
     private final AccessibleSettings settings;
     private final PlatformManager platformManager;
+    private final JDKVersionManager jdkVersionManager;
+    private final TaskVariantManager taskVariantManager;
 
     RedeployApi(
             final JDKProjectParser jdkProjectParser,
             final JDKProjectManager jdkProjectManager,
             final JDKTestProjectManager jdkTestProjectManager,
             final PlatformManager platformManager,
+            final JDKVersionManager jdkVersionManager,
+            final TaskVariantManager taskVariantManager,
             final AccessibleSettings settings
     ) {
         this.parser = jdkProjectParser;
         this.jdkProjectManager = jdkProjectManager;
         this.jdkTestProjectManager = jdkTestProjectManager;
         this.platformManager = platformManager;
+        this.jdkVersionManager = jdkVersionManager;
+        this.taskVariantManager = taskVariantManager;
         this.settings = settings;
     }
 
@@ -109,8 +119,8 @@ public class RedeployApi implements EndpointGroup {
                 + "once you set " + REDEPLOY_NVR + "=nvr the jobs affected by this nvr will be printed.\n"
                 + "once you set " + REDEPLOY_DO + "=true, the real work will happen - nvr will be removed from affected jobs.\n"
                 + "For " + REDEPLOY_BUILD + " it also removes the affected NVRA from database. A is deducted  from other params\n"
-                +"\n"
-                + MISC + '/'+ REDEPLOY+ '/' + ARCHES_EXPECTED + " will list exisiting " + FakeBuild.archesConfigFileName + " files"
+                + "\n"
+                + MISC + '/' + REDEPLOY + '/' + ARCHES_EXPECTED + " will list exisiting " + FakeBuild.archesConfigFileName + " files"
                 + "    with " + REDEPLOY_NVR + "  it shows arches expectewd of this NVR (dont forget, that in old api R contan also OS!\n"
                 + "    with " + ARCHES_EXPECTED_SET + " and " + REDEPLOY_NVR + "  set arches  for  this NVR\n"
                 + "       To set more global arches, you must go via file system, as we have new api, dont do that\n";
@@ -130,12 +140,28 @@ public class RedeployApi implements EndpointGroup {
                     context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
                 } else {
                     List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
-                    if (josbOfThisNvr == null){
-                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are null\n");
-                    } else if(josbOfThisNvr.isEmpty()){
-                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are empty\n");
+                    //builds are new api only!
+                    OToolParser op = new OToolParser(
+                            jdkProjectManager.readAll(),
+                            jdkVersionManager.readAll(),
+                            taskVariantManager.getBuildVariants()
+                    );
+                    //there is an catch
+                    //where argument for build job is NVR, and by that we can affect processed.txt
+                    //to remvove it from DB, nvra would be better. Or to do that via bos/arch and friends?
+                    //if via other "b*" args, then sources should be filtered
+                    Result<OToolBuild, String> parsedNvr = op.parseBuild(nvr);
+                    if (parsedNvr.isError()) {
+                        throw new RuntimeException("cannot parse" + nvr + " rebuild is new api only.\n");
+                    }
+                    NvrDirOperator nvd = new NvrDirOperator(parsedNvr.getValue());
+                    nvd.walk();
+                    if (josbOfThisNvr == null) {
+                        context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are null\n");
+                    } else if (josbOfThisNvr.isEmpty()) {
+                        context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are empty\n");
                     } else {
-                        context.status(OToolService.OK).result(josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
+                        context.status(OToolService.OK).result(nvd.toOutput() + "\n" + josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
                     }
                 }
             } catch (StorageException | ManagementException | IOException e) {
@@ -153,10 +179,10 @@ public class RedeployApi implements EndpointGroup {
                     context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
                 } else {
                     List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
-                    if (josbOfThisNvr == null){
-                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are null\n");
-                    } else if(josbOfThisNvr.isEmpty()){
-                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are empty\n");
+                    if (josbOfThisNvr == null) {
+                        context.status(OToolService.BAD).result("jobs which run exact " + nvr + " are null\n");
+                    } else if (josbOfThisNvr.isEmpty()) {
+                        context.status(OToolService.BAD).result("jobs which run exact " + nvr + " are empty\n");
                     } else {
                         context.status(OToolService.OK).result(josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
                     }
@@ -227,7 +253,7 @@ public class RedeployApi implements EndpointGroup {
                     }
                     //filtr affected jobs + places in builds (s neb arches>
                     context.status(OToolService.OK).result(aw.dirsWithArches.entrySet().stream().
-                            map((Function<Map.Entry<String, String[]>, String>) e -> String.join(" ", e.getValue()) + " ("+e.getKey()+")").
+                            map((Function<Map.Entry<String, String[]>, String>) e -> String.join(" ", e.getValue()) + " (" + e.getKey() + ")").
                             sorted().
                             collect(Collectors.joining("\n")) + "\n" +
                             "All used: " + aw.usedArches.stream().
@@ -321,7 +347,7 @@ public class RedeployApi implements EndpointGroup {
                             List<String> processedNvrsByThisJob = Utils.readProcessedTxt(processed);
                             nvrsPerJob.put(job.getName(), processedNvrsByThisJob);
                             nvrsInProcessedTxt.addAll(processedNvrsByThisJob);
-                            for(String nvr: processedNvrsByThisJob){
+                            for (String nvr : processedNvrsByThisJob) {
                                 List<Job> jobsOfThisNvr = jobsPerNvr.get(nvr);
                                 if (jobsOfThisNvr == null) {
                                     jobsOfThisNvr = new ArrayList<>();
@@ -335,6 +361,52 @@ public class RedeployApi implements EndpointGroup {
             }
             sortedNvrs.addAll(nvrsInProcessedTxt);
             Collections.sort(sortedNvrs);
+        }
+    }
+
+    private class NvrDirOperator {
+        private final File mainDir;
+        private final OToolBuild build;
+        private final List<Path> affectedFiles = new ArrayList<>();
+
+        public NvrDirOperator(OToolBuild value) {
+            this.build = value;
+            this.mainDir = new File(settings.getDbFileRoot().getAbsolutePath() + "/" + build.toPathStub());
+        }
+
+        public void walk() throws IOException {
+            affectedFiles.clear();
+            Files.walkFileTree(mainDir.toPath(), new FileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    affectedFiles.add(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    affectedFiles.add(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+
+        public String toOutput() {
+            if (affectedFiles.isEmpty()){
+                return "No files affected! bad filter?";
+            } else {
+                return affectedFiles.stream().map(Path::toString).collect(Collectors.joining("\n"));
+            }
         }
     }
 }
