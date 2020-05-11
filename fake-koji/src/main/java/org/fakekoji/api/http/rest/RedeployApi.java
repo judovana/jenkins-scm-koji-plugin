@@ -129,9 +129,14 @@ public class RedeployApi implements EndpointGroup {
                 if (nvr == null) {
                     context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
                 } else {
-                    //filtr affected jobs + places in builds (s neb arches>
-                    context.status(OToolService.OK).result(raw.allRelevantJobsMap.values().stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
-                    //better to filter them up rather then here
+                    List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
+                    if (josbOfThisNvr == null){
+                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are null\n");
+                    } else if(josbOfThisNvr.isEmpty()){
+                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are empty\n");
+                    } else {
+                        context.status(OToolService.OK).result(josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
+                    }
                 }
             } catch (StorageException | ManagementException | IOException e) {
                 context.status(400).result(e.getMessage());
@@ -147,9 +152,14 @@ public class RedeployApi implements EndpointGroup {
                 if (nvr == null) {
                     context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
                 } else {
-                    //filtr affected jobs + places in builds (s neb arches>
-                    context.status(OToolService.OK).result(raw.allRelevantJobsMap.values().stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
-                    //better to filter them up rather then here
+                    List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
+                    if (josbOfThisNvr == null){
+                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are null\n");
+                    } else if(josbOfThisNvr.isEmpty()){
+                        context.status(OToolService.BAD).result("jobs which run exact "+nvr+" are empty\n");
+                    } else {
+                        context.status(OToolService.OK).result(josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
+                    }
                 }
             } catch (StorageException | ManagementException | IOException e) {
                 context.status(400).result(e.getMessage());
@@ -286,6 +296,7 @@ public class RedeployApi implements EndpointGroup {
         final Set<String> nvrsInProcessedTxt = new HashSet();
         final Map<String, Job> allRelevantJobsMap = new HashMap<>();
         final Map<String, List<String>> nvrsPerJob = new HashMap<>();
+        final Map<String, List<Job>> jobsPerNvr = new HashMap<>();
         final List<String> sortedNvrs = new ArrayList();
         private boolean called = false;
 
@@ -307,9 +318,17 @@ public class RedeployApi implements EndpointGroup {
                         allRelevantJobsMap.put(job.getName(), job);
                         File processed = new File(new File(settings.getJenkinsJobsRoot(), job.getName()), Constants.PROCESSED_BUILDS_HISTORY);
                         if (processed.exists()) {
-                            List<String> l = Utils.readProcessedTxt(processed);
-                            nvrsPerJob.put(job.getName(), l);
-                            nvrsInProcessedTxt.addAll(l);
+                            List<String> processedNvrsByThisJob = Utils.readProcessedTxt(processed);
+                            nvrsPerJob.put(job.getName(), processedNvrsByThisJob);
+                            nvrsInProcessedTxt.addAll(processedNvrsByThisJob);
+                            for(String nvr: processedNvrsByThisJob){
+                                List<Job> jobsOfThisNvr = jobsPerNvr.get(nvr);
+                                if (jobsOfThisNvr == null) {
+                                    jobsOfThisNvr = new ArrayList<>();
+                                    jobsPerNvr.put(nvr, jobsOfThisNvr);
+                                }
+                                jobsOfThisNvr.add(job);
+                            }
                         }
                     }
                 }
