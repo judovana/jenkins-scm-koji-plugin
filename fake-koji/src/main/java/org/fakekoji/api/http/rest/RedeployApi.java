@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -123,7 +124,7 @@ public class RedeployApi implements EndpointGroup {
                 + "  You can narrow your search by [" + REDEPLOY_os + "," + REDEPLOY_arch + "," + REDEPLOY_version + "," + REDEPLOY_task + "," + REDEPLOY_variant + "," + REDEPLOY_provider + "," + REDEPLOY_jp + "]\n"
                 + "  For test-task only, to narrow by its build: [" + REDEPLOY_bos + "," + REDEPLOY_barch + "," + REDEPLOY_bversion + "," + REDEPLOY_bvariant + "," + "]\n"
                 + "    Those are coma separated lists. eg variant=shenandoah,zgc&bvarinat=jre,fastdebug&bos=el&bversion=6,7&version=8\n"
-                + "  you can use " + REDEPLOY_whitelist + "=regex and "+REDEPLOY_blacklist+"=regex to do some more wide/narrow filtering.\n"
+                + "  you can use " + REDEPLOY_whitelist + "=regex and " + REDEPLOY_blacklist + "=regex to do some more wide/narrow filtering.\n"
                 + "  once you set " + REDEPLOY_DO + "=true, the real work will happen - nvr will be removed from affected jobs.\n"
                 + "  For " + REDEPLOY_BUILD + " it also removes the affected NVRA from database. A is deducted  from other params\n"
                 + "\n"
@@ -440,8 +441,8 @@ public class RedeployApi implements EndpointGroup {
     }
 
     private class NvrDirOperatorFactory {
-        public NvrDirOperator createFor(OToolBuild otoolBuild) {
-            return new NvrDirOperator(otoolBuild);
+        public NvrDirOperator createFor(OToolBuild otoolBuild, List<Job> validJobs) {
+            return new NvrDirOperator(otoolBuild, validJobs);
         }
 
         public boolean newApiOnly() {
@@ -451,7 +452,7 @@ public class RedeployApi implements EndpointGroup {
 
     private class FakeNvrDirOperatorFactory extends NvrDirOperatorFactory {
         @Override
-        public NvrDirOperator createFor(OToolBuild otoolBuild) {
+        public NvrDirOperator createFor(OToolBuild otoolBuild, List<Job> validJobs) {
             return new FakeNvrDirOperator();
         }
 
@@ -485,15 +486,18 @@ public class RedeployApi implements EndpointGroup {
         private final List<Path> affectedDirsAndFiles = new ArrayList<>();
         private final List<Path> affectedDirs = new ArrayList<>();
         private final List<Path> affectedFiles = new ArrayList<>();
+        private final List<Job> validJobs;
 
         public NvrDirOperator() {
             this.build = null;
             this.mainDir = null;
+            validJobs = null;
         }
 
-        public NvrDirOperator(OToolBuild value) {
+        public NvrDirOperator(OToolBuild value, List<Job> validJobs) {
             this.build = value;
             this.mainDir = new File(settings.getDbFileRoot().getAbsolutePath() + "/" + build.toPathStub());
+            this.validJobs = validJobs==null?new ArrayList<>(0):validJobs;
         }
 
         public void walk() throws IOException {
@@ -503,15 +507,19 @@ public class RedeployApi implements EndpointGroup {
             Files.walkFileTree(mainDir.toPath(), new FileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    affectedDirsAndFiles.add(dir);
-                    affectedDirs.add(dir);
+                    if (pairedToList(dir)) {
+                        affectedDirsAndFiles.add(dir);
+                        affectedDirs.add(dir);
+                    }
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    affectedDirsAndFiles.add(file);
-                    affectedFiles.add(file);
+                    if (pairedToList(file)) {
+                        affectedDirsAndFiles.add(file);
+                        affectedFiles.add(file);
+                    }
                     return FileVisitResult.CONTINUE;
                 }
 
@@ -525,6 +533,25 @@ public class RedeployApi implements EndpointGroup {
                     return FileVisitResult.CONTINUE;
                 }
             });
+        }
+
+        private boolean pairedToList(Path path) {
+            while (path != null) {
+                for (Job job:validJobs) {
+                    BuildJob bjob = (BuildJob) job; //all the deleting is aimed to build jobs only
+                    String variantsString = bjob.getVariants().entrySet().stream()
+                            .sorted(Comparator.comparing(Map.Entry::getKey))
+                            .map(entry -> entry.getValue().getId())
+                            .collect(Collectors.joining(Job.VARIANTS_DELIMITER));
+                    String dirname = variantsString+Job.VARIANTS_DELIMITER+bjob.getPlatform().getId();
+                    if (path.getFileName()!= null &&
+                            path.getFileName().toString().equals(dirname)){
+                        return true;
+                    }
+                }
+                path = path.getParent();
+            }
+            return false;
         }
 
         public boolean canDeleteWihtoutForce() {
@@ -570,7 +597,7 @@ public class RedeployApi implements EndpointGroup {
                 if (nvr == null) {
                     context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
                 } else {
-                    List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
+                    List<Job> jobsOfThisNvr = raw.jobsPerNvr.get(nvr);
                     //builds are new api only!
                     OToolParser op = new OToolParser(
                             jdkProjectManager.readAll(),
@@ -586,14 +613,14 @@ public class RedeployApi implements EndpointGroup {
                     if (parsedNvr.isError() && nvdf.newApiOnly()) {
                         throw new RuntimeException("cannot parse " + nvr + " rebuild is new api only.\n");
                     }
-                    NvrDirOperator nvd = nvdf.createFor(parsedNvr.getValue());
+                    NvrDirOperator nvd = nvdf.createFor(parsedNvr.getValue(), jobsOfThisNvr);
                     nvd.walk();
-                    if (josbOfThisNvr == null) {
+                    if (jobsOfThisNvr == null) {
                         context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are null\n");
-                    } else if (josbOfThisNvr.isEmpty()) {
+                    } else if (jobsOfThisNvr.isEmpty()) {
                         context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are empty\n");
                     } else {
-                        context.status(OToolService.OK).result(nvd.toOutput() + "\n" + josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
+                        context.status(OToolService.OK).result(nvd.toOutput() + "\n" + jobsOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
                     }
                 }
             } catch (StorageException | ManagementException | IOException e) {
