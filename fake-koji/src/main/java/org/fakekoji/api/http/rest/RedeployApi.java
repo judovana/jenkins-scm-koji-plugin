@@ -1,8 +1,8 @@
 package org.fakekoji.api.http.rest;
 
 import hudson.plugins.scm.koji.Constants;
-import hudson.plugins.scm.koji.model.Build;
 import io.javalin.apibuilder.EndpointGroup;
+import io.javalin.http.Context;
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeBuild;
@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -80,7 +79,8 @@ public class RedeployApi implements EndpointGroup {
     private static final String ARCHES_EXPECTED_SET = "set";
 
     //is needed at the end?
-    private static final String REDEPLOY_regex = "regex";
+    private static final String REDEPLOY_whitelist = "whitelist";
+    private static final String REDEPLOY_blacklist = "blacklist";
 
 
     private final JDKProjectParser parser;
@@ -132,66 +132,12 @@ public class RedeployApi implements EndpointGroup {
     @Override
     public void addEndpoints() {
         get(REDEPLOY_BUILD, context -> {
-            try {
-                RedeployApiWorker raw = new RedeployApiWorker();
-                raw.prepare(BuildJob.class);
-                String nvr = context.queryParam(REDEPLOY_NVR);
-                if (nvr == null) {
-                    context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
-                } else {
-                    List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
-                    //builds are new api only!
-                    OToolParser op = new OToolParser(
-                            jdkProjectManager.readAll(),
-                            jdkVersionManager.readAll(),
-                            taskVariantManager.getBuildVariants()
-                    );
-                    //there is an catch
-                    //where argument for build job is NVR, and by that we can affect processed.txt
-                    //to remvove it from DB, nvra would be better. Or to do that via bos/arch and friends?
-                    //if via other "b*" args, then sources should be filtered
-                    Result<OToolBuild, String> parsedNvr = op.parseBuild(nvr);
-                    if (parsedNvr.isError()) {
-                        throw new RuntimeException("cannot parse" + nvr + " rebuild is new api only.\n");
-                    }
-                    NvrDirOperator nvd = new NvrDirOperator(parsedNvr.getValue());
-                    nvd.walk();
-                    if (josbOfThisNvr == null) {
-                        context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are null\n");
-                    } else if (josbOfThisNvr.isEmpty()) {
-                        context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are empty\n");
-                    } else {
-                        context.status(OToolService.OK).result(nvd.toOutput() + "\n" + josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
-                    }
-                }
-            } catch (StorageException | ManagementException | IOException e) {
-                context.status(400).result(e.getMessage());
-            } catch (Exception e) {
-                context.status(500).result(e.getMessage());
-            }
+            WarHorse wh = new WarHorse(context);
+            wh.workload(new NvrDirOperatorFactory(), BuildJob.class);
         });
         get(REDEPLOY_TEST, context -> {
-            try {
-                RedeployApiWorker raw = new RedeployApiWorker();
-                raw.prepare(TestJob.class);
-                String nvr = context.queryParam(REDEPLOY_NVR);
-                if (nvr == null) {
-                    context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
-                } else {
-                    List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
-                    if (josbOfThisNvr == null) {
-                        context.status(OToolService.BAD).result("jobs which run exact " + nvr + " are null\n");
-                    } else if (josbOfThisNvr.isEmpty()) {
-                        context.status(OToolService.BAD).result("jobs which run exact " + nvr + " are empty\n");
-                    } else {
-                        context.status(OToolService.OK).result(josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
-                    }
-                }
-            } catch (StorageException | ManagementException | IOException e) {
-                context.status(400).result(e.getMessage());
-            } catch (Exception e) {
-                context.status(500).result(e.getMessage());
-            }
+            WarHorse wh = new WarHorse(context);
+            wh.workload(new FakeNvrDirOperatorFactory(), TestJob.class);
         });
         get(ARCHES_EXPECTED, context -> {
             try {
@@ -364,10 +310,57 @@ public class RedeployApi implements EndpointGroup {
         }
     }
 
+    private class NvrDirOperatorFactory{
+        public NvrDirOperator createFor(OToolBuild otoolBuild){
+            return new NvrDirOperator(otoolBuild);
+        }
+
+        public boolean newApiOnly(){
+            return true;
+        }
+    }
+
+    private class FakeNvrDirOperatorFactory extends NvrDirOperatorFactory{
+        @Override
+        public NvrDirOperator createFor(OToolBuild otoolBuild){
+            return new FakeNvrDirOperator();
+        }
+
+        @Override
+        public boolean newApiOnly(){
+            return false;
+        }
+    }
+
+    private class FakeNvrDirOperator extends NvrDirOperator{
+
+        @Override
+        public void walk() throws IOException {
+            //no need to waste time
+        }
+
+        @Override
+        public boolean canDeleteWihtoutForce() {
+            return true;
+        }
+
+        @Override
+        public String toOutput() {
+            return "No NVRAs to delete, see affected jobs:";
+        }
+    }
+
     private class NvrDirOperator {
         private final File mainDir;
         private final OToolBuild build;
+        private final List<Path> affectedDirsAndFiles = new ArrayList<>();
+        private final List<Path> affectedDirs = new ArrayList<>();
         private final List<Path> affectedFiles = new ArrayList<>();
+
+        public NvrDirOperator() {
+            this.build = null;
+            this.mainDir = null;
+        }
 
         public NvrDirOperator(OToolBuild value) {
             this.build = value;
@@ -375,16 +368,20 @@ public class RedeployApi implements EndpointGroup {
         }
 
         public void walk() throws IOException {
+            affectedDirsAndFiles.clear();
+            affectedDirs.clear();
             affectedFiles.clear();
             Files.walkFileTree(mainDir.toPath(), new FileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    affectedFiles.add(dir);
+                    affectedDirsAndFiles.add(dir);
+                    affectedDirs.add(dir);
                     return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    affectedDirsAndFiles.add(file);
                     affectedFiles.add(file);
                     return FileVisitResult.CONTINUE;
                 }
@@ -401,11 +398,66 @@ public class RedeployApi implements EndpointGroup {
             });
         }
 
+        public boolean canDeleteWihtoutForce() {
+            return affectedDirs.size() < 2 && affectedFiles.size() < 2;
+        }
+
         public String toOutput() {
-            if (affectedFiles.isEmpty()){
+            if (affectedDirsAndFiles.isEmpty()) {
                 return "No files affected! bad filter?";
             } else {
-                return affectedFiles.stream().map(Path::toString).collect(Collectors.joining("\n"));
+                return affectedDirsAndFiles.stream().map(Path::toString).collect(Collectors.joining("\n"));
+            }
+        }
+    }
+
+    private class WarHorse {
+
+
+        private final Context context;
+
+        public WarHorse(Context context) {
+            this.context = context;
+        }
+
+        public void workload(NvrDirOperatorFactory nvdf, Class clazz) {
+            try {
+                RedeployApiWorker raw = new RedeployApiWorker();
+                raw.prepare(clazz);
+                String nvr = context.queryParam(REDEPLOY_NVR);
+                if (nvr == null) {
+                    context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
+                } else {
+                    List<Job> josbOfThisNvr = raw.jobsPerNvr.get(nvr);
+                    //builds are new api only!
+                    OToolParser op = new OToolParser(
+                            jdkProjectManager.readAll(),
+                            jdkVersionManager.readAll(),
+                            taskVariantManager.getBuildVariants()
+                    );
+                    //there is an catch
+                    //where argument for build job is NVR, and by that we can affect processed.txt
+                    //to remvove it from DB, nvra would be better. Or to do that via bos/arch and friends?
+                    //if via other "b*" args, then sources should be filtered
+                    //warn if more then one file and one dir is deleted, require do=force // and password? YYMMDDHHMM?
+                    Result<OToolBuild, String> parsedNvr = op.parseBuild(nvr);
+                    if (parsedNvr.isError() && nvdf.newApiOnly()) {
+                        throw new RuntimeException("cannot parse " + nvr + " rebuild is new api only.\n");
+                    }
+                    NvrDirOperator nvd = nvdf.createFor(parsedNvr.getValue());
+                    nvd.walk();
+                    if (josbOfThisNvr == null) {
+                        context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are null\n");
+                    } else if (josbOfThisNvr.isEmpty()) {
+                        context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are empty\n");
+                    } else {
+                        context.status(OToolService.OK).result(nvd.toOutput() + "\n" + josbOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
+                    }
+                }
+            } catch (StorageException | ManagementException | IOException e) {
+                context.status(400).result(e.getMessage());
+            } catch (Exception e) {
+                context.status(500).result(e.getMessage());
             }
         }
     }
