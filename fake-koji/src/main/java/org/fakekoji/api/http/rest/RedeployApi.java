@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -91,6 +92,12 @@ public class RedeployApi implements EndpointGroup {
     private static final String ARCHES_EXPECTED = "archesExpected";
     private static final String ARCHES_EXPECTED_SET = "set";
 
+    private static final String PROCESSED = "processed";
+    private static final String PROCESSED_job = "job";
+    private static final String PROCESSED_cmments = "comments";
+    private static final String PROCESSED_uniq = "nouniq";
+    private static final String PROCESSED_sort = "sort";
+
 
     private final JDKProjectParser parser;
     private final JDKProjectManager jdkProjectManager;
@@ -137,7 +144,10 @@ public class RedeployApi implements EndpointGroup {
                 + MISC + '/' + REDEPLOY + '/' + ARCHES_EXPECTED + " will list exisiting " + FakeBuild.archesConfigFileName + " files"
                 + "  with " + REDEPLOY_NVR + "  it shows arches expectewd of this NVR (dont forget, that in old api R contan also OS!\n"
                 + "  with " + ARCHES_EXPECTED_SET + " and " + REDEPLOY_NVR + "  set arches  for  this NVR\n"
-                + "    To set more global arches, you must go via file system, as we have new api, dont do that\n";
+                + "    To set more global arches, you must go via file system, as we have new api, dont do that\n"
+                + "\n"
+                + MISC + '/' + REDEPLOY + '/' + PROCESSED + " will show content of " + Constants.PROCESSED_BUILDS_HISTORY + " of given JOB"
+                + "  mandatory " + PROCESSED_job + "=jobName optional [" + String.join(",", Arrays.asList(PROCESSED_cmments, PROCESSED_sort, PROCESSED_uniq)) + "]\n";
 
 
     }
@@ -145,6 +155,36 @@ public class RedeployApi implements EndpointGroup {
 
     @Override
     public void addEndpoints() {
+        get(PROCESSED, context -> {
+            String job = context.queryParam(PROCESSED_job);
+            if (job != null) {
+                try {
+                    File processed = new File(new File(settings.getJenkinsJobsRoot(), job), Constants.PROCESSED_BUILDS_HISTORY);
+                    List<String> raw = Utils.readFileToLines(processed, null);
+                    if (context.queryParam(PROCESSED_cmments) == null) {
+                        for (int i = 0; i < raw.size(); i++) {
+                            raw.set(i, raw.get(i).replaceAll("\\s*#.*", ""));
+                        }
+                    }
+                    if (context.queryParam(PROCESSED_uniq) == null) {
+                        raw = new ArrayList<>(new TreeSet<>(raw));
+                    }
+                    if (context.queryParam(PROCESSED_sort) != null) {
+                        Collections.sort(raw);
+                        //Collections.reverse(raw);no!
+                    }
+                    context.status(OToolService.OK).result(String.join("\n", raw) + "\n");
+                } catch (IOException e) {
+                    LOGGER.log(Level.WARNING, e.getMessage(), e);
+                    context.status(400).result(e.getMessage());
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, e.getMessage(), e);
+                    context.status(500).result(e.getMessage());
+                }
+            } else {
+                context.status(OToolService.BAD).result("job is mandatory\n");
+            }
+        });
         get(REDEPLOY_BUILD, context -> {
             WarHorse wh = new WarHorse(context);
             wh.workload(new NvrDirOperatorFactory(), BuildJob.class);
@@ -224,8 +264,10 @@ public class RedeployApi implements EndpointGroup {
                     //better to filter them up rather then here
                 }
             } catch (StorageException | IOException e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(400).result(e.getMessage());
             } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getMessage());
             }
         });
@@ -694,7 +736,7 @@ public class RedeployApi implements EndpointGroup {
                                         + summUp("Deleted:", delete.y[0], delete.y[1], nvd.affectedDirsAndFiles.size()) + "\n"
                                         + summUp("Rescheduled:", reschedul.y[0], reschedul.y[1], raw.getJobsOfThisNvr(nvr).size()) + "\n"
                                         + finalSentence(delete.y[0] + reschedul.y[0]);
-                                context.status((delete.y[0] + reschedul.y[0])==0?OToolService.OK:OToolService.BAD).result(result);
+                                context.status((delete.y[0] + reschedul.y[0]) == 0 ? OToolService.OK : OToolService.BAD).result(result);
                             } else {
                                 context.status(OToolService.BAD).result("To much files to delete, verify by listing (remove `do`), and then `do=force`\n");
                             }
@@ -702,8 +744,10 @@ public class RedeployApi implements EndpointGroup {
                     }
                 }
             } catch (StorageException | ManagementException | IOException e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(400).result(e.getMessage());
             } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getMessage());
             }
         }
