@@ -8,6 +8,7 @@ import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeBuild;
 import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
+import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
@@ -24,6 +25,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -51,6 +55,8 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 
 public class RedeployApi implements EndpointGroup {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     public static final String REDEPLOY = "re";
     //without list/do just list list waht can be done?
@@ -329,8 +335,6 @@ public class RedeployApi implements EndpointGroup {
             }
             called = true;
             List<Project> allProjects = new ArrayList<>();
-            //todo do not parse everything always
-            // eg for builds just jdk projects ar enough and so on
             allProjects.addAll(jdkProjectManager.readAll());
             allProjects.addAll(jdkTestProjectManager.readAll());
             for (Project project : allProjects) {
@@ -389,6 +393,36 @@ public class RedeployApi implements EndpointGroup {
             }
             sortedNvrs.addAll(nvrsInProcessedTxt);
             Collections.sort(sortedNvrs);
+        }
+
+        public List<Job> getJobsOfThisNvr(String nvr) {
+            return jobsPerNvr.get(nvr);
+        }
+
+        public Tuple<String, Integer[]> removeNvrFromProcessedOfAffectedJobs(String nvr) {
+            StringBuilder result = new StringBuilder();
+            int issues = 0;
+            int ok = 0;
+            for (Job job : jobsPerNvr.get(nvr)) {
+                try {
+                    File processed = new File(new File(settings.getJenkinsJobsRoot(), job.getName()), Constants.PROCESSED_BUILDS_HISTORY);
+                    result.append(job.getName() + " - " + nvr + "\n");
+                    Utils.RemovedNvrsResult details = Utils.removeNvrFromProcessed(processed, nvr);
+                    if (details.removed() <= 0 || details.removedUniq() <= 0) {
+                        result.append("  Error! Nothing removed - " + details.toString() + "\n");
+                        issues++;
+                    } else {
+                        result.append("  Ok - " + details.toString() + "\n");
+                        ok++;
+                    }
+
+                } catch (Exception ex) {
+                    issues++;
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                    result.append("  " + ex.toString() + "\n");
+                }
+            }
+            return new Tuple<>(result.toString(), new Integer[]{issues, ok});
         }
     }
 
@@ -478,6 +512,11 @@ public class RedeployApi implements EndpointGroup {
         public String toOutput() {
             return "No NVRAs to delete, see affected jobs:";
         }
+
+        @Override
+        public Tuple<String, Integer[]> deleteSelected() {
+            return new Tuple("No files should be delted during test rescheduling.", new Integer[]{0, 0});
+        }
     }
 
     private class NvrDirOperator {
@@ -497,7 +536,7 @@ public class RedeployApi implements EndpointGroup {
         public NvrDirOperator(OToolBuild value, List<Job> validJobs) {
             this.build = value;
             this.mainDir = new File(settings.getDbFileRoot().getAbsolutePath() + "/" + build.toPathStub());
-            this.validJobs = validJobs==null?new ArrayList<>(0):validJobs;
+            this.validJobs = validJobs == null ? new ArrayList<>(0) : validJobs;
         }
 
         public void walk() throws IOException {
@@ -537,15 +576,15 @@ public class RedeployApi implements EndpointGroup {
 
         private boolean pairedToList(Path path) {
             while (path != null) {
-                for (Job job:validJobs) {
+                for (Job job : validJobs) {
                     BuildJob bjob = (BuildJob) job; //all the deleting is aimed to build jobs only
                     String variantsString = bjob.getVariants().entrySet().stream()
                             .sorted(Comparator.comparing(Map.Entry::getKey))
                             .map(entry -> entry.getValue().getId())
                             .collect(Collectors.joining(Job.VARIANTS_DELIMITER));
-                    String dirname = variantsString+Job.VARIANTS_DELIMITER+bjob.getPlatform().getId();
-                    if (path.getFileName()!= null &&
-                            path.getFileName().toString().equals(dirname)){
+                    String dirname = variantsString + Job.VARIANTS_DELIMITER + bjob.getPlatform().getId();
+                    if (path.getFileName() != null &&
+                            path.getFileName().toString().equals(dirname)) {
                         return true;
                     }
                 }
@@ -563,6 +602,30 @@ public class RedeployApi implements EndpointGroup {
                 return "No files affected! bad filter?";
             } else {
                 return affectedDirsAndFiles.stream().map(Path::toString).collect(Collectors.joining("\n"));
+            }
+        }
+
+        public Tuple<String, Integer[]> deleteSelected() {
+            StringBuilder result = new StringBuilder();
+            int[] ok = new int[]{0};
+            int[] issues = new int[]{0};
+            deleteFileWithResult(affectedFiles, result, ok, issues);
+            deleteFileWithResult(affectedDirs, result, ok, issues);
+            return new Tuple<>(result.toString(), new Integer[]{issues[0], ok[0]});
+        }
+
+        private void deleteFileWithResult(List<Path> affectedItems, StringBuilder result, int[] ok, int[] issues) {
+            for (Path file : affectedItems) {
+                try {
+                    result.append(file.toString() + " - " + build.toNiceString() + "\n");
+                    Files.delete(file);
+                    result.append("  Ok - deleted\n");
+                    ok[0]++;
+                } catch (Exception ex) {
+                    issues[0]++;
+                    LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                    result.append("  " + ex.toString() + "\n");
+                }
             }
         }
     }
@@ -597,13 +660,11 @@ public class RedeployApi implements EndpointGroup {
                 if (nvr == null) {
                     context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
                 } else {
-                    List<Job> jobsOfThisNvr = raw.jobsPerNvr.get(nvr);
                     //builds are new api only!
                     OToolParser op = new OToolParser(
                             jdkProjectManager.readAll(),
                             jdkVersionManager.readAll(),
-                            taskVariantManager.getBuildVariants()
-                    );
+                            taskVariantManager.getBuildVariants());
                     //there is an catch
                     //where argument for build job is NVR, and by that we can affect processed.txt
                     //to remvove it from DB, nvra would be better. Or to do that via bos/arch and friends?
@@ -613,20 +674,49 @@ public class RedeployApi implements EndpointGroup {
                     if (parsedNvr.isError() && nvdf.newApiOnly()) {
                         throw new RuntimeException("cannot parse " + nvr + " rebuild is new api only.\n");
                     }
-                    NvrDirOperator nvd = nvdf.createFor(parsedNvr.getValue(), jobsOfThisNvr);
+                    NvrDirOperator nvd = nvdf.createFor(parsedNvr.getValue(), raw.getJobsOfThisNvr(nvr));
                     nvd.walk();
-                    if (jobsOfThisNvr == null) {
+                    if (raw.getJobsOfThisNvr(nvr) == null) {
                         context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are null\n");
-                    } else if (jobsOfThisNvr.isEmpty()) {
-                        context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are empty\n");
                     } else {
-                        context.status(OToolService.OK).result(nvd.toOutput() + "\n" + jobsOfThisNvr.stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
+                        String doAndHow = context.queryParam(REDEPLOY_DO);
+                        if (doAndHow == null) {
+                            if (raw.getJobsOfThisNvr(nvr).isEmpty()) {
+                                context.status(OToolService.BAD).result(nvd.toOutput() + "\n" + "jobs which run exact " + nvr + " are empty\n");
+                            } else {
+                                context.status(OToolService.OK).result(nvd.toOutput() + "\n" + raw.getJobsOfThisNvr(nvr).stream().map(Job::getName).sorted().collect(Collectors.joining("\n")) + "\n");
+                            }
+                        } else {
+                            if (nvd.canDeleteWihtoutForce() || (doAndHow.equals("force"))) {
+                                Tuple<String, Integer[]> delete = nvd.deleteSelected();
+                                Tuple<String, Integer[]> reschedul = raw.removeNvrFromProcessedOfAffectedJobs(nvr);
+                                String result = delete.x + "\n" + reschedul.x + "\n"
+                                        + summUp("Deleted:", delete.y[0], delete.y[1], nvd.affectedDirsAndFiles.size()) + "\n"
+                                        + summUp("Rescheduled:", reschedul.y[0], reschedul.y[1], raw.getJobsOfThisNvr(nvr).size()) + "\n"
+                                        + finalSentence(delete.y[0] + reschedul.y[0]);
+                                context.status((delete.y[0] + reschedul.y[0])==0?OToolService.OK:OToolService.BAD).result(result);
+                            } else {
+                                context.status(OToolService.BAD).result("To much files to delete, verify by listing (remove `do`), and then `do=force`\n");
+                            }
+                        }
                     }
                 }
             } catch (StorageException | ManagementException | IOException e) {
                 context.status(400).result(e.getMessage());
             } catch (Exception e) {
                 context.status(500).result(e.getMessage());
+            }
+        }
+
+        private String summUp(String preffix, int issues, int ok, int total) {
+            return preffix + " " + ok + " from total " + total + ". Failed " + issues + " that is " + (ok + issues) + "/" + total;
+        }
+
+        private String finalSentence(int i) {
+            if (i > 0) {
+                return "Error: there were " + i + " failures\n";
+            } else {
+                return "Ok\n";
             }
         }
     }

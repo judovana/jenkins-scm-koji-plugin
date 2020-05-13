@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -51,7 +52,7 @@ public class Utils {
 
     public static String readFile(URL url) throws IOException {
         try (final Reader urlReader = new InputStreamReader(url.openStream(), "utf-8");
-                final BufferedReader bufferedReader = new BufferedReader(urlReader)) {
+             final BufferedReader bufferedReader = new BufferedReader(urlReader)) {
             return readStream(bufferedReader);
         }
 
@@ -64,6 +65,7 @@ public class Utils {
         }
 
     }
+
     public static String readFile(File file) throws IOException {
         return readFile(file.toURI().toURL());
     }
@@ -75,10 +77,11 @@ public class Utils {
     public static List<String> readProcessedTxt(File file) throws IOException {
         return readFileToLines(file.toURI().toURL(), new Function<String, String>() {
             Pattern p = Pattern.compile("#.*");
+
             @Override
             public String apply(String s) {
                 String ss = p.matcher(s).replaceAll("").trim();
-                if (ss.isEmpty()){
+                if (ss.isEmpty()) {
                     return null;
                 }
                 return ss;
@@ -104,9 +107,9 @@ public class Utils {
             while ((line = bufferedReader.readLine()) != null) {
                 if (cleaner == null) {
                     r.add(line);
-                }else {
+                } else {
                     String s = cleaner.apply(line);
-                    if (s!=null){
+                    if (s != null) {
                         r.add(s);
                     }
                 }
@@ -154,45 +157,45 @@ public class Utils {
         final List<String> outLog = new ArrayList<>();
         final List<Exception> errLog = new ArrayList<>();
         Files.walkFileTree(source.getAbsoluteFile().toPath(), new FileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                return FileVisitResult.CONTINUE;
-            }
+                    @Override
+                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                        return FileVisitResult.CONTINUE;
+                    }
 
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                String msg = "Deleting file" + file;
-                try {
-                    outLog.add(msg);
-                    LOGGER.log(SILENCE, msg);
-                    Files.delete(file);
-                } catch (Exception ex) {
-                    LOGGER.log(Level.INFO, "issue while " + msg, ex);
-                    errLog.add(ex);
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                        String msg = "Deleting file" + file;
+                        try {
+                            outLog.add(msg);
+                            LOGGER.log(SILENCE, msg);
+                            Files.delete(file);
+                        } catch (Exception ex) {
+                            LOGGER.log(Level.INFO, "issue while " + msg, ex);
+                            errLog.add(ex);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                        LOGGER.log(Level.INFO, "Failed to visit " + file);
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        String msg = "Deleting dir" + dir;
+                        try {
+                            outLog.add(msg);
+                            LOGGER.log(SILENCE, msg);
+                            Files.delete(dir);
+                        } catch (Exception ex) {
+                            LOGGER.log(Level.INFO, "issue while " + msg, ex);
+                            errLog.add(ex);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
                 }
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                LOGGER.log(Level.INFO, "Failed to visit " + file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                String msg = "Deleting dir" + dir;
-                try {
-                    outLog.add(msg);
-                    LOGGER.log(SILENCE, msg);
-                    Files.delete(dir);
-                } catch (Exception ex) {
-                    LOGGER.log(Level.INFO, "issue while " + msg, ex);
-                    errLog.add(ex);
-                }
-                return FileVisitResult.CONTINUE;
-            }
-        }
         );
         if (!errLog.isEmpty()) {
             throw new IOException("Noted " + errLog.size() + " issues from " + outLog.size() + " operations. See logs");
@@ -288,4 +291,58 @@ public class Utils {
         }
     }
 
+    public static RemovedNvrsResult removeNvrFromProcessed(File processed, String nvrToRemove) throws IOException {
+        List<String> removedNVRsWithComments = new ArrayList<>();
+        Set<String> removedNVRs = new HashSet<>();
+        List<String> allRead = readFileToLines(processed, null);
+        List<String> toSave = new ArrayList<>(allRead.size());
+        int empty = 0;
+        for (String origLine : allRead) {
+            if (origLine.trim().isEmpty()) {
+                empty++;
+                continue;
+            }
+            String nvrRead;
+            if (origLine.contains("#")) {
+                nvrRead = origLine.split("\\s*#")[0];
+            } else {
+                nvrRead = origLine;
+            }
+            if (nvrRead.trim().equals(nvrToRemove.trim())) {
+                removedNVRs.add(nvrToRemove);
+                removedNVRsWithComments.add(origLine);
+            } else {
+                toSave.add(origLine);
+            }
+        }
+        writeToFile(processed, String.join("\n", toSave) + "\n");
+        return new RemovedNvrsResult(removedNVRsWithComments, removedNVRs, allRead, toSave, empty);
+    }
+
+    public static class RemovedNvrsResult {
+        final List<String> removedNVRs;
+        final Set<String> removedNVRsUniq;
+        final List<String> allRead;
+        final List<String> saved;
+        final int emptyLines;
+
+        public RemovedNvrsResult(List<String> removedNVRs, Set<String> removedNVRsUniq, List<String> allRead, List<String> saved, int emptyLines) {
+            this.removedNVRs = removedNVRs;
+            this.removedNVRsUniq = removedNVRsUniq;
+            this.allRead = allRead;
+            this.saved = saved;
+            this.emptyLines = emptyLines;
+        }
+
+        @Override
+        public String toString() {
+            return "Removed " + removedUniq() + " items, occuring " + removed() + ". Saved " + saved.size() + " from original " + allRead.size() + ". Removed " + emptyLines + " empty lines";
+        }
+        public int removed(){
+            return removedNVRs.size();
+        }
+        public int removedUniq(){
+            return removedNVRsUniq.size();
+        }
+    }
 }

@@ -26,7 +26,9 @@ package org.fakekoji;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Assert;
 
@@ -34,7 +36,6 @@ import org.junit.Test;
 
 
 public class TestUtils {
-
 
 
     @Test
@@ -45,10 +46,43 @@ public class TestUtils {
         List<String> l1 = Utils.readFileToLines(pt, null);
         List<String> l2 = Utils.readProcessedTxt(pt);
         Assert.assertEquals("a #bb\nb  \n\nc #10 \n", s);
-        Assert.assertEquals(Arrays.asList("a #bb", "b  ","", "c #10 "), l1);
+        Assert.assertEquals(Arrays.asList("a #bb", "b  ", "", "c #10 "), l1);
         Assert.assertEquals(Arrays.asList("a", "b", "c"), l2);
     }
 
+    @Test
+    public void testRemoveNvrFromProcessed() throws IOException, InterruptedException {
+        final File pt = File.createTempFile("processed", "txt");
+        Utils.writeToFile(pt, "bb# comment\na #bb\nb  \n\nc #10 \nbb\n\n  \na #10");
+        final Utils.RemovedNvrsResult r = Utils.removeNvrFromProcessed(pt, "bb");
+        String s = Utils.readFile(pt);
+        Assert.assertEquals("a #bb\nb  \nc #10 \na #10\n", s);
+        List<String> removedNvras = Arrays.asList(
+                "bb# comment",
+                "bb");
+        Set<String> removedNvrasUniq = new HashSet<>(Arrays.asList("bb"));
+        List<String> allRead = Arrays.asList(
+                "bb# comment",
+                "a #bb",
+                "b  ",
+                "",
+                "c #10 ",
+                "bb",
+                "",
+                "  ",
+                "a #10");
+        List<String> saved = Arrays.asList(
+                "a #bb",
+                "b  ",
+                "c #10 ",
+                "a #10"
+        );
+        Assert.assertEquals(removedNvras, r.removedNVRs);
+        Assert.assertEquals(removedNvrasUniq, r.removedNVRsUniq);
+        Assert.assertEquals(allRead, r.allRead);
+        Assert.assertEquals(saved, r.saved);
+
+    }
 
 
 }

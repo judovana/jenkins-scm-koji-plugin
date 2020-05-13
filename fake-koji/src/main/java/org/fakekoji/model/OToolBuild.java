@@ -1,7 +1,5 @@
 package org.fakekoji.model;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.Objects;
 
 public class OToolBuild {
@@ -81,6 +79,10 @@ public class OToolBuild {
                 ", garbage='" + garbage + '\'' + delimiter +
                 ", projectName='" + projectName + '\'' + delimiter +
                 '}' + delimiter;
+    }
+
+    public String toNiceString() {
+        return packageName + "-" + version + "-" + getRelease();
     }
 
     public String toPathStub() {
