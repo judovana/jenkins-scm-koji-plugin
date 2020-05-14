@@ -173,7 +173,6 @@ public class OToolService {
                     settings.getScriptsRoot()
             );
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
-            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
             final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
 
             path(MISC, () -> {

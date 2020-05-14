@@ -3,6 +3,7 @@ package org.fakekoji.api.http.rest;
 import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.ProductBumper;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobModifier;
