@@ -641,7 +641,7 @@ public class KojiListBuildsTest {
     public void testListMatchingBuildsAnything64_OpenJ9() throws Exception {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(
-                createHydraOnlyList(),
+                createBrewOnlyList(),
                 createConfigWithOpenJ9(),
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
