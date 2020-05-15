@@ -10,7 +10,6 @@ import org.fakekoji.model.TaskVariantValue;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -18,17 +17,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PACKAGE_NAME_VAR;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR;
-
 public abstract class TaskJob extends Job {
 
     private final String platformProvider;
-
-    private final Product product;
-    private final JDKVersion jdkVersion;
     private final Set<BuildProvider> buildProviders;
     private final Task task;
     private final Platform platform;
@@ -47,10 +38,8 @@ public abstract class TaskJob extends Job {
             File scriptsRoot,
             List<OToolVariable> projectVariables
     ) {
-        super(projectName, projectVariables);
+        super(projectName, projectVariables, product, jdkVersion);
         this.platformProvider = platformProvider;
-        this.product = product;
-        this.jdkVersion = jdkVersion;
         this.buildProviders = buildProviders;
         this.task = task;
         this.platform = platform;
@@ -60,14 +49,6 @@ public abstract class TaskJob extends Job {
 
     public String getPlatformProvider() {
         return platformProvider;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public JDKVersion getJdkVersion() {
-        return jdkVersion;
     }
 
     public Set<BuildProvider> getBuildProviders() {
@@ -96,8 +77,6 @@ public abstract class TaskJob extends Job {
         if (!(o instanceof TaskJob)) return false;
         TaskJob taskJob = (TaskJob) o;
         return Objects.equals(platformProvider, taskJob.platformProvider) &&
-                Objects.equals(product, taskJob.product) &&
-                Objects.equals(jdkVersion, taskJob.jdkVersion) &&
                 Objects.equals(buildProviders, taskJob.buildProviders) &&
                 Objects.equals(task, taskJob.task) &&
                 Objects.equals(platform, taskJob.platform) &&
@@ -111,8 +90,6 @@ public abstract class TaskJob extends Job {
         return Objects.hash(
                 super.hashCode(),
                 platformProvider,
-                product,
-                jdkVersion,
                 buildProviders,
                 task,
                 platform,
@@ -124,12 +101,7 @@ public abstract class TaskJob extends Job {
 
     @Override
     List<OToolVariable> getExportedVariables() {
-        final List<OToolVariable> defaultVariables = new ArrayList<>(Arrays.asList(
-                new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
-                new OToolVariable(OJDK_VAR, jdkVersion.getId()),
-                new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName())
-        ));
-        defaultVariables.addAll(super.getExportedVariables());
+        final List<OToolVariable> defaultVariables = new ArrayList<>(super.getExportedVariables());
         getPlatform().addZstreamVar(defaultVariables);
         getPlatform().addYstreamVar(defaultVariables);
         defaultVariables.addAll(getProjectVariables());

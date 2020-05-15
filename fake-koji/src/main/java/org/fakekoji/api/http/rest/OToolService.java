@@ -54,7 +54,7 @@ public class OToolService {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
-    static final int OK = 200;
+    public static final int OK = 200;
     public static final int BAD = 400;
     public static final int ERROR = 500;
 
@@ -78,6 +78,7 @@ public class OToolService {
     public static final String BUMP = "bump";
     public static final String MISC = "misc";
     private static final String HELP = "help";
+    public static final String PRODUCTS = "/products";
     static final String FILTER = "filter";
     static final String SKIP_EMPTY = "skipEmpty";
     static final String ONLY_HW = "onlyHW";
@@ -164,6 +165,7 @@ public class OToolService {
             );
             final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
             final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
+            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
 
             final JDKProjectParser jdkProjectParser = new JDKProjectParser(
                     ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
@@ -171,7 +173,6 @@ public class OToolService {
                     settings.getScriptsRoot()
             );
             final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
-            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
             final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
 
             path(MISC, () -> {
@@ -180,7 +181,7 @@ public class OToolService {
                             + BumperAPI.getHelp()
                             + RedeployApi.getHelp());
                 }));
-                path(BUMP, new BumperAPI(jenkinsJobUpdater, jdkProjectParser, new ReverseJDKProjectParser(), jdkProjectManager, jdkTestProjectManager, platformManager));
+                path(BUMP, new BumperAPI(jenkinsJobUpdater, jdkProjectParser, new ReverseJDKProjectParser(), jdkProjectManager, jdkTestProjectManager, jdkVersionManager, platformManager));
                 path(RedeployApi.REDEPLOY, new RedeployApi(jdkProjectParser, jdkProjectManager, jdkTestProjectManager, platformManager, jdkVersionManager, taskVariantManager, settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {

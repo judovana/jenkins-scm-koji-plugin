@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager.model;
 
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolVariable;
 
 import java.io.IOException;
@@ -11,6 +12,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PACKAGE_NAME_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.PROJECT_NAME_VAR;
 
 public abstract class Job implements NamesProvider {
@@ -21,13 +25,19 @@ public abstract class Job implements NamesProvider {
 
     private final String projectName;
     private final List<OToolVariable> projectVariables;
+    private final Product product;
+    private final JDKVersion jdkVersion;
 
     protected Job(
             final String projectName,
-            List<OToolVariable> projectVariables
+            final List<OToolVariable> projectVariables,
+            final Product product,
+            final JDKVersion jdkVersion
     ) {
         this.projectName = projectName;
         this.projectVariables = projectVariables;
+        this.product = product;
+        this.jdkVersion = jdkVersion;
     }
 
     public String getProjectName() {
@@ -42,11 +52,30 @@ public abstract class Job implements NamesProvider {
         }
     }
 
+    public Product getProduct() {
+        return product;
+    }
+
+    public JDKVersion getJdkVersion() {
+        return jdkVersion;
+    }
+
     public abstract String generateTemplate() throws IOException;
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Job)) return false;
+        Job job = (Job) o;
+        return Objects.equals(projectName, job.projectName) &&
+                Objects.equals(projectVariables, job.projectVariables) &&
+                Objects.equals(product, job.product) &&
+                Objects.equals(jdkVersion, job.jdkVersion);
+    }
+
+    @Override
     public int hashCode() {
-        return Objects.hash(toString());
+        return Objects.hash(projectName, projectVariables, product, jdkVersion);
     }
 
     @Override
@@ -114,7 +143,10 @@ public abstract class Job implements NamesProvider {
 
     List<OToolVariable> getExportedVariables() {
         return Arrays.asList(
-                new OToolVariable(PROJECT_NAME_VAR, projectName)
+                new OToolVariable(PROJECT_NAME_VAR, projectName),
+                new OToolVariable(OJDK_VAR, product.getJdk()),
+                new OToolVariable(JDK_VERSION_VAR, jdkVersion.getVersion()),
+                new OToolVariable(PACKAGE_NAME_VAR, product.getPackageName())
         );
     }
 }
