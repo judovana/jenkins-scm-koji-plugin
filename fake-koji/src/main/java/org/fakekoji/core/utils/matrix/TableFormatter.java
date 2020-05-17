@@ -216,12 +216,12 @@ public interface TableFormatter {
                 return "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/\">all projects</a>";
             }
             if (project.length == 1) {
-                return "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~" + project[0] + "\">" + project[0] + "</a>";
+                return "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~" + project[0] + "#projectstatus\">" + project[0] + "</a>";
             } else {
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < project.length; i++) {
                     String leaf = project[i];
-                    sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~").append(leaf).append("\">").append("[" + (i + 1) + "]").append("</a>");
+                    sb.append("<a href=\"" + MASTER + ":" + JENKINS_PORT + "/view/~").append(leaf).append("#projectstatus\">").append("[" + (i + 1) + "]").append("</a>");
                 }
                 return sb.toString();
             }
