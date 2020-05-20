@@ -258,12 +258,14 @@ public interface TableFormatter {
         private final String url;
         private final String dir;
         private final String time;
+        private final String chartDir;
         private final boolean alsoReport;
         private String cachedReport = "Error to cache report";
         private Map<String, Integer> cachedResults = new HashMap<>(0);
 
-        public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String... projects) {
+        public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String chartDir, String... projects) {
             this.vr = nvr;
+            this.chartDir = chartDir;
             if (projects == null || projects.length == 0) {
                 this.projectsRegex = ".*";
             } else {
@@ -298,8 +300,31 @@ public interface TableFormatter {
                 File f = null;
                 try {
                     f = File.createTempFile("summaryReport", ".cache");
-                    ProcessBuilder pb = new ProcessBuilder(jvm, "-jar", remoteJar.getAbsolutePath(),
-                            "--directory", dir, "--jenkins", this.url, "--time", time, "--nvrfilter", vr, "--jobfilter", projectsRegex, "--return", "DONE-" + f.getAbsolutePath());
+                    List<String> args = new ArrayList();
+                    args.add(jvm);
+                    args.add("-jar");
+                    args.add(remoteJar.getAbsolutePath());
+                    args.add("--directory");
+                    args.add(dir);
+                    args.add("--jenkins");
+                    args.add(this.url);
+                    args.add("--time");
+                    args.add(time);
+                    args.add("--nvrfilter");
+                    args.add(vr);
+                    args.add("--jobfilter");
+                    args.add(projectsRegex);
+                    args.add("--return");
+                    args.add("DONE-" + f.getAbsolutePath());
+                    if (chartDir != null) {
+                        args.add("--chartdir");
+                        args.add(chartDir);
+                        args.add("--wipecharts");
+                        args.add("true");
+                        args.add("--interpolate");
+                        args.add("true");
+                    }
+                    ProcessBuilder pb = new ProcessBuilder(args);
                     cachedReport = executeAndWaitForOutput(pb);
                     cachedResults = new HashMap<>();
                     try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f)))) {

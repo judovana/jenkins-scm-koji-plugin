@@ -124,9 +124,10 @@ public class OToolService {
                 + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
-                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=htmlspan/html/plain/fill (fill requires vr=>nvr time=number alsoReport=false>\n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=htmlspan/html/plain/fill (fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
-                + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n";
+                + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n"
+                + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n";
     }
 
     public OToolService(AccessibleSettings settings) {
@@ -338,13 +339,14 @@ public class OToolService {
                     } else if ("fill".equals(format)) {
                         String vr = context.queryParam("vr");
                         String time = context.queryParam("time");
+                        String chartDir = context.queryParam("chartDir");
                         boolean alsoReport = notNullBoolean(context, "alsoReport", false);
                         if (vr == null || vr.isEmpty()) {
                             context.status(400).result("nvr=<nvr> necessary");
                         } else {
                             context.status(OK).result(m.printMatrix(
                                     orieantaion, dropRows, dropColumns,
-                                    new TableFormatter.SpanningFillingHtmlTableFormatter(vr, settings, time, alsoReport, projects)));
+                                    new TableFormatter.SpanningFillingHtmlTableFormatter(vr, settings, time, alsoReport, chartDir, projects)));
                         }
                     } else {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));
