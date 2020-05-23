@@ -1,11 +1,17 @@
 package org.fakekoji.jobmanager.model;
 
 import org.fakekoji.Utils;
+import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.ConfigCache;
+import org.fakekoji.model.TaskVariantValue;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class VariantsConfig {
 
@@ -55,5 +61,23 @@ public class VariantsConfig {
                 "map=" + map +
                 ", platforms=" + platforms +
                 '}';
+    }
+
+    public String concatVariants(final ConfigCache cache) {
+        return map.entrySet()
+                .stream()
+                .map(entry -> {
+                    final String variantId = entry.getKey();
+                    final String valueId = entry.getValue();
+                    return cache.getTaskVariant(variantId).map(variant -> {
+                        final TaskVariantValue value = variant.getVariants().get(valueId);
+                        return new Tuple<>(variant, value);
+                    });
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparing(tuple -> tuple.x))
+                .map(tuple -> tuple.y.getId())
+                .collect(Collectors.joining("."));
     }
 }

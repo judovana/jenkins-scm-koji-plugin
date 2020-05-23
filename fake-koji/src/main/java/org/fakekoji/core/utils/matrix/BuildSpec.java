@@ -3,13 +3,20 @@ package org.fakekoji.core.utils.matrix;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.Platform;
 
+import java.util.List;
+
 class BuildSpec extends Spec {
 
     private final Project project;
 
 
-    public BuildSpec(Platform platform, Platform.Provider provider, Project project, BuildEqualityFilter viewFilter) {
-        super(platform, provider, viewFilter);
+    public BuildSpec(
+            final Platform platform,
+            final Platform.Provider provider,
+            final Project project,
+            final List<String> variants,
+            final BuildEqualityFilter viewFilter) {
+        super(platform, provider, viewFilter, variants);
         this.project = project;
 
     }

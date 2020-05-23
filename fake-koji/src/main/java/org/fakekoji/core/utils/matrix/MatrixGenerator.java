@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class MatrixGenerator {
 
@@ -87,7 +88,22 @@ public class MatrixGenerator {
 
     }
 
+    private List<List<String>> getTaskVariantValuesProduct(Collection<TaskVariant> taskVariants) {
+        return cartesianProduct(
+                taskVariants
+                        .stream()
+                        .map(variant -> variant.getVariants()
+                                .values()
+                                .stream()
+                                .map(TaskVariantValue::getId)
+                                .collect(Collectors.toList())
+                        )
+                        .collect(Collectors.toList())
+        );
+    }
+
     public List<TestSpec> getTests() {
+        final List<List<String>> variantsProducts = getTaskVariantValuesProduct(cache.getTestTaskVariants());
         List<TestSpec> r = new ArrayList<>();
         for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
@@ -99,15 +115,8 @@ public class MatrixGenerator {
                             r.add(t);
                         }
                     } else {
-                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(
-                                new ArrayList<>(cache.getTaskVariants()),
-                                task.getType())
-                        );
-                        for (Collection<TaskVariantValue> tvvs : variants) {
-                            TestSpec t = new TestSpec(platform, provider, task, testFilter);
-                            for (TaskVariantValue tv : tvvs) {
-                                t.addVariant(tv);
-                            }
+                        for (List<String> variantsProduct : variantsProducts) {
+                            TestSpec t = new TestSpec(platform, provider, task, variantsProduct, testFilter);
                             if (testRegex.matcher(t.toString()).matches()) {
                                 r.add(t);
                             }
@@ -164,18 +173,15 @@ public class MatrixGenerator {
 
 
     public List<BuildSpec> getBuilds() {
-        List<BuildSpec> r = new ArrayList<>();
+        final List<List<String>> variantsProducts = getTaskVariantValuesProduct(cache.getBuildTaskVariants());
+        final List<BuildSpec> r = new ArrayList<>();
         for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
             for (Platform.Provider provider : platform.getProviders()) {
                 for (Project project : cache.getProjects())
                     if (matchProject(project.getId())) {
-                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(cache.getTaskVariants(), Task.Type.BUILD));
-                        for (Collection<TaskVariantValue> tvvs : variants) {
-                            BuildSpec b = new BuildSpec(platform, provider, project, buildFilter);
-                            for (TaskVariantValue tv : tvvs) {
-                                b.addVariant(tv);
-                            }
+                        for (List<String> variantProduct : variantsProducts) {
+                            BuildSpec b = new BuildSpec(platform, provider, project, variantProduct, buildFilter);
                             if (buildRgex.matcher(b.toString()).matches()) {
                                 r.add(b);
                             }
@@ -198,36 +204,21 @@ public class MatrixGenerator {
         return false;
     }
 
-    private Collection<TaskVariantValue>[] getTasksSets(List<TaskVariant> taskVars, Task.Type build) {
-        ArrayList<Collection<TaskVariantValue>> r = new ArrayList<>(taskVars.size());
-        for (int i = 0; i < taskVars.size(); i++) {
-            if (taskVars.get(i).getType().equals(build)) {
-                r.add(taskVars.get(i).getVariants().values());
-            }
+    static List<List<String>> cartesianProduct(List<List<String>> values) {
+        if (values.size() < 2) {
+            return new ArrayList<>(values);
         }
-        return r.toArray(new Collection[0]);
+        return cartesianProductImpl(0, values);
     }
 
-
-    static Collection<Collection<TaskVariantValue>> cartesianProduct(Collection<TaskVariantValue>... sets) {
-        if (sets.length < 2) {
-            List<Collection<TaskVariantValue>> r = new ArrayList<>(1);
-            if (sets.length == 1) {
-                r.add(sets[0]);
-            }
-            return r;
-        }
-        return cartesianProductImpl(0, sets);
-    }
-
-    private static Collection<Collection<TaskVariantValue>> cartesianProductImpl(int index, Collection<TaskVariantValue>... sets) {
-        List<Collection<TaskVariantValue>> ret = new ArrayList<>();
-        if (index == sets.length) {
+    private static List<List<String>> cartesianProductImpl(int index, List<List<String>> values) {
+        List<List<String>> ret = new ArrayList<>();
+        if (index == values.size()) {
             ret.add(new ArrayList<>());
         } else {
-            for (TaskVariantValue obj : sets[index]) {
-                for (Collection<TaskVariantValue> set : cartesianProductImpl(index + 1, sets)) {
-                    set.add(obj);
+            for (String obj : values.get(index)) {
+                for (List<String> set : cartesianProductImpl(index + 1, values)) {
+                    set.add(0, obj); // needs to be prepended so the order of variants is preserved
                     ret.add(set);
                 }
             }
@@ -291,7 +282,7 @@ public class MatrixGenerator {
                 int maxForSpan = 1;
                 for (int ii = 0; ii < matrix.size(); ii++) {
                     List<List<Leaf>> rowForSpan = matrix.get(ii);
-                    maxForSpan  = Math.max(rowForSpan.get(j).size(), maxForSpan);
+                    maxForSpan = Math.max(rowForSpan.get(j).size(), maxForSpan);
                 }
                 List<Leaf> cel = row.get(j);
                 String cellContent;
@@ -450,18 +441,19 @@ public class MatrixGenerator {
         String btask = btce.getId(); //always build
         String platformVersion = project.getProduct().getJdk();
         String projectName = project.getId();
+        final String variants = bvc.concatVariants(cache);
         Collection<String> buildVars = bvc.getMap().values();
         String fullBuild = "" + //warning, is used for job url generation
                 btask + "-" +
                 platformVersion + "-" +
                 projectName + "-" +
                 buildOsAarch[0] + "." + buildOsAarch[1] + "." + buildProvider + "-" +
-                String.join(".", buildVars);
+                variants;
         String providerLessFutureTaskFullBuild = "" + //warning, is used for job url generation
                 platformVersion + "-" +
                 projectName + "-" +
                 buildOsAarch[0] + "." + buildOsAarch[1] + "-" +
-                String.join(".", buildVars);
+                variants;
         //System.out.println(fullBuild);
         if (ts.getTask().getId().equals("build")) { //where it get from?
             //this is trap. We are checking, whether the build is actually building in gvem combination, first the testsuite must moreover match, then it must "itself"
@@ -532,12 +524,13 @@ public class MatrixGenerator {
                     String[] testOsAarch = tpce.getId().split("\\.");
                     String testProvider = tpce.getProvider();
                     String ttask = ttce.getId();
+                    final String variants = tvc.concatVariants(cache);
                     Collection<String> testVars = tvc.getMap().values();
                     String full = "" + //warning, is used for job url generation
                             ttask + "-" +
                             tmpBuildIdForSimpleTextIdentification + "-" +
                             testOsAarch[0] + "." + testOsAarch[1] + "." + testProvider + "-" +
-                            String.join(".", testVars);
+                            variants;
                     if (taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
                         counter.add(new Leaf(full));
                     }

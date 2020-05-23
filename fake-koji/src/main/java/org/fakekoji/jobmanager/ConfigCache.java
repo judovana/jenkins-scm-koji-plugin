@@ -147,4 +147,12 @@ public class ConfigCache {
         return Stream.concat(getTestTaskVariants().stream(), getBuildTaskVariants().stream())
                 .collect(Collectors.toList());
     }
+
+    public Optional<TaskVariant> getTaskVariant(final String id) {
+        final Optional<TaskVariant> buildVariantOptional = getBuildTaskVariant(id);
+        if (buildVariantOptional.isPresent()) {
+            return buildVariantOptional;
+        }
+        return getTestTaskVariant(id);
+    }
 }
