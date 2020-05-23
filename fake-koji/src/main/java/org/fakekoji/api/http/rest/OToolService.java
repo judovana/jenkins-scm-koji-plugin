@@ -1,50 +1,39 @@
 package org.fakekoji.api.http.rest;
 
-import hudson.plugins.scm.koji.Constants;
 import io.javalin.Javalin;
-import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.plugin.json.JavalinJackson;
-import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.core.utils.matrix.TableFormatter;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
-import org.fakekoji.functional.Result;
-import org.fakekoji.jobmanager.*;
-import org.fakekoji.jobmanager.manager.*;
-import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.JenkinsUpdateVmTemplateBuilder;
+import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
+import org.fakekoji.jobmanager.JobUpdater;
+import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.ManagementResult;
+import org.fakekoji.jobmanager.ManagerWrapper;
+import org.fakekoji.jobmanager.manager.BuildProviderManager;
+import org.fakekoji.jobmanager.manager.JDKVersionManager;
+import org.fakekoji.jobmanager.manager.PlatformManager;
+import org.fakekoji.jobmanager.manager.TaskManager;
+import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
-import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
-import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
-import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
-import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
@@ -108,7 +97,6 @@ public class OToolService {
 
     private final int port;
     private final Javalin app;
-    private final JobUpdater jenkinsJobUpdater;
 
     private String getMiscHelp() {
         return ""
@@ -136,8 +124,9 @@ public class OToolService {
         app = Javalin.create(config -> config
                 .addStaticFiles("/webapp")
         );
-        jenkinsJobUpdater = new JenkinsJobUpdater(settings);
-        final ConfigManager configManager = ConfigManager.create(settings.getConfigRoot().getAbsolutePath());
+
+        final JobUpdater jenkinsJobUpdater = settings.getJobUpdater();
+        final GetterAPI getterApi = new GetterAPI(settings);
 
         final OToolHandlerWrapper wrapper = oToolHandler -> context -> {
             try {
@@ -155,26 +144,14 @@ public class OToolService {
         };
 
         app.routes(() -> {
-
-            final JDKTestProjectManager jdkTestProjectManager = new JDKTestProjectManager(
-                    configManager.getJdkTestProjectStorage()
-            );
-            final JDKProjectManager jdkProjectManager = new JDKProjectManager(
-                    configManager,
-                    settings.getLocalReposRoot(),
-                    settings.getScriptsRoot()
-            );
-            final PlatformManager platformManager = new PlatformManager(configManager.getPlatformStorage());
-            final TaskManager taskManager = new TaskManager(configManager.getTaskStorage());
-            final JDKVersionManager jdkVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
-
-            final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                    settings.getLocalReposRoot(),
-                    settings.getScriptsRoot()
-            );
-            final BuildProviderManager buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
-            final TaskVariantManager taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
+            final ManagerWrapper managerWrapper = settings.getManagerWrapper();
+            final JDKTestProjectManager jdkTestProjectManager = managerWrapper.jdkTestProjectManager;
+            final JDKProjectManager jdkProjectManager = managerWrapper.jdkProjectManager;
+            final PlatformManager platformManager = managerWrapper.platformManager;
+            final TaskManager taskManager = managerWrapper.taskManager;
+            final JDKVersionManager jdkVersionManager = managerWrapper.jdkVersionManager;
+            final BuildProviderManager buildProviderManager = managerWrapper.buildProviderManager;
+            final TaskVariantManager taskVariantManager = managerWrapper.taskVariantManager;
 
             path(MISC, () -> {
                 get(HELP, wrapper.wrap(context -> {
@@ -182,8 +159,8 @@ public class OToolService {
                             + BumperAPI.getHelp()
                             + RedeployApi.getHelp());
                 }));
-                path(BUMP, new BumperAPI(jenkinsJobUpdater, jdkProjectParser, new ReverseJDKProjectParser(), jdkProjectManager, jdkTestProjectManager, jdkVersionManager, platformManager));
-                path(RedeployApi.REDEPLOY, new RedeployApi(jdkProjectParser, jdkProjectManager, jdkTestProjectManager, platformManager, jdkVersionManager, taskVariantManager, settings));
+                path(BUMP, new BumperAPI(settings));
+                path(RedeployApi.REDEPLOY, new RedeployApi(settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
@@ -220,7 +197,7 @@ public class OToolService {
                     get(VIEWS_CREATE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
-                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.create(jvt, jobs);
                                 context.status(OK).result(results);
                             }
@@ -228,7 +205,7 @@ public class OToolService {
                     get(VIEWS_REMOVE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
-                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.delete(jvt, jobs);
                                 context.status(OK).result(results);
                             }
@@ -236,7 +213,7 @@ public class OToolService {
                     get(VIEWS_UPDATE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
-                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.update(jvt, jobs);
                                 context.status(OK).result(results);
                             }
@@ -245,7 +222,7 @@ public class OToolService {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 if (va.isSkipEmpty()) {
-                                    List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                    List<String> jobs = getterApi.getAllOtoolJobs();
                                     String viewsAndMatchesToPrint = va.listNonEmpty(jvt, jobs);
                                     context.status(OK).result(viewsAndMatchesToPrint);
                                 } else {
@@ -259,7 +236,7 @@ public class OToolService {
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 List<String> allJenkinsJobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(allJenkinsJobs);
-                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                List<String> jobs = getterApi.getAllOtoolJobs();
                                 String details = va.getDetails(jvt, allJenkinsJobs, jobs);
                                 context.status(OK).result(details);
                             }
@@ -268,7 +245,7 @@ public class OToolService {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
                                 if (va.isSkipEmpty()) {
-                                    List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                    List<String> jobs = getterApi.getAllOtoolJobs();
                                     context.status(OK).result(va.getNonEmptyXmls(jvt, jobs));
                                 } else {
                                     context.status(OK).result(va.getXmls(jvt));
@@ -278,7 +255,7 @@ public class OToolService {
                     get(VIEWS_MATCHES, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
-                                List<String> jobs = getAllOtoolJobs(settings, jdkTestProjectManager, jdkProjectManager);
+                                List<String> jobs = getterApi.getAllOtoolJobs();
                                 context.status(OK).result(va.printMatches(jvt, jobs));
                             }
                     ));
@@ -327,7 +304,7 @@ public class OToolService {
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
                     String[] projects = project == null ? new String[0] : project.split(",");
-                    MatrixGenerator m = new MatrixGenerator(settings, configManager, trex, brex, tf, bf, projects);
+                    MatrixGenerator m = new MatrixGenerator(managerWrapper, trex, brex, tf, bf, projects);
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
@@ -458,24 +435,8 @@ public class OToolService {
                 );
                 context.status(OK).json(result);
             }));
-            path(GET, new GetterAPI(
-                    settings,
-                    jdkProjectManager,
-                    jdkTestProjectManager,
-                    jdkVersionManager,
-                    taskVariantManager,
-                    platformManager,
-                    taskManager
-            ));
+            path(GET, getterApi);
         });
-    }
-
-    @NotNull
-    private static List<String> getAllOtoolJobs(AccessibleSettings settings, JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager) throws StorageException, ManagementException {
-        List<String> jobs = GetterAPI.getAllJdkJobs(settings, jdkProjectManager, Optional.empty());
-        jobs.addAll(GetterAPI.getAllJdkTestJobs(settings, jdkTestProjectManager, Optional.empty()));
-        Collections.sort(jobs);
-        return jobs;
     }
 
     private String notNullMessage(Exception e) {

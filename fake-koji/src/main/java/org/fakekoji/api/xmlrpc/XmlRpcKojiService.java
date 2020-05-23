@@ -29,6 +29,7 @@ import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.apache.xmlrpc.webserver.WebServer;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
+import org.fakekoji.jobmanager.ManagerWrapper;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;

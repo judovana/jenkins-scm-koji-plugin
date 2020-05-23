@@ -4,7 +4,6 @@ import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
-import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
@@ -16,9 +15,12 @@ import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
-import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
-import org.fakekoji.model.*;
+import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolArchive;
+import org.fakekoji.model.OToolBuild;
+import org.fakekoji.model.Platform;
+import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 
 import java.io.IOException;
@@ -27,8 +29,16 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -83,29 +93,9 @@ public class GetterAPI implements EndpointGroup {
     private static final String HELP = "help";
 
     private final AccessibleSettings settings;
-    private final JDKProjectManager jdkProjectManager;
-    private final JDKTestProjectManager jdkTestProjectManager;
-    private final JDKVersionManager jdkVersionManager;
-    private final TaskVariantManager taskVariantManager;
-    private final PlatformManager platformManager;
-    private final TaskManager taskManager;
 
-    public GetterAPI(
-            final AccessibleSettings settings,
-            final JDKProjectManager jdkProjectManager,
-            final JDKTestProjectManager jdkTestProjectManager,
-            final JDKVersionManager jdkVersionManager,
-            final TaskVariantManager taskVariantManager,
-            final PlatformManager platformManager,
-            final TaskManager taskManager
-    ) {
+    public GetterAPI(final AccessibleSettings settings) {
         this.settings = settings;
-        this.jdkProjectManager = jdkProjectManager;
-        this.jdkTestProjectManager = jdkTestProjectManager;
-        this.jdkVersionManager = jdkVersionManager;
-        this.taskVariantManager = taskVariantManager;
-        this.platformManager = platformManager;
-        this.taskManager = taskManager;
     }
 
     private QueryHandler getJobsHandler() {
@@ -138,11 +128,11 @@ public class GetterAPI implements EndpointGroup {
                 }
 
                 if (allInOtoolOpt.isPresent() || testParam.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
-                    testProjects = getAllJdkTestJobs(settings, jdkTestProjectManager, projectParam);
+                    testProjects = getAllJdkTestJobs(projectParam);
                 }
 
                 if (allInOtoolOpt.isPresent() || jdkParam.isPresent() || orphansOnJenkinsParam.isPresent() || orphansOnOtoolParam.isPresent()) {
-                    jdkProjects = getAllJdkJobs(settings, jdkProjectManager, projectParam);
+                    jdkProjects = getAllJdkJobs(projectParam);
                 }
 
                 if (excludeParam.isPresent()) {
@@ -205,16 +195,12 @@ public class GetterAPI implements EndpointGroup {
         }
     }
 
-    public static List<String> getAllJdkTestJobs(AccessibleSettings settings, JDKTestProjectManager jdkTestProjectManager, Optional<String> projectFilter) throws StorageException, ManagementException {
+    public List<String> getAllJdkTestJobs(Optional<String> projectFilter) throws StorageException, ManagementException {
+        final JDKTestProjectManager jdkTestProjectManager = settings.getManagerWrapper().jdkTestProjectManager;
         List<String> testProjects = new ArrayList<>();
-        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
         for (final JDKTestProject jdkTestProject : jdkTestProjectManager.readAll()) {
             if (checkProjectName(jdkTestProject.getId(), projectFilter)) {
-                Set<Job> testJobsSet = jdkProjectParser.parse(jdkTestProject);
+                Set<Job> testJobsSet = settings.getJdkProjectParser().parse(jdkTestProject);
                 for (Job j : testJobsSet) {
                     testProjects.add(j.getName());
                 }
@@ -224,16 +210,12 @@ public class GetterAPI implements EndpointGroup {
         return testProjects;
     }
 
-    public static List<String> getAllJdkJobs(AccessibleSettings settings, JDKProjectManager jdkProjectManager, Optional<String> projectFilter) throws StorageException, ManagementException {
+    public List<String> getAllJdkJobs(Optional<String> projectFilter) throws StorageException, ManagementException {
+        final JDKProjectManager jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
         List<String> jdkProjects = new ArrayList<>();
-        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
         for (final JDKProject jdkProject : jdkProjectManager.readAll()) {
             if (checkProjectName(jdkProject.getId(), projectFilter)) {
-                Set<Job> tr = jdkProjectParser.parse(jdkProject);
+                Set<Job> tr = settings.getJdkProjectParser().parse(jdkProject);
                 for (Job j : tr) {
                     jdkProjects.add(j.getName());
                 }
@@ -243,6 +225,14 @@ public class GetterAPI implements EndpointGroup {
         return jdkProjects;
     }
 
+    public List<String> getAllOtoolJobs() throws StorageException, ManagementException {
+        return Stream.concat(
+                getAllJdkJobs(Optional.empty()).stream(),
+                getAllJdkTestJobs(Optional.empty()).stream()
+        )
+                .sorted()
+                .collect(Collectors.toList());
+    }
 
     public static List<String> getAllJenkinsJobs() throws Exception {
         try {
@@ -259,6 +249,9 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getJDKVersionHandler() {
+        final JDKProjectManager jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
+        final JDKTestProjectManager jdkTestProjectManager = settings.getManagerWrapper().jdkTestProjectManager;
+        final JDKVersionManager jdkVersionManager = settings.getManagerWrapper().jdkVersionManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> paramsMap) throws StorageException, ManagementException {
@@ -302,6 +295,7 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getJDKVersionsHandler() {
+        final JDKVersionManager jdkVersionManager = settings.getManagerWrapper().jdkVersionManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> paramsMap) throws StorageException {
@@ -363,6 +357,10 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getProductHandler() {
+        final JDKProjectManager jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
+        final JDKTestProjectManager jdkTestProjectManager = settings.getManagerWrapper().jdkTestProjectManager;
+        final JDKVersionManager jdkVersionManager = settings.getManagerWrapper().jdkVersionManager;
+        final TaskVariantManager taskVariantManager = settings.getManagerWrapper().taskVariantManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -424,6 +422,7 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getProductsHandler() {
+        final JDKVersionManager jdkVersionManager = settings.getManagerWrapper().jdkVersionManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -443,6 +442,9 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getProjectHandler() {
+        final JDKProjectManager jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
+        final JDKVersionManager jdkVersionManager = settings.getManagerWrapper().jdkVersionManager;
+        final TaskVariantManager taskVariantManager = settings.getManagerWrapper().taskVariantManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -478,6 +480,9 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getFileNameParserHandler() {
+        final JDKProjectManager jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
+        final JDKVersionManager jdkVersionManager = settings.getManagerWrapper().jdkVersionManager;
+        final TaskVariantManager taskVariantManager = settings.getManagerWrapper().taskVariantManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -515,6 +520,10 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getProjectsHandler() {
+        final JDKProjectManager jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
+        final JDKTestProjectManager jdkTestProjectManager = settings.getManagerWrapper().jdkTestProjectManager;
+        final JDKVersionManager jdkVersionManager = settings.getManagerWrapper().jdkVersionManager;
+        final TaskVariantManager taskVariantManager = settings.getManagerWrapper().taskVariantManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -729,6 +738,7 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getPlatformDetailsHandler() {
+        final PlatformManager platformManager = settings.getManagerWrapper().platformManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -756,6 +766,7 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getTasksHandler() {
+        final TaskManager taskManager = settings.getManagerWrapper().taskManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -775,6 +786,7 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getPlatformsHandler() {
+        final PlatformManager platformManager = settings.getManagerWrapper().platformManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
@@ -794,6 +806,7 @@ public class GetterAPI implements EndpointGroup {
     }
 
     private QueryHandler getKojiArchesHandler() {
+        final PlatformManager platformManager = settings.getManagerWrapper().platformManager;
         return new QueryHandler() {
             @Override
             public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {

@@ -1,17 +1,16 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.apibuilder.EndpointGroup;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.ProductBumper;
-import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobModifier;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.PlatformBumper;
-import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
@@ -58,22 +57,14 @@ public class BumperAPI implements EndpointGroup {
     private final ConfigReader<JDKVersion> jdkVersionConfigReader;
     private final ConfigReader<Platform> platformConfigReader;
 
-    BumperAPI(
-            final JobUpdater jobUpdater,
-            final JDKProjectParser jdkProjectParser,
-            final ReverseJDKProjectParser reverseParser,
-            final JDKProjectManager jdkProjectManager,
-            final JDKTestProjectManager jdkTestProjectManager,
-            final JDKVersionManager jdkVersionManager,
-            final PlatformManager platformManager
-    ) {
-        this.jobUpdater = jobUpdater;
-        this.parser = jdkProjectParser;
-        this.reverseParser = reverseParser;
-        this.jdkProjectManager = jdkProjectManager;
-        this.jdkTestProjectManager = jdkTestProjectManager;
-        jdkVersionConfigReader = new ConfigReader<>(jdkVersionManager);
-        platformConfigReader = new ConfigReader<>(platformManager);
+    BumperAPI(final AccessibleSettings settings) {
+        this.jobUpdater = settings.getJobUpdater();
+        this.parser = settings.getJdkProjectParser();
+        this.reverseParser = settings.getReverseJDKProjectParser();
+        this.jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
+        this.jdkTestProjectManager = settings.getManagerWrapper().jdkTestProjectManager;
+        jdkVersionConfigReader = new ConfigReader<>(settings.getManagerWrapper().jdkVersionManager);
+        platformConfigReader = new ConfigReader<>(settings.getManagerWrapper().platformManager);
     }
 
     private Result<List<Project>, OToolError> checkProjectIds(final List<String> projectIds) {

@@ -1,11 +1,7 @@
 package org.fakekoji.jobmanager;
 
-import org.eclipse.jetty.util.IO;
 import org.fakekoji.Utils;
-import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
-import org.fakekoji.jobmanager.model.JDKProject;
-import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
@@ -42,31 +38,32 @@ public class JenkinsJobUpdater implements JobUpdater {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
     static final String JENKINS_JOB_CONFIG_FILE = "config.xml";
 
-    private final AccessibleSettings settings;
+    private final ManagerWrapper managerWrapper;
+    private final JDKProjectParser jdkProjectParser;
+    private final File jenkinsJobsRoot;
+    private final File jenkinsJobArchiveRoot;
 
-    public JenkinsJobUpdater(AccessibleSettings settings) {
-        this.settings = settings;
+    public JenkinsJobUpdater(
+            final ManagerWrapper managerWrapper,
+            final JDKProjectParser jdkProjectParser,
+            final File jenkinsJobsRoot,
+            final File jenkinsJobArchiveRoot
+
+    ) {
+        this.managerWrapper = managerWrapper;
+        this.jdkProjectParser = jdkProjectParser;
+        this.jenkinsJobsRoot = jenkinsJobsRoot;
+        this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
     }
 
     @Override
     public JobUpdateResults regenerate(Project project, String whitelist) throws StorageException, ManagementException {
-        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
         final Set<Job> jobs = project == null ? Collections.emptySet() : jdkProjectParser.parse(project);
         return regenerate(jobs, whitelist);
     }
 
     @Override
     public JobUpdateResults update(Project oldProject, Project newProject) throws StorageException, ManagementException {
-
-        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
         final Set<Job> oldJobs;
         final Set<Job> newJobs;
         oldJobs = oldProject == null ? Collections.emptySet() : jdkProjectParser.parse(oldProject);
@@ -117,19 +114,9 @@ public class JenkinsJobUpdater implements JobUpdater {
             final Function<Job, JobUpdateResult> jobUpdateFunction
     ) throws StorageException {
 
-        final ConfigManager configManager = ConfigManager.create(settings.getConfigRoot().getAbsolutePath());
-        final JDKProjectParser jdkProjectParser = new JDKProjectParser(
-                configManager,
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
         final Set<Job> jobs = Stream.of(
-                configManager
-                        .getJdkProjectStorage()
-                        .loadAll(JDKProject.class),
-                configManager
-                        .getJdkTestProjectStorage()
-                        .loadAll(JDKTestProject.class)
+                managerWrapper.jdkProjectManager.readAll(),
+                managerWrapper.jdkTestProjectManager.readAll()
         )
                 .flatMap(Collection::stream)
                 .map(jdkProject -> {
@@ -170,8 +157,8 @@ public class JenkinsJobUpdater implements JobUpdater {
         final List<JobUpdateResult> jobsRewritten = new LinkedList<>();
         final List<JobUpdateResult> jobsRevived = new LinkedList<>();
 
-        final Set<String> archivedJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobArchiveRoot().list())));
-        final Set<String> existingJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobsRoot().list())));
+        final Set<String> archivedJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(jenkinsJobArchiveRoot.list())));
+        final Set<String> existingJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(jenkinsJobsRoot.list())));
 
         for (final Job job : jobs) {
             if (!whitelistPattern.matcher(job.getName()).matches()) {
@@ -232,7 +219,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         final List<JobUpdateResult> jobsRewritten = new LinkedList<>();
         final List<JobUpdateResult> jobsRevived = new LinkedList<>();
 
-        final Set<String> archivedJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(settings.getJenkinsJobArchiveRoot().list())));
+        final Set<String> archivedJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(jenkinsJobArchiveRoot.list())));
 
         wakeUpJenkins();
 
@@ -278,7 +265,7 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     public List<JobUpdateResult> checkBumpJobs(final Set<Tuple<Job, Job>> jobTuples) {
-        final Set<String> jobNames = Stream.of(Objects.requireNonNull(settings.getJenkinsJobsRoot().list()))
+        final Set<String> jobNames = Stream.of(Objects.requireNonNull(jenkinsJobsRoot.list()))
                 .collect(Collectors.toSet());
         return jobTuples.stream()
                 .filter(jobTuple -> jobNames.contains(jobTuple.y.getName()))
@@ -305,7 +292,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         return job -> {
             final String jobName = job.toString();
             LOGGER.info("Creating job " + jobName);
-            final String jobsRootPath = settings.getJenkinsJobsRoot().getAbsolutePath();
+            final String jobsRootPath = jenkinsJobsRoot.getAbsolutePath();
             LOGGER.info("Creating directory " + jobName + " in " + jobsRootPath);
             final File jobDir = Paths.get(jobsRootPath, jobName).toFile();
             if (!jobDir.mkdir()) {
@@ -328,8 +315,8 @@ public class JenkinsJobUpdater implements JobUpdater {
     private JobUpdateFunction<Job> getReviveFunction() {
         return job -> {
             final String jobName = job.toString();
-            final File src = Paths.get(settings.getJenkinsJobArchiveRoot().getAbsolutePath(), job.toString()).toFile();
-            final File dst = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), job.toString()).toFile();
+            final File src = Paths.get(jenkinsJobArchiveRoot.getAbsolutePath(), job.toString()).toFile();
+            final File dst = Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Reviving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             return new PrimaryExceptionThrower<JobUpdateResult>(
@@ -349,8 +336,8 @@ public class JenkinsJobUpdater implements JobUpdater {
     private JobUpdateFunction<Job> getArchiveFunction() {
         return job -> {
             final String jobName = job.toString();
-            final File src = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), job.toString()).toFile();
-            final File dst = Paths.get(settings.getJenkinsJobArchiveRoot().getAbsolutePath(), job.toString()).toFile();
+            final File src = Paths.get(jenkinsJobsRoot.getAbsolutePath(), job.toString()).toFile();
+            final File dst = Paths.get(jenkinsJobArchiveRoot.getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Archiving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             Utils.moveDirByCopy(src, dst);
@@ -363,7 +350,7 @@ public class JenkinsJobUpdater implements JobUpdater {
     private JobUpdateFunction<Job> getRewriteFunction() {
         return job -> {
             final String jobName = job.toString();
-            final File jobConfig = Paths.get(settings.getJenkinsJobsRoot().getAbsolutePath(), jobName, JENKINS_JOB_CONFIG_FILE).toFile();
+            final File jobConfig = Paths.get(jenkinsJobsRoot.getAbsolutePath(), jobName, JENKINS_JOB_CONFIG_FILE).toFile();
             LOGGER.info("Rewriting job " + jobName);
             LOGGER.info("Writing to file " + jobConfig.getAbsolutePath());
             return new PrimaryExceptionThrower<JobUpdateResult>(
@@ -376,7 +363,7 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     private JobUpdateFunction<Tuple<Job, Job>> getBumpFunction() {
-        final File jobsRoot = settings.getJenkinsJobsRoot();
+        final File jobsRoot = jenkinsJobsRoot;
         return jobTuple -> {
             final Job original = jobTuple.x;
             final Job transformed = jobTuple.y;
@@ -429,12 +416,12 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     private void createManuallyUploadedJob(final String jobName) throws Exception {
-        JenkinsCliWrapper.getCli().createManuallyUploadedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();
+        JenkinsCliWrapper.getCli().createManuallyUploadedJob(jenkinsJobsRoot, jobName).throwIfNecessary();
         ;
     }
 
     private void updateManuallyUpdatedJob(final String jobName) throws Exception {
-        JenkinsCliWrapper.getCli().updateManuallyUpdatedJob(settings.getJenkinsJobsRoot(), jobName).throwIfNecessary();
+        JenkinsCliWrapper.getCli().updateManuallyUpdatedJob(jenkinsJobsRoot, jobName).throwIfNecessary();
         ;
     }
 

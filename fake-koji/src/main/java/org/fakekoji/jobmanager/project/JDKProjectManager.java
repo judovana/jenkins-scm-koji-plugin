@@ -1,6 +1,5 @@
 package org.fakekoji.jobmanager.project;
 
-import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.model.JDKProject;
@@ -24,23 +23,26 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     private Thread cloningThread;
 
-    private final ConfigManager configManager;
+    private final Storage<JDKProject> jdkProjectStorage;
+    private final Storage<JDKVersion> jdkVersionStorage;
     private final File repositoriesRoot;
     private final File scriptsRoot;
 
     public JDKProjectManager(
-            final ConfigManager configManager,
+            final Storage<JDKProject> jdkProjectStorage,
+            final Storage<JDKVersion> jdkVersionStorage,
             final File repositoriesRoot,
             final File scriptsRoot
     ) {
-        this.configManager = configManager;
+        this.jdkProjectStorage = jdkProjectStorage;
+        this.jdkVersionStorage = jdkVersionStorage;
         this.repositoriesRoot = repositoriesRoot;
         this.scriptsRoot = scriptsRoot;
     }
 
     @Override
     public JDKProject create(JDKProject project) throws StorageException, ManagementException {
-        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
+        final Storage<JDKProject> storage = jdkProjectStorage;
         if (storage.contains(project.getId())) {
             throw new ManagementException("JDKProject with id: " + project.getId() + " already exists");
         }
@@ -52,22 +54,22 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     @Override
     public JDKProject read(String id) throws StorageException, ManagementException {
-        if (!configManager.getJdkProjectStorage().contains(id)) {
+        if (!jdkProjectStorage.contains(id)) {
             throw new ManagementException("No project with id: " + id);
         }
-        return configManager.getJdkProjectStorage().load(id, JDKProject.class);
+        return jdkProjectStorage.load(id, JDKProject.class);
     }
 
     @Override
     public List<JDKProject> readAll() throws StorageException {
-        List<JDKProject> l = configManager.getJdkProjectStorage().loadAll(JDKProject.class);
+        List<JDKProject> l = jdkProjectStorage.loadAll(JDKProject.class);
         Collections.sort(l);
         return l;
     }
 
     @Override
     public JDKProject update(String id, JDKProject jdkProject) throws StorageException, ManagementException {
-        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
+        final Storage<JDKProject> storage = jdkProjectStorage;
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
         }
@@ -83,7 +85,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     @Override
     public JDKProject delete(String id) throws StorageException, ManagementException {
-        final Storage<JDKProject> storage = configManager.getJdkProjectStorage();
+        final Storage<JDKProject> storage = jdkProjectStorage;
         if (!storage.contains(id)) {
             throw new ManagementException("JDKProject with id: " + id + " doesn't exists");
         }
@@ -94,7 +96,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
     }
 
     public JDKProject cloneProject(final JDKProject jdkProject) throws StorageException, ManagementException {
-        final Storage<JDKVersion> productStorage = configManager.getJdkVersionStorage();
+        final Storage<JDKVersion> productStorage = jdkVersionStorage;
         if (!productStorage.contains(jdkProject.getProduct().getJdk())) {
             throw new ManagementException("Unknown product: " + jdkProject.getProduct());
         }
@@ -141,7 +143,7 @@ public class JDKProjectManager implements Manager<JDKProject> {
             final JDKProject clonedJDKProject = setProjectRepoStatus(jdkProject, repoState);
             try {
                 LOGGER.info("Updating JDK project " + clonedJDKProject.getId() + " after cloning its repository");
-                configManager.getJdkProjectStorage().store(clonedJDKProject.getId(), clonedJDKProject);
+                jdkProjectStorage.store(clonedJDKProject.getId(), clonedJDKProject);
             } catch (StorageException e) {
                 LOGGER.severe(e.getMessage());
             }
@@ -170,6 +172,6 @@ public class JDKProjectManager implements Manager<JDKProject> {
 
     @Override
     public boolean contains(String id) {
-        return configManager.getJdkProjectStorage().contains(id);
+        return jdkProjectStorage.contains(id);
     }
 }
