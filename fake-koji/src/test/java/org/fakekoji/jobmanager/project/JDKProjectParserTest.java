@@ -1,7 +1,7 @@
 package org.fakekoji.jobmanager.project;
 
 import org.fakekoji.DataGenerator;
-import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
@@ -22,24 +22,17 @@ public class JDKProjectParserTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    private ConfigManager configManager;
-    private DataGenerator.FolderHolder folderHolder;
+    private AccessibleSettings settings;
 
     @Before
-    public void setup() throws IOException, StorageException {
-        folderHolder = DataGenerator.initFolders(temporaryFolder);
-        configManager = ConfigManager.create(folderHolder.configsRoot.getAbsolutePath());
-
+    public void setup() throws IOException {
+        settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
     }
 
     @Test
     public void parseJDKTestProject() throws StorageException, ManagementException {
         final JDKTestProject jdkTestProject = DataGenerator.getJDKTestProject();
-        final JDKProjectParser parser = new JDKProjectParser(
-                configManager,
-                folderHolder.reposRoot,
-                folderHolder.scriptsRoot
-        );
+        final JDKProjectParser parser = settings.getJdkProjectParser();
         final Set<Job> actualJobs = parser.parse(jdkTestProject);
         Assert.assertEquals(
                 "ParsedProject should be equal",
@@ -51,11 +44,7 @@ public class JDKProjectParserTest {
     @Test
     public void parseJDKProject() throws StorageException, ManagementException {
         final JDKProject jdkProject = DataGenerator.getJDKProject();
-        final JDKProjectParser parser = new JDKProjectParser(
-                configManager,
-                folderHolder.reposRoot,
-                folderHolder.scriptsRoot
-        );
+        final JDKProjectParser parser = settings.getJdkProjectParser();
         final Set<Job> actualJobs = parser.parse(jdkProject);
         Assert.assertEquals(
                 "ParsedProject should be equal",

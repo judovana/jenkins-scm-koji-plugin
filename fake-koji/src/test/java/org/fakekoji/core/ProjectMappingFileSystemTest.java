@@ -1,13 +1,13 @@
 package org.fakekoji.core;
 
-import org.fakekoji.core.AccessibleSettings;
-import org.fakekoji.core.ProjectMapping;
-import org.fakekoji.core.ProjectMappingExceptions;
+import org.fakekoji.DataGenerator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +27,9 @@ public class ProjectMappingFileSystemTest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
+
+    @ClassRule
+    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private static final String[] products = {
             "java-X-openjdk",
@@ -76,12 +79,10 @@ public class ProjectMappingFileSystemTest {
     @BeforeClass
     public static void setUp() {
         try {
-            File baseDir = new File(System.getProperty("java.io.tmpdir"));
+            settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
 
-            File productFile = new File(baseDir, "builds");
-            productFile.mkdir();
-            File reposFile = new File(baseDir, "repos");
-            reposFile.mkdir();
+            File productFile = settings.getDbFileRoot();
+            File reposFile = settings.getLocalReposRoot();
 
             for (String product : products) {
                 new File(productFile, product).mkdir();
@@ -91,7 +92,6 @@ public class ProjectMappingFileSystemTest {
                 new File(reposFile, project).mkdir();
             }
 
-            settings = new AccessibleSettings(productFile, reposFile, null, null, null, null,0, 0, 0, 0, 0);
             Arrays.sort(products);
             Arrays.sort(projects);
         } catch (IOException e) {

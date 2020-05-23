@@ -2,7 +2,6 @@ package org.fakekoji.api.http.rest;
 
 import org.fakekoji.DataGenerator;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
-import org.fakekoji.storage.StorageException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,7 +19,7 @@ import java.util.Set;
 
 public class OToolServiceRun {
 
-    public static void main(String[] args) throws IOException, StorageException {
+    public static void main(String[] args) throws IOException {
         JenkinsCliWrapper.killCli();
         final File oTool = Files.createTempDirectory("oTool").toFile();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
