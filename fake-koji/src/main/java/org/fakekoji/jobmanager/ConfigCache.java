@@ -122,7 +122,10 @@ public class ConfigCache {
     }
 
     public Collection<TaskVariant> getBuildTaskVariants() {
-        return buildVariantMap.values();
+        return buildVariantMap.values()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public Optional<TaskVariant> getBuildTaskVariant(final String id) {
@@ -130,7 +133,10 @@ public class ConfigCache {
     }
 
     public Collection<TaskVariant> getTestTaskVariants() {
-        return testVariantMap.values();
+        return testVariantMap.values()
+                .stream()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     public Optional<TaskVariant> getTestTaskVariant(final String id) {
