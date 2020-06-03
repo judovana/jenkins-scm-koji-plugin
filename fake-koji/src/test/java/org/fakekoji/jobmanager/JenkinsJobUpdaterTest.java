@@ -149,8 +149,8 @@ public class JenkinsJobUpdaterTest {
     public void regenerateAllJDKProject() throws ManagementException, StorageException {
         JenkinsCliWrapper.killCli();
         try {
-            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkProjectManager,null);//create all
-            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkProjectManager, null);//re create all
+            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager,null);//create all
+            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager, null);//re create all
             Assert.assertEquals(0, r1.jobsRewritten.size());
             Assert.assertNotEquals(0, r1.jobsCreated.size());
             Assert.assertNotEquals(0, r2.jobsRewritten.size());
@@ -164,8 +164,8 @@ public class JenkinsJobUpdaterTest {
     public void regenerateAllJDKProjectWithWhitelist() throws ManagementException, StorageException {
         JenkinsCliWrapper.killCli();
         try {
-            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkProjectManager, "somethingNotExisting");//create nothing
-            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkProjectManager, null);//re create all
+            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager, "somethingNotExisting");//create nothing
+            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager, null);//re create all
             Assert.assertEquals(0, r1.jobsRewritten.size());
             Assert.assertEquals(0, r1.jobsCreated.size());
             Assert.assertEquals(0, r2.jobsRewritten.size());
@@ -179,8 +179,8 @@ public class JenkinsJobUpdaterTest {
     public void regenerateAllJDKTestProject() throws ManagementException, StorageException {
         JenkinsCliWrapper.killCli();
         try {
-            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkTestProjectManager, null);//create all
-            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkTestProjectManager, null);//re create all
+            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, null);//create all
+            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, null);//re create all
             Assert.assertEquals(0, r1.jobsRewritten.size());
             Assert.assertEquals(5, r1.jobsCreated.size());
             Assert.assertEquals(5, r2.jobsRewritten.size());
@@ -194,8 +194,8 @@ public class JenkinsJobUpdaterTest {
     public void regenerateAllJDKTestProjectWithWhitelist() throws ManagementException, StorageException {
         JenkinsCliWrapper.killCli();
         try {
-            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkTestProjectManager, "tck-.*");//create tck
-            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getManagerWrapper().jdkTestProjectManager, null);//re create rest
+            JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, "tck-.*");//create tck
+            JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, null);//re create rest
             Assert.assertEquals(0, r1.jobsRewritten.size());
             Assert.assertEquals(4, r1.jobsCreated.size());
             Assert.assertEquals(4, r2.jobsRewritten.size());

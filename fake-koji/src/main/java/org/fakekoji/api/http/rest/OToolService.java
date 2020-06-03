@@ -14,7 +14,7 @@ import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementResult;
-import org.fakekoji.jobmanager.ManagerWrapper;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.manager.BuildProviderManager;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
@@ -144,14 +144,14 @@ public class OToolService {
         };
 
         app.routes(() -> {
-            final ManagerWrapper managerWrapper = settings.getManagerWrapper();
-            final JDKTestProjectManager jdkTestProjectManager = managerWrapper.jdkTestProjectManager;
-            final JDKProjectManager jdkProjectManager = managerWrapper.jdkProjectManager;
-            final PlatformManager platformManager = managerWrapper.platformManager;
-            final TaskManager taskManager = managerWrapper.taskManager;
-            final JDKVersionManager jdkVersionManager = managerWrapper.jdkVersionManager;
-            final BuildProviderManager buildProviderManager = managerWrapper.buildProviderManager;
-            final TaskVariantManager taskVariantManager = managerWrapper.taskVariantManager;
+            final ConfigManager configManager = settings.getConfigManager();
+            final JDKTestProjectManager jdkTestProjectManager = configManager.jdkTestProjectManager;
+            final JDKProjectManager jdkProjectManager = configManager.jdkProjectManager;
+            final PlatformManager platformManager = configManager.platformManager;
+            final TaskManager taskManager = configManager.taskManager;
+            final JDKVersionManager jdkVersionManager = configManager.jdkVersionManager;
+            final BuildProviderManager buildProviderManager = configManager.buildProviderManager;
+            final TaskVariantManager taskVariantManager = configManager.taskVariantManager;
 
             path(MISC, () -> {
                 get(HELP, wrapper.wrap(context -> {
@@ -304,7 +304,7 @@ public class OToolService {
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
                     String[] projects = project == null ? new String[0] : project.split(",");
-                    MatrixGenerator m = new MatrixGenerator(managerWrapper, trex, brex, tf, bf, projects);
+                    MatrixGenerator m = new MatrixGenerator(configManager, trex, brex, tf, bf, projects);
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));

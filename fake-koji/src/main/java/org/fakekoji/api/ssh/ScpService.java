@@ -611,9 +611,9 @@ public class ScpService {
         final List<JDKVersion> jdkVersions;
         final List<TaskVariant> buildVariants;
         try {
-            jdkProjects = settings.getManagerWrapper().jdkProjectManager.readAll();
-            jdkVersions = settings.getManagerWrapper().jdkVersionManager.readAll();
-            buildVariants = settings.getManagerWrapper().taskVariantManager.getBuildVariants();
+            jdkProjects = settings.getConfigManager().jdkProjectManager.readAll();
+            jdkVersions = settings.getConfigManager().jdkVersionManager.readAll();
+            buildVariants = settings.getConfigManager().taskVariantManager.getBuildVariants();
         } catch (StorageException e) {
                 LOGGER.severe(e.getMessage());
                 throw new NvraParsingException(fileName, e);

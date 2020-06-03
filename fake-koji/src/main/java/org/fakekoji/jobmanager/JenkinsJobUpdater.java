@@ -38,19 +38,19 @@ public class JenkinsJobUpdater implements JobUpdater {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
     static final String JENKINS_JOB_CONFIG_FILE = "config.xml";
 
-    private final ManagerWrapper managerWrapper;
+    private final ConfigManager configManager;
     private final JDKProjectParser jdkProjectParser;
     private final File jenkinsJobsRoot;
     private final File jenkinsJobArchiveRoot;
 
     public JenkinsJobUpdater(
-            final ManagerWrapper managerWrapper,
+            final ConfigManager configManager,
             final JDKProjectParser jdkProjectParser,
             final File jenkinsJobsRoot,
             final File jenkinsJobArchiveRoot
 
     ) {
-        this.managerWrapper = managerWrapper;
+        this.configManager = configManager;
         this.jdkProjectParser = jdkProjectParser;
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
@@ -115,8 +115,8 @@ public class JenkinsJobUpdater implements JobUpdater {
     ) throws StorageException {
 
         final Set<Job> jobs = Stream.of(
-                managerWrapper.jdkProjectManager.readAll(),
-                managerWrapper.jdkTestProjectManager.readAll()
+                configManager.jdkProjectManager.readAll(),
+                configManager.jdkTestProjectManager.readAll()
         )
                 .flatMap(Collection::stream)
                 .map(jdkProject -> {

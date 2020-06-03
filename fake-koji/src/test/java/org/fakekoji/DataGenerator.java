@@ -3,7 +3,7 @@ package org.fakekoji;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagerWrapper;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.BuildPlatformConfig;
 import org.fakekoji.jobmanager.model.JDKProject;
@@ -1342,13 +1342,13 @@ public class DataGenerator {
     public static void initConfigsRoot(final AccessibleSettings settings) {
         final String root = settings.getConfigRoot().getAbsolutePath();
 
-        final File products = Paths.get(root, ManagerWrapper.JDK_VERSIONS).toFile();
-        final File platforms = Paths.get(root, ManagerWrapper.PLATFORMS).toFile();
-        final File tasks = Paths.get(root, ManagerWrapper.TASKS).toFile();
-        final File buildProviders = Paths.get(root, ManagerWrapper.BUILD_PROVIDERS).toFile();
-        final File taskVariantCategories = Paths.get(root, ManagerWrapper.TASK_VARIANTS).toFile();
-        final File jdkProjects = Paths.get(root, ManagerWrapper.JDK_PROJECTS).toFile();
-        final File jdkTestProjects = Paths.get(root, ManagerWrapper.JDK_TEST_PROJECTS).toFile();
+        final File products = Paths.get(root, ConfigManager.JDK_VERSIONS).toFile();
+        final File platforms = Paths.get(root, ConfigManager.PLATFORMS).toFile();
+        final File tasks = Paths.get(root, ConfigManager.TASKS).toFile();
+        final File buildProviders = Paths.get(root, ConfigManager.BUILD_PROVIDERS).toFile();
+        final File taskVariantCategories = Paths.get(root, ConfigManager.TASK_VARIANTS).toFile();
+        final File jdkProjects = Paths.get(root, ConfigManager.JDK_PROJECTS).toFile();
+        final File jdkTestProjects = Paths.get(root, ConfigManager.JDK_TEST_PROJECTS).toFile();
 
         final List<File> configFiles = Arrays.asList(
                 products,
@@ -1367,35 +1367,35 @@ public class DataGenerator {
         }
 
         try {
-            final ManagerWrapper managerWrapper = settings.getManagerWrapper();
+            final ConfigManager configManager = settings.getConfigManager();
 
             for (final JDKVersion jdkVersion : getJDKVersions()) {
-                managerWrapper.jdkVersionManager.create(jdkVersion);
+                configManager.jdkVersionManager.create(jdkVersion);
             }
 
             for (final Platform platform : getPlatforms()) {
-                managerWrapper.platformManager.create(platform);
+                configManager.platformManager.create(platform);
             }
 
             for (final TaskVariant taskVariant : getTaskVariants()) {
-                managerWrapper.taskVariantManager.create(taskVariant);
+                configManager.taskVariantManager.create(taskVariant);
             }
 
             for (final Task task : getTasks()) {
-                managerWrapper.taskManager.create(task);
+                configManager.taskManager.create(task);
             }
 
             for (final JDKProject jdkProject : getJDKProjects()) {
-                managerWrapper.jdkProjectManager.create(jdkProject);
+                configManager.jdkProjectManager.create(jdkProject);
             }
 
             for (final JDKTestProject jdkTestProject : getJDKTestProjects()) {
-                managerWrapper.jdkTestProjectManager.create(jdkTestProject);
+                configManager.jdkTestProjectManager.create(jdkTestProject);
             }
 
             final Set<BuildProvider> buildProviderSet = getBuildProviders();
             for (final BuildProvider buildProvider : buildProviderSet) {
-                managerWrapper.buildProviderManager.create(buildProvider);
+                configManager.buildProviderManager.create(buildProvider);
             }
         } catch (StorageException | ManagementException e) {
             throw new RuntimeException(e);

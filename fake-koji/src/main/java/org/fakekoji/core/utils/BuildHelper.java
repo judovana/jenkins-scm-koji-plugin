@@ -6,7 +6,7 @@ import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
-import org.fakekoji.jobmanager.ManagerWrapper;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
@@ -270,28 +270,28 @@ public class BuildHelper {
     }
 
     public static BuildHelper create(
-            final ManagerWrapper managerWrapper,
+            final ConfigManager configManager,
             GetBuildList params,
             File buildsRoot,
             BuildProvider buildProvider
     ) throws StorageException {
 
-        final List<String> platforms = managerWrapper.platformManager.readAll()
+        final List<String> platforms = configManager.platformManager.readAll()
                 .stream()
                 .map(Platform::getId)
                 .distinct()
                 .collect(Collectors.toList());
-        final List<TaskVariant> buildTaskVariants = managerWrapper.taskVariantManager.getBuildVariants();
+        final List<TaskVariant> buildTaskVariants = configManager.taskVariantManager.getBuildVariants();
 
-        final Set<String> packageNames = managerWrapper.jdkVersionManager.readAll()
+        final Set<String> packageNames = configManager.jdkVersionManager.readAll()
                 .stream()
                 .map(JDKVersion::getPackageNames)
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
         final OToolParser parser = new OToolParser(
-                managerWrapper.jdkProjectManager.readAll(),
-                managerWrapper.jdkVersionManager.readAll(),
+                configManager.jdkProjectManager.readAll(),
+                configManager.jdkVersionManager.readAll(),
                 buildTaskVariants
         );
 

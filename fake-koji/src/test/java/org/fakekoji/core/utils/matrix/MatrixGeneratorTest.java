@@ -5,7 +5,7 @@ import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagerWrapper;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Project;
@@ -34,8 +34,8 @@ public class MatrixGeneratorTest {
 
     @Test
     public void showFullMatrix() throws ManagementException, StorageException {
-        final ManagerWrapper managerWrapper = settings.getManagerWrapper();
-        MatrixGenerator m = new MatrixGenerator(managerWrapper, new String[0]);
+        final ConfigManager configManager = settings.getConfigManager();
+        MatrixGenerator m = new MatrixGenerator(configManager, new String[0]);
         List<BuildSpec> bs = m.getBuilds();
         List<TestSpec> ts = m.getTests();
         m.printMatrix(System.out, bs, ts, false, false, tf);
@@ -44,10 +44,10 @@ public class MatrixGeneratorTest {
 
     @Test
     public void showPerProjectMatrix() throws ManagementException, StorageException {
-        final ManagerWrapper managerWrapper = settings.getManagerWrapper();
-        final ConfigCache configCache = new ConfigCache(managerWrapper);
+        final ConfigManager configManager = settings.getConfigManager();
+        final ConfigCache configCache = new ConfigCache(configManager);
         for (Project project : configCache.getProjects()) {
-            MatrixGenerator m = new MatrixGenerator(managerWrapper, new String[]{project.getId()});
+            MatrixGenerator m = new MatrixGenerator(configManager, new String[]{project.getId()});
             List<BuildSpec> bs = m.getBuilds();
             List<TestSpec> ts = m.getTests();
             m.printMatrix(System.out, ts, bs, true, true, tf);
@@ -56,13 +56,13 @@ public class MatrixGeneratorTest {
 
     @Test
     public void showPerProjectsMatrix() throws ManagementException, StorageException {
-        final ManagerWrapper managerWrapper = settings.getManagerWrapper();
-        final ConfigCache configCache = new ConfigCache(managerWrapper);
+        final ConfigManager configManager = settings.getConfigManager();
+        final ConfigCache configCache = new ConfigCache(configManager);
         final List<String> jdkProjectNames = configCache.getJdkProjects().stream().map(JDKProject::getId).collect(Collectors.toList());
         final List<String> jdkTestProjectNames = configCache.getJdkTestProjects().stream().map(JDKTestProject::getId).collect(Collectors.toList());
         final List<List<String>> jdkProjectLists = Arrays.asList(jdkProjectNames, jdkTestProjectNames);
         for (List<String> projectNames : jdkProjectLists) {
-            MatrixGenerator m = new MatrixGenerator(managerWrapper, projectNames.toArray(new String[0]));
+            MatrixGenerator m = new MatrixGenerator(configManager, projectNames.toArray(new String[0]));
             List<BuildSpec> bs = m.getBuilds();
             List<TestSpec> ts = m.getTests();
             m.printMatrix(System.out, ts, bs, true, true, tf);

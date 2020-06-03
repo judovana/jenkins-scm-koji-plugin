@@ -20,7 +20,7 @@ import org.fakekoji.storage.Storage;
 
 import java.nio.file.Paths;
 
-public class ManagerWrapper {
+public class ConfigManager {
     public final static String BUILD_PROVIDERS = "buildProviders";
     public final static String JDK_VERSIONS = "jdkVersions";
     public final static String TASK_VARIANTS = "taskVariants";
@@ -37,7 +37,7 @@ public class ManagerWrapper {
     public final JDKTestProjectManager jdkTestProjectManager;
     public final TaskManager taskManager;
 
-    public ManagerWrapper(final AccessibleSettings settings) {
+    public ConfigManager(final AccessibleSettings settings) {
         final String storagePath = settings.getConfigRoot().getAbsolutePath();
         Storage<BuildProvider> buildProviderStorage =
                 new DirectoryJsonStorage<>(Paths.get(storagePath, BUILD_PROVIDERS).toFile());

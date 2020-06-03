@@ -61,10 +61,10 @@ public class BumperAPI implements EndpointGroup {
         this.jobUpdater = settings.getJobUpdater();
         this.parser = settings.getJdkProjectParser();
         this.reverseParser = settings.getReverseJDKProjectParser();
-        this.jdkProjectManager = settings.getManagerWrapper().jdkProjectManager;
-        this.jdkTestProjectManager = settings.getManagerWrapper().jdkTestProjectManager;
-        jdkVersionConfigReader = new ConfigReader<>(settings.getManagerWrapper().jdkVersionManager);
-        platformConfigReader = new ConfigReader<>(settings.getManagerWrapper().platformManager);
+        this.jdkProjectManager = settings.getConfigManager().jdkProjectManager;
+        this.jdkTestProjectManager = settings.getConfigManager().jdkTestProjectManager;
+        jdkVersionConfigReader = new ConfigReader<>(settings.getConfigManager().jdkVersionManager);
+        platformConfigReader = new ConfigReader<>(settings.getConfigManager().platformManager);
     }
 
     private Result<List<Project>, OToolError> checkProjectIds(final List<String> projectIds) {

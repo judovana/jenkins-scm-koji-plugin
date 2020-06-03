@@ -29,36 +29,36 @@ public class ConfigCache {
     private final Map<String, TaskVariant> buildVariantMap;
 
 
-    public ConfigCache(final ManagerWrapper managerWrapper) throws StorageException {
-        buildProviderMap = managerWrapper.buildProviderManager
+    public ConfigCache(final ConfigManager configManager) throws StorageException {
+        buildProviderMap = configManager.buildProviderManager
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(BuildProvider::getId, buildProvider -> buildProvider));
-        buildVariantMap = managerWrapper.taskVariantManager
+        buildVariantMap = configManager.taskVariantManager
                 .readAll()
                 .stream()
                 .filter(variant -> variant.getType().equals(Task.Type.BUILD))
                 .collect(Collectors.toMap(TaskVariant::getId, taskVariant -> taskVariant));
-        jdkProjectMap = managerWrapper.jdkProjectManager
+        jdkProjectMap = configManager.jdkProjectManager
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(JDKProject::getId, jdkProject -> jdkProject));
-        jdkTestProjectMap = managerWrapper.jdkTestProjectManager
+        jdkTestProjectMap = configManager.jdkTestProjectManager
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(JDKTestProject::getId, jdkTestProject-> jdkTestProject));
-        jdkVersionMap = managerWrapper.jdkVersionManager
+        jdkVersionMap = configManager.jdkVersionManager
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(JDKVersion::getId, jdkVersion -> jdkVersion));
-        platformMap = managerWrapper.platformManager
+        platformMap = configManager.platformManager
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(Platform::getId, platform -> platform));
-        taskMap = managerWrapper.taskManager.readAll()
+        taskMap = configManager.taskManager.readAll()
                 .stream()
                 .collect(Collectors.toMap(Task::getId, task -> task));
-        testVariantMap = managerWrapper.taskVariantManager
+        testVariantMap = configManager.taskVariantManager
                 .readAll()
                 .stream()
                 .filter(variant -> variant.getType().equals(Task.Type.TEST))

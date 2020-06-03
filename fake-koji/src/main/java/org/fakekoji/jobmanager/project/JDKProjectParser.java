@@ -3,7 +3,7 @@ package org.fakekoji.jobmanager.project;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementUtils;
-import org.fakekoji.jobmanager.ManagerWrapper;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.Parser;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.BuildPlatformConfig;
@@ -41,23 +41,23 @@ import java.util.stream.Collectors;
 public class JDKProjectParser implements Parser<Project, Set<Job>> {
 
     private JobBuilder jobBuilder;
-    private final ManagerWrapper managerWrapper;
+    private final ConfigManager configManager;
     private final File repositoriesRoot;
     private final File scriptsRoot;
 
     public JDKProjectParser(
-            final ManagerWrapper managerWrapper,
+            final ConfigManager configManager,
             final File repositoriesRoot,
             final File scriptsRoot
     ) {
-        this.managerWrapper = managerWrapper;
+        this.configManager = configManager;
         this.repositoriesRoot = repositoriesRoot;
         this.scriptsRoot = scriptsRoot;
     }
 
     @Override
     public Set<Job> parse(Project project) throws ManagementException, StorageException {
-        final ConfigCache configCache = new ConfigCache(managerWrapper);
+        final ConfigCache configCache = new ConfigCache(configManager);
         jobBuilder = new JobBuilder(configCache, project.getType());
         final Optional<JDKVersion> jdkVersionOptional = configCache.getJdkVersion(project.getProduct().getJdk());
         if (!jdkVersionOptional.isPresent()) {

@@ -2,7 +2,7 @@ package org.fakekoji.core.utils.matrix;
 
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagerWrapper;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.BuildPlatformConfig;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
@@ -51,18 +51,18 @@ public class MatrixGenerator {
     private final ConfigCache cache;
 
 
-    public MatrixGenerator(final ManagerWrapper managerWrapper, String[] project) {
-        this(managerWrapper, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
+    public MatrixGenerator(final ConfigManager configManager, String[] project) {
+        this(configManager, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
-    public MatrixGenerator(final ManagerWrapper managerWrapper, String testRegex, String buildRegex, String[] project) {
-        this(managerWrapper, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
+    public MatrixGenerator(final ConfigManager configManager, String testRegex, String buildRegex, String[] project) {
+        this(configManager, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
     public MatrixGenerator(
-            final ManagerWrapper managerWrapper,
+            final ConfigManager configManager,
             String testRegex,
             String buildRegex,
             TestEqualityFilter testEqualityFilter,
@@ -81,7 +81,7 @@ public class MatrixGenerator {
         }
 
         try {
-            cache = new ConfigCache(managerWrapper);
+            cache = new ConfigCache(configManager);
         } catch (StorageException se) {
             throw new RuntimeException(se);
         }
