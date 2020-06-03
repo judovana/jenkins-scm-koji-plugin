@@ -6,7 +6,6 @@ import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.TaskJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.Platform;
-import org.fakekoji.storage.StorageException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,7 +24,7 @@ public class PlatformBumperTest {
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Before
-    public void setup() throws IOException, StorageException {
+    public void setup() throws IOException {
         DataGenerator.initFolders(temporaryFolder);
     }
 

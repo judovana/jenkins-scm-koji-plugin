@@ -1,11 +1,9 @@
 package org.fakekoji.jobmanager.project;
 
 import org.fakekoji.DataGenerator;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
-import org.fakekoji.jobmanager.model.JDKProject;
-import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Project;
-import org.fakekoji.storage.StorageException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,16 +21,17 @@ public class ReverseJDKProjectParserTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+    private AccessibleSettings settings;
+
 
     @Before
-    public void setup() throws IOException, StorageException {
-        DataGenerator.initFolders(temporaryFolder);
-
+    public void setup() throws IOException {
+        settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
     }
 
     @Test
     public void parseJDKTestProjectJobs() {
-        final ReverseJDKProjectParser parser = new ReverseJDKProjectParser();
+        final ReverseJDKProjectParser parser = settings.getReverseJDKProjectParser();
         final Result<Project, String> result = parser.parseJobs(DataGenerator.getJDKTestProjectJobs());
         Assert.assertEquals(
                 DataGenerator.getJDKTestProject(),
@@ -42,7 +41,7 @@ public class ReverseJDKProjectParserTest {
 
     @Test
     public void parseJDKProjectJobs() {
-        final ReverseJDKProjectParser parser = new ReverseJDKProjectParser();
+        final ReverseJDKProjectParser parser = settings.getReverseJDKProjectParser();
         final Result<Project, String> result = parser.parseJobs(DataGenerator.getJDKProjectJobs());
         Assert.assertEquals(
                 DataGenerator.getJDKProject(),

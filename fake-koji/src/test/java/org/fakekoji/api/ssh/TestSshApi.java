@@ -23,6 +23,16 @@
  */
 package org.fakekoji.api.ssh;
 
+import org.fakekoji.DataGenerator;
+import org.fakekoji.core.AccessibleSettings;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -41,17 +51,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.fakekoji.DataGenerator;
-import org.fakekoji.storage.StorageException;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import static org.fakekoji.DataGenerator.*;
+import static org.fakekoji.DataGenerator.FASTDEBUG;
+import static org.fakekoji.DataGenerator.FolderHolder;
+import static org.fakekoji.DataGenerator.HOTSPOT;
+import static org.fakekoji.DataGenerator.JDK_8_PACKAGE_NAME;
+import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
+import static org.fakekoji.DataGenerator.RELEASE_1;
+import static org.fakekoji.DataGenerator.RELEASE_1_BAD;
+import static org.fakekoji.DataGenerator.RHEL_7_X64;
+import static org.fakekoji.DataGenerator.SUFFIX;
+import static org.fakekoji.DataGenerator.VERSION_1;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.SOURCES;
 
 /**
@@ -176,8 +185,10 @@ public class TestSshApi {
     public final static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @BeforeClass
-    public static void startSshdServer() throws IOException, GeneralSecurityException, StorageException {
-        ServerSocket s = new ServerSocket(0);
+    public static void startSshdServer() throws IOException, GeneralSecurityException {
+        final FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
+        ServerSocket s = new ServerSocket(settings.getSshPort());
         port = s.getLocalPort();
         final File keys = File.createTempFile("ssh-fake-koji.", ".TestKeys");
         keys.delete();
@@ -202,13 +213,8 @@ public class TestSshApi {
             }
         });
         s.close();
-        kojiDb = File.createTempFile("ssh-fake-koji.", ".root");
-        kojiDb.delete();
-        kojiDb.mkdir();
-        kojiDb.deleteOnExit();
-        final File configsRoot = temporaryFolder.newFolder("configs");
-        DataGenerator.initConfigsRoot(configsRoot);
-        server = new ScpService(kojiDb, port, configsRoot, "tester=" + pub.getAbsolutePath());
+        kojiDb = settings.getDbFileRoot();
+        server = new ScpService(settings, "tester=" + pub.getAbsolutePath());
         server.start();
         sources = File.createTempFile("ssh-fake-koji.", ".sources");
         sources.delete();

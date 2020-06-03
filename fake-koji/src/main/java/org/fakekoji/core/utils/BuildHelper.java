@@ -5,9 +5,8 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.functional.Result;
-import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
-import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
@@ -15,7 +14,6 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
-import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
@@ -272,41 +270,29 @@ public class BuildHelper {
     }
 
     public static BuildHelper create(
-            ConfigManager configManager,
+            final ConfigManager configManager,
             GetBuildList params,
             File buildsRoot,
             BuildProvider buildProvider
     ) throws StorageException {
-        final Storage<TaskVariant> taskVariantStorage = configManager.getTaskVariantStorage();
-        final Storage<Platform> platformStorage = configManager.getPlatformStorage();
-        final Storage<JDKVersion> jdkVersionStorage = configManager.getJdkVersionStorage();
-        final Storage<JDKProject> jdkProjectStorage = configManager.getJdkProjectStorage();
 
-        final List<String> platforms = platformStorage.loadAll(Platform.class)
+        final List<String> platforms = configManager.platformManager.readAll()
                 .stream()
                 .map(Platform::getId)
                 .distinct()
                 .collect(Collectors.toList());
-        final List<TaskVariant> buildTaskVariants = taskVariantStorage.loadAll(TaskVariant.class)
-                .stream()
-                .filter(taskVariant -> taskVariant.getType() == Task.Type.BUILD)
-                .collect(Collectors.toList());
+        final List<TaskVariant> buildTaskVariants = configManager.taskVariantManager.getBuildVariants();
 
-        final Set<String> packageNames = jdkVersionStorage.loadAll(JDKVersion.class)
+        final Set<String> packageNames = configManager.jdkVersionManager.readAll()
                 .stream()
                 .map(JDKVersion::getPackageNames)
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
         final OToolParser parser = new OToolParser(
-                jdkProjectStorage.loadAll(JDKProject.class),
-                jdkVersionStorage.loadAll(JDKVersion.class),
-                taskVariantStorage
-                        .loadAll(TaskVariant.class)
-                        .stream()
-                        .filter(variant -> variant.getType() == Task.Type.BUILD)
-                        .sorted(TaskVariant::compareTo)
-                        .collect(Collectors.toList())
+                configManager.jdkProjectManager.readAll(),
+                configManager.jdkVersionManager.readAll(),
+                buildTaskVariants
         );
 
         final TaskVariant buildPlatformVariant = new TaskVariant(

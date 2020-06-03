@@ -35,6 +35,11 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import org.fakekoji.jobmanager.JenkinsJobUpdater;
+import org.fakekoji.jobmanager.JobUpdater;
+import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.project.JDKProjectParser;
+import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class AccessibleSettings {
@@ -71,6 +76,10 @@ public class AccessibleSettings {
     private URL xmlRpcUrl;
     private URL downloadUrl;
     private URL jenkinsUrlString;
+    private final ConfigManager configManager;
+    private final JDKProjectParser jdkProjectParser;
+    private final ReverseJDKProjectParser reverseJDKProjectParser;
+    private final JobUpdater jenkinsJobUpdater;
     private ProjectMapping projectMapping;
 
     public AccessibleSettings(
@@ -97,6 +106,19 @@ public class AccessibleSettings {
         this.sshPort = sshPort;
         this.jenkinsPort = jenkinsPort;
         this.webappPort = webappPort;
+        configManager = new ConfigManager(this);
+        jdkProjectParser = new JDKProjectParser(
+                configManager,
+                localReposRoot,
+                scriptsRoot
+        );
+        reverseJDKProjectParser = new ReverseJDKProjectParser();
+        jenkinsJobUpdater = new JenkinsJobUpdater(
+                configManager,
+                jdkProjectParser,
+                jenkinsJobsRoot,
+                jenkinsJobArchiveRoot
+        );
         this.projectMapping = new ProjectMapping(this);
 
         String thisMachine = InetAddress.getLocalHost().getHostName();
@@ -201,6 +223,22 @@ public class AccessibleSettings {
     public URL getDownloadUrl() {
         warn(downloadUrl, "downloadUrl");
         return downloadUrl;
+    }
+
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    public JDKProjectParser getJdkProjectParser() {
+        return jdkProjectParser;
+    }
+
+    public ReverseJDKProjectParser getReverseJDKProjectParser() {
+        return reverseJDKProjectParser;
+    }
+
+    public JobUpdater getJobUpdater() {
+        return jenkinsJobUpdater;
     }
 
     public ProjectMapping getProjectMapping() {

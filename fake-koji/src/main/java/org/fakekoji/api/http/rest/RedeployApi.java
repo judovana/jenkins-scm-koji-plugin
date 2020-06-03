@@ -10,6 +10,7 @@ import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
@@ -107,21 +108,14 @@ public class RedeployApi implements EndpointGroup {
     private final JDKVersionManager jdkVersionManager;
     private final TaskVariantManager taskVariantManager;
 
-    RedeployApi(
-            final JDKProjectParser jdkProjectParser,
-            final JDKProjectManager jdkProjectManager,
-            final JDKTestProjectManager jdkTestProjectManager,
-            final PlatformManager platformManager,
-            final JDKVersionManager jdkVersionManager,
-            final TaskVariantManager taskVariantManager,
-            final AccessibleSettings settings
-    ) {
-        this.parser = jdkProjectParser;
-        this.jdkProjectManager = jdkProjectManager;
-        this.jdkTestProjectManager = jdkTestProjectManager;
-        this.platformManager = platformManager;
-        this.jdkVersionManager = jdkVersionManager;
-        this.taskVariantManager = taskVariantManager;
+    RedeployApi(final AccessibleSettings settings) {
+        this.parser = settings.getJdkProjectParser();
+        final ConfigManager configManager = settings.getConfigManager();
+        this.jdkProjectManager = configManager.jdkProjectManager;
+        this.jdkTestProjectManager = configManager.jdkTestProjectManager;
+        this.platformManager = configManager.platformManager;
+        this.jdkVersionManager = configManager.jdkVersionManager;
+        this.taskVariantManager = configManager.taskVariantManager;
         this.settings = settings;
     }
 

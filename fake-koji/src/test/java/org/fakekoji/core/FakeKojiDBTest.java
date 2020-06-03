@@ -2,7 +2,6 @@ package org.fakekoji.core;
 
 import hudson.plugins.scm.koji.model.Build;
 import org.fakekoji.DataGenerator;
-import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,7 +23,7 @@ public class FakeKojiDBTest {
     private FakeKojiDB db;
 
     @Before
-    public void setup() throws IOException, StorageException {
+    public void setup() throws IOException {
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
         DataGenerator.initBuildsRoot(folderHolder.buildsRoot);
         db = new FakeKojiDB(DataGenerator.getSettings(folderHolder));

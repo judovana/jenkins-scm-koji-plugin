@@ -1,13 +1,22 @@
 package org.fakekoji.core.utils.matrix;
 
-import org.fakekoji.core.AccessibleSettings;
-import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.manager.*;
-import org.fakekoji.jobmanager.model.*;
-import org.fakekoji.jobmanager.project.JDKProjectManager;
-import org.fakekoji.jobmanager.project.JDKTestProjectManager;
-import org.fakekoji.model.*;
+import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.model.BuildPlatformConfig;
+import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.JobConfiguration;
+import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.Project;
+import org.fakekoji.jobmanager.model.TaskConfig;
+import org.fakekoji.jobmanager.model.TestJobConfiguration;
+import org.fakekoji.jobmanager.model.VariantsConfig;
+import org.fakekoji.model.BuildProvider;
+import org.fakekoji.model.Platform;
+import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariant;
+import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
@@ -15,21 +24,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class MatrixGenerator {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
-
-    private final BuildProviderManager buildProviderManager;
-    private final PlatformManager platformManager;
-    private final TaskVariantManager taskVariantManager;
-    private final JDKVersionManager jDKVersionManager;
-    private final TaskManager taskManager;
-    private final JDKTestProjectManager jdkTestProjectManager;
-    private final JDKProjectManager jdkProjectManager;
 
     private static final TestEqualityFilter defaultTestFilter = new TestEqualityFilter(true, true, true, true, true);
     private static final BuildEqualityFilter defaultBuildFilter = new BuildEqualityFilter(true, true, true, true, true, true);
@@ -40,112 +48,75 @@ public class MatrixGenerator {
     private final Pattern testRegex;
     private final Pattern buildRgex;
     private final String[] project;
-    private final Cache cache;
+    private final ConfigCache cache;
 
 
-    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String[] project) {
-        this(settings, configManager, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
-
-    }
-
-    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, String[] project) {
-        this(settings, configManager, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
+    public MatrixGenerator(final ConfigManager configManager, String[] project) {
+        this(configManager, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
-    public MatrixGenerator(AccessibleSettings settings, ConfigManager configManager, String testRegex, String buildRegex, TestEqualityFilter testEqualityFilter,
-                           BuildEqualityFilter buildEqualityFilter, String[] project) {
+    public MatrixGenerator(final ConfigManager configManager, String testRegex, String buildRegex, String[] project) {
+        this(configManager, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
+
+    }
+
+    public MatrixGenerator(
+            final ConfigManager configManager,
+            String testRegex,
+            String buildRegex,
+            TestEqualityFilter testEqualityFilter,
+            BuildEqualityFilter buildEqualityFilter,
+            String[] project
+    ) {
 
         this.testFilter = testEqualityFilter;
         this.buildFilter = buildEqualityFilter;
         this.testRegex = Pattern.compile(testRegex == null ? defaultRegex : testRegex);
         this.buildRgex = Pattern.compile(buildRegex == null ? defaultRegex : buildRegex);
-        buildProviderManager = new BuildProviderManager(configManager.getBuildProviderStorage());
-        platformManager = new PlatformManager(configManager.getPlatformStorage());
-        //contains both BUILD and TEST variants
-        taskVariantManager = new TaskVariantManager(configManager.getTaskVariantStorage());
-        jDKVersionManager = new JDKVersionManager(configManager.getJdkVersionStorage());
-        taskManager = new TaskManager(configManager.getTaskStorage());
 
         this.project = project;
         if (project != null) {
             Arrays.sort(project);
         }
 
-        jdkTestProjectManager = new JDKTestProjectManager(
-                configManager.getJdkTestProjectStorage()
-        );
-        jdkProjectManager = new JDKProjectManager(
-                configManager,
-                settings.getLocalReposRoot(),
-                settings.getScriptsRoot()
-        );
         try {
-            cache = new Cache();
+            cache = new ConfigCache(configManager);
         } catch (StorageException se) {
             throw new RuntimeException(se);
         }
 
     }
 
-    private class Cache {
-
-        private final List<Platform> platformManagerReadAll;
-        private final List<Task> taskManageReadAll;
-        private final List<TaskVariant> taskVariantManagerReadAll;
-        private final List<JDKProject> jdkProjectManagerReadAll;
-        private final List<JDKTestProject> jdkTestProjectManagerReadAll;
-        private final List<BuildProvider> buildProviders;
-
-        public Cache() throws StorageException {
-            platformManagerReadAll = platformManager.readAll();
-            taskManageReadAll = taskManager.readAll();
-            taskVariantManagerReadAll = taskVariantManager.readAll();
-            jdkProjectManagerReadAll = jdkProjectManager.readAll();
-            jdkTestProjectManagerReadAll = jdkTestProjectManager.readAll();
-            buildProviders = buildProviderManager.readAll();
-        }
-
-        List<Platform> getPlatformManagerReadAll() throws StorageException {
-            return platformManagerReadAll;
-        }
-
-        List<Task> getTaskManagerReadAll() {
-            return taskManageReadAll;
-        }
-
-        List<TaskVariant> getTaskVariantManagerReadAll() {
-            return taskVariantManagerReadAll;
-        }
-
-        List<JDKProject> jdkProjectManagerReadAll() {
-            return jdkProjectManagerReadAll;
-        }
-
-        List<JDKTestProject> jdkTestProjectManagerReadAll() {
-            return jdkTestProjectManagerReadAll;
-        }
+    private List<List<String>> getTaskVariantValuesProduct(Collection<TaskVariant> taskVariants) {
+        return cartesianProduct(
+                taskVariants
+                        .stream()
+                        .map(variant -> variant.getVariants()
+                                .values()
+                                .stream()
+                                .map(TaskVariantValue::getId)
+                                .collect(Collectors.toList())
+                        )
+                        .collect(Collectors.toList())
+        );
     }
 
-
-    public List<TestSpec> getTests() throws StorageException {
+    public List<TestSpec> getTests() {
+        final List<List<String>> variantsProducts = getTaskVariantValuesProduct(cache.getTestTaskVariants());
         List<TestSpec> r = new ArrayList<>();
-        for (Platform origPlatform : cache.getPlatformManagerReadAll()) {
+        for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
             for (Platform.Provider provider : platform.getProviders()) {
-                for (Task task : cache.getTaskManagerReadAll()) {
+                for (Task task : cache.getTasks()) {
                     if (!task.getType().equals(Task.Type.TEST)) {
                         TestSpec t = new TestSpec(platform, provider, task, testFilter);
                         if (testRegex.matcher(t.toString()).matches()) {
                             r.add(t);
                         }
                     } else {
-                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(cache.getTaskVariantManagerReadAll(), task.getType()));
-                        for (Collection<TaskVariantValue> tvvs : variants) {
-                            TestSpec t = new TestSpec(platform, provider, task, testFilter);
-                            for (TaskVariantValue tv : tvvs) {
-                                t.addVariant(tv);
-                            }
+                        for (List<String> variantsProduct : variantsProducts) {
+                            TestSpec t = new TestSpec(platform, provider, task, variantsProduct, testFilter);
                             if (testRegex.matcher(t.toString()).matches()) {
                                 r.add(t);
                             }
@@ -201,19 +172,16 @@ public class MatrixGenerator {
     }
 
 
-    public List<BuildSpec> getBuilds() throws StorageException {
-        List<BuildSpec> r = new ArrayList<>();
-        for (Platform origPlatform : cache.getPlatformManagerReadAll()) {
+    public List<BuildSpec> getBuilds() {
+        final List<List<String>> variantsProducts = getTaskVariantValuesProduct(cache.getBuildTaskVariants());
+        final List<BuildSpec> r = new ArrayList<>();
+        for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
             for (Platform.Provider provider : platform.getProviders()) {
-                for (Project project : concateProjects(cache.jdkProjectManagerReadAll(), cache.jdkTestProjectManagerReadAll()))
+                for (Project project : cache.getProjects())
                     if (matchProject(project.getId())) {
-                        Collection<Collection<TaskVariantValue>> variants = cartesianProduct(getTasksSets(cache.getTaskVariantManagerReadAll(), Task.Type.BUILD));
-                        for (Collection<TaskVariantValue> tvvs : variants) {
-                            BuildSpec b = new BuildSpec(platform, provider, project, buildFilter);
-                            for (TaskVariantValue tv : tvvs) {
-                                b.addVariant(tv);
-                            }
+                        for (List<String> variantProduct : variantsProducts) {
+                            BuildSpec b = new BuildSpec(platform, provider, project, variantProduct, buildFilter);
                             if (buildRgex.matcher(b.toString()).matches()) {
                                 r.add(b);
                             }
@@ -236,49 +204,26 @@ public class MatrixGenerator {
         return false;
     }
 
-    private Collection<TaskVariantValue>[] getTasksSets(List<TaskVariant> taskVars, Task.Type build) {
-        ArrayList<Collection<TaskVariantValue>> r = new ArrayList<>(taskVars.size());
-        for (int i = 0; i < taskVars.size(); i++) {
-            if (taskVars.get(i).getType().equals(build)) {
-                r.add(taskVars.get(i).getVariants().values());
-            }
+    static List<List<String>> cartesianProduct(List<List<String>> values) {
+        if (values.size() < 2) {
+            return new ArrayList<>(values);
         }
-        return r.toArray(new Collection[0]);
+        return cartesianProductImpl(0, values);
     }
 
-
-    static Collection<Collection<TaskVariantValue>> cartesianProduct(Collection<TaskVariantValue>... sets) {
-        if (sets.length < 2) {
-            List<Collection<TaskVariantValue>> r = new ArrayList<>(1);
-            if (sets.length == 1) {
-                r.add(sets[0]);
-            }
-            return r;
-        }
-        return cartesianProductImpl(0, sets);
-    }
-
-    private static Collection<Collection<TaskVariantValue>> cartesianProductImpl(int index, Collection<TaskVariantValue>... sets) {
-        List<Collection<TaskVariantValue>> ret = new ArrayList<>();
-        if (index == sets.length) {
+    private static List<List<String>> cartesianProductImpl(int index, List<List<String>> values) {
+        List<List<String>> ret = new ArrayList<>();
+        if (index == values.size()) {
             ret.add(new ArrayList<>());
         } else {
-            for (TaskVariantValue obj : sets[index]) {
-                for (Collection<TaskVariantValue> set : cartesianProductImpl(index + 1, sets)) {
-                    set.add(obj);
+            for (String obj : values.get(index)) {
+                for (List<String> set : cartesianProductImpl(index + 1, values)) {
+                    set.add(0, obj); // needs to be prepended so the order of variants is preserved
                     ret.add(set);
                 }
             }
         }
         return ret;
-    }
-
-    public static List<Project> concateProjects(List<? extends Project>... list) {
-        List<Project> r = new ArrayList<>();
-        for (List<? extends Project> l : list) {
-            r.addAll(l);
-        }
-        return r;
     }
 
     static int getLongest(Iterable<? extends Spec> l) {
@@ -337,7 +282,7 @@ public class MatrixGenerator {
                 int maxForSpan = 1;
                 for (int ii = 0; ii < matrix.size(); ii++) {
                     List<List<Leaf>> rowForSpan = matrix.get(ii);
-                    maxForSpan  = Math.max(rowForSpan.get(j).size(), maxForSpan);
+                    maxForSpan = Math.max(rowForSpan.get(j).size(), maxForSpan);
                 }
                 List<Leaf> cel = row.get(j);
                 String cellContent;
@@ -458,7 +403,7 @@ public class MatrixGenerator {
         }
         List<Leaf> counter = new ArrayList<>();
         //do not optimise, will break the compression of attributes
-        for (Project project : concateProjects(cache.jdkProjectManagerReadAll(), cache.jdkTestProjectManagerReadAll()))
+        for (Project project : cache.getProjects())
             if (matchProject(project.getId())) {
                 if (project instanceof JDKTestProject) {
                     TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
@@ -496,18 +441,19 @@ public class MatrixGenerator {
         String btask = btce.getId(); //always build
         String platformVersion = project.getProduct().getJdk();
         String projectName = project.getId();
+        final String variants = bvc.concatVariants(cache);
         Collection<String> buildVars = bvc.getMap().values();
         String fullBuild = "" + //warning, is used for job url generation
                 btask + "-" +
                 platformVersion + "-" +
                 projectName + "-" +
                 buildOsAarch[0] + "." + buildOsAarch[1] + "." + buildProvider + "-" +
-                String.join(".", buildVars);
+                variants;
         String providerLessFutureTaskFullBuild = "" + //warning, is used for job url generation
                 platformVersion + "-" +
                 projectName + "-" +
                 buildOsAarch[0] + "." + buildOsAarch[1] + "-" +
-                String.join(".", buildVars);
+                variants;
         //System.out.println(fullBuild);
         if (ts.getTask().getId().equals("build")) { //where it get from?
             //this is trap. We are checking, whether the build is actually building in gvem combination, first the testsuite must moreover match, then it must "itself"
@@ -562,7 +508,7 @@ public class MatrixGenerator {
     }
 
     private BuildProvider getProvider(String providerId) {
-        for (BuildProvider buildProvider : cache.buildProviders) {
+        for (BuildProvider buildProvider : cache.getBuildProviders()) {
             if (buildProvider.getId().equals(providerId)) {
                 return buildProvider;
             }
@@ -578,12 +524,13 @@ public class MatrixGenerator {
                     String[] testOsAarch = tpce.getId().split("\\.");
                     String testProvider = tpce.getProvider();
                     String ttask = ttce.getId();
+                    final String variants = tvc.concatVariants(cache);
                     Collection<String> testVars = tvc.getMap().values();
                     String full = "" + //warning, is used for job url generation
                             ttask + "-" +
                             tmpBuildIdForSimpleTextIdentification + "-" +
                             testOsAarch[0] + "." + testOsAarch[1] + "." + testProvider + "-" +
-                            String.join(".", testVars);
+                            variants;
                     if (taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
                         counter.add(new Leaf(full));
                     }

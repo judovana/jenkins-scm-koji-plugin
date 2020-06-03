@@ -44,7 +44,6 @@ import java.util.logging.Logger;
 
 import org.fakekoji.api.http.rest.OToolService;
 import org.fakekoji.core.AccessibleSettings;
-import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.api.http.filehandling.FileDownloadService;
 import org.fakekoji.api.xmlrpc.XmlRpcKojiService;
@@ -70,7 +69,7 @@ public class JavaServer {
     public JavaServer(AccessibleSettings settings, OToolService oToolService) {
         xmlRpcKojiService = new XmlRpcKojiService(settings);
         fileDownloadService = new FileDownloadService(settings.getDbFileRoot(), settings.getFileDownloadPort());
-        scpService = new ScpService(settings.getDbFileRoot(), settings.getSshPort(), settings.getConfigRoot());
+        scpService = new ScpService(settings);
         this.oToolService = oToolService;
     }
 

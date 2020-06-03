@@ -2,6 +2,7 @@ package org.fakekoji.api.http.rest;
 
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.storage.StorageException;
@@ -28,10 +29,11 @@ public class GetterAPITest {
     private static AccessibleSettings setting;
 
     @BeforeClass
-    public static void setup() throws IOException, StorageException {
+    public static void setup() throws IOException, StorageException, ManagementException {
         folderHolder = DataGenerator.initFolders(temporaryFolder);
         setting = DataGenerator.getSettings(folderHolder);
-        new OToolService(DataGenerator.getSettings(folderHolder)).start();
+        final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
+        new OToolService(settings).start();
     }
 
     @Test

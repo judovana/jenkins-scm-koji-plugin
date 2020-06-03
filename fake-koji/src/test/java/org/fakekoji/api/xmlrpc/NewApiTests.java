@@ -6,7 +6,6 @@ import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
-import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -33,27 +32,13 @@ public class NewApiTests {
     private static FakeKojiDB kojiDB;
 
     @BeforeClass
-    public static void setup() throws IOException, StorageException {
+    public static void setup() throws IOException {
         final File builds = temporaryFolder.newFolder("builds");
-        final File repos = temporaryFolder.newFolder("repos");
-        final File configs = temporaryFolder.newFolder("configs");
-
-        DataGenerator.initConfigsRoot(configs.getAbsoluteFile());
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
         DataGenerator.initBuildsRoot(builds);
+        final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
 
-        kojiDB = new FakeKojiDB(new AccessibleSettings(
-                builds,
-                repos,
-                configs,
-                null,
-                null,
-                null,
-                9848,
-                9849,
-                9822,
-                8080,
-                0
-        ));
+        kojiDB = new FakeKojiDB(settings);
     }
 
     @Test

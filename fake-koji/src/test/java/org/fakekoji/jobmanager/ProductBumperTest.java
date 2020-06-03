@@ -4,7 +4,6 @@ import org.fakekoji.DataGenerator;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.model.JDKVersion;
-import org.fakekoji.storage.StorageException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,7 +22,7 @@ public class ProductBumperTest {
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Before
-    public void setup() throws IOException, StorageException {
+    public void setup() throws IOException {
         DataGenerator.initFolders(temporaryFolder);
     }
 

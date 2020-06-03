@@ -29,15 +29,16 @@ abstract class Spec {
     }
 
 
-    public Spec(Platform platform, Platform.Provider provider, EqualityFilter viewFilter) {
+    public Spec(
+            final Platform platform,
+            final Platform.Provider provider,
+            final EqualityFilter viewFilter,
+            final List<String> variants
+    ) {
         this.platform = platform;
         this.provider = provider;
         this.viewFilter = viewFilter;
-        this.variants = new ArrayList<>();
-    }
-
-    public void addVariant(TaskVariantValue v) {
-        variants.add(v.getId());
+        this.variants = variants;
     }
 
     protected String getVariantsString() {

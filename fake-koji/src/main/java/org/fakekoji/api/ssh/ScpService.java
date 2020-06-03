@@ -37,14 +37,13 @@ import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.session.ServerSession;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
-import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolArchive;
-import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
@@ -69,7 +68,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,28 +197,28 @@ public class ScpService {
 
     private File dbRoot;
     private int port;
-    final File configsRoot;
+    final AccessibleSettings settings;
     private String[] keys;
 
     private SshServer sshServer;
 
-    public ScpService(File dbRoot, int port, File configsRoot) {
-        this.configsRoot = configsRoot;
-        this.dbRoot = dbRoot;
-        this.port = port;
+    public ScpService(final AccessibleSettings settings) {
+        dbRoot = settings.getDbFileRoot();
+        port = settings.getSshPort();
+        this.settings = settings;
     }
 
-    public ScpService(File dbRoot, int port, File configsRoot, String... keys) {
-        this(dbRoot, port, configsRoot);
+    public ScpService(final AccessibleSettings settings, String... keys) {
+        this(settings);
         this.keys = keys;
     }
 
     public void start() throws IOException, GeneralSecurityException {
         if (sshServer == null) {
             if (keys == null) {
-                sshServer = setup(port, dbRoot);
+                sshServer = setup(settings.getSshPort(), settings.getDbFileRoot());
             } else {
-                sshServer = setup(port, dbRoot, keys);
+                sshServer = setup(settings.getSshPort(), settings.getDbFileRoot(), keys);
             }
         }
         sshServer.start();
@@ -613,20 +611,9 @@ public class ScpService {
         final List<JDKVersion> jdkVersions;
         final List<TaskVariant> buildVariants;
         try {
-            final ConfigManager configManager = ConfigManager.create(configsRoot.getAbsolutePath());
-            jdkProjects = configManager
-                    .getJdkProjectStorage()
-                    .loadAll(JDKProject.class);
-            jdkVersions = configManager
-                    .getJdkVersionStorage()
-                    .loadAll(JDKVersion.class);
-            buildVariants = configManager
-                    .getTaskVariantStorage()
-                    .loadAll(TaskVariant.class)
-                    .stream()
-                    .filter(variant -> variant.getType() == Task.Type.BUILD)
-                    .sorted(TaskVariant::compareTo)
-                    .collect(Collectors.toList());
+            jdkProjects = settings.getConfigManager().jdkProjectManager.readAll();
+            jdkVersions = settings.getConfigManager().jdkVersionManager.readAll();
+            buildVariants = settings.getConfigManager().taskVariantManager.getBuildVariants();
         } catch (StorageException e) {
                 LOGGER.severe(e.getMessage());
                 throw new NvraParsingException(fileName, e);

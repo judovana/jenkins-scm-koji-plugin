@@ -29,7 +29,6 @@ import hudson.plugins.scm.koji.model.RPM;
 import org.fakekoji.core.utils.BuildHelper;
 import org.fakekoji.core.utils.DirFilter;
 import org.fakekoji.functional.Result;
-import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildDetail;
@@ -258,7 +257,7 @@ public class FakeKojiDB {
                     hostname + ':' + settings.getFileDownloadPort()
             );
             buildHelper = BuildHelper.create(
-                    ConfigManager.create(settings.getConfigRoot().getAbsolutePath()),
+                    settings.getConfigManager(),
                     params,
                     settings.getDbFileRoot(),
                     thisBuildProvider
