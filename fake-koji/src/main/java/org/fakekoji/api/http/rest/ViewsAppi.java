@@ -5,12 +5,15 @@ import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
+import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariant;
+import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +33,8 @@ public class ViewsAppi {
     }
 
     @NotNull
-    List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager) throws StorageException, IOException {
+    List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager, TaskVariantManager variantManager) throws StorageException, IOException {
+        List<TaskVariant> taskVariants = variantManager.readAll();
         List<JDKTestProject> jdkTestProjecs = jdkTestProjectManager.readAll();
         List<JDKProject> jdkProjects = jdkProjectManager.readAll();
         List<Platform> allPlatforms = platformManager.readAll();
@@ -118,6 +122,11 @@ public class ViewsAppi {
                 for (String p : projects) {
                     jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(s), Optional.of(allPlatforms)));
                 }
+            }
+        }
+        for(TaskVariant taskVariant: taskVariants){
+            for(TaskVariantValue taskVariantValue: taskVariant.getVariants().values()){
+                jvt.add(JenkinsViewTemplateBuilder.getVariantTempalte(taskVariantValue.getId()));
             }
         }
         return jvt.stream().filter(jvtb -> filter.matcher(jvtb.getName()).matches()).collect(Collectors.toList());

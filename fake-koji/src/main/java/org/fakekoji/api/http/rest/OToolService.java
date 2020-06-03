@@ -196,7 +196,7 @@ public class OToolService {
                 path(VIEWS, () -> {
                     get(VIEWS_CREATE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.create(jvt, jobs);
                                 context.status(OK).result(results);
@@ -204,7 +204,7 @@ public class OToolService {
                     ));
                     get(VIEWS_REMOVE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.delete(jvt, jobs);
                                 context.status(OK).result(results);
@@ -212,7 +212,7 @@ public class OToolService {
                     ));
                     get(VIEWS_UPDATE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.update(jvt, jobs);
                                 context.status(OK).result(results);
@@ -220,7 +220,7 @@ public class OToolService {
                     ));
                     get(VIEWS_LIST_OTOOL, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 if (va.isSkipEmpty()) {
                                     List<String> jobs = getterApi.getAllOtoolJobs();
                                     String viewsAndMatchesToPrint = va.listNonEmpty(jvt, jobs);
@@ -233,7 +233,7 @@ public class OToolService {
                     ));
                     get(VIEWS_DETAILS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 List<String> allJenkinsJobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(allJenkinsJobs);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
@@ -243,7 +243,7 @@ public class OToolService {
                     ));
                     get(VIEWS_XMLS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 if (va.isSkipEmpty()) {
                                     List<String> jobs = getterApi.getAllOtoolJobs();
                                     context.status(OK).result(va.getNonEmptyXmls(jvt, jobs));
@@ -254,14 +254,14 @@ public class OToolService {
                     ));
                     get(VIEWS_MATCHES, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 context.status(OK).result(va.printMatches(jvt, jobs));
                             }
                     ));
                     get(VIEWS_MATCHES_JENKINS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
                                 List<String> jobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(jobs);
                                 context.status(OK).result(va.printMatches(jvt, jobs));

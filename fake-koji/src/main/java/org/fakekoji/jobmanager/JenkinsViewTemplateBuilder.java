@@ -214,6 +214,14 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
                 JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
     }
 
+    public static JenkinsViewTemplateBuilder getVariantTempalte(String id) throws IOException {
+        return new JenkinsViewTemplateBuilder(
+                id,
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                "^"+id+"[_\\.-].*"+"|"+".*[_\\.-]"+id+"[_\\.-].*"+"|"+".*[_\\.-]"+id+"$",
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+    }
+
     private static String getProjectViewName(String viewName, Optional<String> platform) {
         if (!platform.isPresent()) {
             return "~" + viewName;
