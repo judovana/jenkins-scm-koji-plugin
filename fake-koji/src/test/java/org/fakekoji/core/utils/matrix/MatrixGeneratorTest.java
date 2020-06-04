@@ -26,7 +26,8 @@ public class MatrixGeneratorTest {
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private AccessibleSettings settings;
-    private TableFormatter tf = new TableFormatter.PlainTextTableFormatter();
+    private TableFormatter tf = new TableFormatter.PlainTextTableFormatter();//new TableFormatter.HtmlTableFormatter(true);
+
     @Before
     public void setup() throws IOException {
         settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
@@ -40,6 +41,23 @@ public class MatrixGeneratorTest {
         List<TestSpec> ts = m.getTests();
         m.printMatrix(System.out, bs, ts, false, false, tf);
         m.printMatrix(System.out, ts, bs, true, true, tf);
+    }
+
+    @Test
+    public void showFullSqeezedMatrix() throws ManagementException, StorageException {
+        final ConfigManager configManager = settings.getConfigManager();
+        MatrixGenerator m = new MatrixGenerator(
+                configManager,
+                ".*",
+                ".*",
+                new TestEqualityFilter(true, true, false, true, false),
+                new BuildEqualityFilter(true, true, false, true, true, false),
+                new String[0]
+        );
+        List<BuildSpec> bs = m.getBuilds();
+        List<TestSpec> ts = m.getTests();
+        m.printMatrix(System.out, bs, ts, true, true, tf);
+        m.printMatrix(System.out, ts, bs, false, false, tf);
     }
 
     @Test

@@ -115,7 +115,8 @@ public class OToolService {
                 + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=htmlspan/html/plain/fill (fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n"
-                + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n";
+                + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n"
+                + "  names=true will chage numbers to somehow more describing texts in html formatters. With huge squezing can go wil. Is sometimes buggy with platforms\n";
     }
 
     public OToolService(AccessibleSettings settings) {
@@ -287,6 +288,7 @@ public class OToolService {
                     String trex = context.queryParam(MATRIX_TREGEX);
                     String brex = context.queryParam(MATRIX_BREGEX);
                     String format = context.queryParam(MATRIX_FORMAT);
+                    boolean names = notNullBoolean(context, "names", false);
                     boolean tos = notNullBoolean(context, "tos", true);
                     boolean tarch = notNullBoolean(context, "tarch", true);
                     boolean tprovider = notNullBoolean(context, "tprovider", false);
@@ -310,9 +312,9 @@ public class OToolService {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
                     if ("htmlspan".equals(format)) {
-                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.SpanningHtmlTableFormatter()));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.SpanningHtmlTableFormatter(names)));
                     } else if ("html".equals(format)) {
-                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter()));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter(names)));
                     } else if ("fill".equals(format)) {
                         String vr = context.queryParam("vr");
                         String time = context.queryParam("time");
@@ -323,7 +325,7 @@ public class OToolService {
                         } else {
                             context.status(OK).result(m.printMatrix(
                                     orieantaion, dropRows, dropColumns,
-                                    new TableFormatter.SpanningFillingHtmlTableFormatter(vr, settings, time, alsoReport, chartDir, projects)));
+                                    new TableFormatter.SpanningFillingHtmlTableFormatter(vr, settings, time, alsoReport, chartDir, names, projects)));
                         }
                     } else {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));

@@ -289,7 +289,7 @@ public class MatrixGenerator {
                 if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
                     cellContent = cel.get(0).toString();
                 } else {
-                    cellContent = tf.getContext(cel, maxForSpan);
+                    cellContent = tf.getContext(cel, maxForSpan, matrix.get(i).get(0).get(0).toString(), matrix.get(0).get(j).get(0).toString());
                     total += cel.size();
                 }
                 int align = lcol;

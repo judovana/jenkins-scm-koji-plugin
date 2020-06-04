@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public interface TableFormatter {
 
@@ -34,7 +33,7 @@ public interface TableFormatter {
 
     String tableEnd();
 
-    String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn);
+    String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn, String rowTitle, String columnTitle);
 
     String initialCell(String[] project);
 
@@ -95,7 +94,7 @@ public interface TableFormatter {
         }
 
         @Override
-        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
+        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn, String rowTitle, String columnTitle) {
             return "" + l.size();
         }
 
@@ -103,6 +102,11 @@ public interface TableFormatter {
     }
 
     public static class HtmlTableFormatter implements TableFormatter {
+        private final boolean expandNames;
+
+        public HtmlTableFormatter(boolean expandNames) {
+            this.expandNames = expandNames;
+        }
 
         private static class DummyLeaf extends MatrixGenerator.Leaf {
 
@@ -146,11 +150,11 @@ public interface TableFormatter {
         }
 
         @Override
-        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
-            return getContextImpl(l, false, maxInColumn, null);
+        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn, String rowTitle, String columnTitle) {
+            return getContextImpl(l, false, maxInColumn, null, rowTitle, columnTitle);
         }
 
-        protected String getContextImpl(List<MatrixGenerator.Leaf> origL, boolean td, int maxInColumn, String alsoReportVr) {
+        protected String getContextImpl(List<MatrixGenerator.Leaf> origL, boolean td, int maxInColumn, String alsoReportVr, String rowTitle, String columnTitle) {
             List<MatrixGenerator.Leaf> l = new ArrayList<>(maxInColumn);
             l.addAll(origL);
             if (l.isEmpty() && !td) {
@@ -196,10 +200,39 @@ public interface TableFormatter {
                         if (alsoReportVr != null) {
                             reportHref = "<a class=\"reportJump\" href=\"#" + url + "/" + alsoReportVr + "\">[^]</a>";
                         }
-                        sb.append(tdopen + openAdd(url) + "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\">").append("[" + (i + 1) + "]").append("</a>" + reportHref + closeAdd() + tdclose);
+                        sb.append(tdopen + openAdd(url) + "<a href=\"" + MASTER + ":" + JENKINS_PORT + "/job/").append(url.toString()).append("\">").append("[" + expandIfNeeded((i + 1), leaf.toString(), rowTitle, columnTitle) + "]").append("</a>" + reportHref + closeAdd() + tdclose);
                     }
             }
             return sb.toString();
+        }
+
+        private String expandIfNeeded(int counter, String fullTitle, String rowTitle, String columnTitle) {
+            if (expandNames == false) {
+                return "" + counter;
+            }
+            String[] rowParts = rowTitle.split("\\?");
+            String[] colParts = columnTitle.split("\\?");
+            if (rowParts.length == 1 && colParts.length == 1) {
+                return "" + counter;
+            }
+            fullTitle = removePartsFromFullName(fullTitle, rowParts);
+            fullTitle = removePartsFromFullName(fullTitle, colParts);
+            return fullTitle;
+        }
+
+        private String removePartsFromFullName(String fullTitle, String[] parts) {
+            if (parts.length > 1) {
+                for (String part : parts) {
+                    part = part.replaceAll("^[^0-9a-zA-Z]+", "");
+                    part = part.replaceAll("[^0-9a-zA-Z]+$", "");
+                    //this is  abit buggy, may remove platform from both build and run...
+                    fullTitle = fullTitle.replace(part, "?");
+                }
+            }
+            fullTitle = fullTitle.replaceAll("[^0-9a-zA-Z]{2,}", "?");
+            fullTitle = fullTitle.replaceAll("^[^0-9a-zA-Z]+", "");
+            fullTitle = fullTitle.replaceAll("[^0-9a-zA-Z]+$", "");
+            return fullTitle;
         }
 
         protected String openAdd(String job) {
@@ -235,14 +268,18 @@ public interface TableFormatter {
 
     public static class SpanningHtmlTableFormatter extends HtmlTableFormatter {
 
+        public SpanningHtmlTableFormatter(boolean expandNames) {
+            super(expandNames);
+        }
+
         @Override
         public String cellStart(int span) {
             return "<td colspan=\"" + span + "\">";
         }
 
         @Override
-        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
-            return getContextImpl(l, true, maxInColumn, null);
+        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn, String rowTitle, String columnTitle) {
+            return getContextImpl(l, true, maxInColumn, null, rowTitle, columnTitle);
         }
     }
 
@@ -263,7 +300,8 @@ public interface TableFormatter {
         private String cachedReport = "Error to cache report";
         private Map<String, Integer> cachedResults = new HashMap<>(0);
 
-        public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String chartDir, String... projects) {
+        public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String chartDir, boolean expandNames, String... projects) {
+            super(expandNames);
             this.vr = nvr;
             this.chartDir = chartDir;
             if (projects == null || projects.length == 0) {
@@ -350,11 +388,11 @@ public interface TableFormatter {
         }
 
         @Override
-        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn) {
+        public String getContext(List<MatrixGenerator.Leaf> l, int maxInColumn, String rowTitle, String columnTitle) {
             if (alsoReport) {
-                return getContextImpl(l, true, maxInColumn, vr);
+                return getContextImpl(l, true, maxInColumn, vr, rowTitle, columnTitle);
             } else {
-                return getContextImpl(l, true, maxInColumn, null);
+                return getContextImpl(l, true, maxInColumn, null, rowTitle, columnTitle);
             }
         }
 
