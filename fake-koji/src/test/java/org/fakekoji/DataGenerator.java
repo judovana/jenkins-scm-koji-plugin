@@ -63,7 +63,10 @@ public class DataGenerator {
     public static final String JDK_11 = "jdk11";
     public static final String JDK_11_PACKAGE_NAME = "java-11-openjdk";
     public static final String RANDOM_JDK_11_PACKAGE_NAME = "javarandom-11-openjdk";
-
+    public static final String JDK_13 = "jdk13";
+    public static final String JDK_13_PACKAGE_NAME = "jdk13";
+    public static final String JDK_14 = "jdk14";
+    public static final String JDK_14_PACKAGE_NAME = "jdk14";
 
     public static final String BUILD_PROVIDER_1 = "fakekoji-hydra";
     public static final String BUILD_PROVIDER_2 = "brew-brewhub";
@@ -72,7 +75,10 @@ public class DataGenerator {
     public static final String BEAKER = "beaker";
 
     public static final String RHEL_7_X64 = "el7.x86_64";
+    public static final String RHEL_8_X64 = "el8.x86_64";
     public static final String F_29_X64 = "f29.x86_64";
+    public static final String F_30_X64 = "f30.x86_64";
+    public static final String F_31_X64 = "f31.x86_64";
 
     public static final String AGENT = "AGENT";
     public static final String LINUX = "linux";
@@ -80,6 +86,10 @@ public class DataGenerator {
     public static final String TRUE = "true";
     public static final String BUILD = "build";
     public static final String TCK = "tck";
+    public static final String DACAPO = "dacapo";
+    public static final String LUCENE = "lucene";
+    public static final String WILDFLY = "wildfly";
+    public static final String CHURN = "churn";
     public static final String JTREG = "jtreg";
     public static final String TCK_AGENT = "tck~agent";
 
@@ -87,6 +97,7 @@ public class DataGenerator {
 
     public static final String HOTSPOT = "hotspot";
     public static final String ZERO = "zero";
+    public static final String OPENJ9 = "openj9";
 
     public static final String DEBUG_MODE = "debugMode";
 
@@ -94,8 +105,19 @@ public class DataGenerator {
     public static final String FASTDEBUG = "fastdebug";
     public static final String SLOWDEBUG = "slowdebug";
 
+    public static final String JRE_SDK = "jresdk";
+    public static final String JRE= "jre";
+    public static final String SDK = "sdk";
+    public static final String JRE_HEADLESS = "jre-headless";
+
+    public static final String CRYPTO = "crypto";
+    public static final String LEGACY = "legacy";
+    public static final String FUTURE = "future";
+    public static final String FIPS = "fips";
+
     public static final String GARBAGE_COLLECTOR = "garbageCollector";
 
+    public static final String DEFAULT_GC = "default-gc";
     public static final String SHENANDOAH = "shenandoah";
     public static final String ZGC = "zgc";
 
@@ -103,6 +125,11 @@ public class DataGenerator {
 
     public static final String X_SERVER = "x11";
     public static final String WAYLAND = "wayland";
+    public static final String HEADLESS = "headless";
+
+    public static final String OS_AGENT = "agent";
+    public static final String LINUX_AGENT = "lnxagent";
+    public static final String WIN_AGENT = "winagent";
 
     public static final String SCP_POLL_SCHEDULE = "H/24 * * * *";
 
@@ -133,6 +160,28 @@ public class DataGenerator {
                 Arrays.asList(
                         JDK_11_PACKAGE_NAME,
                         RANDOM_JDK_11_PACKAGE_NAME
+                )
+        );
+    }
+
+    public static JDKVersion getJDKVersion13() {
+        return new JDKVersion(
+                JDK_13,
+                "JDK 13",
+                "13",
+                Arrays.asList(
+                        JDK_13_PACKAGE_NAME
+                )
+        );
+    }
+
+    public static JDKVersion getJDKVersion14() {
+        return new JDKVersion(
+                JDK_14,
+                "JDK 14",
+                "14",
+                Arrays.asList(
+                        JDK_14_PACKAGE_NAME
                 )
         );
     }
@@ -257,6 +306,7 @@ public class DataGenerator {
                             put(hotspot.getId(), hotspot);
                             final TaskVariantValue zero = getZeroVariant();
                             put(zero.getId(), zero);
+                            put(OPENJ9, new TaskVariantValue(OPENJ9, OPENJ9));
                         }}
                 ),
                 false
@@ -297,6 +347,7 @@ public class DataGenerator {
                             put(shenandoah.getId(), shenandoah);
                             final TaskVariantValue zgc = getZGCVariant();
                             put(zgc.getId(), zgc);
+                            put(DEFAULT_GC, new TaskVariantValue(DEFAULT_GC, DEFAULT_GC));
                         }}
                 ),
                 false
@@ -316,6 +367,62 @@ public class DataGenerator {
                             put(wayland.getId(), wayland);
                             final TaskVariantValue xServer = getXServerVariant();
                             put(xServer.getId(), xServer);
+                            put(HEADLESS, new TaskVariantValue(HEADLESS, HEADLESS));
+                        }}
+                ),
+                false
+        );
+    }
+
+    public static TaskVariant getJreSdk() {
+        return new TaskVariant(
+                JRE_SDK,
+                JRE_SDK,
+                Task.Type.TEST,
+                SDK,
+                1,
+                Collections.unmodifiableMap(
+                        new HashMap<String, TaskVariantValue>() {{
+                            put(SDK, new TaskVariantValue(SDK, SDK));
+                            put(JRE, new TaskVariantValue(JRE, JRE));
+                            put(JRE_HEADLESS, new TaskVariantValue(JRE_HEADLESS, JRE_HEADLESS));
+
+                        }}
+                ),
+                false
+        );
+    }
+
+    public static TaskVariant getCrypto() {
+        return new TaskVariant(
+                CRYPTO,
+                CRYPTO,
+                Task.Type.TEST,
+                FIPS,
+                1,
+                Collections.unmodifiableMap(
+                        new HashMap<String, TaskVariantValue>() {{
+                            put(FIPS, new TaskVariantValue(FIPS, FIPS));
+                            put(LEGACY, new TaskVariantValue(LEGACY, LEGACY));
+                            put(FUTURE, new TaskVariantValue(FUTURE, FUTURE));
+
+                        }}
+                ),
+                false
+        );
+    }
+
+    public static TaskVariant getAgent() {
+        return new TaskVariant(
+                OS_AGENT,
+                OS_AGENT,
+                Task.Type.TEST,
+                LINUX_AGENT,
+                1,
+                Collections.unmodifiableMap(
+                        new HashMap<String, TaskVariantValue>() {{
+                            put(LINUX_AGENT, new TaskVariantValue(LINUX_AGENT, LINUX_AGENT));
+                            put(WIN_AGENT, new TaskVariantValue(WIN_AGENT, WIN_AGENT));
                         }}
                 ),
                 false
@@ -327,7 +434,10 @@ public class DataGenerator {
                 getJvmVariant(),
                 getDebugModeVariant(),
                 getDisplayProtocolCategory(),
-                getGarbageCollectorCategory()
+                getGarbageCollectorCategory(),
+                getCrypto(),
+                getJreSdk(),
+                getAgent()
         ));
     }
 
@@ -361,6 +471,40 @@ public class DataGenerator {
                 Arrays.asList("a", "b"),
                 Arrays.asList("c", "d")
         );
+    }
+
+    public static Platform getRHEL6i686() {
+        return Platform.create(new Platform(
+                null,
+                "el",
+                "6",
+                "6",
+                "i686",
+                null,
+                Arrays.asList(getProvider(), getBeakerProvider()),
+                "rhel-i686",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
+                Collections.singletonList("el6-*"),
+                Collections.emptyList()
+        ));
+    }
+
+    public static Platform getRHEL6x64() {
+        return Platform.create(new Platform(
+                null,
+                "el",
+                "6",
+                "6",
+                "x86_64",
+                null,
+                Arrays.asList(getProvider(), getBeakerProvider()),
+                "rhel-x64",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
+                Collections.singletonList("el6-*"),
+                Collections.emptyList()
+        ));
     }
 
     public static Platform getRHEL7x64() {
@@ -412,6 +556,74 @@ public class DataGenerator {
                 Platform.TestStableYZupdates.NaN,
                 Platform.TestStableYZupdates.NaN,
                 Collections.singletonList("f29-*"),
+                Collections.emptyList()
+        ));
+    }
+
+    public static Platform getF30x64() {
+        return Platform.create(new Platform(
+                null,
+                "f",
+                "30",
+                "30",
+                "x86_64",
+                null,
+                Arrays.asList(getVMOnlyProvider()),
+                "30-x64",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
+                Collections.singletonList("f30-*"),
+                Collections.emptyList()
+        ));
+    }
+
+    public static Platform getF31x64() {
+        return Platform.create(new Platform(
+                null,
+                "f",
+                "31",
+                "31",
+                "x86_64",
+                null,
+                Arrays.asList(getVMOnlyProvider()),
+                "f31-x64",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
+                Collections.singletonList("f31-*"),
+                Collections.emptyList()
+        ));
+    }
+
+    public static Platform getRHEL8X64() {
+        return Platform.create(new Platform(
+                null,
+                "el",
+                "8",
+                "8",
+                "x86_64",
+                null,
+                Arrays.asList(getHWOnlyProvider()),
+                "rhel8-x64",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
+                Collections.singletonList("el8-*"),
+                Collections.emptyList()
+        ));
+    }
+
+    public static Platform getRHEL8i686() {
+        return Platform.create(new Platform(
+                null,
+                "el",
+                "8",
+                "8",
+                "i686",
+                null,
+                Arrays.asList(getHWOnlyProvider()),
+                "rhel8-i686",
+                Platform.TestStableYZupdates.NaN,
+                Platform.TestStableYZupdates.NaN,
+                Collections.singletonList("el8-*"),
                 Collections.emptyList()
         ));
     }
@@ -607,6 +819,106 @@ public class DataGenerator {
         return getTestTaskRequiringSourcesAndBinary();
     }
 
+    public static Task getLucene() {
+        return new Task(
+                LUCENE,
+                "/path/test.sh",
+                Task.Type.TEST,
+                SCP_POLL_SCHEDULE,
+                Task.MachinePreference.HW,
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.FileRequirements(
+                        true,
+                        false,
+                        Task.BinaryRequirements.BINARIES
+                ),
+                TEST_POST_BUILD_TASK,
+                "",
+                new Task.RpmLimitation(
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                ),
+                Collections.emptyList(),
+                0
+        );
+    }
+
+    public static Task getWildfly() {
+        return new Task(
+                WILDFLY,
+                "/path/test.sh",
+                Task.Type.TEST,
+                SCP_POLL_SCHEDULE,
+                Task.MachinePreference.HW,
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.FileRequirements(
+                        true,
+                        false,
+                        Task.BinaryRequirements.BINARIES
+                ),
+                TEST_POST_BUILD_TASK,
+                "",
+                new Task.RpmLimitation(
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                ),
+                Collections.emptyList(),
+                0
+        );
+    }
+
+    public static Task getChurn() {
+        return new Task(
+                CHURN,
+                "/path/test.sh",
+                Task.Type.TEST,
+                SCP_POLL_SCHEDULE,
+                Task.MachinePreference.HW,
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.FileRequirements(
+                        true,
+                        false,
+                        Task.BinaryRequirements.BINARIES
+                ),
+                TEST_POST_BUILD_TASK,
+                "",
+                new Task.RpmLimitation(
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                ),
+                Collections.emptyList(),
+                0
+        );
+    }
+
+    public static Task getDacapo() {
+        return new Task(
+                DACAPO,
+                "/path/test.sh",
+                Task.Type.TEST,
+                SCP_POLL_SCHEDULE,
+                Task.MachinePreference.HW,
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.Limitation<>(Collections.emptyList(), null),
+                new Task.FileRequirements(
+                        true,
+                        false,
+                        Task.BinaryRequirements.BINARIES
+                ),
+                TEST_POST_BUILD_TASK,
+                "",
+                new Task.RpmLimitation(
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                ),
+                Collections.emptyList(),
+                0
+        );
+    }
+
     public static Task getTCKWithAgent() {
         return new Task(
                 TCK_AGENT,
@@ -778,6 +1090,12 @@ public class DataGenerator {
     }
 
     public static JDKProject getJDKProjectU() {
+        final Set<VariantsConfig> testVariants = new HashSet<>(Arrays.asList(
+                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY)),
+                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, FUTURE)),
+                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, WAYLAND, LINUX_AGENT, LEGACY)),
+                new VariantsConfig(getTestVariantsMap(SHENANDOAH, WAYLAND, LINUX_AGENT, FUTURE))
+        ));
         return new JDKProject(
                 PROJECT_NAME_U,
                 new Product(JDK_8, JDK_8_PACKAGE_NAME),
@@ -797,9 +1115,7 @@ public class DataGenerator {
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        new HashSet<>(Collections.singletonList(
-                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
-                                                                                        ))
+                                                                                        testVariants
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
@@ -813,9 +1129,7 @@ public class DataGenerator {
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        new HashSet<>(Collections.singletonList(
-                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
-                                                                                        ))
+                                                                                        testVariants
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
@@ -829,9 +1143,7 @@ public class DataGenerator {
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        new HashSet<>(Collections.singletonList(
-                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
-                                                                                        ))
+                                                                                        testVariants
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
@@ -851,10 +1163,26 @@ public class DataGenerator {
                                                                         F_29_X64,
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
+                                                                                        LUCENE,
+                                                                                        testVariants
+                                                                                )
+                                                                        )), VAGRANT
+                                                                ),
+                                                                new PlatformConfig(
+                                                                        F_30_X64,
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
                                                                                         TCK,
-                                                                                        new HashSet<>(Collections.singletonList(
-                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
-                                                                                        ))
+                                                                                        testVariants
+                                                                                )
+                                                                        )), VAGRANT
+                                                                ),
+                                                                new PlatformConfig(
+                                                                        F_31_X64,
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        testVariants
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
@@ -868,9 +1196,7 @@ public class DataGenerator {
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        new HashSet<>(Collections.singletonList(
-                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
-                                                                                        ))
+                                                                                        testVariants
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
@@ -884,9 +1210,7 @@ public class DataGenerator {
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        new HashSet<>(Collections.singletonList(
-                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER))
-                                                                                        ))
+                                                                                        testVariants
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
@@ -980,6 +1304,14 @@ public class DataGenerator {
         }});
     }
 
+    private static Map<String, String> getBuildVariantsMap(String jvm, String debugMode, String jreSdk) {
+        return Collections.unmodifiableMap(new HashMap<String, String>() {{
+            put(JVM, jvm);
+            put(DEBUG_MODE, debugMode);
+            put(JRE_SDK, jreSdk);
+        }});
+    }
+
     private static Map<String, String> getTestVariantsMap(String garbageCollector, String displayProtocol) {
         return Collections.unmodifiableMap(new HashMap<String, String>() {{
             put(GARBAGE_COLLECTOR, garbageCollector);
@@ -987,18 +1319,40 @@ public class DataGenerator {
         }});
     }
 
+    private static Map<String, String> getTestVariantsMap(
+            String garbageCollector,
+            String displayProtocol,
+            String agent,
+            String crypto
+    ) {
+        return Collections.unmodifiableMap(new HashMap<String, String>() {{
+            put(GARBAGE_COLLECTOR, garbageCollector);
+            put(DISPLAY_PROTOCOL, displayProtocol);
+            put(OS_AGENT, agent);
+            put(CRYPTO, crypto);
+        }});
+    }
+
     public static Set<JDKVersion> getJDKVersions() {
         return new HashSet<>(Arrays.asList(
                 getJDKVersion8(),
-                getJDKVersion11()
+                getJDKVersion11(),
+                getJDKVersion13(),
+                getJDKVersion14()
         ));
     }
 
     public static Set<Platform> getPlatforms() {
         return new HashSet<>(Arrays.asList(
+                getRHEL6i686(),
+                getRHEL6x64(),
                 getRHEL7x64(),
                 getRHEL7Zx64(),
+                getRHEL8i686(),
+                getRHEL8X64(),
                 getF29x64(),
+                getF30x64(),
+                getF31x64(),
                 getRHEL8Aarch64(),
                 getWin2019x64()
         ));
@@ -1009,7 +1363,11 @@ public class DataGenerator {
                 getBuildTask(),
                 getTCK(),
                 getTCKWithAgent(),
-                getJTREG()
+                getJTREG(),
+                getDacapo(),
+                getChurn(),
+                getLucene(),
+                getWildfly()
         ));
     }
 
