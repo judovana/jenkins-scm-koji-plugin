@@ -103,9 +103,11 @@ public interface TableFormatter {
 
     public static class HtmlTableFormatter implements TableFormatter {
         private final boolean expandNames;
+        private final String[] projects;
 
-        public HtmlTableFormatter(boolean expandNames) {
+        public HtmlTableFormatter(boolean expandNames, String[] projects) {
             this.expandNames = expandNames;
+            this.projects = projects;
         }
 
         private static class DummyLeaf extends MatrixGenerator.Leaf {
@@ -210,6 +212,11 @@ public interface TableFormatter {
             if (expandNames == false) {
                 return "" + counter;
             }
+            if (projects != null) {
+                if (projects.length > 1) {
+                    return "" + counter;
+                }
+            }
             String[] rowParts = rowTitle.split("\\?");
             String[] colParts = columnTitle.split("\\?");
             if (rowParts.length == 1 && colParts.length == 1) {
@@ -268,8 +275,8 @@ public interface TableFormatter {
 
     public static class SpanningHtmlTableFormatter extends HtmlTableFormatter {
 
-        public SpanningHtmlTableFormatter(boolean expandNames) {
-            super(expandNames);
+        public SpanningHtmlTableFormatter(boolean expandNames, String[] projects) {
+            super(expandNames, projects);
         }
 
         @Override
@@ -300,8 +307,8 @@ public interface TableFormatter {
         private String cachedReport = "Error to cache report";
         private Map<String, Integer> cachedResults = new HashMap<>(0);
 
-        public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String chartDir, boolean expandNames, String... projects) {
-            super(expandNames);
+        public SpanningFillingHtmlTableFormatter(String nvr, AccessibleSettings settings, String time, boolean appendReport, String chartDir, boolean expandNames, String[] projects) {
+            super(expandNames, projects);
             this.vr = nvr;
             this.chartDir = chartDir;
             if (projects == null || projects.length == 0) {
