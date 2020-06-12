@@ -24,9 +24,11 @@ import static org.fakekoji.DataGenerator.FASTDEBUG;
 import static org.fakekoji.DataGenerator.F_29_X64;
 import static org.fakekoji.DataGenerator.HOTSPOT;
 import static org.fakekoji.DataGenerator.JDK_8_PACKAGE_NAME;
+import static org.fakekoji.DataGenerator.JRE_SDK;
 import static org.fakekoji.DataGenerator.JVM;
 import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
 import static org.fakekoji.DataGenerator.RELEASE;
+import static org.fakekoji.DataGenerator.SDK;
 
 public class OToolParserTest {
 
@@ -148,6 +150,7 @@ public class OToolParserTest {
                         new ArrayList<Tuple<String, String>>() {{
                             add(new Tuple<>(DEBUG_MODE, RELEASE));
                             add(new Tuple<>(JVM, HOTSPOT));
+                            add(new Tuple<>(JRE_SDK, SDK));
                         }},
                         F_29_X64,
                         SUFFIX
@@ -170,6 +173,7 @@ public class OToolParserTest {
                         new ArrayList<Tuple<String, String>>() {{
                             add(new Tuple<>(DEBUG_MODE, FASTDEBUG));
                             add(new Tuple<>(JVM, HOTSPOT));
+                            add(new Tuple<>(JRE_SDK, SDK));
                         }},
                         F_29_X64,
                         SUFFIX
@@ -192,6 +196,7 @@ public class OToolParserTest {
                         new ArrayList<Tuple<String, String>>() {{
                             add(new Tuple<>(DEBUG_MODE, RELEASE));
                             add(new Tuple<>(JVM, HOTSPOT));
+                            add(new Tuple<>(JRE_SDK, SDK));
                         }},
                         F_29_X64,
                         SUFFIX
@@ -214,6 +219,7 @@ public class OToolParserTest {
                         new ArrayList<Tuple<String, String>>() {{
                             add(new Tuple<>(DEBUG_MODE, FASTDEBUG));
                             add(new Tuple<>(JVM, HOTSPOT));
+                            add(new Tuple<>(JRE_SDK, SDK));
                         }},
                         F_29_X64,
                         SUFFIX
