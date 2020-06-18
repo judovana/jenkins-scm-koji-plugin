@@ -281,9 +281,6 @@ public class FakeKojiDB {
                 .collect(Collectors.toList());
     }
 
-    public static boolean isOkForNewApi(String name) {
-        return name.endsWith(".tarxz");
-    }
 
     public static boolean isOkForOldApi(String name) {
         return name.endsWith(".rpm") ||
