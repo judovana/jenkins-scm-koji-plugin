@@ -69,7 +69,7 @@ public class JavaTestClient {
 //        System.out.println("The sum is: " + sum);
 
         final long timeThen = System.nanoTime();
-        final String packageName = "java-1.7.0-openjdk";
+        final String packageName = "java-1.8.0-openjdk";
 
         System.out.println("Getting ID of package: " + packageName);
         final XmlRpcRequestParams getPackageIdParams = new GetPackageId(packageName);

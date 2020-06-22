@@ -219,6 +219,13 @@ public class FakeBuild {
     public String[] guessTags() throws ProjectMappingExceptions.ProjectMappingException {
         List<File> files = this.getNonLogs();
         for (File file : files) {
+            if (name.endsWith("openjdk") || name.startsWith("openjdk")) {
+                if (file.getName().toLowerCase().contains("portable")) {
+                    return new String[]{"openjdk-portable-rhel-6-candidate "};
+                }
+            }
+        }
+        for (File file : files) {
             //appearence and using of openjdkX-win is very unlike, but...
             //we have java-X.Y-openjdk or openjdkX-win)
             if (name.endsWith("openjdk") || name.startsWith("openjdk")) {
