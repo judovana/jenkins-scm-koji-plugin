@@ -221,7 +221,7 @@ public class FakeBuild {
         for (File file : files) {
             if (name.endsWith("openjdk") || name.startsWith("openjdk")) {
                 if (file.getName().toLowerCase().contains("portable")) {
-                    return new String[]{"openjdk-portable-rhel-6-candidate "};
+                    return new String[]{"openjdk-portable-rhel-6-candidate"};
                 }
             }
         }
