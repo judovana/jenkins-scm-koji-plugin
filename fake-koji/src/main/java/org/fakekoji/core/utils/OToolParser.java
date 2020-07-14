@@ -265,6 +265,16 @@ public class OToolParser {
             return n+"/"+v;
         }
 
+        public String getArch() {
+            String[] dotted = nvr.split("\\.");
+            return dotted[dotted.length-1];
+        }
+
+        public String getOs() {
+            String[] dotted = nvr.split("\\.");
+            return dotted[dotted.length-2];
+        }
+
         public String getFullPath() {
             return getPartialPath()+"/"+r;
         }

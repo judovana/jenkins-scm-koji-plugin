@@ -854,6 +854,12 @@ public class GetterAPI implements EndpointGroup {
                         return Result.ok(parsedNvr.getVR());
                     case "NR":
                         return Result.ok(parsedNvr.getNR());
+                    case "O":
+                        return Result.ok(parsedNvr.getOs());
+                    case "A":
+                        return Result.ok(parsedNvr.getArch());
+                    case "OA":
+                        return Result.ok(parsedNvr.getOs() + "." + parsedNvr.getArch());
                     default:
                         return Result.err("Unknown type - " + type.get());
                 }
@@ -861,7 +867,7 @@ public class GetterAPI implements EndpointGroup {
 
             @Override
             public String about() {
-                return "/" + LEGACY_PARSER + " [" + NVR + "=<nvr> + optional " + TYPE + "=<Nand/orVand/orR]";
+                return "/" + LEGACY_PARSER + " [" + NVR + "=<nvr> + optional " + TYPE + "=<//Nand/orVand/orR//xor//OsAnd/orArch//]";
             }
         };
     }
