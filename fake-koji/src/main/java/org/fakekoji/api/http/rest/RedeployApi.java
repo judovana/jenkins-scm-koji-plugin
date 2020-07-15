@@ -9,6 +9,7 @@ import org.fakekoji.core.FakeBuild;
 import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
@@ -30,10 +31,12 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +70,8 @@ public class RedeployApi implements EndpointGroup {
     //already filtered via other filters?
     private static final String REDEPLOY_TEST = "test"; //test have sense with all the swithces before, build do not. build needs only 1/2 nvra
     private static final String REDEPLOY_BUILD = "build"; //only jdkProject in addtion to removal VR from processed.txt, it cleans  FAILED, ERROR and smaller then 4bytes files from local-builds
+    private static final String REDEPLOY_RUN = "run"; //job=jobName&build=id resore archve/changelog.xml as build.xml and execute build now
+    private static final String REDEPLOY_CHECKOUT = "checkout"; //job=jobName removes build.xml and execute build now
     private static final String REDEPLOY_DO = "do"; //will do the real work if true, by default it will only print what it will affect
     //with?
     private static final String REDEPLOY_NVR = "nvr"; //and enforce platform as separate thing?
@@ -98,6 +103,8 @@ public class RedeployApi implements EndpointGroup {
     private static final String PROCESSED_cmments = "comments";
     private static final String PROCESSED_uniq = "nouniq";
     private static final String PROCESSED_sort = "sort";
+    private static final String RERUN_JOB = "job";
+    private static final String RERUN_BUILD = "build";
 
 
     private final JDKProjectParser parser;
@@ -122,6 +129,10 @@ public class RedeployApi implements EndpointGroup {
 
     public static String getHelp() {
         return "\n"
+                + MISC + '/' + REDEPLOY + "/" + REDEPLOY_RUN + "\n"
+                + "  requires job=name&build=number; will rereun given job. It is invoking build now, with fake checkout. Job should not be in queue.\n"
+                + MISC + '/' + REDEPLOY + "/" + REDEPLOY_CHECKOUT + "\n"
+                + "  requires job=name  will execute checkout and build (unlike build now, which rebuilds last nvr). Job should not be in queue\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_BUILD + "\n"
                 + "  Will print out all nvrs in processed.txt of builds.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_TEST + "\n"
@@ -177,6 +188,65 @@ public class RedeployApi implements EndpointGroup {
                 }
             } else {
                 context.status(OToolService.BAD).result("job is mandatory\n");
+            }
+        });
+        get(REDEPLOY_CHECKOUT, context -> {
+            try {
+                String job = context.queryParam(RERUN_JOB);
+                if (job == null) {
+                    throw new RuntimeException(RERUN_JOB + " must be an existing job id, was " + job);
+                }
+                File currentt = new File(settings.getJenkinsJobsRoot().getAbsolutePath() + File.separator + job + File.separator + "build.xml");
+                if (!currentt.getParentFile().exists()) {
+                    throw new RuntimeException(currentt.getParentFile() + " do not exists. bad job?");
+                }
+                StringBuilder sb = new StringBuilder();
+                if (!currentt.exists()) {
+                    sb.append(currentt.getAbsolutePath() + " do not exists. bad job? Broken checkou?t No koji-scm job?\n");
+                }
+                Files.delete(currentt.toPath());
+                sb.append("deleted " + currentt.getAbsolutePath() + "\n");
+                JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().scheduleBuild(job);
+                cr.throwIfNecessary();
+                sb.append("scheduled " + job + "\n");
+                context.status(OToolService.OK).result(sb.toString());
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+
+        });
+        get(REDEPLOY_RUN, context -> {
+            try {
+                String job = context.queryParam(RERUN_JOB);
+                if (job == null) {
+                    throw new RuntimeException(RERUN_JOB + " must be an existing job id, was " + job);
+                }
+                String id = context.queryParam(RERUN_BUILD);
+                if (id == null) {
+                    throw new RuntimeException(RERUN_BUILD + " must be an existing build number, was " + id);
+                }
+                File currentt = new File(settings.getJenkinsJobsRoot().getAbsolutePath() + File.separator + job + File.separator + "build.xml");
+                if (!currentt.getParentFile().exists()) {
+                    throw new RuntimeException(currentt.getParentFile() + " do not exists. bad job?");
+                }
+                File archived = new File(settings.getJenkinsJobsRoot().getAbsolutePath() + File.separator + job + File.separator + "builds" + File.separator + id + File.separator + "changelog.xml");
+                if (!archived.exists()) {
+                    throw new RuntimeException(archived.getAbsolutePath() + " do not exists. failed at checkout? Bad id? bad job?");
+                }
+                StringBuilder sb = new StringBuilder();
+                if (!currentt.exists()) {
+                    sb.append(currentt.getAbsolutePath() + " do not exists. bad job? Broken checkou?t No koji-scm job?\n");
+                }
+                Files.copy(archived.toPath(), currentt.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                sb.append("Copied " + archived.getAbsolutePath() + " as " + currentt.getAbsolutePath() + "\n");
+                JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().scheduleBuild(job);
+                cr.throwIfNecessary();
+                sb.append("scheduled " + job + "\n");
+                context.status(OToolService.OK).result(sb.toString());
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
             }
         });
         get(REDEPLOY_BUILD, context -> {
