@@ -133,6 +133,7 @@ public class RedeployApi implements EndpointGroup {
                 + "  requires job=name&build=number; will rereun given job. It is invoking build now, with fake checkout. Job should not be in queue.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_CHECKOUT + "\n"
                 + "  requires job=name  will execute checkout and build (unlike build now, which rebuilds last nvr). Job should not be in queue\n"
+                + "  if there is nothing to checkout (eg due allbuilds in processed.txt, build will fail\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_BUILD + "\n"
                 + "  Will print out all nvrs in processed.txt of builds.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_TEST + "\n"
