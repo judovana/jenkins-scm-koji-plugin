@@ -1,18 +1,13 @@
 package org.fakekoji.core.utils.matrix;
 
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ConfigManager;
-import org.fakekoji.jobmanager.model.BuildPlatformConfig;
-import org.fakekoji.jobmanager.model.JDKProject;
-import org.fakekoji.jobmanager.model.JDKTestProject;
-import org.fakekoji.jobmanager.model.JobConfiguration;
-import org.fakekoji.jobmanager.model.PlatformConfig;
+import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
-import org.fakekoji.jobmanager.model.TaskConfig;
-import org.fakekoji.jobmanager.model.TestJobConfiguration;
-import org.fakekoji.jobmanager.model.VariantsConfig;
-import org.fakekoji.model.BuildProvider;
+import org.fakekoji.jobmanager.model.TaskJob;
+import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
@@ -28,12 +23,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MatrixGenerator {
 
@@ -49,27 +49,30 @@ public class MatrixGenerator {
     private final Pattern buildRgex;
     private final String[] project;
     private final ConfigCache cache;
+    private final AccessibleSettings settings;
+
+    private final static String EXTERNAL_PLATFORM_PROVIDER = "external";
 
 
-    public MatrixGenerator(final ConfigManager configManager, String[] project) {
-        this(configManager, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
+    public MatrixGenerator(final AccessibleSettings settings, String[] project) {
+        this(settings, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
-    public MatrixGenerator(final ConfigManager configManager, String testRegex, String buildRegex, String[] project) {
-        this(configManager, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
+    public MatrixGenerator(final AccessibleSettings settings, String testRegex, String buildRegex, String[] project) {
+        this(settings, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
     public MatrixGenerator(
-            final ConfigManager configManager,
+            final AccessibleSettings settings,
             String testRegex,
             String buildRegex,
             TestEqualityFilter testEqualityFilter,
             BuildEqualityFilter buildEqualityFilter,
             String[] project
     ) {
-
+        this.settings = settings;
         this.testFilter = testEqualityFilter;
         this.buildFilter = buildEqualityFilter;
         this.testRegex = Pattern.compile(testRegex == null ? defaultRegex : testRegex);
@@ -81,7 +84,7 @@ public class MatrixGenerator {
         }
 
         try {
-            cache = new ConfigCache(configManager);
+            cache = new ConfigCache(settings.getConfigManager());
         } catch (StorageException se) {
             throw new RuntimeException(se);
         }
@@ -103,29 +106,34 @@ public class MatrixGenerator {
     }
 
     public List<TestSpec> getTests() {
+        final Collection<Platform.Provider> providers = Arrays.asList(createNoneProvider(), createExternalProvider());
+        final Map<String, TestSpec> map = new LinkedHashMap<>();
         final List<List<String>> variantsProducts = getTaskVariantValuesProduct(cache.getTestTaskVariants());
-        List<TestSpec> r = new ArrayList<>();
         for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
-            for (Platform.Provider provider : platform.getProviders()) {
+            final Collection<Platform.Provider> platformProviders = Stream.concat(
+                    providers.stream(),
+                    platform.getProviders().stream()
+            ).collect(Collectors.toList());
+            for (Platform.Provider provider : platformProviders) {
                 for (Task task : cache.getTasks()) {
                     if (!task.getType().equals(Task.Type.TEST)) {
                         TestSpec t = new TestSpec(platform, provider, task, testFilter);
                         if (testRegex.matcher(t.toString()).matches()) {
-                            r.add(t);
+                            map.put(t.toString(), t); //r.add(t);
                         }
                     } else {
                         for (List<String> variantsProduct : variantsProducts) {
                             TestSpec t = new TestSpec(platform, provider, task, variantsProduct, testFilter);
                             if (testRegex.matcher(t.toString()).matches()) {
-                                r.add(t);
+                                map.put(t.toString(), t); //r.add(t);
                             }
                         }
                     }
                 }
             }
         }
-        return (List<TestSpec>) filterByToString(r);
+        return new ArrayList<>(map.values());
     }
 
     private Platform clonePlatformForProviders(Platform origPlatform) {
@@ -159,37 +167,47 @@ public class MatrixGenerator {
                 Collections.emptyList());
     }
 
-    private List<? extends Spec> filterByToString(List<? extends Spec> r) {
-        for (int i = 0; i < r.size(); i++) {
-            for (int j = i + 1; j < r.size(); j++) {
-                if (r.get(i).toString().equals(r.get(j).toString())) {
-                    r.remove(j);
-                    j--;
-                }
-            }
-        }
-        return Collections.unmodifiableList(r);
+    private Platform.Provider createExternalProvider() {
+        return new Platform.Provider(
+                EXTERNAL_PLATFORM_PROVIDER,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
     }
 
-
     public List<BuildSpec> getBuilds() {
-        final List<List<String>> variantsProducts = getTaskVariantValuesProduct(cache.getBuildTaskVariants());
-        final List<BuildSpec> r = new ArrayList<>();
+        final Collection<Platform.Provider> providers = Arrays.asList(createNoneProvider(), createExternalProvider());
+        final Collection<TaskVariant> allVariants = cache.getBuildTaskVariants();
+        final Collection<TaskVariant> testOnlyVariants = allVariants
+                .stream()
+                .filter(TaskVariant::isSupportsSubpackages)
+                .collect(Collectors.toList());
+        final List<List<String>> variantsProducts = Stream.of(
+                getTaskVariantValuesProduct(allVariants).stream(),
+                getTaskVariantValuesProduct(testOnlyVariants).stream()
+        )
+                .flatMap(s -> s)
+                .collect(Collectors.toList());
+        final Map<String, BuildSpec> map = new LinkedHashMap<>();
         for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
-            for (Platform.Provider provider : platform.getProviders()) {
+            final Collection<Platform.Provider> platformProviders = Stream.concat(
+                    providers.stream(),
+                    platform.getProviders().stream()
+            ).collect(Collectors.toList());
+            for (Platform.Provider provider : platformProviders) {
                 for (Project project : cache.getProjects())
                     if (matchProject(project.getId())) {
                         for (List<String> variantProduct : variantsProducts) {
                             BuildSpec b = new BuildSpec(platform, provider, project, variantProduct, buildFilter);
                             if (buildRgex.matcher(b.toString()).matches()) {
-                                r.add(b);
+                                map.put(b.toString(), b); //r.add(b);
                             }
                         }
                     }
             }
         }
-        return (List<BuildSpec>) filterByToString(r);
+        return new ArrayList<>(map.values());
     }
 
     private boolean matchProject(String project) {
@@ -236,10 +254,6 @@ public class MatrixGenerator {
         return max;
     }
 
-    static String fill(String s, int l) {
-        return fill(s, l, " ");
-    }
-
     static String fill(String s, int l, String by) {
         StringBuilder filledString = new StringBuilder(s);
         while (filledString.length() < l) {
@@ -248,20 +262,15 @@ public class MatrixGenerator {
         return filledString.toString();
     }
 
-
     public String printMatrix(int orientation, boolean dropRows, boolean dropColumns, TableFormatter tf) throws StorageException, ManagementException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final String utf8 = StandardCharsets.UTF_8.name();
         List<BuildSpec> bs = getBuilds();
         List<TestSpec> ts = getTests();
+        final boolean inverted = orientation <= 0;
         try {
             try (PrintStream ps = new PrintStream(baos, true, utf8)) {
-                if (orientation <= 0) {
-                    printMatrix(ps, bs, ts, dropRows, dropColumns, tf);
-                }
-                if (orientation >= 0) {
-                    printMatrix(ps, ts, bs, dropRows, dropColumns, tf);
-                }
+                printMatrix(ps, bs, ts, dropRows, dropColumns, tf, inverted);
             }
             return baos.toString(utf8);
         } catch (UnsupportedEncodingException e) {
@@ -269,12 +278,38 @@ public class MatrixGenerator {
         }
     }
 
-    void printMatrix(PrintStream p, Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns, TableFormatter tf) throws ManagementException, StorageException {
-        int lrow = getLongest(rows) + 1;
-        int lcol = getLongest(columns) + 1;
+    void printMatrix(
+            final PrintStream p,
+            final Collection<BuildSpec> buildSpecs,
+            final Collection<TestSpec> testSpecs,
+            final boolean dropRows,
+            final boolean dropColumns,
+            final TableFormatter tf
+    ) throws ManagementException, StorageException {
+        printMatrix(p, buildSpecs, testSpecs, dropRows, dropColumns, tf, false);
+    }
+
+    void printMatrix(
+            final PrintStream p,
+            final Collection<BuildSpec> buildSpecs,
+            final Collection<TestSpec> testSpecs,
+            final boolean dropRows,
+            final boolean dropColumns,
+            final TableFormatter tf,
+            final boolean inverted
+    ) throws ManagementException, StorageException {
+        int lrow;
+        int lcol;
+        if (inverted) {
+            lrow = getLongest(testSpecs) + 1;
+            lcol = getLongest(buildSpecs) + 1;
+        } else {
+            lrow = getLongest(testSpecs) + 1;
+            lcol = getLongest(buildSpecs) + 1;
+        }
         int total = 0;
         p.print(tf.tableStart());
-        List<List<List<Leaf>>> matrix = generateMatrix(rows, columns, dropRows, dropColumns);
+        List<List<List<Leaf>>> matrix = generateMatrix(buildSpecs, testSpecs, dropRows, dropColumns, inverted);
         for (int i = 0; i < matrix.size(); i++) {
             List<List<Leaf>> row = matrix.get(i);
             p.print(tf.rowStart());
@@ -300,7 +335,7 @@ public class MatrixGenerator {
                     if (i == 0 && (j == 0 || j == row.size() - 1)) {
                         cellContent = tf.initialCell(project);
                     } else if (i == matrix.size() - 1 && (j == 0 || j == row.size() - 1)) {
-                        cellContent = tf.lastCell(total, rows.size() * columns.size());
+                        cellContent = tf.lastCell(total, buildSpecs.size() * testSpecs.size());
                     } else {
                         //filing by soething, as leading spaces can be trimmed on the fly
                         cellContent = fill(cellContent, align - 1, "-") + " ";
@@ -317,30 +352,62 @@ public class MatrixGenerator {
         p.print(tf.tableEnd());
     }
 
+    private List<List<List<Leaf>>> generateMatrix(
+            final Collection<BuildSpec> buildSpecs,
+            final Collection<TestSpec> testSpecs,
+            final boolean dropRows,
+            final boolean dropColumns,
+            final boolean inverted
+    ) throws ManagementException, StorageException {
+        final Collection<? extends Spec> rows;
+        final Collection<? extends Spec> columns;
+        if (inverted) {
+            rows = testSpecs;
+            columns = buildSpecs;
+        } else {
+            rows = buildSpecs;
+            columns = testSpecs;
+        }
 
-    private List<List<List<Leaf>>> generateMatrix(Collection<? extends Spec> rows, Collection<? extends Spec> columns, boolean dropRows, boolean dropColumns)
-            throws ManagementException, StorageException {
         //last list is content of single cel
         List<List<List<Leaf>>> listOfRows = new ArrayList<>(rows.size() + 2/*rows headers are additional first and last column*/);
 
         List<List<Leaf>> initialRow = new ArrayList<>(columns.size() + 2);
-        initialRow.add(Arrays.asList(new LeafTitle("")));//initial empty intersection, upper left corner
+        initialRow.add(Collections.singletonList(new LeafTitle("")));//initial empty intersection, upper left corner
         for (Spec t : columns) {
-            initialRow.add(Arrays.asList(new LeafTitle(t.toString())));
+            initialRow.add(Collections.singletonList(new LeafTitle(t.toString())));
         }
         initialRow.add(initialRow.get(0));//last empty intersection, upper right corner, reusing
         listOfRows.add(initialRow);
-        for (Spec b : rows) {
-            List<List<Leaf>> row = new ArrayList<>(columns.size() + 2);
-            row.add(Arrays.asList(new LeafTitle(b.toString())));
-            for (Spec t : columns) {
-                List<Leaf> matched = countMatchingProjects(b, t);
-                row.add(matched);
+        final Map<String, Map<String, List<TaskJob>>> map = generateMap(inverted);
+        for (final Spec row : rows) {
+            final Map<String, List<TaskJob>> rowsMap = map.get(row.toString());
+            final List<List<Leaf>> matrixRow = new ArrayList<>(columns.size() + 2);
+            matrixRow.add(Collections.singletonList(new LeafTitle(row.toString())));
+            if (rowsMap == null) {
+                // empty row
+                for (int i = 0; i < columns.size(); i++) {
+                    matrixRow.add(Collections.emptyList());
+                }
+            } else {
+                for (final Spec col : columns) {
+                    final List<TaskJob> jobList = rowsMap.get(col.toString());
+                    if (jobList == null) {
+                        // empty cell
+                        matrixRow.add(Collections.emptyList());
+                        continue;
+                    }
+                    final List<Leaf> matrixCell = jobList.stream()
+                            .distinct()
+                            .map(job -> new Leaf(job.getName()))
+                            .collect(Collectors.toList());
+                    matrixRow.add(matrixCell);
+                }
             }
-            row.add(row.get(0)); //again ending by rowtitle, why not reuse
-            listOfRows.add(row);
+            matrixRow.add(matrixRow.get(0));
+            listOfRows.add(matrixRow);
         }
-        listOfRows.add(new ArrayList<>(initialRow)); //and last row are again only titles, not reusing, because of column delete
+        listOfRows.add(new ArrayList<>(initialRow));
 
         if (dropRows) {
             //not dropping first and last with headers
@@ -377,185 +444,168 @@ public class MatrixGenerator {
         return listOfRows;
     }
 
+    private List<TaskJob> getJobs() throws StorageException, ManagementException {
+        return cache.getProjects()
+                .stream()
+                .filter(project -> matchProject(project.getId()))
+                .map(project -> {
+                    try {
+                        return settings.getJdkProjectParser().parse(project);
+                    } catch (ManagementException | StorageException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .flatMap(Set::stream)
+                .filter(job -> job instanceof TaskJob)
+                .map(job -> (TaskJob) job)
+                .collect(Collectors.toList());
+    }
+
+    private Consumer<TaskJob> getJobConsumer(final Map<String, Map<String, List<TaskJob>>> map, final boolean inverted) {
+        return job -> {
+            final BuildSpec buildSpec;
+            final TestSpec testSpec;
+            final String projectName = job.getProjectName();
+            final Product product = job.getProduct();
+            final Task task = job.getTask();
+
+            final Platform.Provider provider = job.getPlatform()
+                    .getProviders()
+                    .stream()
+                    .filter(p -> p.getId().equals(job.getPlatformProvider()))
+                    .findFirst()
+                    .orElseGet(this::createNoneProvider);
+            final List<String> variants = job.getVariants()
+                    .entrySet()
+                    .stream()
+                    .sorted(Comparator.comparing(Map.Entry::getKey))
+                    .map(e -> e.getValue().getId())
+                    .collect(Collectors.toList());
+            if (job instanceof BuildJob) {
+                final BuildJob buildJob = (BuildJob) job;
+                buildSpec = new BuildSpec(
+                        buildJob.getPlatform(),
+                        provider,
+                        projectName,
+                        product,
+                        variants,
+                        buildFilter
+                );
+                testSpec = new TestSpec(
+                        buildJob.getPlatform(),
+                        provider,
+                        task,
+                        testFilter
+                );
+            } else if (job instanceof TestJob) {
+                final TestJob testJob = (TestJob) job;
+                final List<String> buildVariants = testJob.getBuildVariants()
+                        .entrySet()
+                        .stream()
+                        .sorted(Comparator.comparing(Map.Entry::getKey))
+                        .map(e -> e.getValue().getId())
+                        .collect(Collectors.toList());
+                final Platform.Provider buildPlatformProvider = testJob.getBuildPlatform()
+                        .getProviders()
+                        .stream()
+                        .filter(p -> p.getId().equals(testJob.getBuildPlatformProvider()))
+                        .findFirst()
+                        .orElse(provider);
+                testSpec = new TestSpec(
+                        testJob.getPlatform(),
+                        provider,
+                        task,
+                        variants,
+                        testFilter
+                );
+                if (testJob.getProjectType() == Project.ProjectType.JDK_TEST_PROJECT) {
+                    final BuildJob testOnlyBuildJob = new BuildJob(
+                            EXTERNAL_PLATFORM_PROVIDER,
+                            projectName,
+                            product,
+                            testJob.getJdkVersion(),
+                            job.getBuildProviders(),
+                            cache.getTask("build").orElse(null),
+                            testJob.getBuildPlatform(),
+                            testJob.getBuildVariants(),
+                            null,
+                            null
+                    );
+                    buildSpec = new BuildSpec(
+                            testJob.getBuildPlatform(),
+                            createExternalProvider(),
+                            projectName,
+                            product,
+                            buildVariants,
+                            buildFilter
+                    );
+                    final TestSpec testBuildSpec = new TestSpec(
+                            testOnlyBuildJob.getPlatform(),
+                            createExternalProvider(),
+                            testOnlyBuildJob.getTask(),
+                            testFilter
+                    );
+                    addJob(map, buildSpec, testBuildSpec, testOnlyBuildJob, inverted);
+                } else {
+                    buildSpec = new BuildSpec(
+                            testJob.getBuildPlatform(),
+                            buildPlatformProvider,
+                            projectName,
+                            product,
+                            buildVariants,
+                            buildFilter
+                    );
+                }
+            } else {
+                return;
+            }
+            addJob(map, buildSpec, testSpec, job, inverted);
+        };
+    }
+
+    private Map<String, Map<String, List<TaskJob>>> generateMap(final boolean inverted) throws ManagementException, StorageException {
+        final Map<String, Map<String, List<TaskJob>>> map = new HashMap<>();
+        getJobs().forEach(getJobConsumer(map, inverted));
+        return map;
+    }
+
+    private void addJob(
+            final Map<String, Map<String, List<TaskJob>>> map,
+            final BuildSpec buildSpec,
+            final TestSpec testSpec,
+            final TaskJob job,
+            final boolean inverted
+    ) {
+        final String rowKey;
+        final String colKey;
+        if (inverted) {
+            rowKey = testSpec.toString();
+            colKey = buildSpec.toString();
+        } else {
+            rowKey = buildSpec.toString();
+            colKey = testSpec.toString();
+        }
+        final Map<String, List<TaskJob>> rowSpecs;
+        if (map.containsKey(rowKey)) {
+            rowSpecs = map.get(rowKey);
+        } else {
+            rowSpecs = new HashMap<>();
+            map.put(rowKey, rowSpecs);
+        }
+        final List<TaskJob> jobList;
+        if (rowSpecs.containsKey(colKey)) {
+            jobList = rowSpecs.get(colKey);
+        } else {
+            jobList = new ArrayList<>();
+            rowSpecs.put(colKey, jobList);
+        }
+        jobList.add(job);
+    }
+
     private static void deleteClumn(List<List<List<Leaf>>> listOfRows, int j) {
         for (List<List<Leaf>> row : listOfRows) {
             row.remove(j);
         }
-    }
-
-    private List<Leaf> countMatchingProjects(Spec b, Spec t) throws StorageException, ManagementException {
-        BuildSpec bs = null;
-        TestSpec ts = null;
-        if (b instanceof BuildSpec) {
-            bs = (BuildSpec) b;
-        }
-        if (t instanceof BuildSpec) {
-            bs = (BuildSpec) t;
-        }
-        if (b instanceof TestSpec) {
-            ts = (TestSpec) b;
-        }
-        if (t instanceof TestSpec) {
-            ts = (TestSpec) t;
-        }
-        if (bs == null | ts == null) {
-            throw new StorageException("Only build x test ot test x build can be searched for, nothing else");
-        }
-        List<Leaf> counter = new ArrayList<>();
-        //do not optimise, will break the compression of attributes
-        for (Project project : cache.getProjects())
-            if (matchProject(project.getId())) {
-                if (project instanceof JDKTestProject) {
-                    TestJobConfiguration jc = ((JDKTestProject) project).getJobConfiguration();
-                    Set<BuildPlatformConfig> buildPlatformConfig = jc.getPlatforms();
-                    for (BuildPlatformConfig bpce : buildPlatformConfig) {
-                        TaskConfig tc = new TaskConfig(null, bpce.getVariants());
-                        Set<TaskConfig> taskConfigs = new HashSet<>();
-                        taskConfigs.add(tc);
-                        for (TaskConfig btce : taskConfigs) {
-                            for (VariantsConfig bvc : btce.getVariants()) {
-                                checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), null, btce, bvc);
-                            }
-                        }
-                    }
-                } else if (project instanceof JDKProject) {
-                    JobConfiguration jc = ((JDKProject) project).getJobConfiguration();
-                    for (PlatformConfig bpce : jc.getPlatforms()) {
-                        for (TaskConfig btce : bpce.getTasks()) {
-                            for (VariantsConfig bvc : btce.getVariants()) {
-                                checkAndIterateBuild(bs, ts, counter, project, bpce.getId(), bpce.getProvider(), btce, bvc);
-                            }
-                        }
-                    }
-                } else {
-                    throw new ManagementException("Unknow project type " + project.getClass());
-                }
-            }
-        return counter;
-    }
-
-    private void checkAndIterateBuild(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, TaskConfig btce,
-                                      VariantsConfig bvc) {
-        //builds must be counted here, otherwise they a) multiply b) do not exists for project less leaves(so building wthout testing)
-        String[] buildOsAarch = buildArchOs.split("\\.");
-        String btask = btce.getId(); //always build
-        String platformVersion = project.getProduct().getJdk();
-        String projectName = project.getId();
-        final String variants = bvc.concatVariants(cache);
-        Collection<String> buildVars = bvc.getMap().values();
-        String fullBuild = "" + //warning, is used for job url generation
-                btask + "-" +
-                platformVersion + "-" +
-                projectName + "-" +
-                buildOsAarch[0] + "." + buildOsAarch[1] + "." + buildProvider + "-" +
-                variants;
-        String providerLessFutureTaskFullBuild = "" + //warning, is used for job url generation
-                platformVersion + "-" +
-                projectName + "-" +
-                buildOsAarch[0] + "." + buildOsAarch[1] + "-" +
-                variants;
-        //System.out.println(fullBuild);
-        if (ts.getTask().getId().equals("build")) { //where it get from?
-            //this is trap. We are checking, whether the build is actually building in gvem combination, first the testsuite must moreover match, then it must "itself"
-            if (genericMatcher(ts, buildOsAarch[0], buildOsAarch[1], buildProvider, new ArrayList<>(0))) {
-                if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
-                    if (btask == null) {//test only jobs
-                        //we add test only job only in case, it actualy have any test, testonly jobs without tests do not have sense?
-                        //but we can see it later in matrix that it do nothave run any tests
-                        if (project instanceof JDKTestProject) {
-                            counter.addAll(createProvidersUrls((JDKTestProject) project, fullBuild));
-                        } else {
-                            counter.add(new Leaf(fullBuild));
-                        }
-                    } else {
-                        if (project instanceof JDKTestProject) {
-                            counter.addAll(createProvidersUrls((JDKTestProject) project, fullBuild));
-                        } else {
-                            counter.add(new Leaf(fullBuild));
-                        }
-                    }
-                }
-            }
-        } else {
-            if (buildMatcher(bs, project.getId(), buildOsAarch[0], buildOsAarch[1], buildProvider, project.getProduct().getJdk(), buildVars)) {
-                iterateBuildVariantsConfig(bs, ts, counter, project, buildArchOs, buildProvider, btce, bvc, providerLessFutureTaskFullBuild);
-            }
-        }
-    }
-
-    private Collection<Leaf> createProvidersUrls(JDKTestProject project, String fallBack) {
-        List<Leaf> r = new ArrayList<>();
-        for (String providerId : project.getBuildProviders()) {
-            BuildProvider buildProvider = getProvider(providerId);
-            if (buildProvider == null) {
-                r.add(new Leaf(fallBack));
-            } else {
-                if (buildProvider.getTopUrl().endsWith("hub") || buildProvider.getTopUrl().endsWith("hub/")) {
-                    String nwTopUrl = buildProvider.getTopUrl();
-                    if (buildProvider.getTopUrl().endsWith("hub")) {
-                        nwTopUrl = nwTopUrl.substring(0, nwTopUrl.length() - 3);
-                    } else if (buildProvider.getTopUrl().endsWith("hub/")) {
-                        nwTopUrl = nwTopUrl.substring(0, nwTopUrl.length() - 4);
-                    }
-                    nwTopUrl = nwTopUrl.replace("hub", "web");
-                    r.add(new Leaf(nwTopUrl + "/search?match=glob&type=package&terms=" + project.getProduct().getPackageName()));
-                } else {
-                    r.add(new Leaf(buildProvider.getDownloadUrl() + "/" + project.getProduct().getPackageName()));
-                }
-            }
-        }
-        return r;
-    }
-
-    private BuildProvider getProvider(String providerId) {
-        for (BuildProvider buildProvider : cache.getBuildProviders()) {
-            if (buildProvider.getId().equals(providerId)) {
-                return buildProvider;
-            }
-        }
-        return null;
-    }
-
-    private void iterateBuildVariantsConfig(BuildSpec bs, TestSpec ts, List<Leaf> counter, Project project, String buildArchOs, String buildProvider, TaskConfig btce,
-                                            VariantsConfig bvc, String tmpBuildIdForSimpleTextIdentification) {
-        for (PlatformConfig tpce : bvc.getPlatforms()) {
-            for (TaskConfig ttce : tpce.getTasks()) {
-                for (VariantsConfig tvc : ttce.getVariants()) {
-                    String[] testOsAarch = tpce.getId().split("\\.");
-                    String testProvider = tpce.getProvider();
-                    String ttask = ttce.getId();
-                    final String variants = tvc.concatVariants(cache);
-                    Collection<String> testVars = tvc.getMap().values();
-                    String full = "" + //warning, is used for job url generation
-                            ttask + "-" +
-                            tmpBuildIdForSimpleTextIdentification + "-" +
-                            testOsAarch[0] + "." + testOsAarch[1] + "." + testProvider + "-" +
-                            variants;
-                    if (taskMatcher(ts, ttask, testOsAarch[0], testOsAarch[1], testProvider, testVars)) {
-                        counter.add(new Leaf(full));
-                    }
-                }
-            }
-        }
-    }
-
-
-    private static boolean genericMatcher(Spec s, String os, String arch, String provider, Collection<String> variants) {
-        return (s.matchOs(os)) &&
-                (s.matchArch(arch)) &&
-                (s.matchProvider(provider)) &&
-                (s.matchVars(variants));
-    }
-
-    private static boolean buildMatcher(BuildSpec bs, String projectId, String os, String arch, String provider, String jdk, Collection<String> variants) {
-        return (bs.matchProject(projectId) &&
-                bs.matchJdk(jdk) &&
-                genericMatcher(bs, os, arch, provider, variants));
-    }
-
-    private static boolean taskMatcher(TestSpec ts, String taskId, String os, String arch, String provider, Collection<String> variants) {
-        return (ts.matchSuite(taskId)) &&
-                genericMatcher(ts, os, arch, provider, variants);
     }
 
     public static class Leaf {
@@ -574,7 +624,7 @@ public class MatrixGenerator {
         }
     }
 
-    private static class LeafTitle extends Leaf {
+    public static class LeafTitle extends Leaf {
         final String simpleTitle;
 
         LeafTitle(String title) {

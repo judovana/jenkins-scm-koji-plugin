@@ -41,25 +41,23 @@ public class MatrixGeneratorTest {
 
     @Test
     public void showFullMatrix() throws ManagementException, StorageException, IOException {
-        final ConfigManager configManager = settings.getConfigManager();
-        MatrixGenerator m = new MatrixGenerator(configManager, new String[0]);
+        MatrixGenerator m = new MatrixGenerator(settings, new String[0]);
         List<BuildSpec> bs = m.getBuilds();
         List<TestSpec> ts = m.getTests();
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final String expectedContent = readResource("full_dropped_matrix");
-        m.printMatrix(new PrintStream(outputStream), ts, bs, true, true, tf);
+        m.printMatrix(new PrintStream(outputStream), bs, ts, true, true, tf, true);
         assertContents(expectedContent, outputStream);
 
     }
 
     @Test
     public void showFullSqueezedMatrix() throws ManagementException, StorageException, IOException {
-        final ConfigManager configManager = settings.getConfigManager();
         final String expectedContent = readResource("squeezed_matrix");
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final PrintStream printStream = new PrintStream(outputStream);
         MatrixGenerator m = new MatrixGenerator(
-                configManager,
+                settings,
                 ".*",
                 ".*",
                 new TestEqualityFilter(true, true, false, true, false),
@@ -69,7 +67,7 @@ public class MatrixGeneratorTest {
         List<BuildSpec> bs = m.getBuilds();
         List<TestSpec> ts = m.getTests();
         m.printMatrix(printStream, bs, ts, true, true, tf);
-        m.printMatrix(printStream, ts, bs, false, false, tf);
+        m.printMatrix(printStream, bs, ts, false, false, tf, true);
         assertContents(expectedContent, outputStream);
     }
 
@@ -81,10 +79,10 @@ public class MatrixGeneratorTest {
         final String expectedContent = readResource("per_project_matrices");
         final PrintStream printStream = new PrintStream(outputStream);
         for (Project project : configCache.getProjects()) {
-            MatrixGenerator m = new MatrixGenerator(configManager, new String[]{project.getId()});
+            MatrixGenerator m = new MatrixGenerator(settings, new String[]{project.getId()});
             List<BuildSpec> bs = m.getBuilds();
             List<TestSpec> ts = m.getTests();
-            m.printMatrix(printStream, ts, bs, true, true, tf);
+            m.printMatrix(printStream, bs, ts, true, true, tf, true);
         }
         assertContents(expectedContent, outputStream);
     }
@@ -100,10 +98,10 @@ public class MatrixGeneratorTest {
         final String expectedContent = readResource("per_projects_matrices");
         final PrintStream printStream = new PrintStream(outputStream);
         for (List<String> projectNames : jdkProjectLists) {
-            MatrixGenerator m = new MatrixGenerator(configManager, projectNames.toArray(new String[0]));
+            MatrixGenerator m = new MatrixGenerator(settings, projectNames.toArray(new String[0]));
             List<BuildSpec> bs = m.getBuilds();
             List<TestSpec> ts = m.getTests();
-            m.printMatrix(printStream, ts, bs, true, true, tf);
+            m.printMatrix(printStream, bs, ts, true, true, tf, true);
         }
         assertContents(expectedContent, outputStream);
     }

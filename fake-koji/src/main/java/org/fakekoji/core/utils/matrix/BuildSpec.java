@@ -1,5 +1,6 @@
 package org.fakekoji.core.utils.matrix;
 
+import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.Platform;
 
@@ -7,8 +8,8 @@ import java.util.List;
 
 class BuildSpec extends Spec {
 
-    private final Project project;
-
+    private final String projectName;
+    private final Product product;
 
     public BuildSpec(
             final Platform platform,
@@ -16,9 +17,19 @@ class BuildSpec extends Spec {
             final Project project,
             final List<String> variants,
             final BuildEqualityFilter viewFilter) {
-        super(platform, provider, viewFilter, variants);
-        this.project = project;
+        this(platform, provider, project.getId(), project.getProduct(), variants, viewFilter);
+    }
 
+    public BuildSpec(
+            final Platform platform,
+            final Platform.Provider provider,
+            final String projectName,
+            final Product product,
+            final List<String> variants,
+            final BuildEqualityFilter viewFilter) {
+        super(platform, provider, viewFilter, variants);
+        this.projectName = projectName;
+        this.product = product;
     }
 
     private BuildEqualityFilter getViewFilter() {
@@ -27,12 +38,12 @@ class BuildSpec extends Spec {
 
     @Override
     public String toString() {
-        String jdk= project.getProduct().getJdk();
+        String jdk= product.getJdk();
         if (!getViewFilter().jdk){
             jdk = "?";
         }
 
-        String prj = project.getId();
+        String prj = projectName;
         if (!getViewFilter().project){
             prj = "?";
         }
@@ -41,13 +52,4 @@ class BuildSpec extends Spec {
                 getVariantsString();
 
     }
-
-    public boolean matchProject(String id){
-        return !getViewFilter().project || project.getId().equals(id);
-    }
-
-    public boolean matchJdk(String jdk){
-        return !getViewFilter().jdk || project.getProduct().getJdk().equals(jdk);
-    }
-
 }
