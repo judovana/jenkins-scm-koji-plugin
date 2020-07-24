@@ -106,7 +106,7 @@ public class JobTest {
 
         final TestJob buildJob1 = new TestJob(
                 "",
-                "name", //final name have 59 chars. its maximum possible, before shortening
+                "name", //it is no longer possible to have  non shortened name due to number of variants
                 Project.ProjectType.JDK_PROJECT,
                 DataGenerator.getJDK8Product(),
                 jdk8,
@@ -126,8 +126,8 @@ public class JobTest {
         System.out.println(ss1);
         System.out.println(ss1.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss1.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, sl1.length());
-        Assert.assertEquals(ss1, sl1);
+//        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, sl1.length()); it is no longer possible - with so much variants - to have not shortened test name
+        Assert.assertNotEquals(ss1, sl1); //so they can not even be same
 
         final TestJob buildJob2 = new TestJob(
                 "",
@@ -153,12 +153,12 @@ public class JobTest {
         System.out.println(ss2);
         System.out.println(ss2.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
-        Assert.assertEquals("tck-nameA-rh-pr.1-sw-845ddd6d7e9704a3149d2a7abae2a8f08a9865", ss2);
+        Assert.assertEquals("tck-nameA-rhs-pr.1-swflj-737762821238584da15c77f1de32ba334e", ss2);
 
 
         final TestJob buildJob3 = new TestJob(
                 "",
-                "nameA0123456789012345678901234567890123456", //projname is now so long
+                "nameA012345678901234567890123456789012", //projname is now so long
                 //that its hasum is exactly 1char
                 Project.ProjectType.JDK_PROJECT,
                 DataGenerator.getJDK8Product(),
@@ -179,7 +179,7 @@ public class JobTest {
         System.out.println(ss3);
         System.out.println(ss3.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
-        Assert.assertEquals("tck-nameA0123456789012345678901234567890123456-rh-pr.1-sw-c", ss3);
+        Assert.assertEquals("tck-nameA012345678901234567890123456789012-rhs-pr.1-swflj-e", ss3);
 
         final TestJob buildJob4 = new TestJob(
                 "",
@@ -204,7 +204,7 @@ public class JobTest {
         System.out.println(ss4);
         System.out.println(ss4.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
-        Assert.assertEquals("257a8a5033ff9ed487c3c955b360e3e20e74dacb2cd081b30707c01ac7d", ss4);
+        Assert.assertEquals("1a567b4123766bcc701339dabb5379efc93ba3a8a4376618778564e45a6", ss4);
     }
 
 
@@ -222,7 +222,7 @@ public class JobTest {
 
         final BuildJob buildJob1 = new BuildJob(
                 "",
-                "nameNameNameNameNameNameNam", //final name have 59 chars. its maximum possible, before shortening
+                "nameNameNameNameNameNam", //final name have 59 chars. its maximum possible, before shortening
                 DataGenerator.getJDK8Product(),
                 jdk8,
                 buildProviders,
@@ -263,12 +263,12 @@ public class JobTest {
         System.out.println(ss2);
         System.out.println(ss2.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
-        Assert.assertEquals("build-nameNameNameNameNameNameNamA-pb.1-rh-40bc2fb82186d52f", ss2);
+        Assert.assertEquals("build-nameNameNameNameNameNameNamA-pb.1-rhs-8605ebf98b0e790", ss2);
 
 
         final BuildJob buildJob3 = new BuildJob(
                 "",
-                "nameNameNameNameNameNameNamA012345678901234", //projname is now so long
+                "nameNameNameNameNameNameNamA012345678", //projname is now so long
                 //that its hasum is exactly 1char
                 DataGenerator.getJDK8Product(),
                 jdk8,
@@ -286,7 +286,7 @@ public class JobTest {
         System.out.println(ss3);
         System.out.println(ss3.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
-        Assert.assertEquals("build-nameNameNameNameNameNameNamA012345678901234-pb.1-rh-c", ss3);
+        Assert.assertEquals("build-nameNameNameNameNameNameNamA012345678-pb.1-rhs-9cfea6", ss3);
 
         final BuildJob buildJob4 = new BuildJob(
                 "",
@@ -308,7 +308,7 @@ public class JobTest {
         System.out.println(ss4);
         System.out.println(ss4.length());
         Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
-        Assert.assertEquals("4a6389f501a4c51f05436278d7051d62cd65e3ee06d2b85f43ddcef39f0", ss4);
+        Assert.assertEquals("61a6548f8bed43b6b1af78604c1c1c6bf8ac9a529fdc869d487913a3c22", ss4);
     }
 
 }
