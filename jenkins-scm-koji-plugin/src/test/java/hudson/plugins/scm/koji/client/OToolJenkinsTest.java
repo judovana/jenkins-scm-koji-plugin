@@ -59,7 +59,7 @@ public class OToolJenkinsTest {
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=release jvm=hotspot buildPlatform=f29.x86_64",
+                        "debugMode=release jvm=hotspot jreSdk=sdk buildPlatform=f29.x86_64",
                         "src",
                         false
                 ),
@@ -75,7 +75,7 @@ public class OToolJenkinsTest {
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=fastdebug jvm=hotspot buildPlatform=f29.x86_64",
+                        "debugMode=fastdebug jvm=hotspot jreSdk=sdk buildPlatform=f29.x86_64",
                         "src",
                         false
                 ),
@@ -91,7 +91,7 @@ public class OToolJenkinsTest {
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=fastdebug jvm=hotspot buildPlatform=f29.x86_64",
+                        "debugMode=fastdebug jvm=hotspot jreSdk=sdk buildPlatform=f29.x86_64",
                         "src",
                         false
                 ),
@@ -107,7 +107,7 @@ public class OToolJenkinsTest {
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=slowdebug jvm=hotspot",
+                        "debugMode=slowdebug jvm=hotspot jreSdk=sdk",
                         "f29.x86_64",
                         true
                 ),
@@ -118,12 +118,12 @@ public class OToolJenkinsTest {
 
     @Test
     public void testTestJobSuccess() throws Exception {
-        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=fastdebug jvm=hotspot",
+                        "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
                         "f29.x86_64",
                         true
                 ),
@@ -134,12 +134,12 @@ public class OToolJenkinsTest {
 
     @Test
     public void testTestJobSuccessNotForBadRelease() throws Exception {
-        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=fastdebug jvm=hotspot",
+                        "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
                         "f29.x86_64",
                         true
                 ),
@@ -150,13 +150,13 @@ public class OToolJenkinsTest {
 
     @Test
     public void testTestJobWithSourcesSuccess() throws Exception {
-        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         final String expectedSourceFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\nfind . | grep \"" + expectedSourceFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=fastdebug jvm=hotspot",
+                        "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
                         "f29.x86_64 src",
                         true
                 ),
@@ -167,13 +167,13 @@ public class OToolJenkinsTest {
 
     @Test
     public void testTestJobWithSourcesSuccessNotForBAdRelease() throws Exception {
-        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.f29.x86_64"+SUFFIX;
+        final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         final String expectedSourceFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\nfind . | grep \"" + expectedSourceFile + "\"\n";
         runTest(
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
-                        "debugMode=fastdebug jvm=hotspot",
+                        "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
                         "f29.x86_64 src",
                         true
                 ),
