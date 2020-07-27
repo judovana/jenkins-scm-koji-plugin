@@ -33,7 +33,7 @@ public class FakeKojiDBTest {
     public void getBuildsForBuildJobWhenAllBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=release buildPlatform=f29.x86_64",
+                "jvm=hotspot debugMode=release buildPlatform=f29.x86_64 jreSdk=sdk",
                 "src",
                 false
         ));
@@ -48,7 +48,7 @@ public class FakeKojiDBTest {
     public void getBuildsForBuildJobWhenSomeBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=fastdebug buildPlatform=f29.x86_64",
+                "jvm=hotspot debugMode=fastdebug buildPlatform=f29.x86_64 jreSdk=sdk",
                 "src",
                 false
         ));
@@ -63,7 +63,7 @@ public class FakeKojiDBTest {
     public void getBuildsForBuildJobWhenNoneBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=slowdebug buildPlatform=f29.x86_64",
+                "jvm=hotspot debugMode=slowdebug buildPlatform=f29.x86_64 jreSdk=sdk",
                 "src",
                 false
         ));
@@ -78,7 +78,7 @@ public class FakeKojiDBTest {
     public void getBuildsForTestJobWhenAllBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=release",
+                "jvm=hotspot debugMode=release jreSdk=sdk",
                 "f29.x86_64",
                 true
         ));
@@ -93,7 +93,7 @@ public class FakeKojiDBTest {
     public void getBuildsForTestJobWhenSomeBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=fastdebug",
+                "jvm=hotspot debugMode=fastdebug jreSdk=sdk",
                 "f29.x86_64",
                 true
         ));
@@ -108,7 +108,7 @@ public class FakeKojiDBTest {
     public void getBuildsForTestJobWhenNoneBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=slowdebug",
+                "jvm=hotspot debugMode=slowdebug jreSdk=sdk",
                 "f29.x86_64",
                 true
         ));
@@ -123,7 +123,7 @@ public class FakeKojiDBTest {
     public void getBuildsWithSourcesForTestJobWhenNoneBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=slowdebug",
+                "jvm=hotspot debugMode=slowdebug jreSdk=sdk",
                 "f29.x86_64 src",
                 false
         ));
@@ -137,7 +137,7 @@ public class FakeKojiDBTest {
     public void getBuildsWithSourcesForTestJobWhenAllBuilt() {
         final List<Build> builds = db.getBuildList(new GetBuildList(
                 PROJECT_NAME_U,
-                "jvm=hotspot debugMode=release",
+                "jvm=hotspot debugMode=release jreSdk=sdk",
                 "f29.x86_64 src",
                 false
         ));

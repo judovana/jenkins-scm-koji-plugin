@@ -59,6 +59,7 @@ import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
 import static org.fakekoji.DataGenerator.RELEASE_1;
 import static org.fakekoji.DataGenerator.RELEASE_1_BAD;
 import static org.fakekoji.DataGenerator.RHEL_7_X64;
+import static org.fakekoji.DataGenerator.SDK;
 import static org.fakekoji.DataGenerator.SUFFIX;
 import static org.fakekoji.DataGenerator.VERSION_1;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.SOURCES;
@@ -2216,7 +2217,7 @@ public class TestSshApi {
     final private static String RELEASE_BAD = RELEASE_1_BAD + '.' + PROJECT_NAME_U;
     final private static String NVR = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE;
     final private static String NVR_BAD = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_BAD;
-    final private static String ARCHIVE = FASTDEBUG + '.' + HOTSPOT + '.' + RHEL_7_X64;
+    final private static String ARCHIVE = FASTDEBUG + '.' + HOTSPOT + '.' + SDK + '.' + RHEL_7_X64;
     final private static String RELEASE_CHAOS = RELEASE_1 + ".C.H.A.O.S." + PROJECT_NAME_U;
     final private static String RELEASE_CHAOS_BAD = RELEASE_1_BAD + ".C.H.A.O.S." + PROJECT_NAME_U;
     final private static String NVR_CHAOS = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_CHAOS;

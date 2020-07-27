@@ -306,7 +306,7 @@ public class OToolService {
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
                     String[] projects = project == null ? new String[0] : project.split(",");
-                    MatrixGenerator m = new MatrixGenerator(configManager, trex, brex, tf, bf, projects);
+                    MatrixGenerator m = new MatrixGenerator(settings, trex, brex, tf, bf, projects);
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));

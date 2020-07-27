@@ -28,7 +28,7 @@ public class RPM implements java.io.Serializable {
         this.name = name;
         this.version = version;
         this.release = release;
-        if (filename.endsWith(".rpm") || filename.endsWith(".tarxz")) {
+        if (filename == null || filename.endsWith(".rpm") || filename.endsWith(".tarxz")) {
             this.nvr = nvr;
         } else {
             this.nvr = filename;
