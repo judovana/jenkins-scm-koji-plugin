@@ -24,10 +24,6 @@
 package org.fakekoji.core;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -73,9 +69,6 @@ public class AccessibleSettings {
     private final int sshPort;
     private final int jenkinsPort;
     private final int webappPort;
-    private URL xmlRpcUrl;
-    private URL downloadUrl;
-    private URL jenkinsUrlString;
     private final ConfigManager configManager;
     private final JDKProjectParser jdkProjectParser;
     private final ReverseJDKProjectParser reverseJDKProjectParser;
@@ -94,7 +87,7 @@ public class AccessibleSettings {
             int sshPort,
             int jenkinsPort,
             int webappPort
-    ) throws UnknownHostException, MalformedURLException {
+    ) {
         this.dbFileRoot = dbFileRoot;
         this.localReposRoot = localReposRoot;
         this.configRoot = configRoot;
@@ -120,11 +113,6 @@ public class AccessibleSettings {
                 jenkinsJobArchiveRoot
         );
         this.projectMapping = new ProjectMapping(this);
-
-        String thisMachine = InetAddress.getLocalHost().getHostName();
-        this.xmlRpcUrl = new URL("http://" + thisMachine + ":" + this.xmlRpcPort + "/RPC2/");
-        this.downloadUrl = new URL("http://" + thisMachine + ":" + this.fileDownloadPort + "/");
-        this.jenkinsUrlString = new URL("http://" + thisMachine + ":" + this.jenkinsPort + "/");
     }
 
     public File getDbFileRoot() {
@@ -174,21 +162,6 @@ public class AccessibleSettings {
 
     public int getJenkinsPort() {
         return jenkinsPort;
-    }
-
-    public URL getXmlRpcUrl() {
-        warn(xmlRpcUrl, "xmlRpcUrl");
-        return xmlRpcUrl;
-    }
-
-    public URL getJenkinsUrlString() {
-        warn(jenkinsUrlString, "jenkinsUrlString");
-        return jenkinsUrlString;
-    }
-
-    public URL getDownloadUrl() {
-        warn(downloadUrl, "downloadUrl");
-        return downloadUrl;
     }
 
     public ConfigManager getConfigManager() {
@@ -245,12 +218,6 @@ public class AccessibleSettings {
             LOGGER.log(Level.SEVERE, "Reqested file for `{0}` is NULL", src);
         } else if (!f.exists()) {
             LOGGER.log(Level.SEVERE, "Reqested file `{0}` for `{1}` do not exists. You can expect failure", new Object[]{f.getAbsolutePath(), src});
-        }
-    }
-
-    private void warn(URL u, String src) {
-        if (u == null) {
-            LOGGER.log(Level.SEVERE, "Reqested file for `{0}` is NULL", src);
         }
     }
 }
