@@ -267,10 +267,12 @@ public class MatrixGenerator {
         final String utf8 = StandardCharsets.UTF_8.name();
         List<BuildSpec> bs = getBuilds();
         List<TestSpec> ts = getTests();
-        final boolean inverted = orientation <= 0;
-        try {
-            try (PrintStream ps = new PrintStream(baos, true, utf8)) {
-                printMatrix(ps, bs, ts, dropRows, dropColumns, tf, inverted);
+        try (final PrintStream stream = new PrintStream(baos, true, utf8)) {
+            if (orientation <= 0) {
+                printMatrix(stream, bs, ts, dropRows, dropColumns, tf, false);
+            }
+            if (orientation >= 1) {
+                printMatrix(stream, bs, ts, dropRows, dropColumns, tf, true);
             }
             return baos.toString(utf8);
         } catch (UnsupportedEncodingException e) {
