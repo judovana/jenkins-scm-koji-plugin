@@ -127,40 +127,6 @@ public class AccessibleSettings {
         this.jenkinsUrlString = new URL("http://" + thisMachine + ":" + this.jenkinsPort + "/");
     }
 
-    /**
-     * Default may lead to localhost, so itcna be desirable to set proper
-     * hostname via this method
-     *
-     * @param specialHost
-     * @throws MalformedURLException
-     */
-    public void setDownloadUrl(String specialHost) throws MalformedURLException {
-        this.downloadUrl = new URL("http://" + specialHost + ":" + fileDownloadPort + "/");
-
-    }
-
-    /**
-     * Default may lead to localhost, so itcna be desirable to set proper
-     * hostname via this method
-     *
-     * @param specialHost
-     * @throws MalformedURLException
-     */
-    public void setXmlRpcUrl(String specialHost) throws MalformedURLException {
-        this.xmlRpcUrl = new URL("http://" + specialHost + ":" + xmlRpcPort + "/RPC2/");
-    }
-
-    /**
-     * Default may lead to localhost, so itcna be desirable to set proper
-     * hostname via this method
-     *
-     * @param specialHost
-     * @throws MalformedURLException
-     */
-    public void setJekinsUrl(String specialHost) throws MalformedURLException {
-        this.jenkinsUrlString = new URL("http://" + specialHost + ":" + jenkinsPort + "/");
-    }
-
     public File getDbFileRoot() {
         warn(dbFileRoot, "dbFileRoot");
         return dbFileRoot;
