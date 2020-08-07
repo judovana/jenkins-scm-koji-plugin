@@ -158,10 +158,12 @@ public class OToolService {
                 get(HELP, wrapper.wrap(context -> {
                     context.status(OK).result(getMiscHelp()
                             + BumperAPI.getHelp()
-                            + RedeployApi.getHelp());
+                            + RedeployApi.getHelp()
+                            + CancelApi.getHelp());
                 }));
                 path(BUMP, new BumperAPI(settings));
                 path(RedeployApi.REDEPLOY, new RedeployApi(settings));
+                path(CancelApi.NO, new CancelApi(settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
