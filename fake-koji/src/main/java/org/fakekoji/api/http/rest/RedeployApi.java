@@ -31,7 +31,6 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -72,28 +71,11 @@ public class RedeployApi implements EndpointGroup {
     private static final String REDEPLOY_BUILD = "build"; //only jdkProject in addtion to removal VR from processed.txt, it cleans  FAILED, ERROR and smaller then 4bytes files from local-builds
     private static final String REDEPLOY_RUN = "run"; //job=jobName&build=id resore archve/changelog.xml as build.xml and execute build now
     private static final String REDEPLOY_CHECKOUT = "checkout"; //job=jobName removes build.xml and execute build now
+    private static final String REDEPLOY_CHECKOUT_ALL = "checkoutall"; //no job name, but filtering, removes build.xml and execute build now, requires do
+    private static final String REDEPLOY_NOW = "now"; //still same filtering, simply pressing "build now" on selected jobs, requires do
     private static final String REDEPLOY_DO = "do"; //will do the real work if true, by default it will only print what it will affect
     //with?
     private static final String REDEPLOY_NVR = "nvr"; //and enforce platform as separate thing?
-
-    //other details for selection, all can be coma separated lists
-    private static final String REDEPLOY_os = "os";
-    private static final String REDEPLOY_arch = "arch";
-    private static final String REDEPLOY_version = "version";
-    private static final String REDEPLOY_task = "task";
-    private static final String REDEPLOY_variant = "variant";
-    private static final String REDEPLOY_provider = "provider";
-
-    //sometimes we need also build arch to judge , all can be coma separated lists
-    private static final String REDEPLOY_jp = "jp";
-    private static final String REDEPLOY_bos = "bos";
-    private static final String REDEPLOY_barch = "barch";
-    private static final String REDEPLOY_bversion = "bversion";
-    private static final String REDEPLOY_bvariant = "bvariant";
-
-    //is needed at the end?
-    private static final String REDEPLOY_whitelist = "whitelist";
-    private static final String REDEPLOY_blacklist = "blacklist";
 
     private static final String ARCHES_EXPECTED = "archesExpected";
     private static final String ARCHES_EXPECTED_SET = "set";
@@ -140,10 +122,7 @@ public class RedeployApi implements EndpointGroup {
                 + "  Will print out all nvrs in processed.txt of tests.\n"
                 + "Shared by both:\n"
                 + "  once you set " + REDEPLOY_NVR + "=nvr the jobs affected by this nvr will be printed.\n"
-                + "  You can narrow your search by [" + REDEPLOY_os + "," + REDEPLOY_arch + "," + REDEPLOY_version + "," + REDEPLOY_task + "," + REDEPLOY_variant + "," + REDEPLOY_provider + "," + REDEPLOY_jp + "]\n"
-                + "  For test-task only, to narrow by its build: [" + REDEPLOY_bos + "," + REDEPLOY_barch + "," + REDEPLOY_bversion + "," + REDEPLOY_bvariant + "," + "]\n"
-                + "    Those are coma separated lists. eg variant=shenandoah,zgc&bvarinat=jre,fastdebug&bos=el&bversion=6,7&version=8\n"
-                + "  you can use " + REDEPLOY_whitelist + "=regex and " + REDEPLOY_blacklist + "=regex to do some more wide/narrow filtering.\n"
+                + RedeployApiWorkerBase.getHelp()
                 + "  once you set " + REDEPLOY_DO + "=true, the real work will happen - nvr will be removed from affected jobs.\n"
                 + "  For " + REDEPLOY_BUILD + " it also removes the affected NVRA from database. A is deducted  from other params\n"
                 + "\n"
@@ -192,6 +171,7 @@ public class RedeployApi implements EndpointGroup {
             }
         });
         get(REDEPLOY_CHECKOUT, context -> {
+            //hmm enable filtering?
             try {
                 String job = context.queryParam(RERUN_JOB);
                 if (job == null) {
@@ -218,6 +198,7 @@ public class RedeployApi implements EndpointGroup {
 
         });
         get(REDEPLOY_RUN, context -> {
+            //hmm enable filtering?
             try {
                 String job = context.queryParam(RERUN_JOB);
                 if (job == null) {
@@ -385,28 +366,58 @@ public class RedeployApi implements EndpointGroup {
         }
     }
 
-    private class RedeployApiWorker {
-        private final Set<String> nvrsInProcessedTxt = new HashSet();
-        private final Map<String, Job> allRelevantJobsMap = new HashMap<>();
-        private final Map<String, List<String>> nvrsPerJob = new HashMap<>();
-        private final Map<String, List<Job>> jobsPerNvr = new HashMap<>();
-        private final List<String> sortedNvrs = new ArrayList();
-        private boolean called = false;
-        private final Matcher os;
-        private final Matcher arch;
-        private final Matcher version;
-        private final Matcher task;
-        private final Matcher variant;
-        private final Matcher provider;
-        private final Matcher jp;
-        private final Matcher bos;
-        private final Matcher barch;
-        private final Matcher bversion;
-        private final Matcher bvariant;
-        private final Pattern blacklist;
-        private final Pattern whitelist;
+    public static class RedeployApiWorkerBase {
+        //other details for selection, all can be coma separated lists
+        private static final String REDEPLOY_project = "project";
+        private static final String REDEPLOY_os = "os";
+        private static final String REDEPLOY_arch = "arch";
+        private static final String REDEPLOY_version = "version";
+        private static final String REDEPLOY_task = "task";
+        private static final String REDEPLOY_variant = "variant";
+        private static final String REDEPLOY_provider = "provider";
 
-        public RedeployApiWorker(
+        //sometimes we need also build arch to judge , all can be coma separated lists
+        private static final String REDEPLOY_jp = "jp";
+        private static final String REDEPLOY_bos = "bos";
+        private static final String REDEPLOY_barch = "barch";
+        private static final String REDEPLOY_bversion = "bversion";
+        private static final String REDEPLOY_bvariant = "bvariant";
+
+        //is needed at the end?
+        private static final String REDEPLOY_whitelist = "whitelist";
+        private static final String REDEPLOY_blacklist = "blacklist";
+
+        protected final Matcher project;
+        protected final Matcher os;
+        protected final Matcher arch;
+        protected final Matcher version;
+        protected final Matcher task;
+        protected final Matcher variant;
+        protected final Matcher provider;
+        protected final Matcher jp;
+        protected final Matcher bos;
+        protected final Matcher barch;
+        protected final Matcher bversion;
+        protected final Matcher bvariant;
+        protected final Pattern blacklist;
+        protected final Pattern whitelist;
+
+        public RedeployApiWorkerBase(
+                Matcher project,
+                Matcher os,
+                Matcher arch,
+                Matcher version,
+                Matcher task,
+                Matcher variant,
+                Matcher provider,
+                Matcher jp,
+                Pattern blacklist,
+                Pattern whitelist) {
+            this(project, os, arch, version, task, variant, provider, jp, null, null, null, null, blacklist, whitelist);
+        }
+
+        public RedeployApiWorkerBase(
+                Matcher project,
                 Matcher os,
                 Matcher arch,
                 Matcher version,
@@ -420,6 +431,7 @@ public class RedeployApi implements EndpointGroup {
                 Matcher bvariant,
                 Pattern blacklist,
                 Pattern whitelist) {
+            this.project = project;
             this.os = os;
             this.arch = arch;
             this.version = version;
@@ -435,71 +447,194 @@ public class RedeployApi implements EndpointGroup {
             this.whitelist = whitelist;
         }
 
+        public RedeployApiWorkerBase(Context context) {
+            this(new Matcher(context.queryParam(REDEPLOY_project)),
+                    new Matcher(context.queryParam(REDEPLOY_os)),
+                    new Matcher(context.queryParam(REDEPLOY_arch)),
+                    new Matcher(context.queryParam(REDEPLOY_version)),
+                    new Matcher(context.queryParam(REDEPLOY_task)),
+                    new Matcher(context.queryParam(REDEPLOY_variant)),
+                    new Matcher(context.queryParam(REDEPLOY_provider)),
+                    new Matcher(context.queryParam(REDEPLOY_jp)),
+                    new Matcher(context.queryParam(REDEPLOY_bos)),
+                    new Matcher(context.queryParam(REDEPLOY_barch)),
+                    new Matcher(context.queryParam(REDEPLOY_bversion)),
+                    new Matcher(context.queryParam(REDEPLOY_bvariant)),
+                    context.queryParam(REDEPLOY_blacklist) == null ? Pattern.compile("NothingNeverEverCanMatchMe!") : Pattern.compile(context.queryParam(REDEPLOY_blacklist)),
+                    context.queryParam(REDEPLOY_whitelist) == null ? Pattern.compile(".*") : Pattern.compile(context.queryParam(REDEPLOY_whitelist))
+            );
+        }
 
-        public void prepare(Class clazz) throws StorageException, IOException, ManagementException {
+        public static String getHelp() {
+            return "  You can narrow your search by [" + REDEPLOY_os + "," + REDEPLOY_arch + "," + REDEPLOY_version + "," + REDEPLOY_task + "," + REDEPLOY_variant + "," + REDEPLOY_provider + "," + REDEPLOY_jp + "," + REDEPLOY_project + "]\n"
+                    + "  For test-task only, to narrow by its build: [" + REDEPLOY_bos + "," + REDEPLOY_barch + "," + REDEPLOY_bversion + "," + REDEPLOY_bvariant + "]\n"
+                    + "    Those are coma separated lists. eg variant=shenandoah,zgc&bvarinat=jre,fastdebug&bos=el&bversion=6,7&version=8\n"
+                    + "  you can use " + REDEPLOY_whitelist + "=regex and " + REDEPLOY_blacklist + "=regex to do some more wide/narrow filtering.\n";
+        }
+
+        public boolean blacklisted(Job job) {
+            return blacklist.matcher(job.getName()).matches();
+        }
+
+        public boolean whitelisted(Job job) {
+            return whitelist.matcher(job.getName()).matches();
+        }
+
+        public boolean isNotMyBuildJob(BuildJob bjob) {
+            return
+                    !project.matches(bjob.getProjectName()) ||
+                    !os.matches(bjob.getPlatform().getOs()) ||
+                    !version.matches(bjob.getPlatform().getVersion()) ||
+                    !arch.matches(bjob.getPlatform().getArchitecture()) ||
+                    !provider.matches(bjob.getPlatformProvider()) ||
+                    !variant.matchesTaskVariants(bjob.getVariants());
+        }
+
+        public boolean isNotMyTestJob(TestJob tjob) {
+            return
+                    !project.matches(tjob.getProjectName()) ||
+                    !os.matches(tjob.getPlatform().getOs()) ||
+                    !version.matches(tjob.getPlatform().getVersion()) ||
+                    !arch.matches(tjob.getPlatform().getArchitecture()) ||
+                    !provider.matches(tjob.getPlatformProvider()) ||
+                    !task.matches(tjob.getTask().getId()) ||
+                    !jp.matches(tjob.getJdkVersion().getId()) ||
+                    !variant.matchesTaskVariants(tjob.getVariants()) ||
+                    !bos.matches(tjob.getBuildPlatform().getOs()) ||
+                    !barch.matches(tjob.getBuildPlatform().getArchitecture()) ||
+                    !bversion.matches(tjob.getBuildPlatform().getVersion()) ||
+                    !bvariant.matchesTaskVariants(tjob.getBuildVariants());
+
+        }
+    }
+
+    public static abstract class RedeployApiListingWorker extends RedeployApiWorkerBase {
+
+        public RedeployApiListingWorker(Context context) {
+            super(context);
+        }
+
+        protected abstract void onPass(Job job) throws IOException;
+
+        public void iterate(final JDKProjectManager jdkProjectManager, final JDKTestProjectManager jdkTestProjectManager, JDKProjectParser parser) throws IOException, StorageException, ManagementException {
+            List<Project> allProjects = new ArrayList<>();
+            allProjects.addAll(jdkProjectManager.readAll());
+            allProjects.addAll(jdkTestProjectManager.readAll());
+            iterate(allProjects, parser);
+        }
+
+        public void iterate(final List<Project> allProjects, final JDKProjectParser parser) throws IOException, StorageException, ManagementException {
+            for (Project project : allProjects) {
+                Set<Job> jobs = parser.parse(project);
+                iterate(jobs);
+            }
+        }
+
+        public void iterate(final Collection<Job> jobs) throws IOException {
+            for (Job job : jobs) {
+                if (blacklisted(job)) {
+                    continue;
+                }
+                if (!whitelisted(job)) {
+                    continue;
+                }
+                if (job instanceof BuildJob) {
+                    BuildJob bjob = (BuildJob) job;
+                    if (isNotMyBuildJob(bjob)) {
+                        continue;
+                    }
+                }
+                if (job instanceof TestJob) {
+                    TestJob tjob = (TestJob) job;
+                    if (isNotMyTestJob(tjob)) {
+                        continue;
+                    }
+                }
+                onPass(job);
+            }
+        }
+    }
+
+    public static class RedeployApiJobListing extends RedeployApiListingWorker {
+        List<Job> results;
+
+        public RedeployApiJobListing(Context context) {
+            super(context);
+        }
+
+        public List<Job>  process(final JDKProjectManager jdkProjectManager, final JDKTestProjectManager jdkTestProjectManager, JDKProjectParser parser) throws IOException, StorageException, ManagementException {
+            results = new ArrayList<>();
+            iterate(jdkProjectManager, jdkTestProjectManager, parser);
+            return results;
+        }
+
+        @Override
+        protected void onPass(Job job) {
+            results.add(job);
+        }
+    }
+
+    public static class RedeployApiStringListing extends RedeployApiListingWorker {
+        List<String> results;
+
+        public RedeployApiStringListing(Context context) {
+            super(context);
+        }
+        public List<String>  process(final JDKProjectManager jdkProjectManager, final JDKTestProjectManager jdkTestProjectManager, JDKProjectParser parser) throws IOException, StorageException, ManagementException {
+            results = new ArrayList<>();
+            iterate(jdkProjectManager, jdkTestProjectManager, parser);
+            return results;
+        }
+
+        @Override
+        protected void onPass(Job job) {
+            results.add(job.getName());
+        }
+    }
+    private class RedeployApiWorker extends RedeployApiListingWorker {
+
+        private final Set<String> nvrsInProcessedTxt = new HashSet();
+        private final Map<String, Job> allRelevantJobsMap = new HashMap<>();
+        private final Map<String, List<String>> nvrsPerJob = new HashMap<>();
+        private final Map<String, List<Job>> jobsPerNvr = new HashMap<>();
+        private final List<String> sortedNvrs = new ArrayList();
+        private final Class clazz;
+        private boolean called = false;
+
+        public RedeployApiWorker(Context context, Class clazz) {
+            super(context);
+            this.clazz = clazz;
+        }
+
+        public void prepare() throws StorageException, IOException, ManagementException {
             if (called) {
                 throw new IOException("No need to call tis twice");
             }
             called = true;
-            List<Project> allProjects = new ArrayList<>();
-            allProjects.addAll(jdkProjectManager.readAll());
-            allProjects.addAll(jdkTestProjectManager.readAll());
-            for (Project project : allProjects) {
-                Set<Job> jobs = parser.parse(project);
-                for (Job job : jobs) {
-                    if (blacklist.matcher(job.getName()).matches()) {
-                        continue;
-                    }
-                    if (!whitelist.matcher(job.getName()).matches()) {
-                        continue;
-                    }
-                    if (job instanceof BuildJob) {
-                        BuildJob bjob = (BuildJob) job;
-                        if (!os.matches(bjob.getPlatform().getOs()) ||
-                                !version.matches(bjob.getPlatform().getVersion()) ||
-                                !arch.matches(bjob.getPlatform().getArchitecture()) ||
-                                !provider.matches(bjob.getPlatformProvider()) ||
-                                !variant.matchesTaskVariants(bjob.getVariants())) {
-                            continue;
+            iterate(jdkProjectManager, jdkTestProjectManager, parser);
+            sortedNvrs.addAll(nvrsInProcessedTxt);
+            Collections.sort(sortedNvrs);
+        }
+
+        @Override
+        protected void onPass(Job job) throws IOException {
+            if (clazz.isInstance(job)) {
+                allRelevantJobsMap.put(job.getName(), job);
+                File processed = new File(new File(settings.getJenkinsJobsRoot(), job.getName()), Constants.PROCESSED_BUILDS_HISTORY);
+                if (processed.exists()) {
+                    List<String> processedNvrsByThisJob = Utils.readProcessedTxt(processed);
+                    nvrsPerJob.put(job.getName(), processedNvrsByThisJob);
+                    nvrsInProcessedTxt.addAll(processedNvrsByThisJob);
+                    for (String nvr : processedNvrsByThisJob) {
+                        List<Job> jobsOfThisNvr = jobsPerNvr.get(nvr);
+                        if (jobsOfThisNvr == null) {
+                            jobsOfThisNvr = new ArrayList<>();
+                            jobsPerNvr.put(nvr, jobsOfThisNvr);
                         }
-                    }
-                    if (job instanceof TestJob) {
-                        TestJob tjob = (TestJob) job;
-                        if (!os.matches(tjob.getPlatform().getOs()) ||
-                                !version.matches(tjob.getPlatform().getVersion()) ||
-                                !arch.matches(tjob.getPlatform().getArchitecture()) ||
-                                !provider.matches(tjob.getPlatformProvider()) ||
-                                !task.matches(tjob.getTask().getId()) ||
-                                !jp.matches(tjob.getJdkVersion().getId()) ||
-                                !variant.matchesTaskVariants(tjob.getVariants()) ||
-                                !bos.matches(tjob.getBuildPlatform().getOs()) ||
-                                !barch.matches(tjob.getBuildPlatform().getArchitecture()) ||
-                                !bversion.matches(tjob.getBuildPlatform().getVersion()) ||
-                                !bvariant.matchesTaskVariants(tjob.getBuildVariants())) {
-                            continue;
-                        }
-                    }
-                    if (clazz.isInstance(job)) {
-                        allRelevantJobsMap.put(job.getName(), job);
-                        File processed = new File(new File(settings.getJenkinsJobsRoot(), job.getName()), Constants.PROCESSED_BUILDS_HISTORY);
-                        if (processed.exists()) {
-                            List<String> processedNvrsByThisJob = Utils.readProcessedTxt(processed);
-                            nvrsPerJob.put(job.getName(), processedNvrsByThisJob);
-                            nvrsInProcessedTxt.addAll(processedNvrsByThisJob);
-                            for (String nvr : processedNvrsByThisJob) {
-                                List<Job> jobsOfThisNvr = jobsPerNvr.get(nvr);
-                                if (jobsOfThisNvr == null) {
-                                    jobsOfThisNvr = new ArrayList<>();
-                                    jobsPerNvr.put(nvr, jobsOfThisNvr);
-                                }
-                                jobsOfThisNvr.add(job);
-                            }
-                        }
+                        jobsOfThisNvr.add(job);
                     }
                 }
             }
-            sortedNvrs.addAll(nvrsInProcessedTxt);
-            Collections.sort(sortedNvrs);
         }
 
         public List<Job> getJobsOfThisNvr(String nvr) {
@@ -747,22 +882,8 @@ public class RedeployApi implements EndpointGroup {
 
         public void workload(NvrDirOperatorFactory nvdf, Class clazz) {
             try {
-                RedeployApiWorker raw = new RedeployApiWorker(
-                        new Matcher(context.queryParam(REDEPLOY_os)),
-                        new Matcher(context.queryParam(REDEPLOY_arch)),
-                        new Matcher(context.queryParam(REDEPLOY_version)),
-                        new Matcher(context.queryParam(REDEPLOY_task)),
-                        new Matcher(context.queryParam(REDEPLOY_variant)),
-                        new Matcher(context.queryParam(REDEPLOY_provider)),
-                        new Matcher(context.queryParam(REDEPLOY_jp)),
-                        new Matcher(context.queryParam(REDEPLOY_bos)),
-                        new Matcher(context.queryParam(REDEPLOY_barch)),
-                        new Matcher(context.queryParam(REDEPLOY_bversion)),
-                        new Matcher(context.queryParam(REDEPLOY_bvariant)),
-                        context.queryParam(REDEPLOY_blacklist) == null ? Pattern.compile("NothingNeverEverCanMatchMe!") : Pattern.compile(context.queryParam(REDEPLOY_blacklist)),
-                        context.queryParam(REDEPLOY_whitelist) == null ? Pattern.compile(".*") : Pattern.compile(context.queryParam(REDEPLOY_whitelist))
-                );
-                raw.prepare(clazz);
+                RedeployApiWorker raw = new RedeployApiWorker(context, clazz);
+                raw.prepare();
                 String nvr = context.queryParam(REDEPLOY_NVR);
                 if (nvr == null) {
                     context.status(OToolService.OK).result(String.join("\n", raw.sortedNvrs) + "\n");
