@@ -4,6 +4,7 @@ import hudson.plugins.scm.koji.Constants;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
 import org.fakekoji.Utils;
+import org.fakekoji.api.http.rest.utils.RedeployApiWorkerBase;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeBuild;
 import org.fakekoji.core.utils.OToolParser;
@@ -18,6 +19,7 @@ import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.Project;
+import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
@@ -73,6 +75,8 @@ public class RedeployApi implements EndpointGroup {
     private static final String REDEPLOY_CHECKOUT = "checkout"; //job=jobName removes build.xml and execute build now
     private static final String REDEPLOY_CHECKOUT_ALL = "checkoutall"; //no job name, but filtering, removes build.xml and execute build now, requires do
     private static final String REDEPLOY_NOW = "now"; //still same filtering, simply pressing "build now" on selected jobs, requires do
+    //TODO private static final String REDEPLOY_DELETE = "delete"; //works on nvr base, will rmeove from job history every build(1,10,11...) which was of given nvr, optional histry-number defautl eg 10 - how far in hystory to dig
+    //TODO dont forget to relaod after deletation
     private static final String REDEPLOY_DO = "do"; //will do the real work if true, by default it will only print what it will affect
     //with?
     private static final String REDEPLOY_NVR = "nvr"; //and enforce platform as separate thing?
@@ -116,11 +120,15 @@ public class RedeployApi implements EndpointGroup {
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_CHECKOUT + "\n"
                 + "  requires job=name  will execute checkout and build (unlike build now, which rebuilds last nvr). Job should not be in queue\n"
                 + "  if there is nothing to checkout (eg due allbuilds in processed.txt, build will fail\n"
+                + MISC + '/' + REDEPLOY + "/" + REDEPLOY_CHECKOUT_ALL + "\n"
+                + "  Will force " + REDEPLOY_CHECKOUT + " on all jobs, based by filter (See below).\n"
+                + MISC + '/' + REDEPLOY + "/" + REDEPLOY_NOW + "\n"
+                + "  Will will press `build now` on all jobs, based by filter (See below).\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_BUILD + "\n"
                 + "  Will print out all nvrs in processed.txt of builds.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_TEST + "\n"
                 + "  Will print out all nvrs in processed.txt of tests.\n"
-                + "Shared by both:\n"
+                + "Shared by most:\n"
                 + "  once you set " + REDEPLOY_NVR + "=nvr the jobs affected by this nvr will be printed.\n"
                 + RedeployApiWorkerBase.getHelp()
                 + "  once you set " + REDEPLOY_DO + "=true, the real work will happen - nvr will be removed from affected jobs.\n"
@@ -171,26 +179,61 @@ public class RedeployApi implements EndpointGroup {
             }
         });
         get(REDEPLOY_CHECKOUT, context -> {
-            //hmm enable filtering?
             try {
                 String job = context.queryParam(RERUN_JOB);
-                if (job == null) {
-                    throw new RuntimeException(RERUN_JOB + " must be an existing job id, was " + job);
-                }
-                File currentt = new File(settings.getJenkinsJobsRoot().getAbsolutePath() + File.separator + job + File.separator + "build.xml");
-                if (!currentt.getParentFile().exists()) {
-                    throw new RuntimeException(currentt.getParentFile() + " do not exists. bad job?");
-                }
-                StringBuilder sb = new StringBuilder();
-                if (!currentt.exists()) {
-                    sb.append(currentt.getAbsolutePath() + " do not exists. bad job? Broken checkou?t No koji-scm job?\n");
-                }
-                Files.delete(currentt.toPath());
-                sb.append("deleted " + currentt.getAbsolutePath() + "\n");
-                JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().scheduleBuild(job);
-                cr.throwIfNecessary();
-                sb.append("scheduled " + job + "\n");
+                StringBuilder sb = forceCheckoutOnJob(job);
                 context.status(OToolService.OK).result(sb.toString());
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+
+        });
+        get(REDEPLOY_CHECKOUT_ALL, context -> {
+            try {
+                List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
+                String doAndHow = context.queryParam(REDEPLOY_DO);
+                if ("true".equals(doAndHow)) {
+                    List<String> results = new ArrayList<>(jobs.size());
+                    for (String job : jobs) {
+                        try {
+                            forceCheckoutOnJob(job);
+                            results.add("ok - checking out -  " + job);
+                        } catch (Exception ex) {
+                            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                            results.add("failed " + job + ex.toString());
+                        }
+                    }
+                    context.status(OToolService.OK).result(String.join("\n", results) + "\n");
+                } else {
+                    context.status(OToolService.OK).result(String.join("\n", jobs) + "\n");
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+
+        });
+        get(REDEPLOY_NOW, context -> {
+            try {
+                List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
+                String doAndHow = context.queryParam(REDEPLOY_DO);
+                if ("true".equals(doAndHow)) {
+                    List<String> results = new ArrayList<>(jobs.size());
+                    for (String job : jobs) {
+                        try {
+                            JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().scheduleBuild(job);
+                            cr.throwIfNecessary();
+                            results.add("ok - scheduling -  " + job);
+                        } catch (Exception ex) {
+                            LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+                            results.add("failed " + job + ex.toString());
+                        }
+                    }
+                    context.status(OToolService.OK).result(String.join("\n", results) + "\n");
+                } else {
+                    context.status(OToolService.OK).result(String.join("\n", jobs) + "\n");
+                }
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
@@ -319,6 +362,32 @@ public class RedeployApi implements EndpointGroup {
         });
     }
 
+    private File deleteBuildXml(String job, StringBuilder sb) throws IOException {
+        File currentt = new File(settings.getJenkinsJobsRoot().getAbsolutePath() + File.separator + job + File.separator + "build.xml");
+        if (!currentt.getParentFile().exists()) {
+            throw new RuntimeException(currentt.getParentFile() + " do not exists. bad job?");
+        }
+        if (!currentt.exists()) {
+            sb.append(currentt.getAbsolutePath() + " do not exists. bad job? Broken checkou?t No koji-scm job?\n");
+        }
+        Files.delete(currentt.toPath());
+        sb.append("deleted " + currentt.getAbsolutePath() + "\n");
+        return currentt;
+    }
+
+
+    private StringBuilder forceCheckoutOnJob(String job) throws IOException {
+        if (job == null) {
+            throw new RuntimeException(RERUN_JOB + " must be an existing job id, was " + job);
+        }
+        StringBuilder sb = new StringBuilder();
+        deleteBuildXml(job, sb);
+        JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().scheduleBuild(job);
+        cr.throwIfNecessary();
+        sb.append("scheduled " + job + "\n");
+        return sb;
+    }
+
     private class ArchesExpectedWorker {
 
         private final Map<String, String[]> dirsWithArches = new HashMap<>();
@@ -366,232 +435,7 @@ public class RedeployApi implements EndpointGroup {
         }
     }
 
-    public static class RedeployApiWorkerBase {
-        //other details for selection, all can be coma separated lists
-        private static final String REDEPLOY_project = "project";
-        private static final String REDEPLOY_os = "os";
-        private static final String REDEPLOY_arch = "arch";
-        private static final String REDEPLOY_version = "version";
-        private static final String REDEPLOY_task = "task";
-        private static final String REDEPLOY_variant = "variant";
-        private static final String REDEPLOY_provider = "provider";
-
-        //sometimes we need also build arch to judge , all can be coma separated lists
-        private static final String REDEPLOY_jp = "jp";
-        private static final String REDEPLOY_bos = "bos";
-        private static final String REDEPLOY_barch = "barch";
-        private static final String REDEPLOY_bversion = "bversion";
-        private static final String REDEPLOY_bvariant = "bvariant";
-
-        //is needed at the end?
-        private static final String REDEPLOY_whitelist = "whitelist";
-        private static final String REDEPLOY_blacklist = "blacklist";
-
-        protected final Matcher project;
-        protected final Matcher os;
-        protected final Matcher arch;
-        protected final Matcher version;
-        protected final Matcher task;
-        protected final Matcher variant;
-        protected final Matcher provider;
-        protected final Matcher jp;
-        protected final Matcher bos;
-        protected final Matcher barch;
-        protected final Matcher bversion;
-        protected final Matcher bvariant;
-        protected final Pattern blacklist;
-        protected final Pattern whitelist;
-
-        public RedeployApiWorkerBase(
-                Matcher project,
-                Matcher os,
-                Matcher arch,
-                Matcher version,
-                Matcher task,
-                Matcher variant,
-                Matcher provider,
-                Matcher jp,
-                Pattern blacklist,
-                Pattern whitelist) {
-            this(project, os, arch, version, task, variant, provider, jp, null, null, null, null, blacklist, whitelist);
-        }
-
-        public RedeployApiWorkerBase(
-                Matcher project,
-                Matcher os,
-                Matcher arch,
-                Matcher version,
-                Matcher task,
-                Matcher variant,
-                Matcher provider,
-                Matcher jp,
-                Matcher bos,
-                Matcher barch,
-                Matcher bversion,
-                Matcher bvariant,
-                Pattern blacklist,
-                Pattern whitelist) {
-            this.project = project;
-            this.os = os;
-            this.arch = arch;
-            this.version = version;
-            this.task = task;
-            this.variant = variant;
-            this.provider = provider;
-            this.jp = jp;
-            this.bos = bos;
-            this.barch = barch;
-            this.bversion = bversion;
-            this.bvariant = bvariant;
-            this.blacklist = blacklist;
-            this.whitelist = whitelist;
-        }
-
-        public RedeployApiWorkerBase(Context context) {
-            this(new Matcher(context.queryParam(REDEPLOY_project)),
-                    new Matcher(context.queryParam(REDEPLOY_os)),
-                    new Matcher(context.queryParam(REDEPLOY_arch)),
-                    new Matcher(context.queryParam(REDEPLOY_version)),
-                    new Matcher(context.queryParam(REDEPLOY_task)),
-                    new Matcher(context.queryParam(REDEPLOY_variant)),
-                    new Matcher(context.queryParam(REDEPLOY_provider)),
-                    new Matcher(context.queryParam(REDEPLOY_jp)),
-                    new Matcher(context.queryParam(REDEPLOY_bos)),
-                    new Matcher(context.queryParam(REDEPLOY_barch)),
-                    new Matcher(context.queryParam(REDEPLOY_bversion)),
-                    new Matcher(context.queryParam(REDEPLOY_bvariant)),
-                    context.queryParam(REDEPLOY_blacklist) == null ? Pattern.compile("NothingNeverEverCanMatchMe!") : Pattern.compile(context.queryParam(REDEPLOY_blacklist)),
-                    context.queryParam(REDEPLOY_whitelist) == null ? Pattern.compile(".*") : Pattern.compile(context.queryParam(REDEPLOY_whitelist))
-            );
-        }
-
-        public static String getHelp() {
-            return "  You can narrow your search by [" + REDEPLOY_os + "," + REDEPLOY_arch + "," + REDEPLOY_version + "," + REDEPLOY_task + "," + REDEPLOY_variant + "," + REDEPLOY_provider + "," + REDEPLOY_jp + "," + REDEPLOY_project + "]\n"
-                    + "  For test-task only, to narrow by its build: [" + REDEPLOY_bos + "," + REDEPLOY_barch + "," + REDEPLOY_bversion + "," + REDEPLOY_bvariant + "]\n"
-                    + "    Those are coma separated lists. eg variant=shenandoah,zgc&bvarinat=jre,fastdebug&bos=el&bversion=6,7&version=8\n"
-                    + "  you can use " + REDEPLOY_whitelist + "=regex and " + REDEPLOY_blacklist + "=regex to do some more wide/narrow filtering.\n";
-        }
-
-        public boolean blacklisted(Job job) {
-            return blacklist.matcher(job.getName()).matches();
-        }
-
-        public boolean whitelisted(Job job) {
-            return whitelist.matcher(job.getName()).matches();
-        }
-
-        public boolean isNotMyBuildJob(BuildJob bjob) {
-            return
-                    !project.matches(bjob.getProjectName()) ||
-                    !os.matches(bjob.getPlatform().getOs()) ||
-                    !version.matches(bjob.getPlatform().getVersion()) ||
-                    !arch.matches(bjob.getPlatform().getArchitecture()) ||
-                    !provider.matches(bjob.getPlatformProvider()) ||
-                    !variant.matchesTaskVariants(bjob.getVariants());
-        }
-
-        public boolean isNotMyTestJob(TestJob tjob) {
-            return
-                    !project.matches(tjob.getProjectName()) ||
-                    !os.matches(tjob.getPlatform().getOs()) ||
-                    !version.matches(tjob.getPlatform().getVersion()) ||
-                    !arch.matches(tjob.getPlatform().getArchitecture()) ||
-                    !provider.matches(tjob.getPlatformProvider()) ||
-                    !task.matches(tjob.getTask().getId()) ||
-                    !jp.matches(tjob.getJdkVersion().getId()) ||
-                    !variant.matchesTaskVariants(tjob.getVariants()) ||
-                    !bos.matches(tjob.getBuildPlatform().getOs()) ||
-                    !barch.matches(tjob.getBuildPlatform().getArchitecture()) ||
-                    !bversion.matches(tjob.getBuildPlatform().getVersion()) ||
-                    !bvariant.matchesTaskVariants(tjob.getBuildVariants());
-
-        }
-    }
-
-    public static abstract class RedeployApiListingWorker extends RedeployApiWorkerBase {
-
-        public RedeployApiListingWorker(Context context) {
-            super(context);
-        }
-
-        protected abstract void onPass(Job job) throws IOException;
-
-        public void iterate(final JDKProjectManager jdkProjectManager, final JDKTestProjectManager jdkTestProjectManager, JDKProjectParser parser) throws IOException, StorageException, ManagementException {
-            List<Project> allProjects = new ArrayList<>();
-            allProjects.addAll(jdkProjectManager.readAll());
-            allProjects.addAll(jdkTestProjectManager.readAll());
-            iterate(allProjects, parser);
-        }
-
-        public void iterate(final List<Project> allProjects, final JDKProjectParser parser) throws IOException, StorageException, ManagementException {
-            for (Project project : allProjects) {
-                Set<Job> jobs = parser.parse(project);
-                iterate(jobs);
-            }
-        }
-
-        public void iterate(final Collection<Job> jobs) throws IOException {
-            for (Job job : jobs) {
-                if (blacklisted(job)) {
-                    continue;
-                }
-                if (!whitelisted(job)) {
-                    continue;
-                }
-                if (job instanceof BuildJob) {
-                    BuildJob bjob = (BuildJob) job;
-                    if (isNotMyBuildJob(bjob)) {
-                        continue;
-                    }
-                }
-                if (job instanceof TestJob) {
-                    TestJob tjob = (TestJob) job;
-                    if (isNotMyTestJob(tjob)) {
-                        continue;
-                    }
-                }
-                onPass(job);
-            }
-        }
-    }
-
-    public static class RedeployApiJobListing extends RedeployApiListingWorker {
-        List<Job> results;
-
-        public RedeployApiJobListing(Context context) {
-            super(context);
-        }
-
-        public List<Job>  process(final JDKProjectManager jdkProjectManager, final JDKTestProjectManager jdkTestProjectManager, JDKProjectParser parser) throws IOException, StorageException, ManagementException {
-            results = new ArrayList<>();
-            iterate(jdkProjectManager, jdkTestProjectManager, parser);
-            return results;
-        }
-
-        @Override
-        protected void onPass(Job job) {
-            results.add(job);
-        }
-    }
-
-    public static class RedeployApiStringListing extends RedeployApiListingWorker {
-        List<String> results;
-
-        public RedeployApiStringListing(Context context) {
-            super(context);
-        }
-        public List<String>  process(final JDKProjectManager jdkProjectManager, final JDKTestProjectManager jdkTestProjectManager, JDKProjectParser parser) throws IOException, StorageException, ManagementException {
-            results = new ArrayList<>();
-            iterate(jdkProjectManager, jdkTestProjectManager, parser);
-            return results;
-        }
-
-        @Override
-        protected void onPass(Job job) {
-            results.add(job.getName());
-        }
-    }
-    private class RedeployApiWorker extends RedeployApiListingWorker {
+    private class RedeployApiWorker extends RedeployApiWorkerBase.RedeployApiListingWorker {
 
         private final Set<String> nvrsInProcessedTxt = new HashSet();
         private final Map<String, Job> allRelevantJobsMap = new HashMap<>();
@@ -604,6 +448,9 @@ public class RedeployApi implements EndpointGroup {
         public RedeployApiWorker(Context context, Class clazz) {
             super(context);
             this.clazz = clazz;
+            if (clazz.equals(BuildJob.class)) {
+                this.build="true";
+            }
         }
 
         public void prepare() throws StorageException, IOException, ManagementException {
@@ -665,54 +512,6 @@ public class RedeployApi implements EndpointGroup {
                 }
             }
             return new Tuple<>(result.toString(), new Integer[]{issues, ok});
-        }
-    }
-
-    private static class Matcher {
-        private final String orig;
-        private final Set<String> split;
-
-        private Matcher(String orig) {
-            this.orig = orig;
-            split = new HashSet<String>();
-            if (orig != null) {
-                split.addAll(Arrays.asList(orig.split(",")));
-            }
-        }
-
-        public boolean matches(String value) {
-            if (orig == null) {
-                return true;
-            }
-            ;
-            for (String s : split) {
-                if (s.equals(value)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public boolean matchesTaskVariants(Map<TaskVariant, TaskVariantValue> variants) {
-            return matchesTaskVariants(variants.values());
-        }
-
-        public boolean matchesTaskVariants(Collection<TaskVariantValue> variants) {
-            return matches(variants.stream().map(TaskVariantValue::getId).collect(Collectors.toList()));
-        }
-
-        public boolean matches(Collection<String> values) {
-            if (orig == null) {
-                return true;
-            }
-            int found = 0;
-            for (String s : split)
-                for (String value : values) {
-                    if (s.equals(value)) {
-                        found++;
-                    }
-                }
-            return found == split.size();
         }
     }
 

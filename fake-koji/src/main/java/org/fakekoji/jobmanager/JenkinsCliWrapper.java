@@ -34,7 +34,14 @@ public class JenkinsCliWrapper {
 
     }
 
-    public class ClientResponse {
+    public class ClientResponse extends  ClientResponseBase {
+
+        public ClientResponse(Integer res, String so, String se, Throwable ex, String origCommand) {
+            super(res, so, se, ex, "ssh -p " + port + " " + user + "@" + host + " " + origCommand);
+        }
+
+    }
+    public static class ClientResponseBase {
 
         public final int remoteCommandreturnValue;
         public final String sout;
@@ -43,8 +50,8 @@ public class JenkinsCliWrapper {
         public final String cmd;
         public final String plainCmd;
 
-        ClientResponse(Integer res, String so, String se, Throwable ex, String origCommand) {
-            this.cmd = "ssh -p " + port + " " + user + "@" + host + " " + origCommand;
+        public ClientResponseBase(Integer res, String so, String se, Throwable ex, String origCommand) {
+            this.cmd = origCommand;
             this.plainCmd = origCommand;
             this.sshEngineExeption = ex;
             this.sout = so;
@@ -308,6 +315,36 @@ public class JenkinsCliWrapper {
 
     public ClientResponse scheduleBuild(String name) {
         String cmd = "build " + name;
+        try {
+            ClientResponse r = syncSshExec(cmd);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
+
+    public ClientResponse enableJob(String name) {
+        String cmd = "enable-job " + name;
+        try {
+            ClientResponse r = syncSshExec(cmd);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
+
+    public ClientResponse disableJob(String name) {
+        String cmd = "disable-job " + name;
+        try {
+            ClientResponse r = syncSshExec(cmd);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
+
+    public ClientResponse stopJob(String name) {
+        String cmd = "stop-builds " + name;
         try {
             ClientResponse r = syncSshExec(cmd);
             return r;
