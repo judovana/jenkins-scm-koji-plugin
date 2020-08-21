@@ -28,8 +28,14 @@ import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
+
+import org.apache.xmlrpc.client.XmlRpcClient;
+import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestsCache;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -64,7 +70,7 @@ abstract class BuildMatcher {
 
     /**
      * This sorts and filter in following way:
-     * 
+     *
      * exlude list si one item  `2`, max bnuilds is 3
      * 2 1 4 3
      * get sorted
@@ -73,11 +79,8 @@ abstract class BuildMatcher {
      * 1 2 3
      * get filtered
      * 1 3
-     * 
+     *
      * you must filter after limit, otherwise strange builds will go in. The tests are covering this
-     * 
-     * @param bm
-     * @return 
      */
     public static Stream<Build> listBuilds(BuildMatcher bm) {
         return StreamSupport.stream(bm.buildProviders.spliterator(), false)
@@ -91,8 +94,6 @@ abstract class BuildMatcher {
 
     /**
      * From previous javadoc, returns 3
-     * @param bm
-     * @return 
      */
     public static Optional<Build> getLatestOfNewestBuilds(BuildMatcher bm) {
         final Optional<Build> buildOptional = listBuilds(bm).max(BuildMatcher::compare);
@@ -117,8 +118,33 @@ abstract class BuildMatcher {
         throw new RuntimeException("Unknown order");
     }
 
+    private static final RemoteRequestsCache cache = new RemoteRequestsCache(new File(System.getProperty("user.home"), "kojiscmplugin-xmlrpc.caching"));
+
+    /**
+     * Synchronize or not?
+     * We have 6000 jobs and 100 pooling threads
+     * If synchronised, then before looking to cache, all threads will queue here, but look to cache is suuper safe.
+     * but if cache item is discarded, then it will be updated, before
+     *
+     * If not synchronised then of ocurse the threads wil nto queue,
+     * but, if cache item is being discarded for being in cache for to long, all hits will move the else branch, and will read for minute or more from brew/koji
+     *
+     * If the xml rpc request would be moved deeper to caching mechanism, it will notbe so easily disabled
+     */
     protected Object execute(String url, XmlRpcRequestParams params) {
-        return new XmlRpcHelper.XmlRpcExecutioner(url).execute(params);
+        try {
+            final URL u = new URL(url);
+            final Object cached = cache.get(u, params);
+            if (cached != null) {
+                return cached;
+            } else {
+                Object answer = new XmlRpcHelper.XmlRpcExecutioner(url).execute(params);
+                cache.put(answer, u, params);
+                return answer;
+            }
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     public static int compareBuildsByCompletionTime(Build b1, Build b2) {
@@ -127,9 +153,18 @@ abstract class BuildMatcher {
     }
 
     private static int compareKojiTime(String s1, String s2, DateTimeFormatter d) {
-        LocalDateTime thisCompletionTime = LocalDateTime.parse(s1, d);
-        LocalDateTime thatCompletionTime = LocalDateTime.parse(s2, d);
+        LocalDateTime thisCompletionTime = LocalDateTime.parse(sanitizeBadKojiDate(s1), d);
+        LocalDateTime thatCompletionTime = LocalDateTime.parse(sanitizeBadKojiDate(s2), d);
         return thatCompletionTime.compareTo(thisCompletionTime);
+    }
+
+
+    static String sanitizeBadKojiDate(String corruptedDate) {
+        if (corruptedDate.contains("+")) {
+            return corruptedDate.replaceAll("\\+[0-9]{1,2}:[0-9]{1,2}$", "");
+        } else {
+            return corruptedDate;
+        }
     }
 
     private static int compareBuildVersions(Build b1, Build b2) {

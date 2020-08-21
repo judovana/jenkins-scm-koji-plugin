@@ -504,6 +504,19 @@ public class KojiListBuildsTest {
     }
 
     @Test
+    public void testSanitizeBadDate() {
+        Assert.assertEquals("2017-03-01 01:10:54.934384" , BuildMatcher.sanitizeBadKojiDate("2017-03-01 01:10:54.934384+00:00"));
+        Assert.assertEquals("2017-03-01 01:10:54.934384" , BuildMatcher.sanitizeBadKojiDate("2017-03-01 01:10:54.934384"));
+        Assert.assertEquals("blah+123456abc" , BuildMatcher.sanitizeBadKojiDate("blah+123456abc"));
+        Assert.assertEquals("blah+abc" , BuildMatcher.sanitizeBadKojiDate("blah+abc"));
+        Assert.assertEquals("blah+123456" , BuildMatcher.sanitizeBadKojiDate("blah+123456"));
+        Assert.assertEquals("blah+123:456" , BuildMatcher.sanitizeBadKojiDate("blah+123:456"));
+        Assert.assertEquals("blah" , BuildMatcher.sanitizeBadKojiDate("blah+12:45"));
+        Assert.assertEquals("blah" , BuildMatcher.sanitizeBadKojiDate("blah+1:4"));
+    }
+
+
+    @Test
     public void testListMatchingBuildsF() throws Exception {
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),

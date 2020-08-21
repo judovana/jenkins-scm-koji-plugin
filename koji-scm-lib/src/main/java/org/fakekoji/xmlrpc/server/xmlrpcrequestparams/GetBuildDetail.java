@@ -1,5 +1,7 @@
 package org.fakekoji.xmlrpc.server.xmlrpcrequestparams;
 
+import java.util.Objects;
+
 import hudson.plugins.scm.koji.Constants;
 
 public class GetBuildDetail implements XmlRpcRequestParams {
@@ -19,6 +21,22 @@ public class GetBuildDetail implements XmlRpcRequestParams {
     @Override
     public Object toObject() {
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GetBuildDetail that = (GetBuildDetail) o;
+        return Objects.equals(n, that.n) &&
+                Objects.equals(v, that.v) &&
+                Objects.equals(r, that.r) &&
+                Objects.equals(getMethodName(), that.getMethodName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getMethodName(), n, v, r);
     }
 
     @Override
