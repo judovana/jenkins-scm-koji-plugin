@@ -13,14 +13,14 @@ public class GetBuildDetail implements XmlRpcRequestParams {
 
     public GetBuildDetail(String n, String v, String r) {
         this.nvr = n + "-" + v + "-" + r;
-        this.n=n;
-        this.v=v;
-        this.r=r;
+        this.n = n;
+        this.v = v;
+        this.r = r;
     }
 
     @Override
-    public Object toObject() {
-        return this;
+    public Object[] toXmlRpcParams() {
+        return new Object[]{this};
     }
 
     @Override

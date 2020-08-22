@@ -18,11 +18,11 @@ public class ListTags implements XmlRpcRequestParams {
     }
 
     @Override
-    public Object toObject() {
+    public Object[] toXmlRpcParams() {
         final Map<String, Object> map = new HashMap<>();
         map.put(Constants.build, buildId);
         map.put(starStarLabel, Boolean.TRUE);
-        return map;
+        return new Object[]{map};
     }
 
     @Override

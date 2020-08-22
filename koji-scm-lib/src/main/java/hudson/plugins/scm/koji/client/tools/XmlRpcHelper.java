@@ -24,7 +24,6 @@
 package hudson.plugins.scm.koji.client.tools;
 
 import java.net.URL;
-import java.util.Collections;
 
 import org.apache.ws.commons.util.NamespaceContextImpl;
 import org.apache.xmlrpc.client.XmlRpcClient;
@@ -64,18 +63,9 @@ public class XmlRpcHelper {
         public Object execute(XmlRpcRequestParams params) {
             try {
                 final XmlRpcClient client = createClient();
-                return client.execute(params.getMethodName(), Collections.singletonList(params.toObject()));
+                return client.execute(params.getMethodName(), params.toXmlRpcParams());
             } catch (Exception ex) {
                 throw new RuntimeException("Exception while executing " + params.getMethodName(), ex);
-            }
-        }
-
-        public Object execute(String methodName, Object ...args) {
-            try {
-                XmlRpcClient client = createClient();
-                return client.execute(methodName, args);
-            } catch (Exception ex) {
-                throw new RuntimeException("Exception while executing " + methodName, ex);
             }
         }
 

@@ -29,8 +29,8 @@ public class GetBuildList implements XmlRpcRequestParams {
     }
 
     @Override
-    public Object toObject() {
-        return this;
+    public Object[] toXmlRpcParams() {
+        return new Object[]{this};
     }
 
     @Override
@@ -76,7 +76,7 @@ public class GetBuildList implements XmlRpcRequestParams {
         return isBuilt == that.isBuilt &&
                 Objects.equals(projectName, that.projectName) &&
                 Objects.equals(buildVariants, that.buildVariants) &&
-                Objects.equals(platforms, that.platforms)&&
+                Objects.equals(platforms, that.platforms) &&
                 Objects.equals(getMethodName(), that.getMethodName());
     }
 

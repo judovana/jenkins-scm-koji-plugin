@@ -21,12 +21,12 @@ public class ListBuilds implements XmlRpcRequestParams {
     }
 
     @Override
-    public Object toObject() {
+    public Object[] toXmlRpcParams() {
         final Map<String, Object> map = new HashMap<>();
         map.put(Constants.packageID, packageId);
         map.put(starStarLabel, Boolean.TRUE);
         map.put(stateLabel, 1);
-        return map;
+        return new Object[]{map};
     }
 
     @Override

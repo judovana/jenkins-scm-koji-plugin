@@ -13,8 +13,8 @@ public class GetPackageId implements XmlRpcRequestParams {
     }
 
     @Override
-    public Object toObject() {
-        return packageName;
+    public Object[] toXmlRpcParams() {
+        return new Object[]{packageName};
     }
 
     @Override

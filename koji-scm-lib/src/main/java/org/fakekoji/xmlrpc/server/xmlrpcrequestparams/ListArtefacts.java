@@ -32,14 +32,14 @@ public abstract class ListArtefacts implements XmlRpcRequestParams {
     }
 
     @Override
-    public Object toObject() {
+    public Object[] toXmlRpcParams() {
         final Map<String, Object> map = new HashMap<>();
         map.put(Constants.buildID, buildId);
         map.put(starStarLabel, Boolean.TRUE);
         if (archs != null && !archs.isEmpty()) {
             map.put(Constants.arches, archs.toArray());
         }
-        return map;
+        return new Object[]{map};
     }
 
     public Integer getBuildId() {
@@ -56,7 +56,7 @@ public abstract class ListArtefacts implements XmlRpcRequestParams {
         if (o == null || getClass() != o.getClass()) return false;
         ListArtefacts that = (ListArtefacts) o;
         return Objects.equals(buildId, that.buildId) &&
-                Objects.equals(archs, that.archs)&&
+                Objects.equals(archs, that.archs) &&
                 Objects.equals(getMethodName(), that.getMethodName());
     }
 

@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Date;
@@ -24,6 +25,35 @@ public class RemoteRequestsCache {
     private long configRefreshRateMinutes = 10; //if config contains clear=true then cache is cleared every this interval
     private long cacheRefreshRateMinutes = 60 * 6;
     private final Properties propRaw = new Properties();
+    private final OriginalObjectProvider originalProvider;
+
+
+    /**
+     * Synchronize or not?
+     * We have 6000 jobs and 100 pooling threads
+     * If synchronised, then before looking to cache, all threads will queue here, but look to cache is suuper safe.
+     * but if cache item is discarded, then it will be updated, before
+     * <p>
+     * If not synchronised then of ocurse the threads wil nto queue,
+     * but, if cache item is being discarded for being in cache for to long, all hits will move the else branch, and will read for minute or more from brew/koji
+     * <p>
+     * If the xml rpc request would be moved deeper to caching mechanism, it will notbe so easily disabled
+     */
+    public Object obtain(String url, XmlRpcRequestParams params) {
+        try {
+            final URL u = new URL(url);
+            final Object cached = this.get(u, params);
+            if (cached != null) {
+                return cached;
+            } else {
+                Object answer = originalProvider.obtainOriginal(url, params);
+                this.put(answer, u, params);
+                return answer;
+            }
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
 
     private class ConfigRefresh implements Runnable {
@@ -34,7 +64,7 @@ public class RemoteRequestsCache {
         public void run() {
             while (alive) {
                 try {
-                    Thread.sleep(configRefreshRateMinutes * minutesToMilis);
+                    Thread.sleep(getConfigRefreshRateMilis());
                 } catch (Exception e) {
                     LOG.warn("Faield to read existing  cache config", e);
                 }
@@ -52,6 +82,10 @@ public class RemoteRequestsCache {
             }
             apply();
         }
+    }
+
+    protected long getConfigRefreshRateMilis() {
+        return configRefreshRateMinutes * minutesToMilis;
     }
 
     private void apply() {
@@ -76,8 +110,9 @@ public class RemoteRequestsCache {
         }
     }
 
-    public RemoteRequestsCache(final File config) {
+    public RemoteRequestsCache(final File config, OriginalObjectProvider originalObjectProvider) {
         this.config = config;
+        this.originalProvider = originalObjectProvider;
         ConfigRefresh r = new ConfigRefresh();
         r.read();
         LOG.info("Cache started - cacheRefreshRateMinutes is " + cacheRefreshRateMinutes + " (0==disabled). Set config is: " + getConfigString());
@@ -121,7 +156,7 @@ public class RemoteRequestsCache {
         if (cachedResult == null) {
             return null;
         } else {
-            if (isValid(cachedResult.getDateCreated(), cacheRefreshRateMinutes * minutesToMilis, params.getMethodName())) {
+            if (isValid(cachedResult.getDateCreated(), params.getMethodName())) {
                 return cachedResult.getResult();
             } else {
                 return null;
@@ -129,18 +164,26 @@ public class RemoteRequestsCache {
         }
     }
 
-    private boolean isValid(final Date dateCreated, final long cachemaxLive, String methodName) {
+    private long getDefaultValidnesMilis() {
+        return cacheRefreshRateMinutes * minutesToMilis;
+    }
+
+    protected long getPerMethodValidnesMilis(String methodName) {
         String rawCustomTimePerMethod = propRaw.getProperty(methodName);
         long customTimeoutPerMethod;
         if (rawCustomTimePerMethod != null) {
             try {
                 customTimeoutPerMethod = Long.parseLong(rawCustomTimePerMethod) * minutesToMilis;
-                return new Date().getTime() - dateCreated.getTime() < customTimeoutPerMethod;
+                return customTimeoutPerMethod;
             } catch (Exception ex) {
                 LOG.warn("Failed to read or apply custom method (" + methodName + ") timeout (" + rawCustomTimePerMethod + ")", ex);
             }
         }
-        return new Date().getTime() - dateCreated.getTime() < cachemaxLive;
+        return getDefaultValidnesMilis();
+    }
+
+    private boolean isValid(final Date dateCreated, String methodName) {
+        return new Date().getTime() - dateCreated.getTime() < getPerMethodValidnesMilis(methodName);
     }
 
 }

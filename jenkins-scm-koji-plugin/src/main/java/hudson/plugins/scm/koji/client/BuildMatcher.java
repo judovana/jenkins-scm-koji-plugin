@@ -29,13 +29,11 @@ import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
 
-import org.apache.xmlrpc.client.XmlRpcClient;
+import org.fakekoji.xmlrpc.server.expensiveobjectscache.OriginalObjectProvider;
 import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestsCache;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -118,33 +116,15 @@ abstract class BuildMatcher {
         throw new RuntimeException("Unknown order");
     }
 
-    private static final RemoteRequestsCache cache = new RemoteRequestsCache(new File(System.getProperty("user.home"), "kojiscmplugin-xmlrpc.caching"));
-
-    /**
-     * Synchronize or not?
-     * We have 6000 jobs and 100 pooling threads
-     * If synchronised, then before looking to cache, all threads will queue here, but look to cache is suuper safe.
-     * but if cache item is discarded, then it will be updated, before
-     *
-     * If not synchronised then of ocurse the threads wil nto queue,
-     * but, if cache item is being discarded for being in cache for to long, all hits will move the else branch, and will read for minute or more from brew/koji
-     *
-     * If the xml rpc request would be moved deeper to caching mechanism, it will notbe so easily disabled
-     */
-    protected Object execute(String url, XmlRpcRequestParams params) {
-        try {
-            final URL u = new URL(url);
-            final Object cached = cache.get(u, params);
-            if (cached != null) {
-                return cached;
-            } else {
-                Object answer = new XmlRpcHelper.XmlRpcExecutioner(url).execute(params);
-                cache.put(answer, u, params);
-                return answer;
-            }
-        } catch (MalformedURLException ex) {
-            throw new RuntimeException(ex);
+    private static final RemoteRequestsCache cache = new RemoteRequestsCache(new File(System.getProperty("user.home"), "kojiscmplugin-xmlrpc.caching"), new OriginalObjectProvider() {
+        @Override
+        public Object obtainOriginal(String url, XmlRpcRequestParams params) {
+            return new XmlRpcHelper.XmlRpcExecutioner(url).execute(params);
         }
+    });
+
+    protected Object execute(String url, XmlRpcRequestParams params) {
+        return cache.obtain(url, params);
     }
 
     public static int compareBuildsByCompletionTime(Build b1, Build b2) {
