@@ -18,16 +18,12 @@ import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
-import org.fakekoji.jobmanager.model.Project;
-import org.fakekoji.jobmanager.model.PullJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.OToolBuild;
 import org.fakekoji.model.Platform;
-import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
@@ -53,7 +49,6 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
