@@ -31,6 +31,7 @@ public class SingleUrlResponseCache {
     public static final class ResultWithTimeStamp {
         private final Date dateCreated;
         private final Object result;
+        private boolean notBeingRepalced = true;
 
         public ResultWithTimeStamp(final Date datecreated, final Object result) {
             this.dateCreated = datecreated;
@@ -43,6 +44,14 @@ public class SingleUrlResponseCache {
 
         public Object getResult() {
             return result;
+        }
+
+        public boolean isNotBeingRepalced() {
+            return notBeingRepalced;
+        }
+
+        public void flagBeingRepalced() {
+            this.notBeingRepalced = false;
         }
     }
 }

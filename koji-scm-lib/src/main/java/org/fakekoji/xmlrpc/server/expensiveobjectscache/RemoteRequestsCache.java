@@ -27,18 +27,6 @@ public class RemoteRequestsCache {
     private Properties propRaw = new Properties();
     private final OriginalObjectProvider originalProvider;
 
-
-    /**
-     * Synchronize or not?
-     * We have 6000 jobs and 100 pooling threads
-     * If synchronised, then before looking to cache, all threads will queue here, but look to cache is suuper safe.
-     * but if cache item is discarded, then it will be updated, before
-     * <p>
-     * If not synchronised then of ocurse the threads wil nto queue,
-     * but, if cache item is being discarded for being in cache for to long, all hits will move the else branch, and will read for minute or more from brew/koji
-     * <p>
-     * If the xml rpc request would be moved deeper to caching mechanism, it will notbe so easily disabled
-     */
     public Object obtain(String url, XmlRpcRequestParams params) {
         try {
             final URL u = new URL(url);
@@ -88,7 +76,7 @@ public class RemoteRequestsCache {
         return configRefreshRateMinutes * minutesToMilis;
     }
 
-    protected void setProperties(Properties prop){
+    protected void setProperties(Properties prop) {
         this.propRaw = prop;
         apply();
     }
@@ -158,14 +146,20 @@ public class RemoteRequestsCache {
         if (cachedResult == null) {
             return null;
         } else {
-            Boolean validity = isValid(cachedResult.getDateCreated(), params.getMethodName());
-            if (validity == null){
+            Boolean validity = isValid(cachedResult, params.getMethodName());
+            if (validity == null) {
                 return null; //disbaled by global or by method
             }
             if (validity) {
                 return cachedResult.getResult();
             } else {
-                return null;
+                //if the  objkect is already being replaced, we do not check the time and return it as valid, as we know, it will already be refreshed
+                if (cachedResult.isNotBeingRepalced()) {
+                    cachedResult.flagBeingRepalced();
+                    return null;
+                } else {
+                    return cachedResult.getResult();
+                }
             }
         }
     }
@@ -191,7 +185,8 @@ public class RemoteRequestsCache {
         return getDefaultValidnesMilis();
     }
 
-    private Boolean isValid(final Date dateCreated, String methodName) {
+    private Boolean isValid(final SingleUrlResponseCache.ResultWithTimeStamp temptedResult, String methodName) {
+        final Date dateCreated = temptedResult.getDateCreated();
         long timeForThisMethodOrDefault = getPerMethodValidnesMilis(methodName);
         if (timeForThisMethodOrDefault == 0) {
             return null;
