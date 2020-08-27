@@ -138,6 +138,7 @@ public class RemoteRequestsCache {
     }
 
     public Object get(final URL u, XmlRpcRequestParams params) {
+        //if url balcklisted, return null
         SingleUrlResponseCache cached = cache.get(u.toExternalForm());
         if (cached == null) {
             return null;
