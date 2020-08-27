@@ -24,7 +24,7 @@ public class RemoteRequestsCache {
     private final File config;
     private long configRefreshRateMinutes = 10; //if config contains clear=true then cache is cleared every this interval
     private long cacheRefreshRateMinutes = 60 * 6;
-    private final Properties propRaw = new Properties();
+    private Properties propRaw = new Properties();
     private final OriginalObjectProvider originalProvider;
 
 
@@ -86,6 +86,11 @@ public class RemoteRequestsCache {
 
     protected long getConfigRefreshRateMilis() {
         return configRefreshRateMinutes * minutesToMilis;
+    }
+
+    protected void setProperties(Properties prop){
+        this.propRaw = prop;
+        apply();
     }
 
     private void apply() {
@@ -150,13 +155,14 @@ public class RemoteRequestsCache {
             return null;
         }
         SingleUrlResponseCache.ResultWithTimeStamp cachedResult = cached.get(params);
-        if (cacheRefreshRateMinutes <= 0) {
-            return null; //disabled
-        }
         if (cachedResult == null) {
             return null;
         } else {
-            if (isValid(cachedResult.getDateCreated(), params.getMethodName())) {
+            Boolean validity = isValid(cachedResult.getDateCreated(), params.getMethodName());
+            if (validity == null){
+                return null; //disbaled by global or by method
+            }
+            if (validity) {
                 return cachedResult.getResult();
             } else {
                 return null;
@@ -164,11 +170,14 @@ public class RemoteRequestsCache {
         }
     }
 
-    private long getDefaultValidnesMilis() {
+    protected long getDefaultValidnesMilis() {
         return cacheRefreshRateMinutes * minutesToMilis;
     }
 
     protected long getPerMethodValidnesMilis(String methodName) {
+        // for method names:
+        //See: hudson.plugins.scm.koji.Constants for methods
+        //See: XmlRpcRequestParams getMethodName() vaues
         String rawCustomTimePerMethod = propRaw.getProperty(methodName);
         long customTimeoutPerMethod;
         if (rawCustomTimePerMethod != null) {
@@ -182,8 +191,13 @@ public class RemoteRequestsCache {
         return getDefaultValidnesMilis();
     }
 
-    private boolean isValid(final Date dateCreated, String methodName) {
-        return new Date().getTime() - dateCreated.getTime() < getPerMethodValidnesMilis(methodName);
+    private Boolean isValid(final Date dateCreated, String methodName) {
+        long timeForThisMethodOrDefault = getPerMethodValidnesMilis(methodName);
+        if (timeForThisMethodOrDefault == 0) {
+            return null;
+        } else {
+            return new Date().getTime() - dateCreated.getTime() < timeForThisMethodOrDefault;
+        }
     }
 
 }
