@@ -1,6 +1,8 @@
 package org.fakekoji.xmlrpc.server.expensiveobjectscache;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ArrayList;
@@ -428,5 +430,81 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(4, r1);
         Assert.assertEquals(5, r2);
+    }
+
+
+    @Test
+    public void fileRefreshWorks() throws InterruptedException, IOException {
+        File f = File.createTempFile("cache", ".config");
+        Properties p = new Properties();
+        p.setProperty("configRefreshRateMinutes", "10");
+        FileWriter fw = new FileWriter(f);
+        p.store(fw, null);
+        fw.flush();
+        fw.close();
+        DummyOriginalObjectProvider provider = new DummyOriginalObjectProvider();
+        AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(f, provider) {
+            @Override
+            protected long toUnits(long time) {
+                return time;
+            }
+        };
+        long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        long r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(1, r1);
+        Assert.assertEquals(2, r2);
+        Thread.sleep(20);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(1, r1);
+        Assert.assertEquals(2, r2);
+        p = new Properties();
+        p.setProperty("blackListedUrlsList", ".*url:1.*");
+        fw = new FileWriter(f);
+        p.store(fw, null);
+        fw.flush();
+        fw.close();
+        Thread.sleep(20);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(3, r1);
+        Assert.assertEquals(2, r2);
+        Thread.sleep(20);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(4, r1);
+        Assert.assertEquals(2, r2);
+        p = new Properties();
+        p.setProperty("blackListedUrlsList", "someGarbage .*url:2.* .*url:1.*");
+        fw = new FileWriter(f);
+        p.store(fw, null);
+        fw.flush();
+        fw.close();
+        Thread.sleep(20);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(5, r1);
+        Assert.assertEquals(6, r2);
+        Thread.sleep(20);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(7, r1);
+        Assert.assertEquals(8, r2);
+        p = new Properties();
+        fw = new FileWriter(f);
+        p.store(fw, null);
+        fw.flush();
+        fw.close();
+        Thread.sleep(20);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(7, r1);
+        Assert.assertEquals(8, r2);
+        Thread.sleep(20);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(7, r1);
+        Assert.assertEquals(8, r2);
+
     }
 }
