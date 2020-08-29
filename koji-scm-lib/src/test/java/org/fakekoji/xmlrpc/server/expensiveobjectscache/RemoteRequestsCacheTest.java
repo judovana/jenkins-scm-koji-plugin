@@ -234,6 +234,69 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(3, r6);
     }
 
+    private static class IncredibleThread extends Thread {
+
+        private boolean alive = true;
+        private boolean paused = false;
+        private boolean killed = false;
+        private final List<Long>[] resultsHolder;
+        private final RemoteRequestsCache cache;
+        private boolean pauseApplied = false;
+        private boolean haveRun= false;
+
+        private IncredibleThread(List<Long>[] resultsHolder, RemoteRequestsCache cache) {
+            this.resultsHolder = resultsHolder;
+            this.cache = cache;
+        }
+
+
+        @Override
+        public void run() {
+            while (alive) {
+                if (!paused) {
+                    pauseApplied = false;
+                    long r = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+                    resultsHolder[0].add(r);
+                    haveRun = true;
+                } else {
+                    pauseApplied = true;
+                    haveRun = false;
+                    try {
+                        Thread.sleep(5);
+                    }catch (InterruptedException ex){
+                    }
+                }
+            }
+            killed = true;
+        }
+
+        public void kill() {
+            alive = false;
+        }
+
+        public boolean isKilled() {
+            return killed;
+        }
+
+        public void pause() {
+            this.paused = true;
+        }
+
+        public void unpause() {
+            this.paused = false;
+        }
+
+        public boolean isPauseApplied() {
+            return pauseApplied;
+        }
+
+        public boolean hadRun() {
+            return haveRun;
+        }
+    }
+
+    ;
+
     @Test
     public void concurentReadWriteWorks() throws InterruptedException {
         final long[] necessarryTimeout = new long[]{Long.MAX_VALUE};
@@ -247,35 +310,29 @@ public class RemoteRequestsCacheTest {
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(1, r1);
         int threadCount = 100;
-        final boolean[] alive = new boolean[]{true};
         final List<Long>[] l = new List[]{Collections.synchronizedList(new ArrayList<>())};
-        Thread[] threads1 = new Thread[threadCount];
+        IncredibleThread[] threads1 = new IncredibleThread[threadCount];
         for (int i = 0; i < threadCount; i++) {
-            threads1[i] = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (alive[0]) {
-                        long r = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-                        l[0].add(r);
-                    }
-                }
-            });
+            threads1[i] = new IncredibleThread(l, cache);
         }
-        for (int i = 0; i < threadCount; i++) {
-            threads1[i].start();
-        }
+        startAll(threads1);
         Thread.sleep(50);
+        pauseAll(threads1);
         List<Long> l1 = l[0];
         l[0] = Collections.synchronizedList(new ArrayList<>());
         necessarryTimeout[0] = 1;
+        unpauseAll(threads1);
         Thread.sleep(50);
+        pauseAll(threads1);
         necessarryTimeout[0] = Long.MAX_VALUE;
-        Thread.sleep(50);
+        unpauseAll(threads1);
         List<Long> l2 = l[0];
         l[0] = Collections.synchronizedList(new ArrayList<>());
         Thread.sleep(50);
-        alive[0] = false;
-        Thread.sleep(50);
+        pauseAll(threads1);
+        for (int i = 0; i < threadCount; i++) {
+            threads1[i].kill();
+        }
         List<Long> l3 = l[0];
         for (int i = 0; i < l1.size(); i++) {
             Assert.assertEquals(1, l1.get(i).intValue());
@@ -294,6 +351,54 @@ public class RemoteRequestsCacheTest {
             Assert.assertEquals(max, l3.get(i).intValue());
         }
         Assert.assertTrue(l3.size() > 5);
+    }
+
+    private void startAll(IncredibleThread[] threads) throws InterruptedException {
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].start();
+        }
+        waitForAllRun(threads);
+    }
+
+    private void pauseAll(IncredibleThread[] threads) throws InterruptedException {
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].pause();
+        }
+        waitForAllPaused(threads);
+    }
+
+    private void unpauseAll(IncredibleThread[] threads) throws InterruptedException {
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].unpause();
+        }
+        waitForAllRun(threads);
+    }
+
+    private void waitForAllRun(IncredibleThread[] threads) throws InterruptedException {
+        while(!areAllStarted(threads)){Thread.sleep(10);}
+    }
+
+    private void waitForAllPaused(IncredibleThread[] threads) throws InterruptedException {
+        while(!areAllPaused(threads)){Thread.sleep(10);}
+    }
+
+
+    private boolean areAllStarted(IncredibleThread[] threads) {
+        for (int i = 0; i < threads.length; i++) {
+            if (!threads[i].hadRun()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean areAllPaused(IncredibleThread[] threads) {
+        for (int i = 0; i < threads.length; i++) {
+            if (!threads[i].isPauseApplied()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Test
