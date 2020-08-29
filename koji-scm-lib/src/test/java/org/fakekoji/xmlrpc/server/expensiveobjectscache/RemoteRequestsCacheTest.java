@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 import org.junit.Assert;
@@ -26,19 +27,26 @@ public class RemoteRequestsCacheTest {
         public void setProperties(Properties prop) {
             super.setProperties(prop);
         }
+
+        public boolean isLoaded() {
+            return loaded;
+        }
+
+        public void markNotLoaded() {
+            loaded = false;
+        }
     }
 
     private static class DummyOriginalObjectProvider implements OriginalObjectProvider {
-        long i = 0;
+        AtomicLong i = new AtomicLong(0);
 
         @Override
         public Object obtainOriginal(String url, XmlRpcRequestParams params) {
-            i++;
-            return i;
+            return i.incrementAndGet();
         }
 
         public long getState() {
-            return i;
+            return i.get();
         }
     }
 
@@ -464,7 +472,10 @@ public class RemoteRequestsCacheTest {
         p.store(fw, null);
         fw.flush();
         fw.close();
-        Thread.sleep(20);
+        cache.markNotLoaded();
+        while (!cache.isLoaded()) {
+            Thread.sleep(5);
+        }
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(3, r1);
@@ -480,12 +491,15 @@ public class RemoteRequestsCacheTest {
         p.store(fw, null);
         fw.flush();
         fw.close();
-        Thread.sleep(20);
+        cache.markNotLoaded();
+        while (!cache.isLoaded()) {
+            Thread.sleep(5);
+        }
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(5, r1);
         Assert.assertEquals(6, r2);
-        Thread.sleep(20);
+        Thread.sleep(RemoteRequestsCache.CACHE_DEFAULT); //let it expire
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(7, r1);
@@ -495,7 +509,10 @@ public class RemoteRequestsCacheTest {
         p.store(fw, null);
         fw.flush();
         fw.close();
-        Thread.sleep(20);
+        cache.markNotLoaded();
+        while (!cache.isLoaded()) {
+            Thread.sleep(5);
+        }
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(7, r1);

@@ -27,13 +27,14 @@ public class RemoteRequestsCache {
     private static final long minutesToMilis = 60l * 1000l;
     private final Map<String, SingleUrlResponseCache> cache = Collections.synchronizedMap(new HashMap<>());
     private final File config;
-    private final long CONFIG_DEFAULT = 10;
+    private static final long CONFIG_DEFAULT = 10;
     private long configRefreshRateMinutes = CONFIG_DEFAULT;
-    private final long CACHE_DEFAULT = 60 * 6;
+    static final long CACHE_DEFAULT = 60 * 6;
     private long cacheRefreshRateMinutes = CACHE_DEFAULT;
     private Properties propRaw = new Properties();
     private final OriginalObjectProvider originalProvider;
     private List<Pattern> blackListedUrlsList = new ArrayList<>();
+    protected boolean loaded = false;
 
     public Object obtain(String url, XmlRpcRequestParams params) {
         try {
@@ -129,6 +130,7 @@ public class RemoteRequestsCache {
         if ("true".equals(propRaw.getProperty("clean"))) {
             cache.clear();
         }
+        loaded=true;
     }
 
     public RemoteRequestsCache(final File config, OriginalObjectProvider originalObjectProvider) {
