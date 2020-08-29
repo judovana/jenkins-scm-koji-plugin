@@ -44,10 +44,6 @@ public class RemoteRequestsCacheTest {
         public Object obtainOriginal(String url, XmlRpcRequestParams params) {
             return i.incrementAndGet();
         }
-
-        public long getState() {
-            return i.get();
-        }
     }
 
     private static class DummyRequestparam implements XmlRpcRequestParams {
@@ -628,5 +624,98 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(7, r1);
         Assert.assertEquals(8, r2);
 
+    }
+
+
+    @Test
+    public void cleanWorks() throws InterruptedException, IOException {
+        DummyOriginalObjectProvider provider = new DummyOriginalObjectProvider();
+        AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(null, provider);
+        long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        long r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(1, r1);
+        Assert.assertEquals(2, r2);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1", "p2"}));
+        Assert.assertEquals(1, r1);
+        Assert.assertEquals(3, r2);
+        Properties p = new Properties();
+        p.setProperty("clean", "true");
+        cache.setProperties(p);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(4, r1);
+        Assert.assertEquals(5, r2);
+    }
+
+    private static class SlowOriginalObjectProvider implements OriginalObjectProvider {
+        AtomicLong i = new AtomicLong(0);
+
+        @Override
+        public Object obtainOriginal(String url, XmlRpcRequestParams params) {
+            try {
+                Thread.sleep(1000);
+                return i.incrementAndGet();
+            }catch(Exception ex){
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    private static class LongReturningThread extends Thread {
+        long r;
+        private final XmlRpcRequestParams param;
+        private final AccessibleRemoteRequestsCache cache;
+
+        private LongReturningThread(XmlRpcRequestParams param, AccessibleRemoteRequestsCache cache) {
+            this.param = param;
+            this.cache = cache;
+        }
+
+        @Override
+        public void run() {
+            r = (long) cache.obtain("http://url:1/path", param);
+        }
+
+        public long getR() {
+            return r;
+        }
+    }
+
+    @Test
+    public void lazyRefreshWorks() throws InterruptedException, IOException {
+        SlowOriginalObjectProvider provider = new SlowOriginalObjectProvider();
+        AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(null, provider) {
+            @Override
+            protected long toUnits(long time) {
+                return time;
+            }
+        };
+        Properties p = new Properties();
+        p.setProperty("cacheRefreshRateMinutes", "1000");
+        cache.setProperties(p);
+        LongReturningThread l1 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
+        LongReturningThread l2 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
+        l1.start();
+        l2.start();
+        l1.join();
+        l2.join();
+        //both attempted to get null fromdb, hard to say which was first
+        Assert.assertTrue((1 == l1.getR()) ^ (1 == l2.getR()));
+        Assert.assertTrue((2 == l1.getR()) ^ (2 == l2.getR()));
+        Thread.sleep(1000);//timeout the value
+        l1 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
+        l2 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
+        l1.start();
+        Thread.sleep(500);//some time for first thread to get
+        p = new Properties();
+        p.setProperty("cacheRefreshRateMinutes", "20000000");//do not invalidate it again
+        cache.setProperties(p);
+        l2.start();
+        l1.join();
+        l2.join();
+        //both attempting cached value, first have to wait for new one, invalidating result, but second get old vlaue again
+        Assert.assertEquals(3, l1.getR()); //new value
+        Assert.assertTrue(2 == l2.getR() || 1 == l2.getR()); //no guarantee which result was added to db; cached value obtained anyway
     }
 }
