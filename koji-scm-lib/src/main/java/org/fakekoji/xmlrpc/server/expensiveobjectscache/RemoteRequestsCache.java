@@ -169,6 +169,9 @@ public class RemoteRequestsCache {
     }
 
     public Object get(final URL u, XmlRpcRequestParams params) {
+        if (cacheRefreshRateMinutes == 0) {
+            return null;
+        }
         if (isBlacklisted(u)) {
             return null;
         }
@@ -180,7 +183,7 @@ public class RemoteRequestsCache {
         if (cachedResult == null) {
             return null;
         } else {
-            Boolean validity = isValid(cachedResult, params.getMethodName());
+            Boolean validity = isValid(cachedResult, params.getMethodName(), u.getHost());
             if (validity == null) {
                 return null; //disbaled by global or by method
             }
@@ -212,12 +215,21 @@ public class RemoteRequestsCache {
         return toUnits(cacheRefreshRateMinutes);
     }
 
-    protected long getPerMethodValidnesMilis(String methodName) {
+    protected long getPerMethodValidnesMilis(String methodName, String host) {
         // for method names:
         //See: hudson.plugins.scm.koji.Constants for methods
         //See: XmlRpcRequestParams getMethodName() vaues
-        String rawCustomTimePerMethod = propRaw.getProperty(methodName);
+        String rawCustomTimePerMethodPerHost = propRaw.getProperty(methodName+"@"+host);
         long customTimeoutPerMethod;
+        if (rawCustomTimePerMethodPerHost != null) {
+            try {
+                customTimeoutPerMethod = toUnits(Long.parseLong(rawCustomTimePerMethodPerHost));
+                return customTimeoutPerMethod;
+            } catch (Exception ex) {
+                LOG.warn("Failed to read or apply custom method (" + methodName+"@"+host + ") timeout (" + rawCustomTimePerMethodPerHost + ")", ex);
+            }
+        }
+        String rawCustomTimePerMethod = propRaw.getProperty(methodName);
         if (rawCustomTimePerMethod != null) {
             try {
                 customTimeoutPerMethod = toUnits(Long.parseLong(rawCustomTimePerMethod));
@@ -229,9 +241,9 @@ public class RemoteRequestsCache {
         return getDefaultValidnesMilis();
     }
 
-    private Boolean isValid(final SingleUrlResponseCache.ResultWithTimeStamp temptedResult, String methodName) {
+    private Boolean isValid(final SingleUrlResponseCache.ResultWithTimeStamp temptedResult, String methodName, String host) {
         final Date dateCreated = temptedResult.getDateCreated();
-        long timeForThisMethodOrDefault = getPerMethodValidnesMilis(methodName);
+        long timeForThisMethodOrDefault = getPerMethodValidnesMilis(methodName, host);
         if (timeForThisMethodOrDefault == 0) {
             return null;
         } else {

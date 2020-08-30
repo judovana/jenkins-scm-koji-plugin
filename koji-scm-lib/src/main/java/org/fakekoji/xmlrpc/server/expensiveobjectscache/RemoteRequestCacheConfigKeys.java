@@ -5,7 +5,10 @@ package org.fakekoji.xmlrpc.server.expensiveobjectscache;
  * any other key, s treated as method
  * unknowKey=10
  * will set timout of method unknownKey to 10 minutes
- **/
+ * It support also extended  method@urlRegex
+ * so method1=10 will set generic timeout for method1 to 10 minutes
+ * However method1@host=1 will set method1, if reqest on host named host. to 1. Note, port nor path is not considered here
+ */
 public class RemoteRequestCacheConfigKeys {
     /**
      * Time in minutes after which config is reloaded
