@@ -25,6 +25,7 @@ public class RemoteRequestsCache {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteRequestsCache.class);
     private static final long minutesToMilis = 60l * 1000l;
+
     private final Map<String, SingleUrlResponseCache> cache = Collections.synchronizedMap(new HashMap<>());
     private final File config;
     private static final long CONFIG_DEFAULT = 10;
@@ -83,7 +84,7 @@ public class RemoteRequestsCache {
         }
     }
 
-    protected long toUnits(long time){
+    protected long toUnits(long time) {
         return time * minutesToMilis;
     }
 
@@ -97,14 +98,14 @@ public class RemoteRequestsCache {
     }
 
     private void apply() {
-        String configRefreshRateMinutesS = propRaw.getProperty("configRefreshRateMinutes");
-        String cacheRefreshRateMinutesS = propRaw.getProperty("cacheRefreshRateMinutes");
-        String blackListedUrlsListS = propRaw.getProperty("blackListedUrlsList");
+        String configRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES);
+        String cacheRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES);
+        String blackListedUrlsListS = propRaw.getProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST);
         if (configRefreshRateMinutesS != null) {
             try {
                 configRefreshRateMinutes = Long.parseLong(configRefreshRateMinutesS);
             } catch (Exception ex) {
-                LOG.warn("Failed to read or apply custom value  of (" + configRefreshRateMinutesS + ") for configRefreshRateMinutes", ex);
+                LOG.warn("Failed to read or apply custom value  of (" + configRefreshRateMinutesS + ") for " + RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES + "", ex);
             }
         } else {
             configRefreshRateMinutes = CONFIG_DEFAULT;
@@ -113,24 +114,24 @@ public class RemoteRequestsCache {
             try {
                 cacheRefreshRateMinutes = Long.parseLong(cacheRefreshRateMinutesS);
             } catch (Exception ex) {
-                LOG.warn("Failed to read or apply custom value  of (" + cacheRefreshRateMinutesS + ") for cacheRefreshRateMinutes", ex);
+                LOG.warn("Failed to read or apply custom value  of (" + cacheRefreshRateMinutesS + ") for " + RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, ex);
             }
         } else {
             cacheRefreshRateMinutes = CACHE_DEFAULT;
         }
-        if (blackListedUrlsListS != null  && blackListedUrlsListS.trim().length() > 0 ) {
+        if (blackListedUrlsListS != null && blackListedUrlsListS.trim().length() > 0) {
             try {
                 blackListedUrlsList = Arrays.stream(blackListedUrlsListS.split("\\s+")).map(Pattern::compile).collect(Collectors.toList());
             } catch (Exception ex) {
-                LOG.warn("Failed to read or apply custom value  of (" + configRefreshRateMinutesS + ") for configRefreshRateMinutes", ex);
+                LOG.warn("Failed to read or apply custom value  of (" + configRefreshRateMinutesS + ") for " + RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES + "", ex);
             }
         } else {
             blackListedUrlsList = new ArrayList<>();
         }
-        if ("true".equals(propRaw.getProperty("clean"))) {
+        if ("true".equals(propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_CLEAN_COMMAND))) {
             cache.clear();
         }
-        loaded=true;
+        loaded = true;
     }
 
     public RemoteRequestsCache(final File config, OriginalObjectProvider originalObjectProvider) {
@@ -138,7 +139,7 @@ public class RemoteRequestsCache {
         this.originalProvider = originalObjectProvider;
         ConfigRefresh r = new ConfigRefresh();
         r.read();
-        LOG.info("Cache started - cacheRefreshRateMinutes is " + cacheRefreshRateMinutes + " (0==disabled). Set config is: " + getConfigString());
+        LOG.info("Cache started - " + RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES + " is " + cacheRefreshRateMinutes + " (0==disabled). Set config is: " + getConfigString());
         Thread t = new Thread(r);
         t.setDaemon(true);
         t.start();
@@ -148,7 +149,7 @@ public class RemoteRequestsCache {
         if (config == null) {
             return "null";
         } else {
-            return config.getAbsolutePath() + "/" + config.exists() + " configRefreshRateMinutes=" + configRefreshRateMinutes;
+            return config.getAbsolutePath() + "/" + config.exists() + " " + RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES + "=" + configRefreshRateMinutes;
         }
     }
 
@@ -168,7 +169,7 @@ public class RemoteRequestsCache {
     }
 
     public Object get(final URL u, XmlRpcRequestParams params) {
-        if (isBlacklisted(u)){
+        if (isBlacklisted(u)) {
             return null;
         }
         SingleUrlResponseCache cached = cache.get(u.toExternalForm());
@@ -199,8 +200,8 @@ public class RemoteRequestsCache {
 
     private boolean isBlacklisted(URL u) {
         String url = u.toExternalForm();
-        for (Pattern p: blackListedUrlsList){
-            if (p.matcher(url).matches()){
+        for (Pattern p : blackListedUrlsList) {
+            if (p.matcher(url).matches()) {
                 return true;
             }
         }

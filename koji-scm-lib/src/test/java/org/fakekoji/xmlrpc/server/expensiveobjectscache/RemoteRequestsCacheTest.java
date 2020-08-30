@@ -238,7 +238,7 @@ public class RemoteRequestsCacheTest {
         private final List<Long>[] resultsHolder;
         private final RemoteRequestsCache cache;
         private boolean pauseApplied = false;
-        private boolean haveRun= false;
+        private boolean haveRun = false;
 
         private IncredibleThread(List<Long>[] resultsHolder, RemoteRequestsCache cache) {
             this.resultsHolder = resultsHolder;
@@ -259,7 +259,7 @@ public class RemoteRequestsCacheTest {
                     haveRun = false;
                     try {
                         Thread.sleep(5);
-                    }catch (InterruptedException ex){
+                    } catch (InterruptedException ex) {
                     }
                 }
             }
@@ -371,11 +371,15 @@ public class RemoteRequestsCacheTest {
     }
 
     private void waitForAllRun(IncredibleThread[] threads) throws InterruptedException {
-        while(!areAllStarted(threads)){Thread.sleep(10);}
+        while (!areAllStarted(threads)) {
+            Thread.sleep(10);
+        }
     }
 
     private void waitForAllPaused(IncredibleThread[] threads) throws InterruptedException {
-        while(!areAllPaused(threads)){Thread.sleep(10);}
+        while (!areAllPaused(threads)) {
+            Thread.sleep(10);
+        }
     }
 
 
@@ -409,7 +413,7 @@ public class RemoteRequestsCacheTest {
         Properties p = new Properties();
         p.setProperty("m1", "200");
         p.setProperty("m2", "200");
-        p.setProperty("cacheRefreshRateMinutes", "200");
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
@@ -424,7 +428,7 @@ public class RemoteRequestsCacheTest {
         p = new Properties();
         p.setProperty("m1", "10");
         p.setProperty("m2", "200");
-        p.setProperty("cacheRefreshRateMinutes", "200");
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         Thread.sleep(30);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -453,7 +457,7 @@ public class RemoteRequestsCacheTest {
         p = new Properties();
         p.setProperty("m1", "200");
         p.setProperty("m2", "10");
-        p.setProperty("cacheRefreshRateMinutes", "200");
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         Thread.sleep(30);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -491,7 +495,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(9, r4);
         Assert.assertEquals(10, r5);
         p = new Properties();
-        p.setProperty("cacheRefreshRateMinutes", "200");
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         Thread.sleep(100);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -520,14 +524,14 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(1, r1);
         Assert.assertEquals(2, r2);
         Properties p = new Properties();
-        p.setProperty("blackListedUrlsList", "someGarbage .*url:2.*");
+        p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, "someGarbage .*url:2.*");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(1, r1);
         Assert.assertEquals(3, r2);
         p = new Properties();
-        p.setProperty("blackListedUrlsList", "someGarbage .*url:2.* .*url:1.*");
+        p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, "someGarbage .*url:2.* .*url:1.*");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -546,7 +550,7 @@ public class RemoteRequestsCacheTest {
     public void fileRefreshWorks() throws InterruptedException, IOException {
         File f = File.createTempFile("cache", ".config");
         Properties p = new Properties();
-        p.setProperty("configRefreshRateMinutes", "10");
+        p.setProperty(RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES, "10");
         FileWriter fw = new FileWriter(f);
         p.store(fw, null);
         fw.flush();
@@ -568,7 +572,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(1, r1);
         Assert.assertEquals(2, r2);
         p = new Properties();
-        p.setProperty("blackListedUrlsList", ".*url:1.*");
+        p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, ".*url:1.*");
         fw = new FileWriter(f);
         p.store(fw, null);
         fw.flush();
@@ -587,7 +591,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(4, r1);
         Assert.assertEquals(2, r2);
         p = new Properties();
-        p.setProperty("blackListedUrlsList", "someGarbage .*url:2.* .*url:1.*");
+        p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, "someGarbage .*url:2.* .*url:1.*");
         fw = new FileWriter(f);
         p.store(fw, null);
         fw.flush();
@@ -640,7 +644,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(1, r1);
         Assert.assertEquals(3, r2);
         Properties p = new Properties();
-        p.setProperty("clean", "true");
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_CLEAN_COMMAND, "true");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -656,7 +660,7 @@ public class RemoteRequestsCacheTest {
             try {
                 Thread.sleep(1000);
                 return i.incrementAndGet();
-            }catch(Exception ex){
+            } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
         }
@@ -692,7 +696,7 @@ public class RemoteRequestsCacheTest {
             }
         };
         Properties p = new Properties();
-        p.setProperty("cacheRefreshRateMinutes", "1000");
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "1000");
         cache.setProperties(p);
         LongReturningThread l1 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
         LongReturningThread l2 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
@@ -709,7 +713,7 @@ public class RemoteRequestsCacheTest {
         l1.start();
         Thread.sleep(500);//some time for first thread to get
         p = new Properties();
-        p.setProperty("cacheRefreshRateMinutes", "20000000");//do not invalidate it again
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "20000000");//do not invalidate it again
         cache.setProperties(p);
         l2.start();
         l1.join();
