@@ -27,6 +27,11 @@
             <name>Jiri Vanek</name>
             <email>judovana@email.cz</email>
         </developer>
+        <developer>
+            <id>okinovs</id>
+            <name>Ondrej Klinovsky</name>
+            <email>oklinov@tutanota.com</email>
+        </developer>
     </developers>
 
     <modules>
