@@ -38,6 +38,8 @@ package org.fakekoji.server;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,7 +55,6 @@ public class JavaServer {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
-    public static final int DEFAULT_JENKINS_PORT = 8080;
     public static final int DEFAULT_XML_RPC_PORT = 9848;
     public static final int DEFAULT_WEBAPP_PORT = 80;
 
@@ -133,10 +134,10 @@ public class JavaServer {
                 getRoot(props, Property.JENKINS_JOBS_ROOT),
                 getRoot(props, Property.JENKINS_JOB_ARCHIVE_ROOT),
                 getRoot(props, Property.SCRIPTS_ROOT),
+                parseUrl(props, Property.JENKINS_URL),
                 xmlRpcPort,
                 fileDownloadPort,
                 sshPort,
-                getPort(props, Property.JENKINS_PORT, DEFAULT_JENKINS_PORT),
                 webappPort
         );
 
@@ -149,7 +150,7 @@ public class JavaServer {
         XML_RPC_PORT("port.xml.rpc"),
         FILE_DOWNLOAD_PORT("port.file.download"),
         SSH_PORT("port.ssh"),
-        JENKINS_PORT("port.jenkins"),
+        JENKINS_URL("url.jenkins"),
         WEBAPP_PORT("port.webapp"),
         REPOS_ROOT("root.repos"),
         BUILD_DB_ROOT("root.build.db"),
@@ -163,6 +164,10 @@ public class JavaServer {
         Property(final String value) {
             this.value = value;
         }
+    }
+
+    private static URL parseUrl(final Properties props, final Property prop) throws MalformedURLException {
+        return new URL(props.getProperty(prop.value));
     }
 
     private static int getPort(Properties props, Property prop, int defaultProp) {

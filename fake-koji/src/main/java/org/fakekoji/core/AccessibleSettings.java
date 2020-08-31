@@ -24,6 +24,7 @@
 package org.fakekoji.core;
 
 import java.io.File;
+import java.net.URL;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -64,10 +65,11 @@ public class AccessibleSettings {
     private final File jenkinsJobArchiveRoot;
     private final File scriptsRoot;
 
+    private final URL jenkins;
+
     private final int xmlRpcPort;
     private final int fileDownloadPort;
     private final int sshPort;
-    private final int jenkinsPort;
     private final int webappPort;
     private final ConfigManager configManager;
     private final JDKProjectParser jdkProjectParser;
@@ -82,10 +84,10 @@ public class AccessibleSettings {
             File jenkinsJobsRoot,
             File jenkinsJobArchiveRoot,
             File scriptsRoot,
+            final URL jenkins,
             int xmlRpcPort,
             int fileDownloadPort,
             int sshPort,
-            int jenkinsPort,
             int webappPort
     ) {
         this.dbFileRoot = dbFileRoot;
@@ -94,10 +96,10 @@ public class AccessibleSettings {
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
         this.scriptsRoot = scriptsRoot;
+        this.jenkins = jenkins;
         this.xmlRpcPort = xmlRpcPort;
         this.fileDownloadPort = fileDownloadPort;
         this.sshPort = sshPort;
-        this.jenkinsPort = jenkinsPort;
         this.webappPort = webappPort;
         configManager = new ConfigManager(this);
         jdkProjectParser = new JDKProjectParser(
@@ -144,6 +146,14 @@ public class AccessibleSettings {
         return scriptsRoot;
     }
 
+    public URL getJenkins() {
+        return jenkins;
+    }
+
+    public String getJenkinsUrl() {
+        return jenkins.toString();
+    }
+
     public int getXmlRpcPort() {
         return xmlRpcPort;
     }
@@ -158,10 +168,6 @@ public class AccessibleSettings {
 
     public int getWebappPort() {
         return webappPort;
-    }
-
-    public int getJenkinsPort() {
-        return jenkinsPort;
     }
 
     public ConfigManager getConfigManager() {
