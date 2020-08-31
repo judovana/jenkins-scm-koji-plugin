@@ -1,6 +1,8 @@
 package org.fakekoji;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.utils.matrix.SummaryReportRunner;
+import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.ManagementException;
@@ -32,7 +34,7 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.UnknownHostException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -140,8 +142,12 @@ public class DataGenerator {
 
     public static final String BUILD_PROVIDER_1_TOP_URL = "http://hydra.brq.redhat.com:XPORT/RPC2/";
     public static final String BUILD_PROVIDER_1_DOWNLOAD_URL = "http://hydra.brq.redhat.com:DPORT/";
+    public static final String BUILD_PROVIDER_1_PACKAGE_INFO_URL = "http://hydra.brq.redhat.com:9849";
     public static final String BUILD_PROVIDER_2_TOP_URL = "brewtopUrl";
     public static final String BUILD_PROVIDER_2_DOWNLOAD_URL = "brewdownloadUrl";
+    public static final String BUILD_PROVIDER_2_PACKAGE_INFO_URL = "brewPackageInfoUrl";
+
+    public static final String JENKINS_URL = "http://hydra.brq.redhat.com:8080/";
 
     private static FolderHolder folderHolder;
 
@@ -212,13 +218,15 @@ public class DataGenerator {
                         BUILD_PROVIDER_1,
                         "Fake Koji @ Hydra",
                         BUILD_PROVIDER_1_TOP_URL,
-                        BUILD_PROVIDER_1_DOWNLOAD_URL
+                        BUILD_PROVIDER_1_DOWNLOAD_URL,
+                        BUILD_PROVIDER_1_PACKAGE_INFO_URL
                 ),
                 new BuildProvider(
                         BUILD_PROVIDER_2,
                         "Brew @ Brewhub",
                         BUILD_PROVIDER_2_TOP_URL,
-                        BUILD_PROVIDER_2_DOWNLOAD_URL
+                        BUILD_PROVIDER_2_DOWNLOAD_URL,
+                        BUILD_PROVIDER_2_PACKAGE_INFO_URL
                 )
         ));
     }
@@ -1921,8 +1929,28 @@ public class DataGenerator {
             this.configsRoot = configsRoot;
         }
     }
+    
+    public static SummaryReportRunner getSummaryReportRunner(final AccessibleSettings settings) {
+        return new SummaryReportRunner(
+                settings,
+                "NVR",
+                "TIME",
+                "CHART_DIR",
+                new String[0]
+        ) {
+            @Override
+            public Result<Tuple<String, Map<String, Integer>>, String> getSummaryReport() {
+                return Result.ok(new Tuple<>("report", new HashMap<>()));
+            }
 
-    public static AccessibleSettings getSettings(FolderHolder folderHolder) throws MalformedURLException, UnknownHostException {
+            @Override
+            public int getJobReportSummary(final String jobName) {
+                return 3;
+            }
+        };
+    }
+
+    public static AccessibleSettings getSettings(FolderHolder folderHolder) throws MalformedURLException {
         return new AccessibleSettings(
                 folderHolder.buildsRoot,
                 folderHolder.reposRoot,
@@ -1930,7 +1958,7 @@ public class DataGenerator {
                 folderHolder.jenkinsJobsRoot,
                 folderHolder.jenkinsJobArchiveRoot,
                 folderHolder.scriptsRoot,
-                9848,
+                new URL(JENKINS_URL),
                 9849,
                 9826,
                 8080,
