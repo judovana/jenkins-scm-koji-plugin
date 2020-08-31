@@ -442,16 +442,15 @@ public class MatrixGenerator {
             }
             listOfRows.add(matrixRow);
         }
-        listOfRows.add(new ArrayList<>(initialRow));
 
         if (dropColumns) {
             //not dropping first and last with headers
             //crawling columns
-            for (int j = 1; j < listOfRows.get(0).size() - 1; j++) {
+            for (int j = 1; j < listOfRows.get(0).size(); j++) {
                 int total = 0;
                 //same skip here, thus skipping the instance of checks
                 //crawling rows
-                for (int i = 1; i < listOfRows.size() - 1; i++) {
+                for (int i = 1; i < listOfRows.size(); i++) {
                     total = total + listOfRows.get(i).get(j).size();
                 }
                 if (total == 0) {
