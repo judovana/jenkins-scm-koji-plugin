@@ -420,6 +420,9 @@ public class MatrixGenerator {
             matrixRow.add(titleCell);
             if (rowsMap == null) {
                 // empty row
+                if (dropRows) {
+                    continue;
+                }
                 for (int i = 0; i < columns.size(); i++) {
                     matrixRow.add(new CellGroup());
                 }
@@ -440,22 +443,6 @@ public class MatrixGenerator {
             listOfRows.add(matrixRow);
         }
         listOfRows.add(new ArrayList<>(initialRow));
-
-        if (dropRows) {
-            //not dropping first and last with headers
-            for (int i = 1; i < listOfRows.size() - 1; i++) {
-                List<Cell> row = listOfRows.get(i);
-                int total = 0;
-                //same skip here, thus skipping the instance of checks
-                for (int j = 1; j < row.size() - 1; j++) {
-                    total = total + row.get(j).size();
-                }
-                if (total == 0) {
-                    listOfRows.remove(i);
-                    i--;
-                }
-            }
-        }
 
         if (dropColumns) {
             //not dropping first and last with headers
