@@ -4,6 +4,16 @@ package org.fakekoji.core.utils.matrix;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.utils.matrix.cell.Cell;
+import org.fakekoji.core.utils.matrix.cell.CellGroup;
+import org.fakekoji.core.utils.matrix.cell.MultiUrlCell;
+import org.fakekoji.core.utils.matrix.cell.TitleCell;
+import org.fakekoji.core.utils.matrix.cell.UpperCornerCell;
+import org.fakekoji.core.utils.matrix.cell.UrlCell;
+import org.fakekoji.core.utils.matrix.formatter.Formatter;
+import org.fakekoji.core.utils.matrix.formatter.HtmlFormatter;
+import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFormatter;
+import org.fakekoji.core.utils.matrix.formatter.PlainTextFormatter;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
@@ -23,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,11 +43,78 @@ public class MatrixGeneratorTest {
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     private AccessibleSettings settings;
-    private TableFormatter tf = new TableFormatter.PlainTextTableFormatter();//new TableFormatter.HtmlTableFormatter(true);
+    private final Formatter tf = new PlainTextFormatter();
 
     @Before
     public void setup() throws IOException {
         settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
+    }
+
+    @Test
+    public void printSimpleMatrix() {
+        MatrixGenerator m = new MatrixGenerator(settings, new String[0]);
+        final String projectName = DataGenerator.PROJECT_NAME_U;
+        final String[] projects = new String[]{projectName};
+        final String url = "https://example.com";
+        final List<List<Cell>> matrix = Arrays.asList(
+                Arrays.asList(
+                        new UpperCornerCell(Collections.singletonList(new UrlCell(projectName))),
+                        new TitleCell("Col1"),
+                        new TitleCell("Col2"),
+                        new TitleCell("Col3")
+                ),
+                Arrays.asList(
+                        new TitleCell("Row1"),
+                        new CellGroup(Arrays.asList(
+                                new UrlCell("Cell0", url),
+                                new UrlCell("Cell1", url),
+                                new UrlCell("Cell2", url))
+                        ),
+                        new CellGroup(Collections.singletonList(new UrlCell("Cell3", url))),
+                        new CellGroup(Collections.singletonList(new MultiUrlCell("Cell4", Arrays.asList(url, url))))
+                ),
+                Arrays.asList(
+                        new TitleCell("Row2"),
+                        new CellGroup(Arrays.asList(
+                                new UrlCell("Cell5", url),
+                                new MultiUrlCell("Cell6", Arrays.asList(url, url))
+                        )),
+                        new CellGroup(Collections.singletonList(new UrlCell("Cell7", url))),
+                        new CellGroup(Collections.singletonList(new UrlCell("Cell8", url)))
+                )
+        );
+        final int total = 10;
+        final int count = 9;
+        final String summary = count + "/" + total;
+        final String summaryTd = "<td>" + summary + "</td>";
+        final String plainTextOutput = m.printMatrix(matrix, new PlainTextFormatter(), 6, 6, total);
+        final String expectedPlainTextOutput = projectName + " Col1  Col2  Col3  " + projectName + " \n"
+                + "Row1  3     1     1     Row1  \n"
+                + "Row2  2     1     1     Row2  \n"
+                + summary + "  Col1  Col2  Col3  " + summary + "  \n";
+        Assert.assertEquals(plainTextOutput, expectedPlainTextOutput);
+
+        final String anchor = "<a href=\"" + url + "\">";
+        final String expectedHtmlOutput = "<table>\n"
+                + "<tr><td><a href=\"#\">" + projectName + "</a></td><td>Col1</td><td>Col2</td><td>Col3</td><td><a href=\"#\">" + projectName + "</a></td></tr>\n"
+                + "<tr><td>Row1</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
+                + "<tr><td>Row2</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row2</td></tr>\n"
+                + "<tr>" + summaryTd + "<td>Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
+                + "</table>";
+        final String htmlOutput = m.printMatrix(matrix, new HtmlFormatter(false, projects), 0, 0, total);
+        Assert.assertEquals(expectedHtmlOutput, htmlOutput);
+
+        final String expandedHtmlOutput = m.printMatrix(matrix, new HtmlFormatter(true, projects), 0, 0, total);
+        Assert.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
+
+        final String expectedSpanningHtmlOutput = "<table>\n"
+                + "<tr><td><a href=\"#\">uName</a></td><td colspan=\"3\">Col1</td><td>Col2</td><td>Col3</td><td><a href=\"#\">uName</a></td></tr>\n"
+                + "<tr><td>Row1</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
+                + "<tr><td>Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a>" + anchor + "[2]</a></td><td /><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row2</td></tr>\n"
+                + "<tr>" + summaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
+                + "</table>";
+        final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
+        Assert.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
     }
 
     @Test
