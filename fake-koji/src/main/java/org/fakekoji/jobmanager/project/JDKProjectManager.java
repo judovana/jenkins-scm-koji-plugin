@@ -127,13 +127,15 @@ public class JDKProjectManager implements Manager<JDKProject> {
                 cloningProcess = processBuilder.start();
                 exitCode = cloningProcess.waitFor();
                 String line;
-                final BufferedReader outputReader = new BufferedReader(new InputStreamReader(cloningProcess.getInputStream()));
-                while ((line = outputReader.readLine()) != null) {
-                    System.out.println(line);
+                try(final BufferedReader outputReader = new BufferedReader(new InputStreamReader(cloningProcess.getInputStream(), "utf-8"))) {
+                    while ((line = outputReader.readLine()) != null) {
+                        System.out.println(line);
+                    }
                 }
-                final BufferedReader errorReader = new BufferedReader(new InputStreamReader(cloningProcess.getErrorStream()));
-                while ((line = errorReader.readLine()) != null) {
-                    System.out.println(line);
+                try(final BufferedReader errorReader = new BufferedReader(new InputStreamReader(cloningProcess.getErrorStream(), "utf-8"))) {
+                    while ((line = errorReader.readLine()) != null) {
+                        System.out.println(line);
+                    }
                 }
             } catch (InterruptedException | IOException e) {
                 LOGGER.severe("Exception occurred during cloning: " + e.getMessage());

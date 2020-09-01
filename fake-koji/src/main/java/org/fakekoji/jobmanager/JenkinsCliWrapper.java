@@ -238,8 +238,10 @@ public class JenkinsCliWrapper {
      */
     public ClientResponse createManuallyUploadedJob(File dirWithJobs, String name) {
         try {
-            ClientResponse r = createJob(name, new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE)));
-            return r;
+            try(final FileInputStream fis = new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE))) {
+                ClientResponse r = createJob(name, fis);
+                return r;
+            }
         } catch (IOException ex) {
             return new ClientResponse(-1, "", "", ex, /*copypasted*/ "create-job " + name);
         }
@@ -254,8 +256,10 @@ public class JenkinsCliWrapper {
      */
     public ClientResponse updateManuallyUpdatedJob(File dirWithJobs, String name) {
         try {
-            ClientResponse r = updateJob(name, new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE)));
-            return r;
+            try(final FileInputStream fis = new FileInputStream(new File(new File(dirWithJobs, name), JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE))) {
+                ClientResponse r = updateJob(name, fis);
+                return r;
+            }
         } catch (IOException ex) {
             return new ClientResponse(-1, "", "", ex, /*copypasted*/ "update-job " + name);
         }
