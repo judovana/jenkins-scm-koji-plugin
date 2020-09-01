@@ -4,6 +4,8 @@ import hudson.plugins.scm.koji.Constants;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+
+import java.util.Arrays;
 import java.util.Optional;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -118,7 +120,7 @@ public class RPM implements java.io.Serializable {
         private final String[] suffixes = {"rpm", "tarxz", "zip", "msi"};
 
         public String[] getSuffixes() {
-            return suffixes;
+            return Arrays.copyOf(suffixes, suffixes.length);
         }
 
         public String getSuffix(String url, String filename) {

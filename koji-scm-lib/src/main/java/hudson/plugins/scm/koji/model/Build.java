@@ -1,5 +1,6 @@
 package hudson.plugins.scm.koji.model;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.plugins.scm.koji.Constants;
 
 import java.net.URL;
@@ -18,6 +19,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = Constants.build)
 @XmlAccessorType(XmlAccessType.FIELD)
+@SuppressFBWarnings(value = {"EQ_COMPARETO_USE_OBJECT_EQUALS"}, justification = "is working like this, is serialised to xml, am afraid to fix this")
 public class Build implements Comparable<Build>, java.io.Serializable {
 
     @XmlElement(name = "manual")

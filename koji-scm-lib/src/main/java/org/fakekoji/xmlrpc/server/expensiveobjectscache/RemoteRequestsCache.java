@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class RemoteRequestsCache {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteRequestsCache.class);
@@ -276,6 +278,7 @@ public class RemoteRequestsCache {
         return methodName + "@" + host;
     }
 
+    @SuppressFBWarnings(value = "NP_BOOLEAN_RETURN_NULL", justification = "private single usage method")
     private Boolean isValid(final SingleUrlResponseCache.ResultWithTimeStamp temptedResult, String methodName, String host) {
         final Date dateCreated = temptedResult.getDateCreated();
         long timeForThisMethodOrDefault = getPerMethodValidnesMilis(methodName, host);

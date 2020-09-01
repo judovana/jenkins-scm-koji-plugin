@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import edu.umd.cs.findbugs.annotations.*;
+
 public class SingleUrlResponseCache {
 
 
@@ -16,7 +18,7 @@ public class SingleUrlResponseCache {
     private final Map<XmlRpcRequestParams, ResultWithTimeStamp> cache = Collections.synchronizedMap(new HashMap<>());
 
 
-   public SingleUrlResponseCache(final URL u) {
+    public SingleUrlResponseCache(final URL u) {
         this.id = u;
     }
 
@@ -25,24 +27,26 @@ public class SingleUrlResponseCache {
     }
 
     public void put(final Object result, XmlRpcRequestParams params) {
-        cache.put(params, new ResultWithTimeStamp(new Date(), result));
+        cache.put(params, new ResultWithTimeStamp(result));
     }
 
     public void remove(XmlRpcRequestParams key) {
-       cache.remove(key);
+        cache.remove(key);
     }
 
     public URL getId() {
         return id;
     }
 
+    @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "pure wrapper class")
     public static final class ResultWithTimeStamp {
+
         private final Date dateCreated;
         private final Object result;
         private boolean notBeingRepalced = true;
 
-        public ResultWithTimeStamp(final Date datecreated, final Object result) {
-            this.dateCreated = datecreated;
+        public ResultWithTimeStamp(final Object result) {
+            this.dateCreated = new Date();
             this.result = result;
         }
 
@@ -63,7 +67,7 @@ public class SingleUrlResponseCache {
         }
     }
 
-    Set<Map.Entry<XmlRpcRequestParams, ResultWithTimeStamp>> getContent(){
-       return cache.entrySet();
+    Set<Map.Entry<XmlRpcRequestParams, ResultWithTimeStamp>> getContent() {
+        return cache.entrySet();
     }
 }
