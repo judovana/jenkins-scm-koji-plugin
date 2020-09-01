@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class SingleUrlResponseCache {
 
@@ -15,7 +16,7 @@ public class SingleUrlResponseCache {
     private final Map<XmlRpcRequestParams, ResultWithTimeStamp> cache = Collections.synchronizedMap(new HashMap<>());
 
 
-    public SingleUrlResponseCache(final URL u) {
+   public SingleUrlResponseCache(final URL u) {
         this.id = u;
     }
 
@@ -27,6 +28,13 @@ public class SingleUrlResponseCache {
         cache.put(params, new ResultWithTimeStamp(new Date(), result));
     }
 
+    public void remove(XmlRpcRequestParams key) {
+       cache.remove(key);
+    }
+
+    public URL getId() {
+        return id;
+    }
 
     public static final class ResultWithTimeStamp {
         private final Date dateCreated;
@@ -53,5 +61,9 @@ public class SingleUrlResponseCache {
         public void flagBeingRepalced() {
             this.notBeingRepalced = false;
         }
+    }
+
+    Set<Map.Entry<XmlRpcRequestParams, ResultWithTimeStamp>> getContent(){
+       return cache.entrySet();
     }
 }

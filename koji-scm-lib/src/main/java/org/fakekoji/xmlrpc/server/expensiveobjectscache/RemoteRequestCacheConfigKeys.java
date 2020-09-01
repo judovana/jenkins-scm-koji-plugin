@@ -18,6 +18,13 @@ public class RemoteRequestCacheConfigKeys {
      * time in minutes, after which the cache records are invlaidate, unless thirs method says differently
      */
     public static final String CACHE_REFRESH_RATE_MINUTES = "cacheRefreshRateMinutes";
+
+    /**
+     * N. After acheRefreshRateMinutes 9or per method) x  this number, the item will be removed fromo cache for ever.
+     * The check runs when configRefreshRateMinutes refresh thr config
+     * If set to 0, items remains in cache forever
+     */
+    public static final String CACHE_RELEASE_TIMOUT_MULTIPLIER = "cacheReleaseTimeout";
     /**
      * space separated list of regexex of  urls
      * matching urls are NOT cached

@@ -12,12 +12,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,8 @@ public class RemoteRequestsCache {
     private long configRefreshRateMinutes = CONFIG_DEFAULT;
     static final long CACHE_DEFAULT = 60 * 6;
     private long cacheRefreshRateMinutes = CACHE_DEFAULT;
+    static final long RELEASE_DEFAULT = CACHE_DEFAULT * 5;
+    private long cacheReleaseRate = RELEASE_DEFAULT;
     private Properties propRaw = new Properties();
     private final OriginalObjectProvider originalProvider;
     private List<Pattern> blackListedUrlsList = new ArrayList<>();
@@ -81,6 +85,7 @@ public class RemoteRequestsCache {
                 }
             }
             apply();
+            freeOldItems();
         }
     }
 
@@ -97,9 +102,26 @@ public class RemoteRequestsCache {
         apply();
     }
 
+    private void freeOldItems() {
+        if (cacheReleaseRate > 0) {
+            Date now = new Date();
+            Collection<SingleUrlResponseCache> caches = cache.values();
+            for (SingleUrlResponseCache cache : caches) {
+                Set<Map.Entry<XmlRpcRequestParams, SingleUrlResponseCache.ResultWithTimeStamp>> kvs = cache.getContent();
+                for (Map.Entry<XmlRpcRequestParams, SingleUrlResponseCache.ResultWithTimeStamp> kv : kvs) {
+                    long t = getPerMethodValidnesMilis(kv.getKey().getMethodName(), cache.getId().getHost());
+                    if (now.getTime() - kv.getValue().getDateCreated().getTime() > t * cacheReleaseRate) {
+                        cache.remove(kv.getKey());
+                    }
+                }
+            }
+        }
+    }
+
     private void apply() {
         String configRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES);
         String cacheRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES);
+        String cacheReleaseS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER);
         String blackListedUrlsListS = propRaw.getProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST);
         if (configRefreshRateMinutesS != null) {
             try {
@@ -115,6 +137,15 @@ public class RemoteRequestsCache {
                 cacheRefreshRateMinutes = Long.parseLong(cacheRefreshRateMinutesS);
             } catch (Exception ex) {
                 LOG.warn("Failed to read or apply custom value  of (" + cacheRefreshRateMinutesS + ") for " + RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, ex);
+            }
+        } else {
+            cacheRefreshRateMinutes = CACHE_DEFAULT;
+        }
+        if (cacheReleaseS != null) {
+            try {
+                cacheReleaseRate = Long.parseLong(cacheReleaseS);
+            } catch (Exception ex) {
+                LOG.warn("Failed to read or apply custom value  of (" + cacheReleaseS + ") for " + RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, ex);
             }
         } else {
             cacheRefreshRateMinutes = CACHE_DEFAULT;
@@ -219,14 +250,14 @@ public class RemoteRequestsCache {
         // for method names:
         //See: hudson.plugins.scm.koji.Constants for methods
         //See: XmlRpcRequestParams getMethodName() vaues
-        String rawCustomTimePerMethodPerHost = propRaw.getProperty(methodName+"@"+host);
+        String rawCustomTimePerMethodPerHost = propRaw.getProperty(methodFromUrl(methodName, host));
         long customTimeoutPerMethod;
         if (rawCustomTimePerMethodPerHost != null) {
             try {
                 customTimeoutPerMethod = toUnits(Long.parseLong(rawCustomTimePerMethodPerHost));
                 return customTimeoutPerMethod;
             } catch (Exception ex) {
-                LOG.warn("Failed to read or apply custom method (" + methodName+"@"+host + ") timeout (" + rawCustomTimePerMethodPerHost + ")", ex);
+                LOG.warn("Failed to read or apply custom method (" + methodFromUrl(methodName, host) + ") timeout (" + rawCustomTimePerMethodPerHost + ")", ex);
             }
         }
         String rawCustomTimePerMethod = propRaw.getProperty(methodName);
@@ -239,6 +270,10 @@ public class RemoteRequestsCache {
             }
         }
         return getDefaultValidnesMilis();
+    }
+
+    private String methodFromUrl(String methodName, String host) {
+        return methodName + "@" + host;
     }
 
     private Boolean isValid(final SingleUrlResponseCache.ResultWithTimeStamp temptedResult, String methodName, String host) {
