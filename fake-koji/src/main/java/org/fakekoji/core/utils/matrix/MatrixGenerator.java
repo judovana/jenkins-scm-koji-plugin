@@ -639,7 +639,10 @@ public class MatrixGenerator {
 
     private MultiUrlCell parseExternalJob(final TaskJob job) {
         final List<String> urls = job.getBuildProviders().stream()
-                .map(provider -> provider.getPackageInfoUrl() + '/' + job.getProduct().getPackageName())
+                .map(provider -> provider.getPackageInfoUrl()
+                        .replace("%{PORT}", String.valueOf(settings.getFileDownloadPort()))
+                        .replace("%{PACKAGE_NAME}", job.getProduct().getPackageName())
+                )
                 .collect(Collectors.toList());
         return new MultiUrlCell(job.getName(), urls);
     }
