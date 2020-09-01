@@ -414,7 +414,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "200");
         p.setProperty("m1@anotherurl", "2000000000");
         p.setProperty("m2", "200");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -433,7 +433,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "10");
         p.setProperty("m1@anotherurl", "2000000000");
         p.setProperty("m2", "200");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         Thread.sleep(30);
@@ -468,7 +468,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "200");
         p.setProperty("m1@anotherurl", "2000000000");
         p.setProperty("m2", "10");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         Thread.sleep(30);
@@ -513,7 +513,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(11, r5);
         Assert.assertEquals(4, r6);
         p = new Properties();
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
         cache.setProperties(p);
         Thread.sleep(100);
@@ -757,7 +757,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "20000");
         p.setProperty("m1@anotherurl", "20000");
         p.setProperty("m2", "20000");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "20000");
         cache.setProperties(p);
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -780,7 +780,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "0");
         p.setProperty("m1@anotherurl", "20000");
         p.setProperty("m2", "20000");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "20000");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -794,7 +794,7 @@ public class RemoteRequestsCacheTest {
         p = new Properties();
         p.setProperty("m1", "0");
         p.setProperty("m2", "20000");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "20000");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -809,7 +809,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "20000");
         p.setProperty("m1@anotherurl", "0");
         p.setProperty("m2", "20000");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "20000");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -824,7 +824,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "20000");
         p.setProperty("m1@anotherurl", "20000");
         p.setProperty("m2", "0");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "20000");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -839,7 +839,7 @@ public class RemoteRequestsCacheTest {
         p.setProperty("m1", "20000");
         p.setProperty("m1@anotherurl", "20000");
         p.setProperty("m2", "20000");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "0"); //disabling, it can interfere here
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "0");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
@@ -858,7 +858,7 @@ public class RemoteRequestsCacheTest {
         Properties p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES, "10");
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "100");
-        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, "2");
+        p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "2");
         FileWriter fw = new FileWriter(f);
         p.store(fw, null);
         fw.flush();

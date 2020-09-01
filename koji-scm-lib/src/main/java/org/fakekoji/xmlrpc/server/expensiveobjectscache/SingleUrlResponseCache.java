@@ -54,11 +54,11 @@ public class SingleUrlResponseCache {
             return result;
         }
 
-        public boolean isNotBeingRepalced() {
+        public boolean isNotBeingReplaced() {
             return notBeingRepalced;
         }
 
-        public void flagBeingRepalced() {
+        public void flagBeingReplaced() {
             this.notBeingRepalced = false;
         }
     }

@@ -29,11 +29,10 @@ import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
 
-import org.fakekoji.xmlrpc.server.expensiveobjectscache.OriginalObjectProvider;
+import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestCacheConfigKeys;
 import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestsCache;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -116,12 +115,9 @@ abstract class BuildMatcher {
         throw new RuntimeException("Unknown order");
     }
 
-    private static final RemoteRequestsCache cache = new RemoteRequestsCache(new File(System.getProperty("user.home"), "kojiscmplugin-xmlrpc.caching"), new OriginalObjectProvider() {
-        @Override
-        public Object obtainOriginal(String url, XmlRpcRequestParams params) {
-            return new XmlRpcHelper.XmlRpcExecutioner(url).execute(params);
-        }
-    });
+    private static final RemoteRequestsCache cache = new RemoteRequestsCache(
+            RemoteRequestCacheConfigKeys.DEFAULT_CONFIG_LOCATION,
+            (url, params) -> new XmlRpcHelper.XmlRpcExecutioner(url).execute(params));
 
     protected Object execute(String url, XmlRpcRequestParams params) {
         return cache.obtain(url, params);

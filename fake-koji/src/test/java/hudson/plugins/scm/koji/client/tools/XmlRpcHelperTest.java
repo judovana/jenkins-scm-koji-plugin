@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Objects;
 
-import com.sun.org.apache.xpath.internal.operations.Equals;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
 import org.apache.xmlrpc.XmlRpcRequest;

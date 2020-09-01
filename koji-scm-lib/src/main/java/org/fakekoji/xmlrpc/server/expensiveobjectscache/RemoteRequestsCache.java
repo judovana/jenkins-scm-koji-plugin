@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class RemoteRequestsCache {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteRequestsCache.class);
-    private static final long minutesToMilis = 60l * 1000l;
+    private static final long minutesToMillis = 60l * 1000l;
 
     private final Map<String, SingleUrlResponseCache> cache = Collections.synchronizedMap(new HashMap<>());
     private final File config;
@@ -68,7 +68,7 @@ public class RemoteRequestsCache {
                 try {
                     Thread.sleep(getConfigRefreshRateMilis());
                 } catch (Exception e) {
-                    LOG.warn("Faield to read existing  cache config", e);
+                    LOG.warn("Failed to read existing  cache config", e);
                 }
                 read();
             }
@@ -81,7 +81,7 @@ public class RemoteRequestsCache {
                     propNew.load(inputStream);
                     propRaw = propNew;
                 } catch (IOException e) {
-                    LOG.warn("Faield to read existing  cache config", e);
+                    LOG.warn("Failed to read existing  cache config", e);
                 }
             }
             apply();
@@ -90,7 +90,7 @@ public class RemoteRequestsCache {
     }
 
     protected long toUnits(long time) {
-        return time * minutesToMilis;
+        return time * minutesToMillis;
     }
 
     protected long getConfigRefreshRateMilis() {
@@ -121,7 +121,7 @@ public class RemoteRequestsCache {
     private void apply() {
         String configRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES);
         String cacheRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES);
-        String cacheReleaseS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER);
+        String cacheReleaseS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER);
         String blackListedUrlsListS = propRaw.getProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST);
         if (configRefreshRateMinutesS != null) {
             try {
@@ -145,7 +145,7 @@ public class RemoteRequestsCache {
             try {
                 cacheReleaseRate = Long.parseLong(cacheReleaseS);
             } catch (Exception ex) {
-                LOG.warn("Failed to read or apply custom value  of (" + cacheReleaseS + ") for " + RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMOUT_MULTIPLIER, ex);
+                LOG.warn("Failed to read or apply custom value  of (" + cacheReleaseS + ") for " + RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, ex);
             }
         } else {
             cacheRefreshRateMinutes = CACHE_DEFAULT;
@@ -199,7 +199,7 @@ public class RemoteRequestsCache {
         ensure(u).put(result, params);
     }
 
-    public Object get(final URL u, XmlRpcRequestParams params) {
+    private Object get(final URL u, XmlRpcRequestParams params) {
         if (cacheRefreshRateMinutes == 0) {
             return null;
         }
@@ -222,8 +222,8 @@ public class RemoteRequestsCache {
                 return cachedResult.getResult();
             } else {
                 //if the  objkect is already being replaced, we do not check the time and return it as valid, as we know, it will already be refreshed
-                if (cachedResult.isNotBeingRepalced()) {
-                    cachedResult.flagBeingRepalced();
+                if (cachedResult.isNotBeingReplaced()) {
+                    cachedResult.flagBeingReplaced();
                     return null;
                 } else {
                     return cachedResult.getResult();

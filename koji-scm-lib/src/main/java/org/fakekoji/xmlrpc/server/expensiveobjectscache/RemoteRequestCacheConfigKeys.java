@@ -1,5 +1,7 @@
 package org.fakekoji.xmlrpc.server.expensiveobjectscache;
 
+import java.io.File;
+
 /**
  * properties keys.
  * any other key, s treated as method
@@ -10,6 +12,7 @@ package org.fakekoji.xmlrpc.server.expensiveobjectscache;
  * However method1@host=1 will set method1, if reqest on host named host. to 1. Note, port nor path is not considered here
  */
 public class RemoteRequestCacheConfigKeys {
+    public static final File DEFAULT_CONFIG_LOCATION = new File(System.getProperty("user.home"), "kojiscmplugin-xmlrpc.caching");
     /**
      * Time in minutes after which config is reloaded
      */
@@ -24,7 +27,7 @@ public class RemoteRequestCacheConfigKeys {
      * The check runs when configRefreshRateMinutes refresh thr config
      * If set to 0, items remains in cache forever
      */
-    public static final String CACHE_RELEASE_TIMOUT_MULTIPLIER = "cacheReleaseTimeout";
+    public static final String CACHE_RELEASE_TIMEOUT_MULTIPLIER = "cacheReleaseTimeout";
     /**
      * space separated list of regexex of  urls
      * matching urls are NOT cached
