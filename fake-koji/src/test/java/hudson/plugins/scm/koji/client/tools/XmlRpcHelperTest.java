@@ -25,12 +25,14 @@ package hudson.plugins.scm.koji.client.tools;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Objects;
+
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.XmlRpcHandler;
 import org.apache.xmlrpc.XmlRpcRequest;
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
-import org.apache.xmlrpc.server.XmlRpcNoSuchHandlerException;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 import org.junit.Test;
 import org.apache.xmlrpc.webserver.WebServer;
 import org.junit.Assert;
@@ -76,13 +78,13 @@ public class XmlRpcHelperTest {
                 @Override
                 public Object execute(XmlRpcRequest xrr) throws XmlRpcException {
                     pretendLoad();
-                    if (xrr.getMethodName().equals("sample.sum")) {
+                    if (xrr.getMethodName().equals(SummXmlRpcParam.SUMM_METHOD)) {
                         //testing method
                         return sum(xrr.getParameter(0), xrr.getParameter(1));
                     }
                     return null;
                 }
-                
+
                 private void pretendLoad() {
                     try {
                         Thread.sleep(delay);
@@ -101,6 +103,46 @@ public class XmlRpcHelperTest {
 
     }
 
+
+    private static class SummXmlRpcParam implements XmlRpcRequestParams {
+        private static final String SUMM_METHOD = "sample.sum";
+        ;
+        private final int a1;
+        private final int a2;
+
+        public SummXmlRpcParam(int a1, int a2) {
+            this.a1 = a1;
+            this.a2 = a2;
+        }
+
+        @Override
+        public Object[] toXmlRpcParams() {
+            return new Object[]{a1, a2};
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SummXmlRpcParam that = (SummXmlRpcParam) o;
+            return a1 == that.a1 &&
+                    a2 == that.a2;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(a1, a2);
+        }
+
+        @Override
+        public String getMethodName() {
+            return SUMM_METHOD;
+        }
+
+    }
+
+    private final SummXmlRpcParam defaultSumHelper = new SummXmlRpcParam(3, 5);
+
     @Test
     public void tryConnectionWorks() throws IOException {
         int port;
@@ -112,7 +154,7 @@ public class XmlRpcHelperTest {
         XmlRpcHelper.XmlRpcExecutioner a = new XmlRpcHelper.XmlRpcExecutioner("http://localhost:" + port + "/RPC2/");
         w.start();
         try {
-            result = a.execute("sample.sum", 3, 5);
+            result = a.execute(defaultSumHelper);
         } finally {
             w.stop();
         }
@@ -132,7 +174,7 @@ public class XmlRpcHelperTest {
         a.setTimeout(2000);
         w.start();
         try {
-            result = a.execute("sample.sum", 3, 5);
+            result = a.execute(defaultSumHelper);
         } finally {
             w.stop();
         }
@@ -152,7 +194,7 @@ public class XmlRpcHelperTest {
         a.setTimeout(1000);
         w.start();
         try {
-            result = a.execute("sample.sum", 3, 5);
+            result = a.execute(defaultSumHelper);
         } catch (Exception ex) {
             thrown = ex;
         } finally {
@@ -160,6 +202,7 @@ public class XmlRpcHelperTest {
         }
         Assert.assertNull(result);
         Assert.assertNotNull(thrown);
-
     }
+
+
 }

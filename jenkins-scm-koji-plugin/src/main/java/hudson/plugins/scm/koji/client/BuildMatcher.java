@@ -28,6 +28,9 @@ import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
+
+import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestCacheConfigKeys;
+import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestsCache;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 
 import java.time.LocalDateTime;
@@ -64,7 +67,7 @@ abstract class BuildMatcher {
 
     /**
      * This sorts and filter in following way:
-     * 
+     *
      * exlude list si one item  `2`, max bnuilds is 3
      * 2 1 4 3
      * get sorted
@@ -73,11 +76,8 @@ abstract class BuildMatcher {
      * 1 2 3
      * get filtered
      * 1 3
-     * 
+     *
      * you must filter after limit, otherwise strange builds will go in. The tests are covering this
-     * 
-     * @param bm
-     * @return 
      */
     public static Stream<Build> listBuilds(BuildMatcher bm) {
         return StreamSupport.stream(bm.buildProviders.spliterator(), false)
@@ -91,8 +91,6 @@ abstract class BuildMatcher {
 
     /**
      * From previous javadoc, returns 3
-     * @param bm
-     * @return 
      */
     public static Optional<Build> getLatestOfNewestBuilds(BuildMatcher bm) {
         final Optional<Build> buildOptional = listBuilds(bm).max(BuildMatcher::compare);
@@ -117,8 +115,12 @@ abstract class BuildMatcher {
         throw new RuntimeException("Unknown order");
     }
 
+    private static final RemoteRequestsCache cache = new RemoteRequestsCache(
+            RemoteRequestCacheConfigKeys.DEFAULT_CONFIG_LOCATION,
+            (url, params) -> new XmlRpcHelper.XmlRpcExecutioner(url).execute(params));
+
     protected Object execute(String url, XmlRpcRequestParams params) {
-        return new XmlRpcHelper.XmlRpcExecutioner(url).execute(params);
+        return cache.obtain(url, params);
     }
 
     public static int compareBuildsByCompletionTime(Build b1, Build b2) {
@@ -127,9 +129,18 @@ abstract class BuildMatcher {
     }
 
     private static int compareKojiTime(String s1, String s2, DateTimeFormatter d) {
-        LocalDateTime thisCompletionTime = LocalDateTime.parse(s1, d);
-        LocalDateTime thatCompletionTime = LocalDateTime.parse(s2, d);
+        LocalDateTime thisCompletionTime = LocalDateTime.parse(sanitizeBadKojiDate(s1), d);
+        LocalDateTime thatCompletionTime = LocalDateTime.parse(sanitizeBadKojiDate(s2), d);
         return thatCompletionTime.compareTo(thisCompletionTime);
+    }
+
+
+    static String sanitizeBadKojiDate(String corruptedDate) {
+        if (corruptedDate.contains("+")) {
+            return corruptedDate.replaceAll("\\+[0-9]{1,2}:[0-9]{1,2}$", "");
+        } else {
+            return corruptedDate;
+        }
     }
 
     private static int compareBuildVersions(Build b1, Build b2) {

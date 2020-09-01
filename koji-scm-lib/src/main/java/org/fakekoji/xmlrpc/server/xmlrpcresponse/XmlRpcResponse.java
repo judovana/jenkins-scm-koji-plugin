@@ -15,7 +15,7 @@ public interface XmlRpcResponse <T> {
     Object toObject();
 
     /**
-     * This method converts a simple object or map of objects to POJO. It is reverse toObject method. This method is
+     * This method converts a simple object or map of objects to POJO. It is reverse toXmlRpcParams method. This method is
      * used in xml-rpc client to receive responses
      *
      * @see RPMList
