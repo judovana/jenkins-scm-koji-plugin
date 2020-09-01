@@ -8,24 +8,28 @@ public class BuildProvider {
     private final String label;
     private final String topUrl;
     private final String downloadUrl;
+    private final String packageInfoUrl;
 
     public BuildProvider() {
         id = null;
         label = null;
         topUrl = null;
         downloadUrl = null;
+        packageInfoUrl = null;
     }
 
     public BuildProvider(
             String id,
             String label,
             String topUrl,
-            String downloadUrl
+            String downloadUrl,
+            final String packageInfoUrl
     ) {
         this.id = id;
         this.label = label;
         this.topUrl = topUrl;
         this.downloadUrl = downloadUrl;
+        this.packageInfoUrl = packageInfoUrl;
     }
 
     public String getId() {
@@ -44,6 +48,10 @@ public class BuildProvider {
         return downloadUrl;
     }
 
+    public String getPackageInfoUrl() {
+        return packageInfoUrl;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -52,12 +60,13 @@ public class BuildProvider {
         return Objects.equals(id, that.id) &&
                 Objects.equals(label, that.label) &&
                 Objects.equals(topUrl, that.topUrl) &&
-                Objects.equals(downloadUrl, that.downloadUrl);
+                Objects.equals(downloadUrl, that.downloadUrl) &&
+                Objects.equals(packageInfoUrl, that.packageInfoUrl);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, label, topUrl, downloadUrl);
+        return Objects.hash(id, label, topUrl, downloadUrl, packageInfoUrl);
     }
 
     @Override
@@ -67,6 +76,7 @@ public class BuildProvider {
                 ", label='" + label + '\'' +
                 ", topUrl='" + topUrl + '\'' +
                 ", downloadUrl='" + downloadUrl + '\'' +
+                ", packageInfoUrl='" + packageInfoUrl + '\'' +
                 '}';
     }
 }

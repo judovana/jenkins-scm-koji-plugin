@@ -1,9 +1,18 @@
 package org.fakekoji.core.utils.matrix;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.utils.matrix.cell.CellGroup;
+import org.fakekoji.core.utils.matrix.cell.Cell;
+import org.fakekoji.core.utils.matrix.cell.MultiUrlCell;
+import org.fakekoji.core.utils.matrix.cell.TitleCell;
+import org.fakekoji.core.utils.matrix.cell.UpperCornerCell;
+import org.fakekoji.core.utils.matrix.cell.UrlCell;
+import org.fakekoji.core.utils.matrix.formatter.Formatter;
+import org.fakekoji.core.utils.matrix.formatter.PlainTextFormatter;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.TaskJob;
@@ -18,6 +27,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -262,7 +272,7 @@ public class MatrixGenerator {
         return filledString.toString();
     }
 
-    public String printMatrix(int orientation, boolean dropRows, boolean dropColumns, TableFormatter tf) throws StorageException, ManagementException {
+    public String printMatrix(int orientation, boolean dropRows, boolean dropColumns, Formatter tf) throws StorageException, ManagementException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final String utf8 = StandardCharsets.UTF_8.name();
         List<BuildSpec> bs = getBuilds();
@@ -286,7 +296,7 @@ public class MatrixGenerator {
             final Collection<TestSpec> testSpecs,
             final boolean dropRows,
             final boolean dropColumns,
-            final TableFormatter tf
+            final Formatter tf
     ) throws ManagementException, StorageException {
         printMatrix(p, buildSpecs, testSpecs, dropRows, dropColumns, tf, false);
     }
@@ -297,64 +307,86 @@ public class MatrixGenerator {
             final Collection<TestSpec> testSpecs,
             final boolean dropRows,
             final boolean dropColumns,
-            final TableFormatter tf,
+            final Formatter tf,
             final boolean inverted
     ) throws ManagementException, StorageException {
         int lrow;
         int lcol;
-        if (inverted) {
+        // TODO: to this better
+        // don't print whitespaces when html formatter is used
+        if (!(tf instanceof PlainTextFormatter)) {
+            lrow = 0;
+            lcol = 0;
+        } else if (inverted) {
             lrow = getLongest(testSpecs) + 1;
             lcol = getLongest(buildSpecs) + 1;
         } else {
             lrow = getLongest(testSpecs) + 1;
             lcol = getLongest(buildSpecs) + 1;
         }
-        int total = 0;
-        p.print(tf.tableStart());
-        List<List<List<Leaf>>> matrix = generateMatrix(buildSpecs, testSpecs, dropRows, dropColumns, inverted);
-        for (int i = 0; i < matrix.size(); i++) {
-            List<List<Leaf>> row = matrix.get(i);
-            p.print(tf.rowStart());
-            for (int j = 0; j < row.size(); j++) {
-                int maxForSpan = 1;
-                for (int ii = 0; ii < matrix.size(); ii++) {
-                    List<List<Leaf>> rowForSpan = matrix.get(ii);
-                    maxForSpan = Math.max(rowForSpan.get(j).size(), maxForSpan);
-                }
-                List<Leaf> cel = row.get(j);
-                String cellContent;
-                if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
-                    cellContent = cel.get(0).toString();
-                } else {
-                    cellContent = tf.getContext(cel, maxForSpan, matrix.get(i).get(0).get(0).toString(), matrix.get(0).get(j).get(0).toString());
-                    total += cel.size();
-                }
-                int align = lcol;
-                if (j == 0 || j == row.size() - 1) {
-                    align = lrow;
-                }
-                if (cellContent.isEmpty()) {
-                    if (i == 0 && (j == 0 || j == row.size() - 1)) {
-                        cellContent = tf.initialCell(project);
-                    } else if (i == matrix.size() - 1 && (j == 0 || j == row.size() - 1)) {
-                        cellContent = tf.lastCell(total, buildSpecs.size() * testSpecs.size());
-                    } else {
-                        //filing by soething, as leading spaces can be trimmed on the fly
-                        cellContent = fill(cellContent, align - 1, "-") + " ";
-                    }
-                }
-                if (cel.size() == 1 && cel.get(0) instanceof LeafTitle) {
-                    p.print(tf.cellStart(maxForSpan) + fill(cellContent, align, " ") + tf.cellEnd());
-                } else {
-                    p.print(tf.cellStart() + fill(cellContent, align, " ") + tf.cellEnd());
-                }
-            }
-            p.println(tf.rowEnd());
-        }
-        p.print(tf.tableEnd());
+        List<List<Cell>> matrix = generateMatrix(buildSpecs, testSpecs, dropRows, dropColumns, inverted);
+        p.print(printMatrix(matrix, tf, lrow, lcol, buildSpecs.size() * testSpecs.size()));
     }
 
-    private List<List<List<Leaf>>> generateMatrix(
+    String printMatrix(
+            final List<List<Cell>> matrix,
+            final Formatter formatter,
+            final int lrow,
+            final int lcol,
+            final int total
+    ) {
+        final StringBuilder output = new StringBuilder(formatter.tableStart());
+        int count = 0;
+        final List<Cell> firstRow = matrix.get(0);
+        final UpperCornerCell upperCornerCell = (UpperCornerCell) firstRow.get(0);
+        final String upperCornerCellContent = fill(formatter.upperCorner(upperCornerCell), lrow, " ");
+        final StringBuilder firstRowString = new StringBuilder();
+        for (int colIdx = 1; colIdx < firstRow.size(); colIdx++) {
+            int maxForSpan = 1;
+            for (List<Cell> rowForSpan : matrix) {
+                maxForSpan = Math.max(rowForSpan.get(colIdx).size(), maxForSpan);
+            }
+            final TitleCell titleCell = (TitleCell) firstRow.get(colIdx);
+            firstRowString.append(fill(formatter.edge(titleCell, maxForSpan), lcol, " "));
+        }
+        output.append(formatter.rowStart())
+                .append(upperCornerCellContent)
+                .append(firstRowString)
+                .append(upperCornerCellContent)
+                .append(formatter.rowEnd());
+        final StringBuilder matrixBody = new StringBuilder();
+        for (int rowIdx = 1; rowIdx < matrix.size(); rowIdx++) {
+            List<Cell> row = matrix.get(rowIdx);
+            final TitleCell titleCell = (TitleCell) row.get(0);
+            final String rowTitle = titleCell.getTitle();
+            final String rowEdge = fill(formatter.edge(titleCell, 1), lrow, " ");
+            matrixBody.append(formatter.rowStart()).append(rowEdge);
+            for (int colIdx = 1; colIdx < row.size(); colIdx++) {
+                final TitleCell colTitleCell = (TitleCell) matrix.get(0).get(colIdx);
+                final String colTitle = colTitleCell.getTitle();
+                int maxForSpan = 1;
+                for (List<Cell> rowForSpan : matrix) {
+                    maxForSpan = Math.max(rowForSpan.get(colIdx).size(), maxForSpan);
+                }
+                final CellGroup cellGroup = (CellGroup) row.get(colIdx);
+                matrixBody.append(fill(formatter.cells(cellGroup, maxForSpan, rowTitle, colTitle), lcol, " "));
+                count += cellGroup.size();
+            }
+            matrixBody.append(rowEdge).append(formatter.rowEnd());
+        }
+        final String lowerCornerCell = fill(formatter.lowerCorner(count, total), lrow, " ");
+        return output
+                .append(matrixBody)
+                .append(formatter.rowStart())
+                .append(lowerCornerCell)
+                .append(firstRowString)
+                .append(lowerCornerCell)
+                .append(formatter.rowEnd())
+                .append(formatter.tableEnd())
+                .toString();
+    }
+
+    private List<List<Cell>> generateMatrix(
             final Collection<BuildSpec> buildSpecs,
             final Collection<TestSpec> testSpecs,
             final boolean dropRows,
@@ -371,70 +403,54 @@ public class MatrixGenerator {
             columns = testSpecs;
         }
 
-        //last list is content of single cel
-        List<List<List<Leaf>>> listOfRows = new ArrayList<>(rows.size() + 2/*rows headers are additional first and last column*/);
+        List<List<Cell>> listOfRows = new ArrayList<>(rows.size() + 1);
 
-        List<List<Leaf>> initialRow = new ArrayList<>(columns.size() + 2);
-        initialRow.add(Collections.singletonList(new LeafTitle("")));//initial empty intersection, upper left corner
+        List<Cell> initialRow = new ArrayList<>(columns.size() + 1);
+        final UpperCornerCell upperCornerCell = createUpperLeftCell();
+        initialRow.add(upperCornerCell);
         for (Spec t : columns) {
-            initialRow.add(Collections.singletonList(new LeafTitle(t.toString())));
+            initialRow.add(new TitleCell(t.toString()));
         }
-        initialRow.add(initialRow.get(0));//last empty intersection, upper right corner, reusing
         listOfRows.add(initialRow);
-        final Map<String, Map<String, List<TaskJob>>> map = generateMap(inverted);
+        final Map<String, Map<String, CellGroup>> map = generateMap(inverted);
         for (final Spec row : rows) {
-            final Map<String, List<TaskJob>> rowsMap = map.get(row.toString());
-            final List<List<Leaf>> matrixRow = new ArrayList<>(columns.size() + 2);
-            matrixRow.add(Collections.singletonList(new LeafTitle(row.toString())));
+            final Map<String, CellGroup> rowsMap = map.get(row.toString());
+            final List<Cell> matrixRow = new ArrayList<>(columns.size() + 1);
+            final TitleCell titleCell = new TitleCell(row.toString());
+            matrixRow.add(titleCell);
             if (rowsMap == null) {
                 // empty row
+                if (dropRows) {
+                    continue;
+                }
                 for (int i = 0; i < columns.size(); i++) {
-                    matrixRow.add(Collections.emptyList());
+                    matrixRow.add(new CellGroup());
                 }
             } else {
                 for (final Spec col : columns) {
-                    final List<TaskJob> jobList = rowsMap.get(col.toString());
-                    if (jobList == null) {
+                    final CellGroup cellGroup = rowsMap.get(col.toString());
+                    if (cellGroup == null) {
                         // empty cell
-                        matrixRow.add(Collections.emptyList());
+                        matrixRow.add(new CellGroup());
                         continue;
                     }
-                    final List<Leaf> matrixCell = jobList.stream()
+                    final CellGroup filteredCellGroup = new CellGroup(cellGroup.getCells().stream()
                             .distinct()
-                            .map(job -> new Leaf(job.getName()))
-                            .collect(Collectors.toList());
-                    matrixRow.add(matrixCell);
+                            .collect(Collectors.toList()));
+                    matrixRow.add(filteredCellGroup);
                 }
             }
-            matrixRow.add(matrixRow.get(0));
             listOfRows.add(matrixRow);
-        }
-        listOfRows.add(new ArrayList<>(initialRow));
-
-        if (dropRows) {
-            //not dropping first and last with headers
-            for (int i = 1; i < listOfRows.size() - 1; i++) {
-                List<List<Leaf>> row = listOfRows.get(i);
-                int total = 0;
-                //same skip here, thus skipping the instance of checks
-                for (int j = 1; j < row.size() - 1; j++) {
-                    total = total + row.get(j).size();
-                }
-                if (total == 0) {
-                    listOfRows.remove(i);
-                    i--;
-                }
-            }
         }
 
         if (dropColumns) {
             //not dropping first and last with headers
             //crawling columns
-            for (int j = 1; j < listOfRows.get(0).size() - 1; j++) {
+            for (int j = 1; j < listOfRows.get(0).size(); j++) {
                 int total = 0;
                 //same skip here, thus skipping the instance of checks
                 //crawling rows
-                for (int i = 1; i < listOfRows.size() - 1; i++) {
+                for (int i = 1; i < listOfRows.size(); i++) {
                     total = total + listOfRows.get(i).get(j).size();
                 }
                 if (total == 0) {
@@ -459,11 +475,12 @@ public class MatrixGenerator {
                 })
                 .flatMap(Set::stream)
                 .filter(job -> job instanceof TaskJob)
+                .sorted(Comparator.comparing(Job::getName))
                 .map(job -> (TaskJob) job)
                 .collect(Collectors.toList());
     }
 
-    private Consumer<TaskJob> getJobConsumer(final Map<String, Map<String, List<TaskJob>>> map, final boolean inverted) {
+    private Consumer<TaskJob> getJobConsumer(final Map<String, Map<String, CellGroup>> map, final boolean inverted) {
         return job -> {
             final BuildSpec buildSpec;
             final TestSpec testSpec;
@@ -547,7 +564,7 @@ public class MatrixGenerator {
                             testOnlyBuildJob.getTask(),
                             testFilter
                     );
-                    addJob(map, buildSpec, testBuildSpec, testOnlyBuildJob, inverted);
+                    addJob(map, buildSpec, testBuildSpec, parseExternalJob(testOnlyBuildJob), inverted);
                 } else {
                     buildSpec = new BuildSpec(
                             testJob.getBuildPlatform(),
@@ -561,21 +578,21 @@ public class MatrixGenerator {
             } else {
                 return;
             }
-            addJob(map, buildSpec, testSpec, job, inverted);
+            addJob(map, buildSpec, testSpec, parseJob(job), inverted);
         };
     }
 
-    private Map<String, Map<String, List<TaskJob>>> generateMap(final boolean inverted) throws ManagementException, StorageException {
-        final Map<String, Map<String, List<TaskJob>>> map = new HashMap<>();
+    private Map<String, Map<String, CellGroup>> generateMap(final boolean inverted) throws ManagementException, StorageException {
+        final Map<String, Map<String, CellGroup>> map = new HashMap<>();
         getJobs().forEach(getJobConsumer(map, inverted));
         return map;
     }
 
     private void addJob(
-            final Map<String, Map<String, List<TaskJob>>> map,
+            final Map<String, Map<String, CellGroup>> map,
             final BuildSpec buildSpec,
             final TestSpec testSpec,
-            final TaskJob job,
+            final TitleCell job,
             final boolean inverted
     ) {
         final String rowKey;
@@ -587,56 +604,61 @@ public class MatrixGenerator {
             rowKey = buildSpec.toString();
             colKey = testSpec.toString();
         }
-        final Map<String, List<TaskJob>> rowSpecs;
+        final Map<String, CellGroup> rowSpecs;
         if (map.containsKey(rowKey)) {
             rowSpecs = map.get(rowKey);
         } else {
             rowSpecs = new HashMap<>();
             map.put(rowKey, rowSpecs);
         }
-        final List<TaskJob> jobList;
+        final CellGroup cellGroup;
         if (rowSpecs.containsKey(colKey)) {
-            jobList = rowSpecs.get(colKey);
+            cellGroup = rowSpecs.get(colKey);
         } else {
-            jobList = new ArrayList<>();
-            rowSpecs.put(colKey, jobList);
+            cellGroup = new CellGroup();
+            rowSpecs.put(colKey, cellGroup);
         }
-        jobList.add(job);
+        cellGroup.add(job);
     }
 
-    private static void deleteClumn(List<List<List<Leaf>>> listOfRows, int j) {
-        for (List<List<Leaf>> row : listOfRows) {
+    private UpperCornerCell createUpperLeftCell() {
+        if (project == null || project.length == 0) {
+            return new UpperCornerCell(Collections.singletonList(new UrlCell("all projects", settings.getJenkinsUrl())));
+        }
+        final String projectUrlPrefix;
+        try {
+            projectUrlPrefix = settings.getJenkins().toURI().resolve("view/~").toString();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        final String projectUrlSuffix = "#projectstatus";
+        return new UpperCornerCell(Arrays.stream(project)
+                .map(projectName -> new UrlCell(projectName, projectUrlPrefix + projectName + projectUrlSuffix))
+                .collect(Collectors.toList()));
+    }
+
+    private MultiUrlCell parseExternalJob(final TaskJob job) {
+        final List<String> urls = job.getBuildProviders().stream()
+                .map(provider -> provider.getPackageInfoUrl()
+                        .replace("%{PORT}", String.valueOf(settings.getFileDownloadPort()))
+                        .replace("%{PACKAGE_NAME}", job.getProduct().getPackageName())
+                )
+                .collect(Collectors.toList());
+        return new MultiUrlCell(job.getName(), urls);
+    }
+
+    private UrlCell parseJob(final TaskJob job) {
+        final String jobName = job.getName();
+        try {
+            return new UrlCell(jobName, settings.getJenkins().toURI().resolve("job/" + jobName).toString());
+        } catch (URISyntaxException e) {
+            return new UrlCell(jobName);
+        }
+    }
+
+    private static void deleteClumn(List<List<Cell>> listOfRows, int j) {
+        for (List<Cell> row : listOfRows) {
             row.remove(j);
-        }
-    }
-
-    public static class Leaf {
-
-        //TODO: replace by soem structure or other way from which
-        //will be able to generate jenkins url or the job itself
-        private final String fullPath;
-
-        public Leaf(String fullPath) {
-            this.fullPath = fullPath;
-        }
-
-        @Override
-        public String toString() {
-            return fullPath;
-        }
-    }
-
-    public static class LeafTitle extends Leaf {
-        final String simpleTitle;
-
-        LeafTitle(String title) {
-            super(null);
-            simpleTitle = title;
-        }
-
-        @Override
-        public String toString() {
-            return simpleTitle;
         }
     }
 }

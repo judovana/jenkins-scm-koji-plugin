@@ -113,7 +113,7 @@ public class GetterAPI implements EndpointGroup {
                 final Optional<String> includeParam = extractParamValue(paramsMap, "include");
                 final Optional<String> projectParam = extractParamValue(paramsMap, "project");
 
-                final String url = urlParam.orElse(AccessibleSettings.master.baseUrl + ":" + settings.getJenkinsPort() + "/job/");
+                final String url = urlParam.orElse(settings.getJenkinsUrl() + "/job/");
 
                 List<String> onJenkins = new ArrayList<>();
                 List<String> testProjects = new ArrayList<>();

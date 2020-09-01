@@ -7,8 +7,12 @@ import io.javalin.plugin.json.JavalinJackson;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
-import org.fakekoji.core.utils.matrix.TableFormatter;
+import org.fakekoji.core.utils.matrix.SummaryReportRunner;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
+import org.fakekoji.core.utils.matrix.formatter.HtmlFormatter;
+import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFillingFormatter;
+import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFormatter;
+import org.fakekoji.core.utils.matrix.formatter.PlainTextFormatter;
 import org.fakekoji.jobmanager.JenkinsUpdateVmTemplateBuilder;
 import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.JobUpdater;
@@ -314,9 +318,9 @@ public class OToolService {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
                     if ("htmlspan".equals(format)) {
-                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.SpanningHtmlTableFormatter(names, projects)));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlSpanningFormatter(names, projects)));
                     } else if ("html".equals(format)) {
-                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.HtmlTableFormatter(names, projects)));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlFormatter(names, projects)));
                     } else if ("fill".equals(format)) {
                         String vr = context.queryParam("vr");
                         String time = context.queryParam("time");
@@ -325,12 +329,13 @@ public class OToolService {
                         if (vr == null || vr.isEmpty()) {
                             context.status(400).result("nvr=<nvr> necessary");
                         } else {
+                            final SummaryReportRunner summaryReportRunner = new SummaryReportRunner(settings, vr, time, chartDir, projects);
                             context.status(OK).result(m.printMatrix(
                                     orieantaion, dropRows, dropColumns,
-                                    new TableFormatter.SpanningFillingHtmlTableFormatter(vr, settings, time, alsoReport, chartDir, names, projects)));
+                                    new HtmlSpanningFillingFormatter(projects, names, vr, alsoReport, summaryReportRunner)));
                         }
                     } else {
-                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new TableFormatter.PlainTextTableFormatter()));
+                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new PlainTextFormatter()));
                     }
                 }));
 

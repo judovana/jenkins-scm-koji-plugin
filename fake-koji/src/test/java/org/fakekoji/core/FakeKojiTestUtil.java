@@ -182,19 +182,7 @@ public class FakeKojiTestUtil {
     public static JavaServer createDefaultFakeKojiServerWithData(File tmpDir) throws Exception {
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(tmpDir);
         generateFakeKojiData(folderHolder.buildsRoot, folderHolder.reposRoot);
-        final AccessibleSettings settings = new AccessibleSettings(
-                folderHolder.buildsRoot,
-                folderHolder.reposRoot,
-                folderHolder.configsRoot,
-                folderHolder.jenkinsJobsRoot,
-                folderHolder.jenkinsJobArchiveRoot,
-                folderHolder.scriptsRoot,
-                9848,
-                9849,
-                9843,
-                8080,
-                0
-        );
+        final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         return new JavaServer(settings);
     }
 
