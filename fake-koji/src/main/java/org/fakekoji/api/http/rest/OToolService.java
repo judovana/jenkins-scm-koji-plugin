@@ -365,7 +365,11 @@ public class OToolService {
             app.delete(JDK_TEST_PROJECT, wrapper.wrap(context -> {
                 final String id = context.pathParam(ID);
                 final JDKTestProject deleted = jdkTestProjectManager.delete(id);
-                context.status(OK).json(jenkinsJobUpdater.update(deleted, null));
+                final ManagementResult<JDKTestProject> result = new ManagementResult<>(
+                        deleted,
+                        jenkinsJobUpdater.update(deleted, null)
+                );
+                context.status(OK).json(result);
             }));
             app.get(BUILD_PROVIDERS, wrapper.wrap(context -> context.json(buildProviderManager.readAll())));
             app.get(JDK_VERSIONS, wrapper.wrap(context -> context.json(jdkVersionManager.readAll())));
