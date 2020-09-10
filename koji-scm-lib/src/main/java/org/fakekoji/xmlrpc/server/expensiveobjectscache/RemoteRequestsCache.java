@@ -150,7 +150,7 @@ public class RemoteRequestsCache {
                 LOG.warn("Failed to read or apply custom value  of (" + cacheReleaseS + ") for " + RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, ex);
             }
         } else {
-            cacheRefreshRateMinutes = CACHE_DEFAULT;
+            cacheReleaseRate  = CACHE_DEFAULT;
         }
         if (blackListedUrlsListS != null && blackListedUrlsListS.trim().length() > 0) {
             try {
