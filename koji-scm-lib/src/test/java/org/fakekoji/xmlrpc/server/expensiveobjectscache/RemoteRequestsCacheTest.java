@@ -896,5 +896,67 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(4, l2.getR()); //so both get new value, compare with lazyRefreshWorks
     }
 
+    @Test
+    public void disapearedConfgDisablesCache() throws InterruptedException, IOException {
+        File f = File.createTempFile("cache", ".config");
+        DummyOriginalObjectProvider provider = new DummyOriginalObjectProvider();
+        AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(f, provider) {
+            @Override
+            protected long toUnits(long time) {
+                return time;
+            }
+        };
+        long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(1, r1);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(1, r1);
+        f.delete();
+        cache.setProperties(new Properties());
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(2, r1);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(3, r1);
+        f.createNewFile();
+        cache.setProperties(new Properties());
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(3, r1);
+        ;
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(3, r1);
+        ;
+    }
+
+    @Test
+    public void nonExistingConigDisablesCache() throws InterruptedException, IOException {
+        File f = File.createTempFile("cache", ".config");
+        f.delete();
+        DummyOriginalObjectProvider provider = new DummyOriginalObjectProvider();
+        AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(f, provider) {
+            @Override
+            protected long toUnits(long time) {
+                return time;
+            }
+        };
+        long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(1, r1);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(2, r1);
+        f.createNewFile();
+        cache.setProperties(new Properties());
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(2, r1);
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(2, r1);
+        f.delete();
+        cache.setProperties(new Properties());
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(3, r1);
+        ;
+        r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
+        Assert.assertEquals(4, r1);
+        ;
+    }
+
+
 }
 

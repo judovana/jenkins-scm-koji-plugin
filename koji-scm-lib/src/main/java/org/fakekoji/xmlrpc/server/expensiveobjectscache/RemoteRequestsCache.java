@@ -141,7 +141,11 @@ public class RemoteRequestsCache {
                 LOG.warn("Failed to read or apply custom value  of (" + cacheRefreshRateMinutesS + ") for " + RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, ex);
             }
         } else {
-            cacheRefreshRateMinutes = CACHE_DEFAULT;
+            if (config!=null && !config.exists()) {
+                cacheRefreshRateMinutes = 0;
+            } else {
+                cacheRefreshRateMinutes = CACHE_DEFAULT;
+            }
         }
         if (cacheReleaseS != null) {
             try {

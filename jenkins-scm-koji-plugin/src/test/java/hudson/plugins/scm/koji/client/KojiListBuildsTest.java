@@ -4,6 +4,7 @@ import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.NotProcessedNvrPredicate;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
+import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestCacheConfigKeys;
 import org.junit.BeforeClass;
 
 import java.io.BufferedWriter;
@@ -317,6 +318,13 @@ public class KojiListBuildsTest {
 
     @BeforeClass
     public static void initProcessed() throws IOException {
+        //this class shold be the only test really pooling the xmlrpc
+        //thus we are creating dummy cache file, to enable at least default caching
+        //it is speeding up the run by 10 minutes on rhnet
+        File cacheConfig = new File(RemoteRequestCacheConfigKeys.DEFAULT_CONFIG_LOCATION.getAbsolutePath());
+        if (!cacheConfig.exists()) {
+            cacheConfig.createNewFile();
+        }
         f1 = File.createTempFile("scm-koji", "fedora");
         e71 = File.createTempFile("scm-koji", "rhel7");
         e61 = File.createTempFile("scm-koji", "rhel6");
