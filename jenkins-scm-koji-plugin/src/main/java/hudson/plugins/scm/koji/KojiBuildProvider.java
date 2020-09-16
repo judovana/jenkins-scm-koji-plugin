@@ -21,7 +21,7 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
 
     @DataBoundConstructor
     public KojiBuildProvider(String topUrl, String downloadUrl) {
-        buildProvider = new BuildProvider(replaceXPort(topUrl), replaceDPORT(downloadUrl));
+        buildProvider = new BuildProvider(topUrl, downloadUrl);
     }
 
     @SuppressWarnings("unchecked")
@@ -42,19 +42,6 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
         return buildProvider.getDownloadUrl();
     }
 
-    private static String replaceDPORT(String url) {
-        return url.replace(
-                ":" + JavaServerConstants.dPortAxiom,
-                ":" + JavaServerConstants.DFAULT_DWNLD_PORT
-        );
-    }
-
-    private static String replaceXPort(String url) {
-        return url.replace(
-                ":" + JavaServerConstants.xPortAxiom,
-                ":" + JavaServerConstants.DFAULT_RP2C_PORT
-        );
-    }
 
     @Extension
     public static final class KojiBuildProviderDescriptor extends Descriptor<KojiBuildProvider> {
@@ -71,7 +58,7 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
 
         FormValidation doCheckTopUrl(@QueryParameter String value) {
             try {
-                new URL(replaceXPort(value));
+                new URL(value);
             } catch (MalformedURLException e) {
                 return FormValidation.error(URL_INVALID);
             }
@@ -80,7 +67,7 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
 
         FormValidation doCheckDownloadUrl(@QueryParameter String value) {
             try {
-                final URL url = new URL(replaceDPORT(value));
+                final URL url = new URL(value);
                 if (!url.getProtocol().equals(SUPPORTED_PROTOCOL.toLowerCase())) {
                     return FormValidation.error(PROTOCOL_NOT_SUPPORTED);
                 }

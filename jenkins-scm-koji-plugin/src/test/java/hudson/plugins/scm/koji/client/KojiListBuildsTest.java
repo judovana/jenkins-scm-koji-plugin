@@ -49,15 +49,15 @@ public class KojiListBuildsTest {
 
     static KojiBuildProvider createHydraKojiBuildProvider() {
         return new KojiBuildProvider(
-                "http://hydra.brq.redhat.com:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://hydra.brq.redhat.com:" + JavaServerConstants.dPortAxiom
+                "http://hydra.brq.redhat.com:" + JavaServerConstants.DFAULT_RP2C_PORT + "/RPC2",
+                "http://hydra.brq.redhat.com:" + JavaServerConstants.DFAULT_DWNLD_PORT
         );
     }
 
     static KojiBuildProvider createLocalhostKojiBuildProvider() {
         return new KojiBuildProvider(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom
+                "http://localhost:" + JavaServerConstants.DFAULT_RP2C_PORT+ "/RPC2",
+                "http://localhost:" + JavaServerConstants.DFAULT_DWNLD_PORT
         );
     }
 

@@ -215,8 +215,8 @@ public class OToolJenkinsTest {
 
     private KojiBuildProvider createLocalhostBuildProvider() {
         return new KojiBuildProvider(
-                "http://localhost:" + JavaServerConstants.xPortAxiom + "/RPC2",
-                "http://localhost:" + JavaServerConstants.dPortAxiom
+                "http://localhost:" + JavaServerConstants.DFAULT_RP2C_PORT + "/RPC2",
+                "http://localhost:" + JavaServerConstants.DFAULT_DWNLD_PORT
         );
     }
 }
