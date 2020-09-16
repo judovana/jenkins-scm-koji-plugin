@@ -59,7 +59,7 @@ public class XmlRpcKojiService {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private WebServer webServer;
-    AccessibleSettings settings;
+    private final AccessibleSettings settings;
 
     public XmlRpcKojiService(AccessibleSettings settings) {
         this.settings = settings;

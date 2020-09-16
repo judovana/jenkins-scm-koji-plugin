@@ -29,6 +29,7 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -1959,10 +1960,10 @@ public class DataGenerator {
                 folderHolder.jenkinsJobArchiveRoot,
                 folderHolder.scriptsRoot,
                 new URL(JENKINS_URL),
-                9849,
-                9826,
-                8080,
-                8888
+                JavaServerConstants.DFAULT_RP2C_PORT,
+                JavaServerConstants.DFAULT_DWNLD_PORT,
+                JavaServerConstants.DFAULT_SCP_PORT,
+                JavaServerConstants.DFAULT_WEBAP_PORT
         );
     }
 }

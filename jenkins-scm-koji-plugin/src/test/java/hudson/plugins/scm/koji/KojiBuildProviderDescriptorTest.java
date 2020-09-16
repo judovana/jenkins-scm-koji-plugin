@@ -24,6 +24,8 @@
 package hudson.plugins.scm.koji;
 
 import hudson.util.FormValidation;
+
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -57,7 +59,7 @@ public class KojiBuildProviderDescriptorTest {
     @Test
     public void advacnedValidValue() {
         final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
-        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz:DPORT/bbb");
+        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz:"+ JavaServerConstants.DFAULT_DWNLD_PORT +"/bbb");
         FormValidation r2 = descriptor.doCheckTopUrl("http:///bbb.com:XPORT");
         assertEquals(FormValidation.Kind.OK, r1.kind);
         assertEquals(FormValidation.Kind.OK, r2.kind);
@@ -66,8 +68,8 @@ public class KojiBuildProviderDescriptorTest {
     @Test
     public void advacnedValidValues() {
         final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
-        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz http://aaa.cz:DPORT");
-        FormValidation r2 = descriptor.doCheckTopUrl("http://aaa.cz http:///bbb.com:XPORT/aaa");
+        FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz http://aaa.cz:"+JavaServerConstants.DFAULT_DWNLD_PORT);
+        FormValidation r2 = descriptor.doCheckTopUrl("http://aaa.cz http:///bbb.com:"+JavaServerConstants.DFAULT_RP2C_PORT+"/aaa");
         assertEquals(FormValidation.Kind.OK, r1.kind);
         assertEquals(FormValidation.Kind.OK, r2.kind);
     }

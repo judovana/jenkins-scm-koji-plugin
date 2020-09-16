@@ -29,6 +29,7 @@ import hudson.plugins.scm.koji.model.RPM;
 import org.apache.xmlrpc.XmlRpcException;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.server.JavaServer;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetPackageId;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListBuilds;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
@@ -120,6 +121,6 @@ public class JavaTestClient {
     }
 
     protected static Object execute(XmlRpcRequestParams params) {
-        return new XmlRpcHelper.XmlRpcExecutioner(AccessibleSettings.master.baseUrl+":" + JavaServer.DEFAULT_XML_RPC_PORT + "/RPC2").execute(params);
+        return new XmlRpcHelper.XmlRpcExecutioner(AccessibleSettings.master.baseUrl+":" + JavaServerConstants.DFAULT_RP2C_PORT + "/RPC2").execute(params);
     }
 }

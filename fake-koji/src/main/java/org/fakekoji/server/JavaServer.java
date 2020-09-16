@@ -55,7 +55,6 @@ public class JavaServer {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
-    public static final int DEFAULT_XML_RPC_PORT = 9848;
     public static final int DEFAULT_WEBAPP_PORT = 80;
 
     private final XmlRpcKojiService xmlRpcKojiService;
@@ -122,7 +121,7 @@ public class JavaServer {
         final int fileDownloadPort;
         final int webappPort;
 
-        xmlRpcPort = getPort(props, Property.XML_RPC_PORT, DEFAULT_XML_RPC_PORT);
+        xmlRpcPort = getPort(props, Property.XML_RPC_PORT, JavaServerConstants.DFAULT_RP2C_PORT);
         fileDownloadPort = getPort(props, Property.FILE_DOWNLOAD_PORT, xmlRpcPort + 1);
         sshPort = getPort(props, Property.SSH_PORT, xmlRpcPort - 26);
         webappPort = getPort(props, Property.WEBAPP_PORT, DEFAULT_WEBAPP_PORT);
