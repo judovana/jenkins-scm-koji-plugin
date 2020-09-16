@@ -279,7 +279,7 @@ public class RemoteRequestsCache {
     }
 
     private String methodFromUrl(String methodName, String host) {
-        return methodName + "@" + host;
+        return methodName + RemoteRequestCacheConfigKeys.METHOD_AT_DELIMITER + host;
     }
 
     @SuppressFBWarnings(value = "NP_BOOLEAN_RETURN_NULL", justification = "private single usage method")

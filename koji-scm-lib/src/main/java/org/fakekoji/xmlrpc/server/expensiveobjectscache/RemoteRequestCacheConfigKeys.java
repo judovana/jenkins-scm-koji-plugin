@@ -1,6 +1,13 @@
 package org.fakekoji.xmlrpc.server.expensiveobjectscache;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+
+import hudson.plugins.scm.koji.Constants;
 
 /**
  * properties keys.
@@ -37,5 +44,74 @@ public class RemoteRequestCacheConfigKeys {
      * Cache is cleared any momnet, clean=true occure in config file
      */
     public static final String CACHE_CLEAN_COMMAND = "clean";
+    public static final String METHOD_AT_DELIMITER = "@";
+    public static final String NEW_API_MACHINE = "hydra";
+    public static final String NEW_API_DOMAIN = "brq.redhat.com";
+    public static final String NEW_API_SERVER = NEW_API_MACHINE + "." + NEW_API_DOMAIN;
+
+    public static void saveDefault() throws IOException {
+        saveExemplar(DEFAULT_CONFIG_LOCATION);
+    }
+
+    public static void saveExemplar(File f) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(f)) {
+            printExemplar(fos);
+        }
+
+    }
+
+    public static void printExemplar(OutputStream os) throws IOException {
+        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, "utf-8"))) {
+            bw.write("# " + DEFAULT_CONFIG_LOCATION.getAbsolutePath() + "\n"
+                    + "# copypasted defaults 10 minutes and 6 hours\n"
+                    + CONFIG_REFRESH_RATE_MINUTES + "=10\n"
+                    + CACHE_REFRESH_RATE_MINUTES + "cacheRefreshRateMinutes=0\n"
+                    + "# hopefully there is a lot of ram on hydra\n"
+                    + CACHE_RELEASE_TIMEOUT_MULTIPLIER + "=10\n"
+                    + "\n"
+                    + "# although  hydra is quick enough, it keeps reading FS, lower this  rate at least a bit\n"
+                    + "#" + BLACK_LISTED_URLS_LIST + "=.*" + NEW_API_MACHINE + ".*\n"
+                    + "\n"
+                    + "#### individual methods ####\n"
+                    + "\n"
+                    + "# list builds is listing new builds on koji/brew/old api hydra; thus is refrehed  every 20 minutes\n"
+                    + Constants.listBuilds + "=20\n"
+                    + "\n"
+                    + "# retaging is touching us very few but unluckily is maybe most used method, and shoudl be cached as much as possible\n"
+                    + "# set to 24h now, but would be nice to have it longer, as we are testing gating.*, candidate.* and moreover all\n"
+                    + "# if the build is disbaled, it is usually disabled much later after testing\n"
+                    + "# on hydra, this method caching should be quite small,  as we use tag to swap from should be built -> built state on old api\n"
+                    + Constants.listTags + "=1440\n"
+                    + Constants.listTags + METHOD_AT_DELIMITER + NEW_API_SERVER + "=20\n"
+                    + "\n"
+                    + "# listrpms and listarchives is listing RPMS/archives of given build.\n"
+                    + "# although on koji/brew this is immutable, it is not so it on hydra\n"
+                    + "# on hydra, those two method caching should be disabled, as we are uploading files in runtime, and can happen, that not fully uplaoded build is picked up\n"
+                    + "# note, this method should be invoked oly for final, selevted NVR, thus should notbe performance blocker\n"
+                    + "# note, 99% requests to hydra is via powerfull single qestion new api: getBuildList and getBuildDetail\n"
+                    + Constants.listRPMs + "=1440\n"
+                    + Constants.listArchives + "=1440\n"
+                    + Constants.listRPMs + METHOD_AT_DELIMITER + NEW_API_SERVER + "=0\n"
+                    + Constants.listArchives + METHOD_AT_DELIMITER + NEW_API_SERVER + "=0\n"
+                    + "\n"
+                    + "# this is immutable onbrew/koji, refreshing once per week\n"
+                    + "# I'm not sure how it is on hydra, where it is hash of File instance. \n"
+                    + Constants.getPackageID + "=10080\n"
+                    + Constants.getPackageID + METHOD_AT_DELIMITER + NEW_API_SERVER + "=1440\n"
+                    + "\n"
+                    + "# new api on hydra\n"
+                    + Constants.getBuildList + "=20\n"
+                    + Constants.getBuildDetail + "=1440\n"
+                    + "");
+        }
+    }
+
+    public static void main(String... args) throws IOException {
+        if (args.length == 0) {
+            printExemplar(System.out);
+        } else {
+            saveDefault();
+        }
+    }
 
 }
