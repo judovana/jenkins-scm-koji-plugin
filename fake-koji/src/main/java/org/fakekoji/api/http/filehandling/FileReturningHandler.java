@@ -57,6 +57,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
  */
 public class FileReturningHandler implements HttpHandler {
 
+    public static final boolean wasteIoOnLastModifiedByDirContent = false;
     private final File root;
 
     public FileReturningHandler(File dbFileRoot) {
@@ -243,7 +244,10 @@ public class FileReturningHandler implements HttpHandler {
 
         StringBuilder sb1 = generateHtmlFromList(requestedFile, fileInfoList, new ComparatorByVersion());
         StringBuilder sb2 = generateHtmlFromList(requestedFile, fileInfoList, new ComparatorByLastModified());
-        StringBuilder sb3 = generateHtmlFromList(requestedFile, fileInfoList, new ComparatorByLastModifiedDirContent());
+        StringBuilder sb3 = new StringBuilder("");
+        if (wasteIoOnLastModifiedByDirContent) {
+            sb3 = generateHtmlFromList(requestedFile, fileInfoList, new ComparatorByLastModifiedDirContent());
+        }
         String close = "  </body>\n</html>\n";
         String result = init + sb1.toString() + "<hr/>" + sb2.toString() + "<hr/>" + sb3.toString() + close;
         long size = result.length(); //yahnot perfect, ets assuemno one will use this on chinese chars
