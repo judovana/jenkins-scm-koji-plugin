@@ -83,7 +83,7 @@ const TaskRow: React.FC<TaskRowProps> = props => {
                 {taskVariants.map((taskVariant, index) =>
                     <VariantRow
                         config={taskVariant}
-                        key={treeID + config.id}
+                        key={treeID + config.id + index}
                         treeID={treeID + config.id}
                         onDelete={() => taskVariants.splice(index, 1)}
                         projectType={projectType}

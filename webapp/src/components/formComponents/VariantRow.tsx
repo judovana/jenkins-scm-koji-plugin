@@ -36,9 +36,13 @@ const VariantRow: React.FC<VariantRowProps> = props => {
             type === "BUILD" &&
             config.platforms.map(platform => platform.id)
 
+        const sortedVariants = Object.entries(config.map)
+            .slice() // .sort sorts in place so we need to make a copy to stay pure
+            .sort(([k1], [k2]) => k1.localeCompare(k2))
+
         const cell = (
             <div style={{ display: "flex", flexDirection: "row" }}>
-                {Object.entries(config.map).map(([id, value]) => {
+                {sortedVariants.map(([id, value]) => {
                     const taskVariant = taskVariantsMap[id]
                     return (
                         <Select

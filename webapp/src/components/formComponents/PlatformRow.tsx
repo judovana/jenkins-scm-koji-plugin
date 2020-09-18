@@ -119,7 +119,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                     (variantConfigs && variantConfigs.map((config, index) =>
                         <VariantRow
                             config={config}
-                            key={treeID + id}
+                            key={treeID + id + index}
                             onDelete={() => onVariantDelete(index)}
                             projectType={projectType}
                             treeID={treeID + id}
