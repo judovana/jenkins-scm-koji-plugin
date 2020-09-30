@@ -228,17 +228,27 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
         KojiListBuilds worker = new KojiListBuilds(kojiBuildProviders, kojiXmlRpcApi, createNotProcessedNvrPredicate(project), maxPreviousBuilds);
         final Build build;
-        if (!DESCRIPTOR.getKojiSCMConfig()) {
-            // when requiresWorkspaceForPolling is set to false (based on descriptor), worksapce may be null.
-            // but not always.  So If it os not null, the path to it is passed on.
-            // however, its usage may be invalid. See KojiListBuilds.invole comemnt about BUILD_XML
-            File wFile = null;
-            if (workspace != null) {
-                wFile = new File(workspace.toURI().getPath());
+        if (!DESCRIPTOR.getKojiSCMConfig_requireWorkspace()) {
+            if (skipBuildingIfDesired(project)){
+                build = null;
+                log("Skipping pooling because the job is running.");
+            } else {
+                // when requiresWorkspaceForPolling is set to false (based on descriptor), worksapce may be null.
+                // but not always.  So If it os not null, the path to it is passed on.
+                // however, its usage may be invalid. See KojiListBuilds.invole comemnt about BUILD_XML
+                File wFile = null;
+                if (workspace != null) {
+                    wFile = new File(workspace.toURI().getPath());
+                }
+                build = worker.invoke(wFile, null);
             }
-            build = worker.invoke(wFile, null);
         } else {
-            build = workspace.act(worker);
+            if (skipBuildingIfDesired(project)){
+                build = null;
+                log("Skipping pooling because the job is running. You have both `require workspace` and `skip poling on running', that is nonsense");
+            } else {
+                build = workspace.act(worker);
+            }
         }
 
         if (build != null) {
@@ -249,6 +259,14 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         // if we are still here - no remote changes:
         log("No remote changes");
         return new PollingResult(baseline, null, PollingResult.Change.NONE);
+    }
+
+    private boolean skipBuildingIfDesired(Job<?, ?> project){
+        if (DESCRIPTOR.getKojiSCMConfig_skipPoolingIfJobRuns()){
+            return project.isBuilding();
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -276,7 +294,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
     public boolean requiresWorkspaceForPolling() {
         // this is merchandize - if it is true, then the jobs can not run in parallel (se "Execute concurrent builds if necessary" in project settings)
         // when it is false, projects can run inparalel, but pooling operation do not have workspace
-        return DESCRIPTOR.getKojiSCMConfig();
+        return DESCRIPTOR.getKojiSCMConfig_requireWorkspace();
     }
 
     private Predicate<String> createNotProcessedNvrPredicate(Job<?, ?> job) throws IOException {

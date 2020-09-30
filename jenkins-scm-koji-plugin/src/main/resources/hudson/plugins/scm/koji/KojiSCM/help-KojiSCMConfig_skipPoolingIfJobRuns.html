@@ -1,0 +1,17 @@
+<div>
+    <h3>If checked, the pooling is skipped (returning no chnages found)  if jobs currently runs</h3>
+    <ul>
+        <li>By default it is not selected</li>
+        <li>It do not have much sense to have enabled both "require worksapce" and this</li>
+        <li>it of course kill the can run in parallel feature</li>
+        <li>General usecase is:</li>
+        <ul>
+            <li>do not enable run in parallel with this feature<li>
+            <li>all the troubels are with archiving of build.xml, it match with build nvr and usage of archved build.xml to rerun the nvr<li>
+            <li>with worksapce on, soemtimes the poling got stuck, waiting for wrkscpae for hours</li>
+            <li>this is avoiding this problem, but may have other consequences</li>
+
+        </ul>
+        <li>this option is not exactly best tested, as is new</li>
+    </ul>
+</div>

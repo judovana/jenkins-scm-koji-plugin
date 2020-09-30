@@ -120,7 +120,7 @@ abstract class BuildMatcher {
             (url, params) -> new XmlRpcHelper.XmlRpcExecutioner(url).execute(params));
 
     protected Object execute(String url, XmlRpcRequestParams params) {
-        return cache.obtain(url, params);
+            return cache.obtain(url, params);
     }
 
     public static int compareBuildsByCompletionTime(Build b1, Build b2) {
