@@ -13,7 +13,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,9 +32,8 @@ public class NewApiTest {
 
     @BeforeClass
     public static void setup() throws IOException {
-        final File builds = temporaryFolder.newFolder("builds");
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
-        DataGenerator.initBuildsRoot(builds);
+        DataGenerator.initBuildsRoot(folderHolder.buildsRoot);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
 
         kojiDB = new FakeKojiDB(settings);
