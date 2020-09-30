@@ -50,7 +50,7 @@ public class BuildHelper {
     private final File buildsRoot;
     private final GetBuildList params;
     private final OToolParser oToolParser;
-    private final List<TaskVariant> taskVariants;
+    private final List<TaskVariant> buildVariants;
     private final Set<String> packageNames;
     private final TaskVariant buildPlatformVariant;
     private final BuildProvider buildProvider;
@@ -62,12 +62,12 @@ public class BuildHelper {
             final File buildsRoot,
             final GetBuildList params,
             final OToolParser oToolParser,
-            final List<TaskVariant> taskVariants,
+            final List<TaskVariant> buildVariants,
             final Set<String> packageNames,
             final TaskVariant buildPlatformVariant,
             final BuildProvider buildProvider
     ) {
-        this.taskVariants = taskVariants;
+        this.buildVariants = buildVariants;
         this.packageNames = packageNames;
         this.oToolParser = oToolParser;
         this.params = params;
@@ -248,7 +248,7 @@ public class BuildHelper {
 
     private Map<TaskVariant, String> getBuildVariantMap() {
         final Map<TaskVariant, String> buildVariantMap = new HashMap<>();
-        final List<TaskVariant> variants = new ArrayList<>(taskVariants);
+        final List<TaskVariant> variants = new ArrayList<>(buildVariants);
         variants.add(buildPlatformVariant);
         for (final TaskVariant taskVariant : variants) {
             final Optional<String> value = getBuildVariantValue(taskVariant.getId());
