@@ -24,7 +24,7 @@ import static org.fakekoji.DataGenerator.RELEASE_1;
 import static org.fakekoji.DataGenerator.RELEASE_2;
 import static org.fakekoji.DataGenerator.SUFFIX;
 
-public class NewApiTests {
+public class NewApiTest {
 
     @ClassRule
     public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
