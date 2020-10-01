@@ -13,7 +13,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,7 +23,7 @@ import static org.fakekoji.DataGenerator.RELEASE_1;
 import static org.fakekoji.DataGenerator.RELEASE_2;
 import static org.fakekoji.DataGenerator.SUFFIX;
 
-public class NewApiTests {
+public class NewApiTest {
 
     @ClassRule
     public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -33,9 +32,8 @@ public class NewApiTests {
 
     @BeforeClass
     public static void setup() throws IOException {
-        final File builds = temporaryFolder.newFolder("builds");
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
-        DataGenerator.initBuildsRoot(builds);
+        DataGenerator.initBuildsRoot(folderHolder.buildsRoot);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
 
         kojiDB = new FakeKojiDB(settings);
@@ -118,10 +116,10 @@ public class NewApiTests {
     public void getArchiveOfBuilt() {
         final int expectedNumberOfBuilds = 4;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.release.hotspot.f29.x86_64" + SUFFIX
+                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(
@@ -147,8 +145,8 @@ public class NewApiTests {
     public void getArchiveOfPartiallyNotBuilt() {
         final int expectedNumberOfBuilds = 2;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.fastdebug.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.fastdebug.hotspot.f29.x86_64" + SUFFIX
+                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.fastdebug.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.fastdebug.hotspot.sdk.f29.x86_64" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(

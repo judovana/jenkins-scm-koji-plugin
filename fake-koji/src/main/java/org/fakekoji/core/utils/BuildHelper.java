@@ -50,7 +50,7 @@ public class BuildHelper {
     private final File buildsRoot;
     private final GetBuildList params;
     private final OToolParser oToolParser;
-    private final List<TaskVariant> taskVariants;
+    private final List<TaskVariant> buildVariants;
     private final Set<String> packageNames;
     private final TaskVariant buildPlatformVariant;
     private final BuildProvider buildProvider;
@@ -62,12 +62,12 @@ public class BuildHelper {
             final File buildsRoot,
             final GetBuildList params,
             final OToolParser oToolParser,
-            final List<TaskVariant> taskVariants,
+            final List<TaskVariant> buildVariants,
             final Set<String> packageNames,
             final TaskVariant buildPlatformVariant,
             final BuildProvider buildProvider
     ) {
-        this.taskVariants = taskVariants;
+        this.buildVariants = buildVariants;
         this.packageNames = packageNames;
         this.oToolParser = oToolParser;
         this.params = params;
@@ -248,12 +248,15 @@ public class BuildHelper {
 
     private Map<TaskVariant, String> getBuildVariantMap() {
         final Map<TaskVariant, String> buildVariantMap = new HashMap<>();
-        final List<TaskVariant> variants = new ArrayList<>(taskVariants);
-        variants.add(buildPlatformVariant);
+        final List<TaskVariant> variants = new ArrayList<>(buildVariants);
         for (final TaskVariant taskVariant : variants) {
             final Optional<String> value = getBuildVariantValue(taskVariant.getId());
-            value.ifPresent(s -> buildVariantMap.put(taskVariant, s));
+            buildVariantMap.put(taskVariant, value.orElse(taskVariant.getDefaultValue()));
         }
+        // build platform does not have a default value -> it is put in the map only if it's defined
+        getBuildVariantValue(buildPlatformVariant.getId()).ifPresent(buildPlatform ->
+            buildVariantMap.put(buildPlatformVariant, buildPlatform)
+        );
         return buildVariantMap;
     }
 
