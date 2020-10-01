@@ -116,10 +116,10 @@ public class NewApiTest {
     public void getArchiveOfBuilt() {
         final int expectedNumberOfBuilds = 4;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.release.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.release.hotspot.f29.x86_64" + SUFFIX
+                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_1 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version2-" + RELEASE_2 + ".uName.release.hotspot.sdk.f29.x86_64" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(
@@ -145,8 +145,8 @@ public class NewApiTest {
     public void getArchiveOfPartiallyNotBuilt() {
         final int expectedNumberOfBuilds = 2;
         final Set<String> expectedArchives = new HashSet<>(Arrays.asList(
-                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.fastdebug.hotspot.f29.x86_64" + SUFFIX,
-                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.fastdebug.hotspot.f29.x86_64" + SUFFIX
+                "java-1.8.0-openjdk-version1-" + RELEASE_1 + ".uName.fastdebug.hotspot.sdk.f29.x86_64" + SUFFIX,
+                "java-1.8.0-openjdk-version1-" + RELEASE_2 + ".uName.fastdebug.hotspot.sdk.f29.x86_64" + SUFFIX
 
         ));
         final GetBuildList params = new GetBuildList(
