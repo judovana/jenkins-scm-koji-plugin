@@ -249,11 +249,14 @@ public class BuildHelper {
     private Map<TaskVariant, String> getBuildVariantMap() {
         final Map<TaskVariant, String> buildVariantMap = new HashMap<>();
         final List<TaskVariant> variants = new ArrayList<>(buildVariants);
-        variants.add(buildPlatformVariant);
         for (final TaskVariant taskVariant : variants) {
             final Optional<String> value = getBuildVariantValue(taskVariant.getId());
-            value.ifPresent(s -> buildVariantMap.put(taskVariant, s));
+            buildVariantMap.put(taskVariant, value.orElse(taskVariant.getDefaultValue()));
         }
+        // build platform does not have a default value -> it is put in the map only if it's defined
+        getBuildVariantValue(buildPlatformVariant.getId()).ifPresent(buildPlatform ->
+            buildVariantMap.put(buildPlatformVariant, buildPlatform)
+        );
         return buildVariantMap;
     }
 
