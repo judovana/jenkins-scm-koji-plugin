@@ -36,6 +36,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -120,7 +121,8 @@ public class OToolService {
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n"
                 + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n"
-                + "  names=true will chage numbers to somehow more describing texts in html formatters. With huge squezing can go wil. Is sometimes buggy with platforms\n";
+                + "  names=true will chage numbers to somehow more describing texts in html formatters. With huge squezing can go wil. Is sometimes buggy with platforms\n"
+                + "  explicitcomparsion=url by default null, unused, to load remote file with listed lates released NVRs to comapre with\n";
     }
 
     public OToolService(AccessibleSettings settings) {
@@ -325,11 +327,12 @@ public class OToolService {
                         String vr = context.queryParam("vr");
                         String time = context.queryParam("time");
                         String chartDir = context.queryParam("chartDir");
+                        String explicitComparsions = context.queryParam("explicitcomparsion");
                         boolean alsoReport = notNullBoolean(context, "alsoReport", false);
                         if (vr == null || vr.isEmpty()) {
                             context.status(400).result("nvr=<nvr> necessary");
                         } else {
-                            final SummaryReportRunner summaryReportRunner = new SummaryReportRunner(settings, vr, time, chartDir, projects);
+                            final SummaryReportRunner summaryReportRunner = new SummaryReportRunner(settings, vr, time, chartDir, Optional.ofNullable(explicitComparsions), projects);
                             context.status(OK).result(m.printMatrix(
                                     orieantaion, dropRows, dropColumns,
                                     new HtmlSpanningFillingFormatter(projects, names, vr, alsoReport, summaryReportRunner)));

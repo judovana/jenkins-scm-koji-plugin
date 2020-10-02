@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -33,17 +34,19 @@ public class SummaryReportRunner {
     private final String dir;
     private final String time;
     private final String chartDir;
+    private final Optional<String> explicitUrl;
 
     public SummaryReportRunner(
             final AccessibleSettings settings,
             final String nvr,
             final String time,
             final String chartDir,
-            final String[] projects
-    ) {
+            final Optional<String> explicitUrl,
+            final String[] projects) {
         this.nvr = nvr;
         this.time = time;
         this.chartDir = chartDir;
+        this.explicitUrl = explicitUrl;
         url = settings.getJenkinsUrl();
         dir = settings.getJenkinsJobsRoot().getAbsolutePath();
         projectRegex = projects.length == 0
@@ -91,7 +94,7 @@ public class SummaryReportRunner {
     }
 
     private List<String> getArgs(final String jobFilter, final String returnPath) {
-        return Arrays.asList(
+        List<String> defaults = Arrays.asList(
                 jvm,
                 "-jar",
                 remoteJar.getAbsolutePath(),
@@ -108,6 +111,14 @@ public class SummaryReportRunner {
                 "--return",
                 returnPath
         );
+        if (explicitUrl.isPresent()) {
+            List a = new ArrayList<>(defaults);
+            a.add("--explicitcomparsion-url");
+            a.add(explicitUrl.get());
+            return a;
+        } else {
+            return defaults;
+        }
     }
 
     private List<String> getArgs(final String jobFilter, final String returnPath, final String chartDir) {
