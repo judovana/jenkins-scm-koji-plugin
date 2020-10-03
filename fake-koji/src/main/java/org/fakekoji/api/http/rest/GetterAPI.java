@@ -21,6 +21,8 @@ import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariant;
+import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
 
 import java.io.IOException;
@@ -77,6 +79,9 @@ public class GetterAPI implements EndpointGroup {
     private static final String PLATFORMS_DETAILS = "platformDetails";
     private static final String PLATFORM_ID = "id";
     private static final String KOJI_ARCHES = "kojiArches";
+    private static final String VARIANTS = "variants";  // typ1(default): v1,v2...
+    private static final String VARIANTS_TYPE = "type"; // builds x tasks x all(default)
+    private static final String VARIANTS_DEFAULTS = "defaults"; // list x string  b1.b2...-t1.t2...
     private static final String REPOS = "repos";
     private static final String ROOT = "root";
     private static final String ROOTS = "roots"; // TODO
@@ -827,6 +832,105 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getVariantsHandler() {
+        final TaskVariantManager taskVariantManager = settings.getConfigManager().taskVariantManager;
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                List<TaskVariant> allVariants = taskVariantManager.readAll();
+                Collections.sort(allVariants);
+                List<TaskVariant> testVariants = new ArrayList<>(allVariants.size());
+                List<TaskVariant> buildVariants = new ArrayList<>(allVariants.size());
+                final Optional<String> type = extractParamValue(queryParams, VARIANTS_TYPE);
+                final Optional<String> defaults = extractParamValue(queryParams, VARIANTS_DEFAULTS);
+                if (type.isPresent() && type.get().equals("TYPES")) {
+                    return Result.ok(Task.Type.BUILD + " " + Task.Type.TEST + "\n");
+                }
+                for (TaskVariant variant : allVariants) {
+                    if (type.isPresent() && type.get().equals(Task.Type.BUILD.getValue())) {
+                        if (variant.getType().equals(Task.Type.BUILD)) {
+                            buildVariants.add(variant);
+                        }
+                    }
+                    if (type.isPresent() && type.get().equals(Task.Type.TEST.getValue())) {
+                        if (variant.getType().equals(Task.Type.TEST)) {
+                            testVariants.add(variant);
+                        }
+                    }
+                    if (!type.isPresent() || variant.getId().equals(type.get())) {
+                        if (variant.getType().equals(Task.Type.TEST)) {
+                            testVariants.add(variant);
+                        }
+                        if (variant.getType().equals(Task.Type.BUILD)) {
+                            buildVariants.add(variant);
+                        }
+                    }
+                }
+                StringBuilder sb = new StringBuilder();
+                if (buildVariants.size() > 0 && testVariants.size() > 0) {
+                    if (defaults.isPresent() && defaults.get().equals("string")) {
+                        //skipping
+                    } else {
+                        printTitle(sb, "Build variants", defaults);
+                    }
+                }
+                for (TaskVariant t : buildVariants) {
+                    print(t, sb, defaults, buildVariants.size() + testVariants.size());
+                }
+                if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '.') {
+                    sb = new StringBuilder(sb.reverse().toString().replaceFirst("\\.", ""));
+                    sb.reverse();
+                }
+                if (buildVariants.size() > 0 && testVariants.size() > 0) {
+                    printTitle(sb, "Test  variants", defaults);
+                }
+                for (TaskVariant t : testVariants) {
+                    print(t, sb, defaults, buildVariants.size() + testVariants.size());
+                }
+                if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '.') {
+                    sb = new StringBuilder(sb.reverse().toString().replaceFirst("\\.", ""));
+                    sb.reverse();
+                }
+                String s = sb.toString();
+                if (s.endsWith("\n")) {
+                    return Result.ok(s);
+                } else {
+                    sb.append("\n");
+                    return Result.ok(sb.toString());
+                }
+            }
+
+            private void printTitle(StringBuilder sb, String title, Optional<String> defaults) {
+                if (defaults.isPresent() && defaults.get().equals("string")) {
+                    sb.append("-");
+                } else {
+                    sb.append(" * ").append(title).append(" *\n");
+                }
+            }
+
+            private void print(TaskVariant t, StringBuilder sb, Optional<String> defaults, int items) {
+                if (defaults.isPresent()) {
+                    if ("list".equals(defaults.get())) {
+                        sb.append(t.getId()).append(":" + t.getOrder() + ":").append(t.getDefaultValue()).append("\n");
+                    } else if ("string".equals(defaults.get())) {
+                        sb.append(t.getDefaultValue()).append(".");
+                    }
+                } else {
+                    if (items == 1) {
+                        sb.append(t.getVariants().values().stream().map(TaskVariantValue::getId).collect(Collectors.joining(","))).append("\n");
+                    } else {
+                        sb.append(t.getId()).append(":" + t.getOrder() + ":").append(t.getVariants().values().stream().map(TaskVariantValue::getId).collect(Collectors.joining(","))).append("\n");
+                    }
+                }
+            }
+
+            @Override
+            public String about() {
+                return "/" + VARIANTS + "[" + VARIANTS_TYPE + "=" + Task.Type.BUILD + "/" + Task.Type.TEST + "/TYPES/nameOfSelectedVariant;" + VARIANTS_DEFAULTS + "=list/string]";
+            }
+        };
+    }
+
 
     private QueryHandler getLegacyParserHandler() {
         return new QueryHandler() {
@@ -840,7 +944,7 @@ public class GetterAPI implements EndpointGroup {
                 if (!type.isPresent() || "NVR".equals(type.get())) {
                     return Result.ok(nvr.get());
                 }
-              OToolParser.LegacyNVR parsedNvr = new OToolParser.LegacyNVR(nvr.get());
+                OToolParser.LegacyNVR parsedNvr = new OToolParser.LegacyNVR(nvr.get());
                 switch (type.get()) {
                     case "N":
                         return Result.ok(parsedNvr.getN());
@@ -981,6 +1085,7 @@ public class GetterAPI implements EndpointGroup {
             put(FILENAME_PARSER, getFileNameParserHandler());
             put(TASKS, getTasksHandler());
             put(LEGACY_PARSER, getLegacyParserHandler());
+            put(VARIANTS, getVariantsHandler());
         }});
     }
 
