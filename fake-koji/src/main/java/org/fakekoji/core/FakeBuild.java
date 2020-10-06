@@ -260,6 +260,13 @@ public class FakeBuild {
                 //currently we have static only for linux
                 if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {
                     return prefixIfNecessary(connect(TagsProvider.getSuplementaryRhel5LikeTag(), TagsProvider.getSuplementaryRhel6LikeTag(), TagsProvider.getSuplementaryRhel7LikeTag()));
+                } else {
+                    if (release.contains("el")) {
+                        int osVersion = determineRhOs(release);
+                        return prefixIfNecessary(new String[]{
+                                TagsProvider.getRhel5Rhel6Base(osVersion),
+                                TagsProvider.getRhel7Base(osVersion)});
+                    }
                 }
             } else {
                 if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {

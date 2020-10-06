@@ -98,11 +98,22 @@ public class KojiListBuildsTest {
         );
     }
 
+    //for some reason, this maps to new api
      RealKojiXmlRpcApi createConfigCustomFedora28() {
         return new RealKojiXmlRpcApi(
                 "java-11-openjdk",
                 "x86_64,src",
                 "f28.*",
+                "",
+                null
+        );
+    }
+
+    RealKojiXmlRpcApi createConfigHydrasIbm() {
+        return new RealKojiXmlRpcApi(
+                "java-1.8.0-ibm",
+                "x86_64,src",
+                ".*",
                 "",
                 null
         );
@@ -454,6 +465,29 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createHydraOnlyList(),
                 createConfigCustomFedora28(),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
+        );
+        File tmpDir = temporaryFolder.newFolder();
+        tmpDir.mkdir();
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+    }
+
+    @Test
+    /**
+     * Probably the only test really testing old api on fake koji
+     * Afaik the old api is now severe broken, as upstream keyword is in all projects
+     * If there will ever need to try openjdk rpms via old api, the tagging will need to be revisited,
+     * and the logic of usptream/static first fc/el last inverted (see this commit in FakeBuild.guessTags
+     *
+     * Removing it completely, will need adapt the tests. To invert old api hydra tests to match null build is bad idea
+     */
+    public void testListMatchingBuildsCustomIbm8() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(
+                createHydraOnlyList(),
+                createConfigHydrasIbm(),
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
