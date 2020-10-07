@@ -121,7 +121,7 @@ public class TagsProvider {
     }
 
     static String getRhel7Base(int i) {
-        return "rhel-" + (i) + ".X-candidate";
+        return "rhel-" + (i) + ".0-candidate";
     }
 
     static String[] getSuplementaryRhel6LikeTag() {
