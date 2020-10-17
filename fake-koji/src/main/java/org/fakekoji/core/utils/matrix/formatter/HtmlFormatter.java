@@ -93,9 +93,9 @@ public class HtmlFormatter implements Formatter {
             final UrlCell projectCell = projectCells.get(0);
             return renderHtmlCell(projectCell.getTitle(), projectCell.getUrl().orElse("#"));
         }
-        return projectCells.stream()
-                .map(projectCell -> renderHtmlCell(projectCell.getTitle(), projectCell.getUrl().orElse("#")))
-                .collect(Collectors.joining());
+        return renderHtmlCell(projectCells.stream()
+                .map(projectCell -> renderHtmlAnchor(projectCell.getTitle(), projectCell.getUrl().orElse("#")))
+                .collect(Collectors.joining()));
     }
 
     String renderCells(
