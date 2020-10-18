@@ -6,11 +6,14 @@ import org.fakekoji.functional.Tuple;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -65,7 +68,20 @@ public class SummaryReportRunner {
                 });
     }
 
-    public Result<Tuple<String, Map<String, Integer>>, String> getSummaryReport() {
+    public static class SummaryreportResults {
+        public final String report;
+        public final Map<String, Integer> nvrResult;
+        public final File logFile;
+
+        public SummaryreportResults(String report, Map<String, Integer> nvrResult, File logFile) {
+            this.report = report;
+            this.nvrResult = nvrResult;
+            this.logFile = logFile;
+        }
+    }
+
+
+    public Result<SummaryreportResults, String> getSummaryReport() {
         final File tmp;
         try {
             tmp = File.createTempFile("summaryReport", ".cache");
@@ -76,7 +92,7 @@ public class SummaryReportRunner {
                 ? getArgs(projectRegex, "DONE-" + tmp.getAbsolutePath())
                 : getArgs(projectRegex, "DONE-" + tmp.getAbsolutePath(), chartDir);
         ProcessBuilder pb = new ProcessBuilder(args);
-        final String cachedReport = executeAndWaitForOutput(pb);
+        final Tuple<String,File> cachedReport = executeAndWaitForOutput(pb);
         final HashMap<String, Integer> cachedResults = new HashMap<>();
         try (final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(tmp)))) {
             while (true) {
@@ -87,7 +103,7 @@ public class SummaryReportRunner {
                 String[] keyValue = l.split("\\s+");
                 cachedResults.put(keyValue[0], Integer.valueOf(keyValue[1]));
             }
-            return Result.ok(new Tuple<>(cachedReport, cachedResults));
+            return Result.ok(new SummaryreportResults(cachedReport.x, cachedResults, cachedReport.y));
         } catch (IOException e) {
             return Result.err(e.getMessage());
         }
@@ -149,23 +165,21 @@ public class SummaryReportRunner {
         }
     }
 
-    private String executeAndWaitForOutput(ProcessBuilder pb) {
+    private Tuple<String, File> executeAndWaitForOutput(ProcessBuilder pb) {
         LOGGER.log(Level.INFO, pb.command().toString());
-        if (System.getProperty("debugSummaryProcess") != null) {
-            pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-        }
         String result = "Failed to generate report - " + pb.command();
+        File f = new File("not_created");
         try {
+            f = File.createTempFile("SummaryReportRunner","err");
+            LOGGER.log(Level.INFO, "Errors in: "+f.getAbsolutePath());
             final Process p = pb.start();
+            final StreamToFileGobbler err = new StreamToFileGobbler(p.getErrorStream(), f);
+            Thread outE = new Thread(err);
+            outE.start();
             final StreamGobbler out = new StreamGobbler(p.getInputStream());
             Thread outT = new Thread(out);
             outT.start();
-            if (System.getProperty("debugSummaryProcess") == null) {
-                final StreamLooser err = new StreamLooser(p.getErrorStream());
-                Thread errT = new Thread(err);
-                errT.start();
-            }
-            while (!out.done) {
+            while (!out.done && !err.done) {
                 Thread.sleep(1000);
             }
             p.waitFor();
@@ -176,7 +190,7 @@ public class SummaryReportRunner {
         if (result.trim().isEmpty()) {
             result = "Some error to generate report - " + pb.command();
         }
-        return result;
+        return new Tuple(result, f);
     }
 
     static class StreamLooser implements Runnable {
@@ -222,6 +236,41 @@ public class SummaryReportRunner {
                             break;
                         } else {
                             sb.append(l).append("\n");
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                LOGGER.log(Level.WARNING, ex.getMessage(), ex);
+            } finally {
+                done = true;
+            }
+        }
+    }
+
+    static class StreamToFileGobbler implements Runnable {
+        private final InputStream inputStream;
+        private final File file;
+        private boolean done = false;
+
+        public StreamToFileGobbler(InputStream inputStream, File f) {
+            this.inputStream = inputStream;
+            this.file = f;
+        }
+
+        @Override
+        public void run() {
+            try {
+                try(BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)))) {
+                    ;
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+                        while (true) {
+                            String l = br.readLine();
+                            if (l == null) {
+                                break;
+                            } else {
+                                bw.write(l);
+                                bw.newLine();
+                            }
                         }
                     }
                 }

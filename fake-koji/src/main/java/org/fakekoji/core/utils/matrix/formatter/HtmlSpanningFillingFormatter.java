@@ -5,6 +5,7 @@ import org.fakekoji.core.utils.matrix.cell.CellGroup;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,7 @@ public class HtmlSpanningFillingFormatter extends HtmlSpanningFormatter {
     private final SummaryReportRunner summaryReportRunner;
     private final String cachedReport;
     private final Map<String, Integer> cachedResults;
+    private final File errorStream; //maybe to append it somewhen somewhere
 
     public HtmlSpanningFillingFormatter(
             final String[] projects,
@@ -26,14 +28,15 @@ public class HtmlSpanningFillingFormatter extends HtmlSpanningFormatter {
         this.nvr = nvr;
         this.appendReport = appendReport;
         this.summaryReportRunner = summaryReportRunner;
-        final Result<Tuple<String, Map<String, Integer>>, String> result = summaryReportRunner.getSummaryReport();
+        final Result<SummaryReportRunner.SummaryreportResults, String> result = summaryReportRunner.getSummaryReport();
         if (result.isOk()) {
-            final Tuple<String, Map<String, Integer>> tuple = result.getValue();
-            cachedReport = tuple.x;
-            cachedResults = tuple.y;
+            cachedReport = result.getValue().report;
+            cachedResults = result.getValue().nvrResult;
+            errorStream = result.getValue().logFile;
         } else {
             cachedReport = "Failed to cache report";
             cachedResults = new HashMap<>();
+            errorStream = null;
         }
     }
 
