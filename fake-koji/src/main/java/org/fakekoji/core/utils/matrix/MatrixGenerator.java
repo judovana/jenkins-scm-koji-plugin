@@ -595,6 +595,9 @@ public class MatrixGenerator {
             final TitleCell job,
             final boolean inverted
     ) {
+        if (!testRegex.matcher(testSpec.toString()).matches() || !buildRgex.matcher(buildSpec.toString()).matches()) {
+            return;
+        }
         final String rowKey;
         final String colKey;
         if (inverted) {
