@@ -2,12 +2,14 @@ package org.fakekoji.core.utils;
 
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
 import org.fakekoji.model.TaskVariant;
+import org.fakekoji.storage.StorageException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +42,18 @@ public class OToolParser {
         this.jdkVersions = jdkVersions;
         this.jdkProjects = jdkProjects;
         this.buildVariants = buildVariants.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList());
+    }
+    
+    public static Result<OToolParser, String> create(final ConfigManager configManager) {
+        try {
+            return Result.ok(new OToolParser(
+                    configManager.jdkProjectManager.readAll(),
+                    configManager.jdkVersionManager.readAll(),
+                    configManager.taskVariantManager.getBuildVariants()
+            ));
+        } catch (StorageException e) {
+            return Result.err(e.getMessage());
+        }
     }
 
     private Result<PackageNameCut, String> parsePackageName(final String nvr) {
