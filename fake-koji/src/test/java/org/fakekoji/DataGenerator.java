@@ -1942,8 +1942,8 @@ public class DataGenerator {
                 new String[0]
         ) {
             @Override
-            public Result<Tuple<String, Map<String, Integer>>, String> getSummaryReport() {
-                return Result.ok(new Tuple<>("report", new HashMap<>()));
+            public Result<SummaryReportRunner.SummaryreportResults, String> getSummaryReport() {
+                return Result.ok(new SummaryreportResults("", null, null));
             }
 
             @Override
