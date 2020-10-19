@@ -4,10 +4,13 @@ import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -41,7 +44,7 @@ public class RemoteRequestsCache {
     private Properties propRaw = new Properties();
     private final OriginalObjectProvider originalProvider;
     private List<Pattern> blackListedUrlsList = new ArrayList<>();
-    protected boolean loaded = false;
+    private boolean loaded = false;
 
     public Object obtain(String url, XmlRpcRequestParams params) {
         try {
@@ -57,6 +60,14 @@ public class RemoteRequestsCache {
         } catch (MalformedURLException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    protected boolean isLoaded() {
+        return loaded;
+    }
+
+    protected void setLoaded(boolean loaded) {
+        this.loaded = loaded;
     }
 
 
@@ -141,7 +152,7 @@ public class RemoteRequestsCache {
                 LOG.warn("Failed to read or apply custom value  of (" + cacheRefreshRateMinutesS + ") for " + RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, ex);
             }
         } else {
-            if (config!=null && !config.exists()) {
+            if (config != null && !config.exists()) {
                 cacheRefreshRateMinutes = 0;
             } else {
                 cacheRefreshRateMinutes = CACHE_DEFAULT;
@@ -154,7 +165,7 @@ public class RemoteRequestsCache {
                 LOG.warn("Failed to read or apply custom value  of (" + cacheReleaseS + ") for " + RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, ex);
             }
         } else {
-            cacheReleaseRate  = CACHE_DEFAULT;
+            cacheReleaseRate = CACHE_DEFAULT;
         }
         if (blackListedUrlsListS != null && blackListedUrlsListS.trim().length() > 0) {
             try {
@@ -168,7 +179,54 @@ public class RemoteRequestsCache {
         if ("true".equals(propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_CLEAN_COMMAND))) {
             cache.clear();
         }
-        loaded = true;
+        if ("true".equals(propRaw.getProperty(RemoteRequestCacheConfigKeys.DUMP_COMMAND))) {
+            File dumpFile = new File(config.getAbsolutePath() + ".dump");
+            dump(dumpFile);
+        }
+        setLoaded(true);
+    }
+
+    @SuppressFBWarnings(value="REC_CATCH_EXCEPTION", justification = "We really do not wont to kill main thread")
+    synchronized void dump(File dumpFile) {
+        try {
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dumpFile), "utf-8"))) {
+                bw.write(this.getClass().getName() + " dump at " + new Date().toString());
+                bw.newLine();
+                bw.write("  config: " + config);
+                bw.newLine();
+                bw.write("  configRefreshRateMinutes: " + configRefreshRateMinutes);
+                bw.newLine();
+                bw.write("  cacheRefreshRateMinutes: " + cacheRefreshRateMinutes);
+                bw.newLine();
+                bw.write("  cacheReleaseRate: " + cacheReleaseRate);
+                bw.newLine();
+                bw.write("  originalProvider: " + originalProvider.getClass().getName());
+                bw.newLine();
+                bw.write("  blackListedUrlsList: " + blackListedUrlsList.stream().map(Pattern::pattern).collect(Collectors.joining(",")));
+                bw.newLine();
+                bw.write("  loaded: " + isLoaded());
+                bw.newLine();
+                bw.write("  propRaw: ");
+                bw.newLine();
+                Set<Map.Entry<Object, Object>> raws = propRaw.entrySet();
+                for (Map.Entry<Object, Object> raw : raws) {
+                    bw.write("    " + raw.getKey() + "=" + raw.getValue());
+                    bw.newLine();
+                }
+                List<Map.Entry<String, SingleUrlResponseCache>> entries = new ArrayList<>(cache.entrySet());
+                entries.sort((o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+                for (Map.Entry<String, SingleUrlResponseCache> entry : entries) {
+                    bw.write("  " + entry.getKey() + ": ");
+                    bw.newLine();
+                    entry.getValue().dump("    ", bw, this);
+                }
+                bw.write("total: " + entries.size());
+                bw.newLine();
+                bw.flush();
+            }
+        } catch (Exception ex) {
+            LOG.info("failed to dump cache", ex);
+        }
     }
 
     public RemoteRequestsCache(final File config, OriginalObjectProvider originalObjectProvider) {
@@ -252,7 +310,7 @@ public class RemoteRequestsCache {
         return toUnits(cacheRefreshRateMinutes);
     }
 
-    protected long getPerMethodValidnesMilis(String methodName, String host) {
+    long getPerMethodValidnesMilis(String methodName, String host) {
         // for method names:
         //See: hudson.plugins.scm.koji.Constants for methods
         //See: XmlRpcRequestParams getMethodName() vaues
@@ -283,13 +341,12 @@ public class RemoteRequestsCache {
     }
 
     @SuppressFBWarnings(value = "NP_BOOLEAN_RETURN_NULL", justification = "private single usage method")
-    private Boolean isValid(final SingleUrlResponseCache.ResultWithTimeStamp temptedResult, String methodName, String host) {
-        final Date dateCreated = temptedResult.getDateCreated();
+    Boolean isValid(final SingleUrlResponseCache.ResultWithTimeStamp temptedResult, String methodName, String host) {
         long timeForThisMethodOrDefault = getPerMethodValidnesMilis(methodName, host);
         if (timeForThisMethodOrDefault == 0) {
             return null;
         } else {
-            return new Date().getTime() - dateCreated.getTime() < timeForThisMethodOrDefault;
+            return new Date().getTime() - temptedResult.getDateCreated().getTime() < timeForThisMethodOrDefault;
         }
     }
 

@@ -3,6 +3,8 @@ package org.fakekoji.xmlrpc.server.xmlrpcrequestparams;
 import org.fakekoji.xmlrpc.server.expensiveobjectscache.CachableRequest;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 
 public interface XmlRpcRequestParams extends Serializable, CachableRequest {
@@ -23,4 +25,15 @@ public interface XmlRpcRequestParams extends Serializable, CachableRequest {
      * @return XML-RPC method name
      */
     String getMethodName();
+
+    public static String toNiceString(XmlRpcRequestParams o) {
+        if (o == null) {
+            return "null";
+        }
+        if (o.toXmlRpcParams() == null || o.toXmlRpcParams().length == 0) {
+            return o.getMethodName() + "()";
+        }
+        return o.getMethodName()+"("+ Arrays.stream(o.toXmlRpcParams()).map(Object::toString).collect(Collectors.joining(","))+")";
+    }
+
 }

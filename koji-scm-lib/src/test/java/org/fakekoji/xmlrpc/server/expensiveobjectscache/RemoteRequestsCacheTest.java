@@ -6,7 +6,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
@@ -29,11 +32,11 @@ public class RemoteRequestsCacheTest {
         }
 
         public boolean isLoaded() {
-            return loaded;
+            return super.isLoaded();
         }
 
         public void markNotLoaded() {
-            loaded = false;
+            setLoaded(false);
         }
     }
 
@@ -80,6 +83,22 @@ public class RemoteRequestsCacheTest {
         }
     }
 
+    private static int i = 0;
+    private static boolean DUMP = true;
+
+    private static void dump(RemoteRequestsCache cache) {
+        if (DUMP) {
+            try {
+                i++;
+                File f = File.createTempFile("cache_test_" + i + "_", ".dump");
+                System.out.println(f.getAbsolutePath());
+                cache.dump(f);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
     @Test
     public void cacheWorks() {
         DummyOriginalObjectProvider provider = new DummyOriginalObjectProvider();
@@ -92,6 +111,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(2, r2);
         Assert.assertEquals(1, r3);
         Assert.assertEquals(3, r4);
+        dump(cache);
     }
 
     @Test
@@ -111,6 +131,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(2, r2);
         Assert.assertEquals(3, r3);
         Assert.assertEquals(4, r4);
+        dump(cache);
     }
 
     @Test
@@ -127,6 +148,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(1, r3);
         Assert.assertEquals(3, r4);
         Assert.assertEquals(2, r5);
+        dump(cache);
     }
 
     @Test
@@ -141,6 +163,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(2, r2);
         Assert.assertEquals(1, r3);
         Assert.assertEquals(2, r4);
+        dump(cache);
     }
 
     @Test
@@ -163,6 +186,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(1, r4);
         Assert.assertEquals(4, r5);
         Assert.assertEquals(3, r6);
+        dump(cache);
     }
 
     @Test
@@ -197,6 +221,7 @@ public class RemoteRequestsCacheTest {
             Assert.assertEquals(1, l.get(i).intValue());
         }
         Assert.assertTrue(l.size() > 5);
+        dump(cache);
     }
 
     @Test
@@ -228,6 +253,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(3, r4);
         Assert.assertEquals(3, r5);
         Assert.assertEquals(3, r6);
+        dump(cache);
     }
 
     private static class IncredibleThread extends Thread {
@@ -347,6 +373,7 @@ public class RemoteRequestsCacheTest {
             Assert.assertEquals(max, l3.get(i).intValue());
         }
         Assert.assertTrue(l3.size() > 5);
+        dump(cache);
     }
 
     private void startAll(IncredibleThread[] threads) throws InterruptedException {
@@ -529,6 +556,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(10, r4);
         Assert.assertEquals(11, r5);
         Assert.assertEquals(12, r6);
+        dump(cache);
 
     }
 
@@ -564,6 +592,7 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(4, r1);
         Assert.assertEquals(5, r2);
+        dump(cache);
     }
 
 
@@ -648,6 +677,7 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(7, r1);
         Assert.assertEquals(8, r2);
+        dump(cache);
     }
 
 
@@ -670,6 +700,7 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(4, r1);
         Assert.assertEquals(5, r2);
+        dump(cache);
     }
 
     private static class SlowOriginalObjectProvider implements OriginalObjectProvider {
@@ -741,6 +772,7 @@ public class RemoteRequestsCacheTest {
         //both attempting cached value, first have to wait for new one, invalidating result, but second get old vlaue again
         Assert.assertEquals(3, l1.getR()); //new value
         Assert.assertTrue(2 == l2.getR() || 1 == l2.getR()); //no guarantee which result was added to db; cached value obtained anyway
+        dump(cache);
     }
 
 
@@ -850,6 +882,7 @@ public class RemoteRequestsCacheTest {
         Assert.assertEquals(11, r2);
         Assert.assertEquals(12, r3);
         Assert.assertEquals(13, r4);
+        dump(cache);
     }
 
     @Test
@@ -894,6 +927,7 @@ public class RemoteRequestsCacheTest {
         //both are again trying value, which was removed from cache
         Assert.assertEquals(3, l1.getR()); //so both get new value
         Assert.assertEquals(4, l2.getR()); //so both get new value, compare with lazyRefreshWorks
+        dump(cache);
     }
 
     @Test
@@ -923,7 +957,7 @@ public class RemoteRequestsCacheTest {
         ;
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(3, r1);
-        ;
+        dump(cache);
     }
 
     @Test
@@ -954,9 +988,110 @@ public class RemoteRequestsCacheTest {
         ;
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Assert.assertEquals(4, r1);
-        ;
+        dump(cache);
     }
 
+    @Test
+    public void dumpComplexTypes() throws InterruptedException, IOException {
+        OriginalObjectProvider provider = new OriginalObjectProvider() {
+
+            @Override
+            public Object obtainOriginal(String url, XmlRpcRequestParams params) {
+                if (params.getMethodName().equals("a1")) {
+                    return new int[]{1, 2, 3};
+                }
+                if (params.getMethodName().equals("a2")) {
+                    return new Object[][]{new Integer[]{1, 2}, new String[]{"aa", "bb"}};
+                }
+                if (params.getMethodName().equals("s")) {
+                    return "ahoj";
+                }
+                if (params.getMethodName().equals("l1")) {
+                    return Arrays.asList(new short[]{1, 2, 3}, new HashMap(), new String[]{"aa", "bb"}, new HashSet<>());
+                }
+                if (params.getMethodName().equals("m1")) {
+                    Map m = new HashMap();
+                    m.put("key1", "val1");
+                    m.put("key2", "val2");
+                    m.put("key3", new double[]{1.5, 2.8});
+                    m.put("key7", Arrays.asList("a", "b", "c"));
+                    m.put("key8", ((HashMap) m).clone());
+                    return m;
+                }
+                throw new RuntimeException("unknown method " + params.getMethodName());
+            }
+        };
+        File f = File.createTempFile("cache", ".config");
+        f.delete();
+        RemoteRequestsCache cache = new RemoteRequestsCache(f, provider) {
+
+        };
+        cache.obtain("http://nope.com", new XmlRpcRequestParams() {
+            @Override
+            public Object[] toXmlRpcParams() {
+                return new Object[0];
+            }
+
+            @Override
+            public String getMethodName() {
+                return "a1";
+            }
+        });
+        cache.obtain("http://nope.com", new XmlRpcRequestParams() {
+            @Override
+            public Object[] toXmlRpcParams() {
+                return new Object[0];
+            }
+
+            @Override
+            public String getMethodName() {
+                return "a2";
+            }
+        });
+        cache.obtain("http://nope.com", new XmlRpcRequestParams() {
+            @Override
+            public Object[] toXmlRpcParams() {
+                return new Object[0];
+            }
+
+            @Override
+            public String getMethodName() {
+                return "s";
+            }
+        });
+        cache.obtain("http://nope.com", new XmlRpcRequestParams() {
+            @Override
+            public Object[] toXmlRpcParams() {
+                return new Object[0];
+            }
+
+            @Override
+            public String getMethodName() {
+                return "l1";
+            }
+        });
+        cache.obtain("http://nope.com", new XmlRpcRequestParams() {
+            @Override
+            public Object[] toXmlRpcParams() {
+                return new Object[0];
+            }
+
+            @Override
+            public String getMethodName() {
+                return "m1";
+            }
+        });
+        File dumpFile = new File(f.getAbsolutePath() + ".dump");
+        dumpFile.deleteOnExit();
+        f.delete();
+        Properties p = new Properties();
+        p.setProperty(RemoteRequestCacheConfigKeys.DUMP_COMMAND, "true");
+        Assert.assertFalse(dumpFile.exists());
+        cache.setProperties(p);
+        Assert.assertTrue(dumpFile.exists());
+        Assert.assertTrue(dumpFile.length() > 100);
+
+    }
 
 }
 

@@ -44,6 +44,7 @@ public class RemoteRequestCacheConfigKeys {
      * Cache is cleared any momnet, clean=true occure in config file
      */
     public static final String CACHE_CLEAN_COMMAND = "clean";
+    public static final String DUMP_COMMAND = "dump";
     public static final String METHOD_AT_DELIMITER = "@";
     public static final String NEW_API_MACHINE = "hydra";
     public static final String NEW_API_DOMAIN = "brq.redhat.com";
@@ -102,6 +103,9 @@ public class RemoteRequestCacheConfigKeys {
                     + "# new api on hydra\n"
                     + Constants.getBuildList + "=20\n"
                     + Constants.getBuildDetail + "=1440\n"
+                    + "\n"
+                    + "# "+CACHE_CLEAN_COMMAND+"=false\n"
+                    + "# "+DUMP_COMMAND+"=false\n"
                     + "");
         }
     }
