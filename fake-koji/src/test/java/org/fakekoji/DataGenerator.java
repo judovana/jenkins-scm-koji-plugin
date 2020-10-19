@@ -1942,7 +1942,7 @@ public class DataGenerator {
                 new String[0]
         ) {
             @Override
-            public Result<SummaryreportResults, String>  getSummaryReport() {
+            public Result<SummaryReportRunner.SummaryreportResults, String> getSummaryReport() {
                 return Result.ok(new SummaryreportResults("report", new HashMap<>(), new File("fake_report_logs_file")));
             }
 
