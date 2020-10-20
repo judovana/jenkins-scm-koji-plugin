@@ -93,8 +93,8 @@ public class RemoteRequestsCache {
                     Properties propNew = new Properties();
                     propNew.load(inputStream);
                     propRaw = propNew;
-                } catch (IOException e) {
-                    LOG.warn("Failed to read existing  cache config", e);
+                } catch (Exception e) {
+                    LOG.warn("Failed to read or apply existing cache config", e);
                 }
             }
             apply();
@@ -235,7 +235,7 @@ public class RemoteRequestsCache {
         ConfigRefresh r = new ConfigRefresh();
         r.read();
         LOG.info("Cache started - " + RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES + " is " + cacheRefreshRateMinutes + " (0==disabled). Set config is: " + getConfigString());
-        Thread t = new Thread(r);
+        Thread t = new Thread(r, "expensiveobjectscacheRemoteRequestsCache");
         t.setDaemon(true);
         t.start();
     }
