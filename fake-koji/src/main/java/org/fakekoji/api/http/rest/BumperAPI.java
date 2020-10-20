@@ -326,9 +326,72 @@ public class BumperAPI implements EndpointGroup {
             return Result.err(new OToolError(e.getMessage(), 500));
         }
         if (taskVariant.getType().equals(Task.Type.BUILD)) {
-            // TODO
+            updateBuildDirs();
         }
         return modifyJobs(projects, new TaskVariantAdder(taskVariant));
+    }
+
+    private void updateBuildDirs() {
+        Arrays.stream(Objects.requireNonNull(buildsRoot.listFiles())).forEach(packageDir ->
+                Arrays.stream(Objects.requireNonNull(packageDir.listFiles())).forEach(versionDir ->
+                        Arrays.stream(Objects.requireNonNull(versionDir.listFiles())).forEach(buildDir ->
+                                updateBuildDir(packageDir, versionDir, buildDir)
+                        )
+                )
+        );
+    }
+
+    private void updateBuildDir(final File packageDir, final File versionDir, final File buildDir) {
+        final Optional<File> logsDirOptional;
+        final File dataDir = new File(buildDir, "data");
+        if (dataDir.exists()) {
+            final File logsDir = new File(dataDir, "logs");
+            if (logsDir.exists()) {
+                logsDirOptional = Optional.of(logsDir);
+            } else {
+                logsDirOptional = Optional.empty();
+            }
+        } else {
+            logsDirOptional = Optional.empty();
+        }
+        Arrays.stream(Objects.requireNonNull(buildDir.listFiles())).forEach(archiveDir -> {
+            final String archiveName = String.join(
+                    "-",
+                    packageDir.getName(),
+                    versionDir.getName(),
+                    buildDir.getName() + "." + archiveDir.getName() + ".tarxz"
+            );
+            final File archive = new File(archiveDir, archiveName);
+            if (!archive.exists()) {
+                return;
+            }
+            final Result<OToolArchive, String> parseResult = OToolParser.create(configManager)
+                    .flatMap(parser -> parser.parseArchive(archiveName));
+            if (parseResult.isError()) {
+                return;
+            }
+            final OToolArchive oToolArchive = parseResult.getValue();
+            final File destFile = new File(archiveDir, oToolArchive.toNiceString());
+            final File destDir = new File(buildDir, oToolArchive.getDirectoryName());
+            try {
+                Files.move(archive.toPath(), destFile.toPath());
+                Files.move(archiveDir.toPath(), destDir.toPath());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            logsDirOptional.ifPresent(logsDir -> {
+                final File archiveLogsDir = new File(logsDir, archiveDir.getName());
+                if (!archiveLogsDir.exists()) {
+                    return;
+                }
+                final File destLogDir = new File(logsDir, oToolArchive.getDirectoryName());
+                try {
+                    Files.move(archiveLogsDir.toPath(), destLogDir.toPath());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
     }
 
     @Override
