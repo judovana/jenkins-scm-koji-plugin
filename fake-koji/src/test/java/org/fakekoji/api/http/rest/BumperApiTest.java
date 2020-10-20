@@ -21,9 +21,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -83,24 +85,9 @@ public class BumperApiTest {
             Assert.assertTrue(new File(jobsRoot, currJobName).exists());
             Assert.assertFalse(new File(jobsRoot, prevJobName).exists());
         }
-        final ProcessBuilder treeCmd = new ProcessBuilder(
-                "tree",
-                settings.getDbFileRoot().getAbsolutePath()
-        );
-        final Process treeProcess = treeCmd.start();
-        final int exitCode = treeProcess.waitFor();
-        final StringBuilder treeOutput = new StringBuilder();
-        try(final BufferedReader outputReader = new BufferedReader(new InputStreamReader(treeProcess.getInputStream(), "utf-8"))) {
-            String line;
-            outputReader.readLine();
-            while ((line = outputReader.readLine()) != null) {
-                treeOutput.append(line).append('\n');
-            }
-        }
-        Assert.assertEquals(0, exitCode);
         Assert.assertEquals(
                 Utils.readResource("org/fakekoji/api/http/rest/post-add-variant-builds-tree"),
-                treeOutput.toString()
+                toTree(settings.getDbFileRoot())
         );
     }
 
@@ -285,5 +272,20 @@ public class BumperApiTest {
 
     private Map<String, List<String>> createParamsMap(final String[][] params) {
         return Stream.of(params).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
+    }
+
+    private String toTree(final File dir) {
+        return toTree(dir, "");
+    }
+
+    private String toTree(final File dir, final String prefix) {
+        final StringBuilder output = new StringBuilder();
+        Arrays.stream(Objects.requireNonNull(dir.listFiles())).sorted().forEach(file -> {
+            output.append(prefix).append(file.getName()).append('\n');
+            if (file.isDirectory()) {
+                output.append(toTree(file, prefix + "\t"));
+            }
+        });
+        return output.toString();
     }
 }

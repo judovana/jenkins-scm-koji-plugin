@@ -1,149 +1,147 @@
-└── java-1.8.0-openjdk
-    ├── version1
-    │   ├── 152.projectName
-    │   │   ├── data
-    │   │   │   └── logs
-    │   │   │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │       │   └── log
-    │   │   │       └── release.zero.sdk.abcdefgh.el7.x86_64
-    │   │   │           └── log
-    │   │   ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-152.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │   │   ├── release.zero.sdk.abcdefgh.el7.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-152.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
-    │   │   └── src
-    │   │       └── java-1.8.0-openjdk-version1-152.projectName.src.tarxz
-    │   ├── 152.uName
-    │   │   ├── data
-    │   │   │   └── logs
-    │   │   │       ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │       │   └── log
-    │   │   │       ├── fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
-    │   │   │       │   └── log
-    │   │   │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │       │   └── log
-    │   │   │       ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-    │   │   │       │   └── log
-    │   │   │       └── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │           └── log
-    │   │   ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-152.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │   │   ├── fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-152.uName.fastdebug.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
-    │   │   ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-152.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │   │   ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-152.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
-    │   │   ├── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-152.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │   │   └── src
-    │   │       └── java-1.8.0-openjdk-version1-152.uName.src.tarxz
-    │   ├── 2.re.l.ease.projectName
-    │   │   ├── data
-    │   │   │   └── logs
-    │   │   │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │       │   └── log
-    │   │   │       └── release.zero.sdk.abcdefgh.el7.x86_64
-    │   │   │           └── log
-    │   │   ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-2.re.l.ease.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │   │   ├── release.zero.sdk.abcdefgh.el7.x86_64
-    │   │   │   └── java-1.8.0-openjdk-version1-2.re.l.ease.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
-    │   │   └── src
-    │   │       └── java-1.8.0-openjdk-version1-2.re.l.ease.projectName.src.tarxz
-    │   └── 2.re.l.ease.uName
-    │       ├── data
-    │       │   └── logs
-    │       │       ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │       │       │   └── log
-    │       │       ├── fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
-    │       │       │   └── log
-    │       │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │       │       │   └── log
-    │       │       ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-    │       │       │   └── log
-    │       │       └── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │       │           └── log
-    │       ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │       │   └── java-1.8.0-openjdk-version1-2.re.l.ease.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │       ├── fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
-    │       │   └── java-1.8.0-openjdk-version1-2.re.l.ease.uName.fastdebug.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
-    │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-    │       │   └── java-1.8.0-openjdk-version1-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │       ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-    │       │   └── java-1.8.0-openjdk-version1-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
-    │       ├── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-    │       │   └── java-1.8.0-openjdk-version1-2.re.l.ease.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-    │       └── src
-    │           └── java-1.8.0-openjdk-version1-2.re.l.ease.uName.src.tarxz
-    └── version2
-        ├── 152.projectName
-        │   ├── data
-        │   │   └── logs
-        │   │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │       │   └── log
-        │   │       └── release.zero.sdk.abcdefgh.el7.x86_64
-        │   │           └── log
-        │   ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-152.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-        │   ├── release.zero.sdk.abcdefgh.el7.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-152.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
-        │   └── src
-        │       └── java-1.8.0-openjdk-version2-152.projectName.src.tarxz
-        ├── 152.uName
-        │   ├── data
-        │   │   └── logs
-        │   │       ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │       │   └── log
-        │   │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │       │   └── log
-        │   │       ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-        │   │       │   └── log
-        │   │       └── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │           └── log
-        │   ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-152.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-        │   ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-152.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-        │   ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-152.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
-        │   ├── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-152.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-        │   └── src
-        │       └── java-1.8.0-openjdk-version2-152.uName.src.tarxz
-        ├── 2.re.l.ease.projectName
-        │   ├── data
-        │   │   └── logs
-        │   │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │       │   └── log
-        │   │       └── release.zero.sdk.abcdefgh.el7.x86_64
-        │   │           └── log
-        │   ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-2.re.l.ease.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-        │   ├── release.zero.sdk.abcdefgh.el7.x86_64
-        │   │   └── java-1.8.0-openjdk-version2-2.re.l.ease.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
-        │   └── src
-        │       └── java-1.8.0-openjdk-version2-2.re.l.ease.projectName.src.tarxz
-        └── 2.re.l.ease.uName
-            ├── data
-            │   └── logs
-            │       ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-            │       │   └── log
-            │       ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-            │       │   └── log
-            │       ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-            │       │   └── log
-            │       └── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-            │           └── log
-            ├── fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
-            │   └── java-1.8.0-openjdk-version2-2.re.l.ease.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-            ├── release.hotspot.sdk.abcdefgh.el7.x86_64
-            │   └── java-1.8.0-openjdk-version2-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-            ├── release.hotspot.sdk.abcdefgh.f29.x86_64
-            │   └── java-1.8.0-openjdk-version2-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
-            ├── slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
-            │   └── java-1.8.0-openjdk-version2-2.re.l.ease.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
-            └── src
-                └── java-1.8.0-openjdk-version2-2.re.l.ease.uName.src.tarxz
-
-87 directories, 60 files
+java-1.8.0-openjdk
+	version1
+		152.projectName
+			data
+				logs
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.zero.sdk.abcdefgh.el7.x86_64
+						log
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-152.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.zero.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-152.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version1-152.projectName.src.tarxz
+		152.uName
+			data
+				logs
+					fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.f29.x86_64
+						log
+					slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+			fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-152.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
+				java-1.8.0-openjdk-version1-152.uName.fastdebug.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-152.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.f29.x86_64
+				java-1.8.0-openjdk-version1-152.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
+			slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-152.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version1-152.uName.src.tarxz
+		2.re.l.ease.projectName
+			data
+				logs
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.zero.sdk.abcdefgh.el7.x86_64
+						log
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-2.re.l.ease.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.zero.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-2.re.l.ease.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version1-2.re.l.ease.projectName.src.tarxz
+		2.re.l.ease.uName
+			data
+				logs
+					fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.f29.x86_64
+						log
+					slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+			fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-2.re.l.ease.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			fastdebug.hotspot.sdk.abcdefgh.f29.x86_64
+				java-1.8.0-openjdk-version1-2.re.l.ease.uName.fastdebug.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.f29.x86_64
+				java-1.8.0-openjdk-version1-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
+			slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version1-2.re.l.ease.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version1-2.re.l.ease.uName.src.tarxz
+	version2
+		152.projectName
+			data
+				logs
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.zero.sdk.abcdefgh.el7.x86_64
+						log
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-152.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.zero.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-152.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version2-152.projectName.src.tarxz
+		152.uName
+			data
+				logs
+					fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.f29.x86_64
+						log
+					slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+			fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-152.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-152.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.f29.x86_64
+				java-1.8.0-openjdk-version2-152.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
+			slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-152.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version2-152.uName.src.tarxz
+		2.re.l.ease.projectName
+			data
+				logs
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.zero.sdk.abcdefgh.el7.x86_64
+						log
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-2.re.l.ease.projectName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.zero.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-2.re.l.ease.projectName.release.zero.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version2-2.re.l.ease.projectName.src.tarxz
+		2.re.l.ease.uName
+			data
+				logs
+					fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+					release.hotspot.sdk.abcdefgh.f29.x86_64
+						log
+					slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+						log
+			fastdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-2.re.l.ease.uName.fastdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			release.hotspot.sdk.abcdefgh.f29.x86_64
+				java-1.8.0-openjdk-version2-2.re.l.ease.uName.release.hotspot.sdk.abcdefgh.f29.x86_64.tarxz
+			slowdebug.hotspot.sdk.abcdefgh.el7.x86_64
+				java-1.8.0-openjdk-version2-2.re.l.ease.uName.slowdebug.hotspot.sdk.abcdefgh.el7.x86_64.tarxz
+			src
+				java-1.8.0-openjdk-version2-2.re.l.ease.uName.src.tarxz
