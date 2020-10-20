@@ -87,6 +87,11 @@ public class OToolArchive extends OToolBuild {
     }
 
     @Override
+    public String toNiceString() {
+        return super.toNiceString() + "." + getDirectoryName() + "." + getSuffix();
+    }
+
+    @Override
     public String toString() {
         return toString("");
     }

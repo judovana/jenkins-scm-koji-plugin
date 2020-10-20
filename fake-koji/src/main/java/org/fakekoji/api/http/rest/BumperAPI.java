@@ -2,15 +2,19 @@ package org.fakekoji.api.http.rest;
 
 import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
-import org.fakekoji.jobmanager.ProductBumper;
+import org.fakekoji.jobmanager.ConfigCache;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobModifier;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.PlatformBumper;
+import org.fakekoji.jobmanager.ProductBumper;
+import org.fakekoji.jobmanager.TaskVariantAdder;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
@@ -23,20 +27,29 @@ import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.Platform;
+import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariant;
+import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static org.fakekoji.api.http.rest.OToolService.BUMP;
@@ -49,6 +62,8 @@ import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
 
 public class BumperAPI implements EndpointGroup {
 
+    private final ConfigManager configManager;
+    private final File buildsRoot;
     private final JobUpdater jobUpdater;
     private final JDKProjectParser parser;
     private final ReverseJDKProjectParser reverseParser;
@@ -58,6 +73,8 @@ public class BumperAPI implements EndpointGroup {
     private final ConfigReader<Platform> platformConfigReader;
 
     BumperAPI(final AccessibleSettings settings) {
+        this.configManager = settings.getConfigManager();
+        buildsRoot = settings.getDbFileRoot();
         this.jobUpdater = settings.getJobUpdater();
         this.parser = settings.getJdkProjectParser();
         this.reverseParser = settings.getReverseJDKProjectParser();
@@ -93,7 +110,7 @@ public class BumperAPI implements EndpointGroup {
         return Result.ok(projects);
     }
 
-    Result<JobUpdateResults, OToolError> modifyJobs(final List<Project> projects, final JobModifier jobModifier) {
+    Result<JobUpdateResults, OToolError> modifyJobs(final Collection<Project> projects, final JobModifier jobModifier) {
         final Set<Job> jobs = new HashSet<>();
         try {
             for (final Project project : projects) {
@@ -228,8 +245,97 @@ public class BumperAPI implements EndpointGroup {
                 + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n";
     }
 
+    Result<JobUpdateResults, OToolError> addTaskVariant(final Map<String, List<String>> params) {
+        final Result<String, OToolError> nameResult = RestUtils.extractMandatoryParamValue(params, "name");
+        if (nameResult.isError()) {
+            return Result.err(nameResult.getError());
+        }
+        final Result<String, OToolError> typeResult = RestUtils.extractMandatoryParamValue(params, "type");
+        if (typeResult.isError()) {
+            return Result.err(typeResult.getError());
+        }
+        final Result<String, OToolError> valuesResult = RestUtils.extractMandatoryParamValue(params, "values");
+        if (valuesResult.isError()) {
+            return Result.err(valuesResult.getError());
+        }
+        final Result<String, OToolError> defaultValueResult = RestUtils.extractMandatoryParamValue(params, "defaultValue");
+        if (defaultValueResult.isError()) {
+            return Result.err(defaultValueResult.getError());
+        }
+        final String name = nameResult.getValue();
+        final Result<Task.Type, String> typeParseResult = Task.Type.parse(typeResult.getValue());
+        if (typeParseResult.isError()) {
+            return Result.err(new OToolError(typeParseResult.getError(), 400));
+        }
+        final Task.Type type = typeParseResult.getValue();
+        final Collection<TaskVariant> taskVariants;
+        final int order;
+        try {
+            taskVariants = configManager.taskVariantManager.readAll();
+            order = taskVariants.stream()
+                    .filter(taskVariant -> taskVariant.getType().equals(type))
+                    .max(Comparator.comparingInt(TaskVariant::getOrder))
+                    .orElseThrow(() -> new StorageException("Error while getting last taskVariant's order"))
+                    .getOrder() + 1;
+        } catch (StorageException e) {
+            return Result.err(new OToolError(e.getMessage(), 500));
+        }
+        final Set<String> taskVariantValues = taskVariants.stream()
+                .flatMap(taskVariant -> taskVariant.getVariants().keySet().stream())
+                .collect(Collectors.toSet());
+
+        final List<String> valuesList = Arrays
+                .stream(valuesResult.getValue().split(","))
+                .collect(Collectors.toList());
+        final Set<String> tmp = new HashSet<>();
+        for (final String value : valuesList) {
+            if (taskVariantValues.contains(value)) {
+                return Result.err(new OToolError("Value " + value + " already exists in another task variant", 400));
+            }
+            if (!tmp.add(value)) {
+                return Result.err(new OToolError("Duplicate value: " + value, 400));
+            }
+        }
+        final Map<String, TaskVariantValue> values = valuesList.stream()
+                .collect(Collectors.toMap(value -> value, value -> new TaskVariantValue(value, value)));
+        final String defaultValue = defaultValueResult.getValue();
+        if (!values.containsKey(defaultValue)) {
+            return Result.err(new OToolError("Default value '" + defaultValue + "' is not defined in values", 500));
+        }
+        final TaskVariant taskVariant = new TaskVariant(
+                name,
+                name,
+                type,
+                defaultValue,
+                order,
+                values,
+                false
+        );
+        try {
+            configManager.taskVariantManager.create(taskVariant);
+        } catch (StorageException e) {
+            return Result.err(new OToolError(e.getMessage(), 500));
+        } catch (ManagementException e) {
+            return Result.err(new OToolError(e.getMessage(), 400));
+        }
+        final Collection<Project> projects;
+        try {
+            final ConfigCache configCache = new ConfigCache(configManager);
+            projects = configCache.getProjects();
+        } catch (StorageException e) {
+            return Result.err(new OToolError(e.getMessage(), 500));
+        }
+        if (taskVariant.getType().equals(Task.Type.BUILD)) {
+            // TODO
+        }
+        return modifyJobs(projects, new TaskVariantAdder(taskVariant));
+    }
+
     @Override
     public void addEndpoints() {
+        get("addVariant", context -> {
+            final Result<JobUpdateResults, OToolError> result = addTaskVariant(context.queryParamMap());
+        });
         get(PLATFORMS, context -> {
             final Result<JobUpdateResults, OToolError> result = bumpPlatform(context.queryParamMap());
             if (result.isError()) {
