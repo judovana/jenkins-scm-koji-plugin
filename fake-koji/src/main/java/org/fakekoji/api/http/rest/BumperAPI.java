@@ -61,6 +61,7 @@ import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
 
 public class BumperAPI implements EndpointGroup {
+    private static final String ADD_VARIANT = "addVariant";
 
     private final ConfigManager configManager;
     private final File buildsRoot;
@@ -242,7 +243,8 @@ public class BumperAPI implements EndpointGroup {
         final String prefix = MISC + '/' + BUMP;
         return "\n"
                 + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
-                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n";
+                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n"
+                + prefix + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n";
     }
 
     Result<JobUpdateResults, OToolError> addTaskVariant(final Map<String, List<String>> params) {
@@ -396,8 +398,14 @@ public class BumperAPI implements EndpointGroup {
 
     @Override
     public void addEndpoints() {
-        get("addVariant", context -> {
+        get(ADD_VARIANT, context -> {
             final Result<JobUpdateResults, OToolError> result = addTaskVariant(context.queryParamMap());
+            if (result.isError()) {
+                final OToolError error = result.getError();
+                context.result(error.message).status(error.code);
+            } else {
+                context.json(result.getValue());
+            }
         });
         get(PLATFORMS, context -> {
             final Result<JobUpdateResults, OToolError> result = bumpPlatform(context.queryParamMap());
