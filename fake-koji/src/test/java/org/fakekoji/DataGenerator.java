@@ -1736,6 +1736,10 @@ public class DataGenerator {
                     final String releaseName = release + '.' + jdkProject.getId();
                     final File releaseDir = new File(versionDir, releaseName);
                     releaseDir.mkdirs();
+                    final File dataDir = new File(releaseDir, "data");
+                    dataDir.mkdirs();
+                    final File logsDir = new File(dataDir, "logs");
+                    logsDir.mkdirs();
                     final String baseName = jdkVersion.getPackageNames().get(0) + '-' + version + '-' + releaseName + '.';
                     final File srcDir = new File(releaseDir, JenkinsJobTemplateBuilder.SOURCES);
                     srcDir.mkdirs();
@@ -1765,6 +1769,10 @@ public class DataGenerator {
                                 if (!notBuilt.contains(archiveFileName)) {
                                     final File archiveFile = new File(platformDir, archiveFileName);
                                     platformDir.mkdirs();
+                                    final File archiveLogsDir = new File(logsDir, archName);
+                                    archiveLogsDir.mkdirs();
+                                    final File log = new File(archiveLogsDir, "log");
+                                    log.createNewFile();
                                     Files.write(archiveFile.toPath(), archiveFileName.getBytes());
                                     if (!archiveFile.setLastModified(timeStamp += 60000)) {
                                         throw new RuntimeException("Failed to set lastModified of file " + archiveFile.getAbsolutePath());
@@ -1932,6 +1940,16 @@ public class DataGenerator {
             this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
             this.configsRoot = configsRoot;
         }
+    }
+
+    public static void createProjectJobs(final AccessibleSettings settings) {
+        getProjects().forEach(jdkProject -> {
+            try {
+                settings.getJobUpdater().update(null, jdkProject);
+            } catch (StorageException | ManagementException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public static SummaryReportRunner getSummaryReportRunner(final AccessibleSettings settings) {
