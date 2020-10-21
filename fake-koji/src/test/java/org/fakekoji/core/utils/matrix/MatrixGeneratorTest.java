@@ -52,9 +52,9 @@ public class MatrixGeneratorTest {
 
     @Test
     public void printSimpleMatrix() {
-        MatrixGenerator m = new MatrixGenerator(settings, new String[0]);
         final String projectName = DataGenerator.PROJECT_NAME_U;
         final String[] projects = new String[]{projectName};
+        MatrixGenerator m = new MatrixGenerator(settings, projects);
         final String url = "https://example.com";
         final List<List<Cell>> matrix = Arrays.asList(
                 Arrays.asList(
@@ -107,11 +107,79 @@ public class MatrixGeneratorTest {
         final String expandedHtmlOutput = m.printMatrix(matrix, new HtmlFormatter(true, projects), 0, 0, total);
         Assert.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
 
+        final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
         final String expectedSpanningHtmlOutput = "<table>\n"
-                + "<tr><td><a href=\"#\">uName</a></td><td colspan=\"3\">Col1</td><td>Col2</td><td>Col3</td><td><a href=\"#\">uName</a></td></tr>\n"
-                + "<tr><td>Row1</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
-                + "<tr><td>Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a>" + anchor + "[2]</a></td><td /><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row2</td></tr>\n"
-                + "<tr>" + summaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
+                + "<tr><td><a href=\"#\">uName</a></td><td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td><td><a href=\"#\">uName</a></td></tr>\n"
+                + "<tr><td>Row1</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
+                + "<tr><td>Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td /><td>Row2</td></tr>\n"
+                + "<tr>" + summaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + summaryTd + "</tr>\n"
+                + "</table>";
+        Assert.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
+    }
+    
+    @Test
+    public void printMatrixWithTwoProjects() {
+        final List<String> projectList = Arrays.asList("proj1", "proj2");
+        final String[] projects = projectList.toArray(new String[0]);
+        MatrixGenerator m = new MatrixGenerator(settings, projects);
+        final String url = "https://example.com";
+        final List<List<Cell>> matrix = Arrays.asList(
+                Arrays.asList(
+                        new UpperCornerCell(projectList.stream().map(UrlCell::new).collect(Collectors.toList())),
+                        new TitleCell("Col1"),
+                        new TitleCell("Col2"),
+                        new TitleCell("Col3")
+                ),
+                Arrays.asList(
+                        new TitleCell("Row1"),
+                        new CellGroup(Arrays.asList(
+                                new UrlCell("Cell0", url),
+                                new UrlCell("Cell1", url),
+                                new UrlCell("Cell2", url))
+                        ),
+                        new CellGroup(Collections.singletonList(new UrlCell("Cell3", url))),
+                        new CellGroup(Collections.singletonList(new MultiUrlCell("Cell4", Arrays.asList(url, url))))
+                ),
+                Arrays.asList(
+                        new TitleCell("Row2"),
+                        new CellGroup(Arrays.asList(
+                                new UrlCell("Cell5", url),
+                                new MultiUrlCell("Cell6", Arrays.asList(url, url))
+                        )),
+                        new CellGroup(Collections.singletonList(new UrlCell("Cell7", url))),
+                        new CellGroup(Collections.singletonList(new UrlCell("Cell8", url)))
+                )
+        );
+        final int total = 10;
+        final int count = 9;
+        final String summary = count + "/" + total;
+        final String summaryTd = "<td>" + summary + "</td>";
+
+        final String anchor = "<a href=\"" + url + "\">";
+        final String expectedProjectsCell = "<td>" + projectList.stream()
+                .map(proj -> "<a href=\"#\">" + proj + "</a>")
+                .collect(Collectors.joining(" ")) + "</td>";
+        final String expectedHtmlOutput = "<table>\n"
+                + "<tr>" + expectedProjectsCell + "<td>Col1</td><td>Col2</td><td>Col3</td>" + expectedProjectsCell + "</tr>\n"
+                + "<tr><td>Row1</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
+                + "<tr><td>Row2</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row2</td></tr>\n"
+                + "<tr>" + summaryTd + "<td>Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
+                + "</table>";
+        final String htmlOutput = m.printMatrix(matrix, new HtmlFormatter(false, projects), 0, 0, total);
+        Assert.assertEquals(expectedHtmlOutput, htmlOutput);
+
+        final String expandedHtmlOutput = m.printMatrix(matrix, new HtmlFormatter(true, projects), 0, 0, total);
+        Assert.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
+
+        final String spanningSummaryTd = "<td colspan=\"2\">" + summary + "</td>";
+        final String expectedProjectsCells = projectList.stream()
+                .map(proj -> "<td><a href=\"#\">" + proj + "</a></td>")
+                .collect(Collectors.joining());
+        final String expectedSpanningHtmlOutput = "<table>\n"
+                + "<tr>" + expectedProjectsCells + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + expectedProjectsCells + "</tr>\n"
+                + "<tr><td colspan=\"2\">Row1</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td colspan=\"2\">Row1</td></tr>\n"
+                + "<tr><td colspan=\"2\">Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td /><td colspan=\"2\">Row2</td></tr>\n"
+                + "<tr>" + spanningSummaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + spanningSummaryTd + "</tr>\n"
                 + "</table>";
         final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
         Assert.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
