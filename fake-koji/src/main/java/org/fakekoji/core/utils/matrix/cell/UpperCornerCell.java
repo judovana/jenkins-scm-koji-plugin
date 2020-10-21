@@ -16,6 +16,11 @@ public class UpperCornerCell implements Cell {
     }
 
     @Override
+    public int getSpan() {
+        return projectCells.size();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof UpperCornerCell)) return false;

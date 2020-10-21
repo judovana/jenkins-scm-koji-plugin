@@ -344,7 +344,7 @@ public class MatrixGenerator {
         for (int colIdx = 1; colIdx < firstRow.size(); colIdx++) {
             int maxForSpan = 1;
             for (List<Cell> rowForSpan : matrix) {
-                maxForSpan = Math.max(rowForSpan.get(colIdx).size(), maxForSpan);
+                maxForSpan = Math.max(rowForSpan.get(colIdx).getSpan(), maxForSpan);
             }
             final TitleCell titleCell = (TitleCell) firstRow.get(colIdx);
             firstRowString.append(fill(formatter.edge(titleCell, maxForSpan), lcol, " "));
@@ -359,14 +359,14 @@ public class MatrixGenerator {
             List<Cell> row = matrix.get(rowIdx);
             final TitleCell titleCell = (TitleCell) row.get(0);
             final String rowTitle = titleCell.getTitle();
-            final String rowEdge = fill(formatter.edge(titleCell, 1), lrow, " ");
+            final String rowEdge = fill(formatter.edge(titleCell, upperCornerCell.getSpan()), lrow, " ");
             matrixBody.append(formatter.rowStart()).append(rowEdge);
             for (int colIdx = 1; colIdx < row.size(); colIdx++) {
                 final TitleCell colTitleCell = (TitleCell) matrix.get(0).get(colIdx);
                 final String colTitle = colTitleCell.getTitle();
                 int maxForSpan = 1;
                 for (List<Cell> rowForSpan : matrix) {
-                    maxForSpan = Math.max(rowForSpan.get(colIdx).size(), maxForSpan);
+                    maxForSpan = Math.max(rowForSpan.get(colIdx).getSpan(), maxForSpan);
                 }
                 final CellGroup cellGroup = (CellGroup) row.get(colIdx);
                 matrixBody.append(fill(formatter.cells(cellGroup, maxForSpan, rowTitle, colTitle), lcol, " "));
@@ -374,7 +374,7 @@ public class MatrixGenerator {
             }
             matrixBody.append(rowEdge).append(formatter.rowEnd());
         }
-        final String lowerCornerCell = fill(formatter.lowerCorner(count, total), lrow, " ");
+        final String lowerCornerCell = fill(formatter.lowerCorner(count, total, upperCornerCell.getSpan()), lrow, " ");
         return output
                 .append(matrixBody)
                 .append(formatter.rowStart())

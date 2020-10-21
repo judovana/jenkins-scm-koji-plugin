@@ -24,6 +24,11 @@ public class CellGroup implements Cell {
         return cells.isEmpty();
     }
 
+    @Override
+    public int getSpan() {
+        return cells.stream().map(Cell::getSpan).reduce(0, Integer::sum);
+    }
+
     public int size() {
         return cells.size();
     }
