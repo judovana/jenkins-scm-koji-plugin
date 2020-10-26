@@ -79,26 +79,39 @@ public class RemoteRequestsCache {
         public void run() {
             while (alive) {
                 try {
-                    Thread.sleep(getConfigRefreshRateMilis());
-                } catch (Exception e) {
+                    try {
+                        Thread.sleep(getConfigRefreshRateMilis());
+                    } catch (Exception e) {
+                        LOG.warn("Failed to wait for cache config", e);
+                    }
+                    read();
+                } catch (Throwable e) {
                     LOG.warn("Failed to read existing  cache config", e);
                 }
-                read();
             }
         }
 
         private void read() {
-            if (config != null && config.exists()) {
-                try (InputStream inputStream = new FileInputStream(config)) {
-                    Properties propNew = new Properties();
-                    propNew.load(inputStream);
-                    propRaw = propNew;
-                } catch (Exception e) {
-                    LOG.warn("Failed to read or apply existing cache config", e);
+            try {
+                if (config != null && config.exists()) {
+                    try (InputStream inputStream = new FileInputStream(config)) {
+                        Properties propNew = new Properties();
+                        propNew.load(inputStream);
+                        propRaw = propNew;
+                    } catch (Exception e) {
+                        LOG.warn("Failed to read existing cache config", e);
+                    }
+                }
+                apply();
+            } catch (Exception ex) {
+                LOG.warn("Failed to apply existing cache config", ex);
+            } finally {
+                try {
+                    freeOldItems();
+                } catch (Exception ex) {
+                    LOG.warn("Failed to clear old items from cache", ex);
                 }
             }
-            apply();
-            freeOldItems();
         }
     }
 
@@ -186,7 +199,7 @@ public class RemoteRequestsCache {
         setLoaded(true);
     }
 
-    @SuppressFBWarnings(value="REC_CATCH_EXCEPTION", justification = "We really do not wont to kill main thread")
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "We really do not wont to kill main thread")
     synchronized void dump(File dumpFile) {
         try {
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dumpFile), "utf-8"))) {
