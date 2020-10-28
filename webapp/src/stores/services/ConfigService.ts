@@ -5,7 +5,11 @@ class ConfigService {
     constructor(private readonly url: string) {
     }
 
-    fetch = async <T>(input: RequestInfo, init?: RequestInit): Promise<FetchResult<T>> => {
+    fetchText = (input: RequestInfo, init?: RequestInit) => this._fetch<string>(false, input, init)
+
+    fetch = <T>(input: RequestInfo, init?: RequestInit) => this._fetch<T>(true, input, init)
+
+    private _fetch = async <T>(isJson: boolean, input: RequestInfo, init?: RequestInit): Promise<FetchResult<T>> => {
 
         const handleError = (
             error: any,
@@ -25,7 +29,10 @@ class ConfigService {
             fetch(`${this.url}/${input}`, init)
                 .then(response => {
                     if (response.status === 200) {
-                        response.json()
+                        const valuePromise = isJson
+                            ? response.json()
+                            : response.text()
+                        valuePromise
                             .then(value => {
                                 resolve({ value: value as T })
                             })
