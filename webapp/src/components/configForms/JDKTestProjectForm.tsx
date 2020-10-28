@@ -89,7 +89,9 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                     onChange={onSubpackageWhitelistChange}
                 />
                 <JobConfigComponent
+                    jdkId={project.product.jdk}
                     jobConfig={project.jobConfiguration}
+                    projectId={project.id}
                     projectType={project.type}
                 />
                 <FormList

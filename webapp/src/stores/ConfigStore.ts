@@ -26,6 +26,7 @@ import {
     ConfigValidation,
     isConfigValid
 } from "../utils/validators"
+import { getJobNameGenerator } from "../utils/createJobName"
 
 export class ConfigStore {
     @observable
@@ -57,6 +58,9 @@ export class ConfigStore {
 
     @observable
     private _resultDialogOpen: boolean = false
+
+    @observable
+    private _jenkinsUrl: string | undefined
 
     constructor(private readonly service: ConfigService) {
         this._configGroups = [
@@ -270,6 +274,11 @@ export class ConfigStore {
     }
 
     @action
+    private setJenkinsUrl = (url: string) => {
+        this._jenkinsUrl = url
+    }
+
+    @action
     private handleError = (configState: ConfigState) => (error: string) => {
         this._configError = error
         this._configState = configState
@@ -322,6 +331,22 @@ export class ConfigStore {
                 })
             }
         }
+    }
+
+    fetchJenkinsUrl = () => {
+        this.service.fetchText("get/jenkinsUrl")
+            .then(result => {
+                if (result.error) {
+                    // TODO
+                }
+                if (result.value) {
+                    this.setJenkinsUrl(result.value)
+                }
+            })
+    }
+
+    get jobNameGenerator() {
+        return getJobNameGenerator(this.taskVariantsMap, this._jenkinsUrl)
     }
 
     get buildProviders(): BuildProvider[] {
@@ -413,5 +438,9 @@ export class ConfigStore {
 
     get resultDialogOpen(): boolean {
         return this._resultDialogOpen
+    }
+
+    get jenkinsUrl(): string | undefined {
+        return this._jenkinsUrl
     }
 }
