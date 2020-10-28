@@ -93,6 +93,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String UNSAFE = "unsafe";
     private static final String WEBAPP = "webapp";
     private static final String XML_RPC = "xmlRpc";
+    private static final String JENKINS_URL = "jenkinsUrl";
 
     private static final String JDK_VERSIONS = "jdkVersions";
     private static final String HELP = "help";
@@ -315,6 +316,20 @@ public class GetterAPI implements EndpointGroup {
             @Override
             public String about() {
                 return "/jdkVersions";
+            }
+        };
+    }
+    
+    private QueryHandler getJenkinsUrlHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) {
+                return Result.ok(settings.getJenkinsUrl());
+            }
+
+            @Override
+            public String about() {
+                return "/url/jenkins";
             }
         };
     }
@@ -1086,6 +1101,7 @@ public class GetterAPI implements EndpointGroup {
             put(TASKS, getTasksHandler());
             put(LEGACY_PARSER, getLegacyParserHandler());
             put(VARIANTS, getVariantsHandler());
+            put(JENKINS_URL, getJenkinsUrlHandler());
         }});
     }
 
