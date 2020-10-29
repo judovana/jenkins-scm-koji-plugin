@@ -125,7 +125,9 @@ public class SummaryReportRunner {
                 "--jobfilter",
                 jobFilter,
                 "--return",
-                returnPath
+                returnPath,
+                "--surpass",
+                "best"
         );
         if (explicitUrl.isPresent()) {
             List a = new ArrayList<>(defaults);
