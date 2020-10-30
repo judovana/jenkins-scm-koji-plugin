@@ -70,8 +70,6 @@ public class RedeployApi implements EndpointGroup {
     private static final String REDEPLOY_CHECKOUT = "checkout"; //job=jobName removes build.xml and execute build now
     private static final String REDEPLOY_CHECKOUT_ALL = "checkoutall"; //no job name, but filtering, removes build.xml and execute build now, requires do
     private static final String REDEPLOY_NOW = "now"; //still same filtering, simply pressing "build now" on selected jobs, requires do
-    //TODO private static final String REDEPLOY_DELETE = "delete"; //works on nvr base, will rmeove from job history every build(1,10,11...) which was of given nvr, optional histry-number defautl eg 10 - how far in hystory to dig
-    //TODO dont forget to relaod after deletation
     private static final String REDEPLOY_DO = "do"; //will do the real work if true, by default it will only print what it will affect
     //with?
     private static final String REDEPLOY_NVR = "nvr"; //and enforce platform as separate thing?
@@ -115,8 +113,10 @@ public class RedeployApi implements EndpointGroup {
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_CHECKOUT + "\n"
                 + "  requires job=name  will execute checkout and build (unlike build now, which rebuilds last nvr). Job should not be in queue\n"
                 + "  if there is nothing to checkout (eg due allbuilds in processed.txt, build will fail\n"
+                + "  optional parametr nvr=  to remove NVR from prcocessed.txt before removing the build.xml, unelss you set force=true, the record must be in processed.txt\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_CHECKOUT_ALL + "\n"
                 + "  Will force " + REDEPLOY_CHECKOUT + " on all jobs, based by filter (See below).\n"
+                + "  optional parametr nvr=  to remove NVR from prcocessed.txt before removing the build.xml, unelss you set force=true, the record must be in processed.txt\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_NOW + "\n"
                 + "  Will will press `build now` on all jobs, based by filter (See below).\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_BUILD + "\n"
@@ -176,7 +176,9 @@ public class RedeployApi implements EndpointGroup {
         get(REDEPLOY_CHECKOUT, context -> {
             try {
                 String job = context.queryParam(RERUN_JOB);
-                StringBuilder sb = forceCheckoutOnJob(job);
+                String nvr = context.queryParam(REDEPLOY_NVR);
+                String force = context.queryParam("force");
+                StringBuilder sb = forceCheckoutOnJob(job, nvr, "true".equals(force));
                 context.status(OToolService.OK).result(sb.toString());
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
@@ -188,11 +190,13 @@ public class RedeployApi implements EndpointGroup {
             try {
                 List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
                 String doAndHow = context.queryParam(REDEPLOY_DO);
+                String nvr = context.queryParam(REDEPLOY_NVR);
+                String force = context.queryParam("force");
                 if ("true".equals(doAndHow)) {
                     List<String> results = new ArrayList<>(jobs.size());
                     for (String job : jobs) {
                         try {
-                            forceCheckoutOnJob(job);
+                            forceCheckoutOnJob(job, nvr, "true".equals(force));
                             results.add("ok - checking out -  " + job);
                         } catch (Exception ex) {
                             LOGGER.log(Level.WARNING, ex.getMessage(), ex);
@@ -371,15 +375,36 @@ public class RedeployApi implements EndpointGroup {
     }
 
 
-    private StringBuilder forceCheckoutOnJob(String job) throws IOException {
+    private StringBuilder forceCheckoutOnJob(String job, String nvr, boolean force) throws IOException {
         if (job == null) {
             throw new RuntimeException(RERUN_JOB + " must be an existing job id, was " + job);
         }
         StringBuilder sb = new StringBuilder();
-        deleteBuildXml(job, sb);
-        JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().scheduleBuild(job);
-        cr.throwIfNecessary();
-        sb.append("scheduled " + job + "\n");
+        boolean removed = true;
+        if (nvr != null) {
+            File processed = new File(settings.getJenkinsJobsRoot().getAbsolutePath() + File.separator + job + File.separator + Constants.PROCESSED_BUILDS_HISTORY);
+            sb.append(job + " - " + nvr + "\n");
+            Utils.RemovedNvrsResult details = Utils.removeNvrFromProcessed(processed, nvr);
+            if (details.removed() <= 0 || details.removedUniq() <= 0) {
+                String ew = "Error";
+                if (force){
+                    ew = "Warning";
+                }
+                sb.append(" " + ew + " ! Nothing removed - " + details.toString() + "\n");
+                removed= false;
+            } else {
+                sb.append("  Ok - " + details.toString() + "\n");
+                removed=true;
+            }
+        }
+        if (removed || force) {
+            deleteBuildXml(job, sb);
+            JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().scheduleBuild(job);
+            cr.throwIfNecessary();
+            sb.append("scheduled " + job + "\n");
+        } else {
+            sb.append("not scheduling " + job + "\n");
+        }
         return sb;
     }
 
