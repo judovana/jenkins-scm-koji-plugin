@@ -15,7 +15,7 @@ public class PlainTextFormatter implements Formatter {
     }
 
     @Override
-    public String lowerCorner(int found, int all) {
+    public String lowerCorner(int found, int all, int span) {
         return found + "/" + all;
     }
 

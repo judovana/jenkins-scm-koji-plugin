@@ -17,6 +17,11 @@ public class MultiUrlCell extends TitleCell {
     }
 
     @Override
+    public int getSpan() {
+        return this.urls.size();
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof MultiUrlCell)) return false;

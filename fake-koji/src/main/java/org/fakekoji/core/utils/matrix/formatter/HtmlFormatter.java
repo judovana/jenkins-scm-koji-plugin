@@ -109,18 +109,22 @@ public class HtmlFormatter implements Formatter {
             final String title = "[" + expandIfNeeded(i + 1, cell.getTitle(), rowTitle, colTitle) + "]";
             final String content;
             if (cell instanceof UrlCell) {
-                content = renderHtmlAnchor(title, ((UrlCell) cell).getUrl().orElse("#"));
+                content = cell(cell.getTitle(), renderHtmlAnchor(title, ((UrlCell) cell).getUrl().orElse("#")));
             } else if (cell instanceof MultiUrlCell) {
-                content = ((MultiUrlCell) cell).getUrls()
-                        .stream()
-                        .map(url -> renderHtmlAnchor(title, url))
-                        .collect(Collectors.joining());
+                content = renderMultiUrlCell(title, (MultiUrlCell) cell);
             } else {
-                content = title;
+                content = cell(cell.getTitle(), title);
             }
-            stringBuilder.append(cell(cell.getTitle(), content));
+            stringBuilder.append(content);
         }
         return stringBuilder.toString();
+    }
+
+    String renderMultiUrlCell(final String title, final MultiUrlCell cell) {
+        return cell(title, cell.getUrls()
+                .stream()
+                .map(url -> renderHtmlAnchor(title, url))
+                .collect(Collectors.joining()));
     }
 
     String cell(final String cellTitle, final String content) {
@@ -163,7 +167,7 @@ public class HtmlFormatter implements Formatter {
     }
 
     @Override
-    public String lowerCorner(int found, int all) {
+    public String lowerCorner(int found, int all, int span) {
         return renderTableCell(found + "/" + all);
     }
 }

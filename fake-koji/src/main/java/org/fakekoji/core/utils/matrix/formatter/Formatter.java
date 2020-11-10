@@ -19,5 +19,5 @@ public interface Formatter {
 
     String upperCorner(final UpperCornerCell cell);
 
-    String lowerCorner(int total, int i);
+    String lowerCorner(int total, int i, int span);
 }
