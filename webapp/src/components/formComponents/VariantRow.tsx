@@ -62,7 +62,7 @@ const VariantRow: React.FC<VariantRowProps> = props => {
             .slice() // .sort sorts in place so we need to make a copy to stay pure
             .sort(([k1], [k2]) => k1.localeCompare(k2))
 
-        const jenkinsJobLink = configStore.jobNameGenerator(projectId, jdkId, platformConfig, taskConfig, config, buildConfigs)
+        const jenkinsJob = configStore.jobNameGenerator(projectId, jdkId, platformConfig, taskConfig, config, buildConfigs)
         const cell = (<div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", flexDirection: "row" }}>
                 {sortedVariants.map(([id, value]) => {
@@ -97,7 +97,10 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                         }} />
                 }
             </div>
-            {!!jenkinsJobLink && <a style={{ alignSelf: "flex-end" }} href={jenkinsJobLink}>{"jenkins job"}</a>}
+            {!!jenkinsJob && <a style={{
+                alignSelf: "flex-start",
+                fontSize: 12,
+            }} href={jenkinsJob.url}>{jenkinsJob.name}</a>}
         </div>)
 
         return (

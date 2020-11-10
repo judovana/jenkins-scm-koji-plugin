@@ -6,6 +6,11 @@ import {
     VariantsConfig,
 } from "../stores/model"
 
+type JenkinsJob = {
+    name: string
+    url: string
+}
+
 export const getJobNameGenerator = (
     variants: { [id: string]: TaskVariant },
     url: string | undefined,
@@ -16,9 +21,9 @@ export const getJobNameGenerator = (
     taskConfig: TaskConfig | undefined,
     variantsConfig: VariantsConfig,
     buildConfigs: BuildConfigs | undefined,
-) => string) => {
+) => JenkinsJob | null) => {
     if (!url) {
-        return () => ""
+        return () => null
     }
     const variantsMap = Object.keys(variants).reduce((map, key) => {
         const variant = variants[key]
@@ -41,12 +46,16 @@ export const getJobNameGenerator = (
     }
     return (projectId, jdkId, platform, task, variants, buildConfigs) => {
         if (!task) {
-            return ""
+            return null
         }
-        const prefix = `${url}job/${task.id}-${jdkId}-${projectId}`
         const buildPart = !!buildConfigs
             ? `-${buildConfigs.platform.id}-${variantsToString(buildConfigs.taskVariants)}-`
             : "-"
-        return `${prefix}${buildPart}${platform.id}.${platform.provider}-${variantsToString(variants)}`
+        const name = `${task.id}-${jdkId}-${projectId}${buildPart}${platform.id}.${platform.provider}-${variantsToString(variants)}`
+        const jobUrl = `${url}job/${name}`
+        return {
+            name,
+            url: jobUrl,
+        }
     }
 }
