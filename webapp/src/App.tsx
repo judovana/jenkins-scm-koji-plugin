@@ -13,6 +13,7 @@ const App: React.FC = () => {
     const { configStore, viewStore } = useStores()
 
     React.useEffect(() => {
+        configStore.fetchJenkinsUrl()
         configStore.fetchConfigs()
     }, [configStore])
 

@@ -10,7 +10,9 @@ import TableCell from "../TableCell"
 
 
 interface Props {
+    jdkId: string
     jobConfig: JobConfig
+    projectId: string
     projectType: ProjectType
 }
 
@@ -19,7 +21,12 @@ const JobConfigComponent: React.FC<Props> = props => {
     const { configStore } = useStores()
 
     return useObserver(() => {
-        const { jobConfig, projectType } = props
+        const {
+            jdkId,
+            jobConfig,
+            projectId,
+            projectType,
+        } = props
         const platformConfigs = jobConfig.platforms
         const onPlatformDelete = (index: number): void => {
             platformConfigs.splice(index, 1)
@@ -65,9 +72,11 @@ const JobConfigComponent: React.FC<Props> = props => {
                         {platformConfigs.map((config, index) =>
                             <PlatformRow
                                 config={config}
+                                jdkId={jdkId}
                                 key={index}
                                 treeID={index.toString()}
                                 onDelete={() => onPlatformDelete(index)}
+                                projectId={projectId}
                                 projectType={projectType}
                                 type={"BUILD"}
                             />)}

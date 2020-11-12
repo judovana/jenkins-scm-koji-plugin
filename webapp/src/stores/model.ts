@@ -59,6 +59,12 @@ export interface VariantsConfig {
     platforms?: PlatformConfig[]
 }
 
+export type BuildConfigs = {
+    platform: PlatformConfig
+    task?: TaskConfig
+    taskVariants: VariantsConfig
+}
+
 export interface Task extends Item {
     script: string;
     type: TaskType;
@@ -127,6 +133,7 @@ export interface JDKVersion extends Item {
 
 export interface TaskVariant extends Item {
     defaultValue: string
+    order: number
     supportsSubpackages: boolean
     type: TaskType;
     variants: Item[];

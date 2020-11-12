@@ -81,7 +81,9 @@ const JDKProjectForm: React.FC<Props> = props => {
                     validation={product}
                 />
                 <JobConfigComponent
+                    jdkId={jdkProject.product.jdk}
                     jobConfig={jdkProject.jobConfiguration}
+                    projectId={jdkProject.id}
                     projectType={jdkProject.type}
                 />
                 <FormList

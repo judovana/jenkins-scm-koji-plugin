@@ -3,7 +3,13 @@ import { useObserver } from "mobx-react"
 import { Tooltip, IconButton, TableRow } from "@material-ui/core"
 import { Add } from "@material-ui/icons"
 
-import { TaskConfig, TaskType, ProjectType } from "../../stores/model"
+import {
+    BuildConfigs,
+    PlatformConfig,
+    ProjectType,
+    TaskConfig,
+    TaskType,
+} from "../../stores/model"
 
 import useStores from "../../hooks/useStores"
 import VariantRow from "./VariantRow"
@@ -12,13 +18,16 @@ import DeleteButton from "../DeleteButton"
 import TableCell from "../TableCell"
 
 type TaskRowProps = {
+    buildConfigs: BuildConfigs | undefined
     config: TaskConfig
+    jdkId: string
     treeID: string
     onDelete: () => void
+    platformConfig: PlatformConfig
+    projectId: string
     projectType: ProjectType
     type: TaskType
 }
-
 
 const TaskRow: React.FC<TaskRowProps> = props => {
 
@@ -41,7 +50,17 @@ const TaskRow: React.FC<TaskRowProps> = props => {
 
     return useObserver(() => {
 
-        const { config, treeID, onDelete, projectType, type } = props
+        const {
+            buildConfigs,
+            config,
+            jdkId,
+            treeID,
+            onDelete,
+            platformConfig,
+            projectId,
+            projectType,
+            type,
+        } = props
 
         const taskVariants = config.variants
 
@@ -82,11 +101,16 @@ const TaskRow: React.FC<TaskRowProps> = props => {
                 </TableRow>
                 {taskVariants.map((taskVariant, index) =>
                     <VariantRow
+                        buildConfigs={buildConfigs}
                         config={taskVariant}
+                        jdkId={jdkId}
                         key={treeID + config.id + index}
                         treeID={treeID + config.id}
                         onDelete={() => taskVariants.splice(index, 1)}
+                        platformConfig={platformConfig}
+                        projectId={projectId}
                         projectType={projectType}
+                        taskConfig={config}
                         type={type} />)}
             </React.Fragment>
         )

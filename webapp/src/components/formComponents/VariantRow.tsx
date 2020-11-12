@@ -2,7 +2,14 @@ import React from "react"
 import { useObserver } from "mobx-react"
 import { TableRow } from "@material-ui/core"
 
-import { VariantsConfig, TaskType, ProjectType } from "../../stores/model"
+import {
+    BuildConfigs,
+    VariantsConfig,
+    TaskType,
+    ProjectType,
+    PlatformConfig,
+    TaskConfig,
+} from "../../stores/model"
 import Select from "./Select"
 import AddComponent from "./AddComponent"
 import useStores from "../../hooks/useStores"
@@ -10,12 +17,16 @@ import PlatformRow from "./PlatformRow"
 import DeleteButton from "../DeleteButton"
 import TableCell from "../TableCell"
 
-
 type VariantRowProps = {
+    buildConfigs: BuildConfigs | undefined
     config: VariantsConfig
-    treeID: string
+    jdkId: string
     onDelete: () => void
     projectType: ProjectType
+    platformConfig: PlatformConfig
+    projectId: string
+    taskConfig: TaskConfig | undefined
+    treeID: string
     type: TaskType
 }
 
@@ -25,7 +36,18 @@ const VariantRow: React.FC<VariantRowProps> = props => {
 
     return useObserver(() => {
 
-        const { config, treeID, onDelete, projectType, type } = props
+        const {
+            buildConfigs,
+            config,
+            jdkId,
+            treeID,
+            onDelete,
+            platformConfig,
+            projectId,
+            projectType,
+            taskConfig,
+            type,
+        } = props
         const { taskVariantsMap, platforms } = configStore
 
         const onPlatformDelete = (index: number): void => {
@@ -40,7 +62,8 @@ const VariantRow: React.FC<VariantRowProps> = props => {
             .slice() // .sort sorts in place so we need to make a copy to stay pure
             .sort(([k1], [k2]) => k1.localeCompare(k2))
 
-        const cell = (
+        const jenkinsJob = configStore.jobNameGenerator(projectId, jdkId, platformConfig, taskConfig, config, buildConfigs)
+        const cell = (<div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", flexDirection: "row" }}>
                 {sortedVariants.map(([id, value]) => {
                     const taskVariant = taskVariantsMap[id]
@@ -74,7 +97,11 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                         }} />
                 }
             </div>
-        )
+            {!!jenkinsJob && <a style={{
+                alignSelf: "flex-start",
+                fontSize: 12,
+            }} href={jenkinsJob.url}>{jenkinsJob.name}</a>}
+        </div>)
 
         return (
             <React.Fragment>
@@ -91,12 +118,19 @@ const VariantRow: React.FC<VariantRowProps> = props => {
                     </TableCell>
                 </TableRow>
                 {type === "BUILD" && config.platforms && config.platforms
-                    .map((config, index) =>
+                    .map((testPlatformConfig, index) =>
                         <PlatformRow
-                            config={config}
-                            key={treeID + config.id}
-                            treeID={treeID + config.id}
+                            buildConfigs={{
+                                platform: platformConfig,
+                                task: taskConfig,
+                                taskVariants: config,
+                            }}
+                            config={testPlatformConfig}
+                            jdkId={jdkId}
+                            key={treeID + testPlatformConfig.id}
+                            treeID={treeID + testPlatformConfig.id}
                             onDelete={() => onPlatformDelete(index)}
+                            projectId={projectId}
                             projectType={projectType}
                             type="TEST"
                         />)}

@@ -3,7 +3,12 @@ import { useObserver } from "mobx-react"
 import { TableRow, IconButton, Tooltip } from "@material-ui/core"
 import { Add } from "@material-ui/icons"
 
-import { PlatformConfig, TaskType, ProjectType } from "../../stores/model"
+import {
+    BuildConfigs,
+    PlatformConfig,
+    ProjectType,
+    TaskType,
+} from "../../stores/model"
 import AddComponent from "./AddComponent"
 import useStores from "../../hooks/useStores"
 import TaskRow from "./TaskRow"
@@ -14,12 +19,14 @@ import DeleteButton from "../DeleteButton"
 import TableCell from "../TableCell"
 
 type PlatformRowProps = {
+    buildConfigs?: BuildConfigs
     config: PlatformConfig
-    treeID: string
+    jdkId: string
     onDelete: () => void
+    projectId: string
     projectType: ProjectType
+    treeID: string
     type: TaskType
-
 }
 
 const PlatformRow: React.FC<PlatformRowProps> = props => {
@@ -36,7 +43,16 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
     }, [platform, props.config.tasks, props.config.provider])
 
     return useObserver(() => {
-        const { config, treeID, onDelete, projectType, type } = props
+        const {
+            buildConfigs,
+            config,
+            jdkId,
+            treeID,
+            onDelete,
+            projectId,
+            projectType,
+            type,
+        } = props
         const { id, tasks: taskConfigs, variants: variantConfigs } = config
 
         if (!platform) {
@@ -107,21 +123,30 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
                         <DeleteButton onClick={onDelete} />
                     </TableCell>
                 </TableRow>
-                {(taskConfigs && taskConfigs.map((config, index) =>
+                {(taskConfigs && taskConfigs.map((taskConfig, index) =>
                     <TaskRow
-                        config={config}
+                        buildConfigs={buildConfigs}
+                        config={taskConfig}
+                        jdkId={jdkId}
                         key={treeID + config.id}
                         treeID={treeID + config.id}
                         onDelete={() => onTaskDelete(index)}
+                        platformConfig={config}
+                        projectId={projectId}
                         projectType={projectType}
                         type={type} />))
                     ||
-                    (variantConfigs && variantConfigs.map((config, index) =>
+                    (variantConfigs && variantConfigs.map((variantsConfig, index) =>
                         <VariantRow
-                            config={config}
+                            buildConfigs={buildConfigs}
+                            config={variantsConfig}
+                            jdkId={jdkId}
                             key={treeID + id + index}
                             onDelete={() => onVariantDelete(index)}
+                            platformConfig={config}
+                            projectId={projectId}
                             projectType={projectType}
+                            taskConfig={undefined}
                             treeID={treeID + id}
                             type={type} />
                     ))}
