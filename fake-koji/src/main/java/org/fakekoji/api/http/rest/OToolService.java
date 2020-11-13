@@ -70,6 +70,7 @@ public class OToolService {
     private static final String JDK_TEST_PROJECT = JDK_TEST_PROJECTS + CONFIG_ID;
     private static final String GET = "get";
     public static final String BUMP = "bump";
+    public static final String RESULTS_DB= "resultsDb";
     public static final String MISC = "misc";
     private static final String HELP = "help";
     public static final String PRODUCTS = "/products";
@@ -164,9 +165,11 @@ public class OToolService {
                 get(HELP, wrapper.wrap(context -> {
                     context.status(OK).result(getMiscHelp()
                             + BumperAPI.getHelp()
+                            + ResultsDb.getHelp()
                             + RedeployApi.getHelp()
                             + CancelApi.getHelp());
                 }));
+                path(RESULTS_DB, new ResultsDb(settings));
                 path(BUMP, new BumperAPI(settings));
                 path(RedeployApi.REDEPLOY, new RedeployApi(settings));
                 path(CancelApi.NO, new CancelApi(settings));

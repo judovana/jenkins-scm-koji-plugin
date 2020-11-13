@@ -61,6 +61,7 @@ public class AccessibleSettings {
     private final File dbFileRoot;
     private final File localReposRoot;
     private final File configRoot;
+    private final File resultsFile;
     private final File jenkinsJobsRoot;
     private final File jenkinsJobArchiveRoot;
     private final File scriptsRoot;
@@ -93,6 +94,7 @@ public class AccessibleSettings {
         this.dbFileRoot = dbFileRoot;
         this.localReposRoot = localReposRoot;
         this.configRoot = configRoot;
+        this.resultsFile = new File(configRoot.getParentFile(),"results.db");
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
         this.scriptsRoot = scriptsRoot;
@@ -129,6 +131,11 @@ public class AccessibleSettings {
     public File getConfigRoot() {
         warn(configRoot, "configRoot");
         return configRoot;
+    }
+
+    public File getResultsFile() {
+        warn(resultsFile, "resultsFile");
+        return resultsFile;
     }
 
     public File getJenkinsJobsRoot() {
