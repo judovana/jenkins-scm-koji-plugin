@@ -115,13 +115,17 @@ public class TagsProvider {
     static String[] getRhelTags() {
         String[] r = new String[Rto - Rfrom];
         for (int i = 0; i < r.length; i++) {
-            r[i] = getRhel7Base(i + Rfrom);
+            r[i] = getRhel7Base(i + Rfrom, true);
         }
         return r;
     }
 
-    static String getRhel7Base(int i) {
-        return "rhel-" + (i) + ".0-candidate";
+    static String getRhel7Base(int i, boolean z) {
+        if (z){
+            return "rhel-" + (i) + ".0-z-candidate";
+        } else {
+            return "rhel-" + (i) + ".0-candidate";
+        }
     }
 
     static String[] getSuplementaryRhel6LikeTag() {
@@ -148,5 +152,9 @@ public class TagsProvider {
 
     private static String getIbmRhel7Base(int i) {
         return "supp-rhel-" + (i) + "-X-fakeTag";
+    }
+
+    public static boolean isZet(String release) {
+        return release.contains("_");
     }
 }

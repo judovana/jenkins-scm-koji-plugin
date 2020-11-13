@@ -237,7 +237,7 @@ public class FakeBuild {
                     int osVersion = determineRhOs(release);
                     return prefixIfNecessary(new String[]{
                             TagsProvider.getRhel5Rhel6Base(osVersion),
-                            TagsProvider.getRhel7Base(osVersion)});
+                            TagsProvider.getRhel7Base(osVersion, TagsProvider.isZet(release))});
                 }
                 if (release.contains("fc")) {
                     int osVersion = determineRhOs(release);
@@ -265,7 +265,7 @@ public class FakeBuild {
                         int osVersion = determineRhOs(release);
                         return prefixIfNecessary(new String[]{
                                 TagsProvider.getRhel5Rhel6Base(osVersion),
-                                TagsProvider.getRhel7Base(osVersion)});
+                                TagsProvider.getRhel7Base(osVersion, TagsProvider.isZet(release))});
                     }
                 }
             } else {
