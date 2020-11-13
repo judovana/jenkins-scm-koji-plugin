@@ -1814,7 +1814,7 @@ public class DataGenerator {
         }
 
         try {
-            final ConfigManager configManager = settings.getConfigManager();
+            final ConfigManager configManager = settings.configManager;
 
             for (final JDKVersion jdkVersion : getJDKVersions()) {
                 configManager.jdkVersionManager.create(jdkVersion);

@@ -133,7 +133,7 @@ public class OToolService {
                 .addStaticFiles("/webapp")
         );
 
-        final JobUpdater jenkinsJobUpdater = settings.getJobUpdater();
+        final JobUpdater jenkinsJobUpdater = settings.jenkinsJobUpdater;
         final GetterAPI getterApi = new GetterAPI(settings);
 
         final OToolHandlerWrapper wrapper = oToolHandler -> context -> {
@@ -152,7 +152,7 @@ public class OToolService {
         };
 
         app.routes(() -> {
-            final ConfigManager configManager = settings.getConfigManager();
+            final ConfigManager configManager = settings.configManager;
             final JDKTestProjectManager jdkTestProjectManager = configManager.jdkTestProjectManager;
             final JDKProjectManager jdkProjectManager = configManager.jdkProjectManager;
             final PlatformManager platformManager = configManager.platformManager;

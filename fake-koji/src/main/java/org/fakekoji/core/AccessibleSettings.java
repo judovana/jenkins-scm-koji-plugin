@@ -73,10 +73,10 @@ public class AccessibleSettings {
     private final int fileDownloadPort;
     private final int sshPort;
     private final int webappPort;
-    private final ConfigManager configManager;
-    private final JDKProjectParser jdkProjectParser;
-    private final ReverseJDKProjectParser reverseJDKProjectParser;
-    private final JobUpdater jenkinsJobUpdater;
+    public final ConfigManager configManager;
+    public final JDKProjectParser jdkProjectParser;
+    public final ReverseJDKProjectParser reverseJDKProjectParser;
+    public final JobUpdater jenkinsJobUpdater;
     private ProjectMapping projectMapping;
 
     private final List<String> reportParams;
@@ -187,22 +187,6 @@ public class AccessibleSettings {
 
     public int getWebappPort() {
         return webappPort;
-    }
-
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public JDKProjectParser getJdkProjectParser() {
-        return jdkProjectParser;
-    }
-
-    public ReverseJDKProjectParser getReverseJDKProjectParser() {
-        return reverseJDKProjectParser;
-    }
-
-    public JobUpdater getJobUpdater() {
-        return jenkinsJobUpdater;
     }
 
     public ProjectMapping getProjectMapping() {

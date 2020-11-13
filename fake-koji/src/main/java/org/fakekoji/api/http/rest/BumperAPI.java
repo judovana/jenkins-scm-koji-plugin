@@ -80,15 +80,15 @@ public class BumperAPI implements EndpointGroup {
     private final ConfigReader<Platform> platformConfigReader;
 
     BumperAPI(final AccessibleSettings settings) {
-        this.configManager = settings.getConfigManager();
+        configManager = settings.configManager;
         buildsRoot = settings.getDbFileRoot();
-        this.jobUpdater = settings.getJobUpdater();
-        this.parser = settings.getJdkProjectParser();
-        this.reverseParser = settings.getReverseJDKProjectParser();
-        this.jdkProjectManager = settings.getConfigManager().jdkProjectManager;
-        this.jdkTestProjectManager = settings.getConfigManager().jdkTestProjectManager;
-        jdkVersionConfigReader = new ConfigReader<>(settings.getConfigManager().jdkVersionManager);
-        platformConfigReader = new ConfigReader<>(settings.getConfigManager().platformManager);
+        this.jobUpdater = settings.jenkinsJobUpdater;
+        this.parser = settings.jdkProjectParser;
+        this.reverseParser = settings.reverseJDKProjectParser;
+        this.jdkProjectManager = configManager.jdkProjectManager;
+        this.jdkTestProjectManager = configManager.jdkTestProjectManager;
+        jdkVersionConfigReader = new ConfigReader<>(settings.configManager.jdkVersionManager);
+        platformConfigReader = new ConfigReader<>(settings.configManager.platformManager);
     }
 
     private Result<List<Project>, OToolError> checkProjectIds(final List<String> projectIds) {

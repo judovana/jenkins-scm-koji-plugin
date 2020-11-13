@@ -32,7 +32,7 @@ public class JDKProjectParserTest {
     @Test
     public void parseJDKTestProject() throws StorageException, ManagementException {
         final JDKTestProject jdkTestProject = DataGenerator.getJDKTestProject();
-        final JDKProjectParser parser = settings.getJdkProjectParser();
+        final JDKProjectParser parser = settings.jdkProjectParser;
         final Set<Job> actualJobs = parser.parse(jdkTestProject);
         Assert.assertEquals(
                 "ParsedProject should be equal",
@@ -44,7 +44,7 @@ public class JDKProjectParserTest {
     @Test
     public void parseJDKProject() throws StorageException, ManagementException {
         final JDKProject jdkProject = DataGenerator.getJDKProject();
-        final JDKProjectParser parser = settings.getJdkProjectParser();
+        final JDKProjectParser parser = settings.jdkProjectParser;
         final Set<Job> actualJobs = parser.parse(jdkProject);
         Assert.assertEquals(
                 "ParsedProject should be equal",
