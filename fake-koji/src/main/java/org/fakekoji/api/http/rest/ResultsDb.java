@@ -58,6 +58,16 @@ public class ResultsDb implements EndpointGroup {
 
     private class DB {
         private final Map<String/*nvr*/, Map<String/*job*/, Map<Integer/*jobId*/, List<ScoreWithTimeStamp>>>> nvras = Collections.synchronizedMap(new HashMap<>());
+        int added = 0;
+
+        public DB() {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    DB.this.save();
+                }
+            });
+        }
 
         private synchronized void load() {
             System.out.println(settings.getResultsFile());
@@ -71,17 +81,17 @@ public class ResultsDb implements EndpointGroup {
         private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score) {
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
             if (jobs == null) {
-                jobs = new HashMap<>();
+                jobs = Collections.synchronizedMap(new HashMap<>());
                 nvras.put(nvr, jobs);
             }
             Map<Integer, List<ScoreWithTimeStamp>> jobIds = jobs.get(job);
             if (jobIds == null) {
-                jobIds = new HashMap<>();
+                jobIds = Collections.synchronizedMap(new HashMap<>());
                 jobs.put(job, jobIds);
             }
             List<ScoreWithTimeStamp> scores = jobIds.get(buildId);
             if (scores == null) {
-                scores = new ArrayList<>();
+                scores = Collections.synchronizedList(new ArrayList<>());
                 jobIds.put(buildId, scores);
             }
             ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
@@ -92,6 +102,11 @@ public class ResultsDb implements EndpointGroup {
                 }
             }
             scores.add(newOne);
+            added++;
+            if (added > 20) {
+                save();
+                added = 0;
+            }
             return null;
         }
 
@@ -195,7 +210,7 @@ public class ResultsDb implements EndpointGroup {
                                 return scoresOut(foundBuildId);
                             }
                         } else {
-                            return iterateBuildIds(buildId,foundJob.entrySet(), nvr, job);
+                            return iterateBuildIds(buildId, foundJob.entrySet(), nvr, job);
                         }
                     }
                 } else {
@@ -224,7 +239,7 @@ public class ResultsDb implements EndpointGroup {
         return r.toString();
     }
 
-    private String iterateBuildIds(String buildId,  Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds, String nvr, String job) {
+    private String iterateBuildIds(String buildId, Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds, String nvr, String job) {
         StringBuilder r = new StringBuilder();
         for (Map.Entry<Integer, List<ScoreWithTimeStamp>> buildIdEntry : buildIds) {
             if (buildId == null || buildId.equals(buildIdEntry.getKey().toString())) {
