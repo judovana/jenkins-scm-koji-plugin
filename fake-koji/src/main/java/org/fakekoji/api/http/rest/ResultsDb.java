@@ -195,41 +195,41 @@ public class ResultsDb implements EndpointGroup {
                                 return scoresOut(foundBuildId);
                             }
                         } else {
-
+                            return iterateBuildIds(buildId,foundJob.entrySet(), nvr, job);
                         }
                     }
                 } else {
-                    Set<Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>>> jobs = foundNvr.entrySet();
-                    for (Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>> jobEntry : jobs) {
-                        if (job == null || job.equals(jobEntry.getKey())) {
-                            Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds = jobEntry.getValue().entrySet();
-                            for (Map.Entry<Integer, List<ScoreWithTimeStamp>> buildIdEntry : buildIds) {
-                                if (buildId == null || buildId.equals(buildIdEntry.getKey().toString())) {
-                                    List<ScoreWithTimeStamp> scores = buildIdEntry.getValue();
-                                    r.append(nvr + ":" + jobEntry.getKey() + ":" + buildIdEntry.getKey() + ":" + scoresOut(scores)).append("\n");
-                                }
-                            }
-                        }
-                    }
+                    return iterateJobs(nvr, foundNvr.entrySet(), job, buildId);
                 }
             }
         } else {
             Set<Map.Entry<String, Map<String, Map<Integer, List<ScoreWithTimeStamp>>>>> nvrs = db.get().entrySet();
             for (Map.Entry<String, Map<String, Map<Integer, List<ScoreWithTimeStamp>>>> nvrEntry : nvrs) {
                 if (nvr == null || nvr.equals(nvrEntry.getKey())) {
-                    Set<Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>>> jobs = nvrEntry.getValue().entrySet();
-                    for (Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>> jobEntry : jobs) {
-                        if (job == null || job.equals(jobEntry.getKey())) {
-                            Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds = jobEntry.getValue().entrySet();
-                            for (Map.Entry<Integer, List<ScoreWithTimeStamp>> buildIdEntry : buildIds) {
-                                if (buildId == null || buildId.equals(buildIdEntry.getKey().toString())) {
-                                    List<ScoreWithTimeStamp> scores = buildIdEntry.getValue();
-                                    r.append(nvrEntry.getKey() + ":" + jobEntry.getKey() + ":" + buildIdEntry.getKey() + ":" + scoresOut(scores)).append("\n");
-                                }
-                            }
-                        }
-                    }
+                    r.append(iterateJobs(nvrEntry.getKey(), nvrEntry.getValue().entrySet(), job, buildId));
                 }
+            }
+        }
+        return r.toString();
+    }
+
+    private String iterateJobs(String nvr, Set<Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>>> jobs, String job, String buildId) {
+        StringBuilder r = new StringBuilder();
+        for (Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>> jobEntry : jobs) {
+            if (job == null || job.equals(jobEntry.getKey())) {
+                Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds = jobEntry.getValue().entrySet();
+                r.append(iterateBuildIds(buildId, buildIds, nvr, jobEntry.getKey()));
+            }
+        }
+        return r.toString();
+    }
+
+    private String iterateBuildIds(String buildId,  Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds, String nvr, String job) {
+        StringBuilder r = new StringBuilder();
+        for (Map.Entry<Integer, List<ScoreWithTimeStamp>> buildIdEntry : buildIds) {
+            if (buildId == null || buildId.equals(buildIdEntry.getKey().toString())) {
+                List<ScoreWithTimeStamp> scores = buildIdEntry.getValue();
+                r.append(nvr + ":" + job + ":" + buildIdEntry.getKey() + ":" + scoresOut(scores)).append("\n");
             }
         }
         return r.toString();
