@@ -5,6 +5,7 @@ import static org.fakekoji.api.http.rest.OToolService.RESULTS_DB;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 
+import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
@@ -22,18 +23,31 @@ import java.util.stream.Collectors;
 
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
+import org.jetbrains.annotations.NotNull;
 
 public class ResultsDb implements EndpointGroup {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
+    public static final String MAIN_DELIMITER = ":";
+    private static final String SECONDARY_DELIMITER = " ";
+
 
     private static class ScoreWithTimeStamp {
+
+        private static final String SCORE_DELIMITER = ";";
+
         final int score;
         final long timestamp;
 
         public ScoreWithTimeStamp(int score, long timestamp) {
             this.score = score;
             this.timestamp = timestamp;
+        }
+
+        public ScoreWithTimeStamp(String from) {
+            String[] srcs = from.trim().split(SCORE_DELIMITER);
+            this.score = Integer.valueOf(srcs[0]);
+            this.timestamp = Long.valueOf(srcs[1]);
         }
 
         @Override
@@ -51,7 +65,7 @@ public class ResultsDb implements EndpointGroup {
 
         @Override
         public String toString() {
-            return score + ";" + timestamp;
+            return score + SCORE_DELIMITER + timestamp;
 
         }
     }
@@ -67,18 +81,66 @@ public class ResultsDb implements EndpointGroup {
                     DB.this.save();
                 }
             });
+            load();
         }
 
         private synchronized void load() {
-            System.out.println(settings.getResultsFile());
+            List<String> lines = new ArrayList<>();
+            try {
+                lines = Utils.readFileToLines(settings.getResultsFile(), null);
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "error loading results db: " + settings.getResultsFile().getAbsoluteFile(), ex);
+                return;
+            }
+            nvras.clear();
+            for (String line : lines) {
+                try {
+                    String[] main = line.split(MAIN_DELIMITER);
+                    String[] second = main[3].split(SECONDARY_DELIMITER);
+                    for(String result: second) {
+                        set(main[0], main[1], Integer.valueOf(main[2]), new ScoreWithTimeStamp(result));
+                    }
+                } catch (Exception ex) {
+                    LOGGER.log(Level.SEVERE, "error results db: " + settings.getResultsFile().getAbsoluteFile() + " line of " + line, ex);
+                    return;
+                }
+            }
         }
 
         private synchronized void save() {
-            System.out.println(settings.getResultsFile());
+            try {
+                Utils.writeToFile(settings.getResultsFile(), getScore(null, null, null));
+            } catch (Exception ex) {
+                LOGGER.log(Level.SEVERE, "error saving results db: " + settings.getResultsFile().getAbsoluteFile(), ex);
+            }
 
         }
 
+        private synchronized void set(String nvr, String job, Integer buildId, ScoreWithTimeStamp result) {
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId);
+            scores.add(result);
+        }
+
         private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score) {
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId);
+            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
+            for (ScoreWithTimeStamp oldOne : scores) {
+                if (oldOne.equals(newOne)) {
+                    //we do not overwrite
+                    return oldOne;
+                }
+            }
+            scores.add(newOne);
+            added++;
+            if (added > 50) {
+                save();
+                added = 0;
+            }
+            return null;
+        }
+
+        @NotNull
+        private List<ScoreWithTimeStamp> getChain(String nvr, String job, Integer buildId) {
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
             if (jobs == null) {
                 jobs = Collections.synchronizedMap(new HashMap<>());
@@ -94,20 +156,7 @@ public class ResultsDb implements EndpointGroup {
                 scores = Collections.synchronizedList(new ArrayList<>());
                 jobIds.put(buildId, scores);
             }
-            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
-            for (ScoreWithTimeStamp oldOne : scores) {
-                if (oldOne.equals(newOne)) {
-                    //we do not overwrite
-                    return oldOne;
-                }
-            }
-            scores.add(newOne);
-            added++;
-            if (added > 20) {
-                save();
-                added = 0;
-            }
-            return null;
+            return scores;
         }
 
         private synchronized Map<String, Map<String, Map<Integer, List<ScoreWithTimeStamp>>>> get() {
@@ -120,11 +169,12 @@ public class ResultsDb implements EndpointGroup {
     public static final String SET = "set";
     public static final String GET = "get";
     private final AccessibleSettings settings;
-    private final DB db = new DB();
+    private final DB db;
 
 
     ResultsDb(final AccessibleSettings settings) {
         this.settings = settings;
+        this.db = new DB();
     }
 
 
@@ -191,6 +241,11 @@ public class ResultsDb implements EndpointGroup {
         String nvr = context.queryParam("nvr");
         String job = context.queryParam("job");
         String buildId = context.queryParam("buildId");
+        return getScore(nvr, job, buildId);
+    }
+
+    private String getScore(String nvr, String job, String buildId) {
+
         StringBuilder r = new StringBuilder();
         if (nvr != null) {
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> foundNvr = db.get().get(nvr);
@@ -244,13 +299,13 @@ public class ResultsDb implements EndpointGroup {
         for (Map.Entry<Integer, List<ScoreWithTimeStamp>> buildIdEntry : buildIds) {
             if (buildId == null || buildId.equals(buildIdEntry.getKey().toString())) {
                 List<ScoreWithTimeStamp> scores = buildIdEntry.getValue();
-                r.append(nvr + ":" + job + ":" + buildIdEntry.getKey() + ":" + scoresOut(scores)).append("\n");
+                r.append(nvr + MAIN_DELIMITER + job + MAIN_DELIMITER + buildIdEntry.getKey() + MAIN_DELIMITER + scoresOut(scores)).append("\n");
             }
         }
         return r.toString();
     }
 
     private String scoresOut(List<ScoreWithTimeStamp> scores) {
-        return scores.stream().map(ScoreWithTimeStamp::toString).collect(Collectors.joining(" "));
+        return scores.stream().map(ScoreWithTimeStamp::toString).collect(Collectors.joining(SECONDARY_DELIMITER));
     }
 }
