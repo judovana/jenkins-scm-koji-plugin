@@ -61,7 +61,7 @@ import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
 
 public class BumperAPI implements EndpointGroup {
-    private static final String ADD_VARIANT = "addVariant";
+    private static final String ADD_VARIANT = "/addVariant";
 
     private final ConfigManager configManager;
     private final File buildsRoot;
@@ -244,7 +244,7 @@ public class BumperAPI implements EndpointGroup {
         return "\n"
                 + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
                 + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n"
-                + prefix + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n";
+                + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n";
     }
 
     Result<JobUpdateResults, OToolError> addTaskVariant(final Map<String, List<String>> params) {
