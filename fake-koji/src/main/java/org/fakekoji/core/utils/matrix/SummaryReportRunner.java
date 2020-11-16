@@ -127,7 +127,15 @@ public class SummaryReportRunner {
                 "--return",
                 returnPath,
                 "--surpass",
-                "best"
+                "best",
+                "--cacheUrl",
+                "http://localhost:8888/misc/resultsDb/set?nvr={NVR}&job={JOB}&buildId={BUILDID}&score={SCORE}",
+                //dont tempt with  --redeployMintime , hardcoded to 3, when overwritten, may be very dangerous
+                "--redeployUrl",
+                "http://localhost:8888/misc/re/{TASK}?whitelist={JOB}&nvr={NVR}&do=true",
+                "--redeployCount",
+                "2"
+
         );
         if (explicitUrl.isPresent()) {
             List a = new ArrayList<>(defaults);
