@@ -168,6 +168,7 @@ public class ResultsDb implements EndpointGroup {
 
     public static final String SET = "set";
     public static final String GET = "get";
+    public static final String NVRS = "nvrs";
     private final AccessibleSettings settings;
     private final DB db;
 
@@ -180,6 +181,7 @@ public class ResultsDb implements EndpointGroup {
 
     public static String getHelp() {
         return "\n"
+                + MISC + '/' + RESULTS_DB + "/nvrs will return set of nvrs in results db" + "\n"
                 + MISC + '/' + RESULTS_DB + "/get will return the score of job of nvr of buildId" + "\n"
                 + MISC + '/' + RESULTS_DB + "/set will set the result for job,nvr,buildId,score" + "\n"
                 + " Negative jobId is manual touch, negative score is manual action, time is automated\n"
@@ -189,6 +191,14 @@ public class ResultsDb implements EndpointGroup {
 
     @Override
     public void addEndpoints() {
+        get(NVRS, context -> {
+            try {
+                context.status(OToolService.OK).result(getNvrs());
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+        });
         get(SET, context -> {
             try {
                 String s = addScore(context);
@@ -208,6 +218,11 @@ public class ResultsDb implements EndpointGroup {
             }
         });
 
+    }
+
+    private String getNvrs() {
+        List l = new ArrayList<>(db.get().keySet());
+        return l.stream().sorted().collect(Collectors.joining("\n"))+"\n";
     }
 
     private String addScore(Context context) {
