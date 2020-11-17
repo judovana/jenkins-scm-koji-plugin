@@ -94,7 +94,7 @@ public class AccessibleSettings {
         this.dbFileRoot = dbFileRoot;
         this.localReposRoot = localReposRoot;
         this.configRoot = configRoot;
-        this.resultsFile = new File(configRoot.getParentFile(),"results.db");
+        this.resultsFile = new File(configRoot,"results.db");
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
         this.scriptsRoot = scriptsRoot;
