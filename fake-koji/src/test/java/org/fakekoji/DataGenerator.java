@@ -38,6 +38,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -111,7 +112,7 @@ public class DataGenerator {
     public static final String SLOWDEBUG = "slowdebug";
 
     public static final String JRE_SDK = "jreSdk";
-    public static final String JRE= "jre";
+    public static final String JRE = "jre";
     public static final String SDK = "sdk";
     public static final String JRE_HEADLESS = "jreheadless";
 
@@ -426,6 +427,7 @@ public class DataGenerator {
                 false
         );
     }
+
     public static TaskVariant getJfr() {
         return new TaskVariant(
                 JFR,
@@ -1931,7 +1933,7 @@ public class DataGenerator {
             this.configsRoot = configsRoot;
         }
     }
-    
+
     public static SummaryReportRunner getSummaryReportRunner(final AccessibleSettings settings) {
         return new SummaryReportRunner(
                 settings,
@@ -1965,7 +1967,9 @@ public class DataGenerator {
                 JavaServerConstants.DFAULT_RP2C_PORT,
                 JavaServerConstants.DFAULT_DWNLD_PORT,
                 JavaServerConstants.DFAULT_SCP_PORT,
-                JavaServerConstants.DFAULT_WEBAP_PORT
+                JavaServerConstants.DFAULT_WEBAP_PORT,
+                Collections.unmodifiableList(new ArrayList<>()),
+                Collections.unmodifiableList(new ArrayList<>())
         );
     }
 }

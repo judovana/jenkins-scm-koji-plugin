@@ -25,6 +25,7 @@ package org.fakekoji.core;
 
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +33,7 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ConfigManager;
@@ -45,9 +47,9 @@ public class AccessibleSettings {
         public final String label = "Hydra";
         public final String machine = "hydra";
         public final String domain = "brq.redhat.com";
-        public final String fullName = machine+"."+domain;
+        public final String fullName = machine + "." + domain;
         public final String protocol = "http";
-        public final String baseUrl = protocol+"://"+fullName;
+        public final String baseUrl = protocol + "://" + fullName;
     }
 
     public static final Master master = new Master();
@@ -78,6 +80,9 @@ public class AccessibleSettings {
     private final JobUpdater jenkinsJobUpdater;
     private ProjectMapping projectMapping;
 
+    private final List<String> reportParams;
+    private final List<String> reportChartParams;
+
     public AccessibleSettings(
             File dbFileRoot,
             File localReposRoot,
@@ -89,12 +94,14 @@ public class AccessibleSettings {
             int xmlRpcPort,
             int fileDownloadPort,
             int sshPort,
-            int webappPort
+            int webappPort,
+            List<String> reportParams,
+            List<String> reportChartParams
     ) {
         this.dbFileRoot = dbFileRoot;
         this.localReposRoot = localReposRoot;
         this.configRoot = configRoot;
-        this.resultsFile = new File(configRoot,"results.db");
+        this.resultsFile = new File(configRoot, "results.db");
         this.jenkinsJobsRoot = jenkinsJobsRoot;
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
         this.scriptsRoot = scriptsRoot;
@@ -117,6 +124,8 @@ public class AccessibleSettings {
                 jenkinsJobArchiveRoot
         );
         this.projectMapping = new ProjectMapping(this);
+        this.reportParams = reportParams;
+        this.reportChartParams = reportChartParams;
     }
 
     public File getDbFileRoot() {
@@ -169,7 +178,7 @@ public class AccessibleSettings {
         return fileDownloadPort;
     }
 
-        public int getSshPort() {
+    public int getSshPort() {
         return sshPort;
     }
 
@@ -232,5 +241,13 @@ public class AccessibleSettings {
         } else if (!f.exists()) {
             LOGGER.log(Level.SEVERE, "Reqested file `{0}` for `{1}` do not exists. You can expect failure", new Object[]{f.getAbsolutePath(), src});
         }
+    }
+
+    public List<String> getReportChartParams() {
+        return reportChartParams;
+    }
+
+    public List<String> getReportParams() {
+        return reportParams;
     }
 }

@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +34,7 @@ public class SummaryReportRunner {
     private final String projectRegex;
     private final String jvm;
     private final File remoteJar;
-    private final String url;
-    private final String dir;
+    private final AccessibleSettings settings;
     private final String time;
     private final String chartDir;
     private final Optional<String> explicitUrl;
@@ -50,8 +50,7 @@ public class SummaryReportRunner {
         this.time = time;
         this.chartDir = chartDir;
         this.explicitUrl = explicitUrl;
-        url = settings.getJenkinsUrl();
-        dir = settings.getJenkinsJobsRoot().getAbsolutePath();
+        this.settings = settings;
         projectRegex = projects.length == 0
                 ? ".*"
                 : ".*-" + String.join("-.*|.*-", projects) + "-.*";
@@ -110,14 +109,14 @@ public class SummaryReportRunner {
     }
 
     private List<String> getArgs(final String jobFilter, final String returnPath) {
-        List<String> defaults = Arrays.asList(
+        List<String> baseSet = Arrays.asList(
                 jvm,
                 "-jar",
                 remoteJar.getAbsolutePath(),
                 "--directory",
-                dir,
+                settings.getJenkinsJobsRoot().getAbsolutePath(),
                 "--jenkins",
-                url,
+                settings.getJenkinsUrl(),
                 "--time",
                 time,
                 "--nvrfilter",
@@ -125,37 +124,24 @@ public class SummaryReportRunner {
                 "--jobfilter",
                 jobFilter,
                 "--return",
-                returnPath,
-                "--surpass",
-                "best",
-                "--cacheUrl",
-                "http://localhost:8888/misc/resultsDb/set?nvr={NVR}&job={JOB}&buildId={BUILDID}&score={SCORE}",
-                //dont tempt with  --redeployMintime , hardcoded to 3, when overwritten, may be very dangerous
-                "--redeployUrl",
-                "http://localhost:8888/misc/re/{TASK}?whitelist={JOB}&nvr={NVR}&do=true",
-                "--redeployCount",
-                "2"
-
+                returnPath
         );
+        List a = new ArrayList<>(baseSet);
+        a.addAll(settings.getReportParams());
         if (explicitUrl.isPresent()) {
-            List a = new ArrayList<>(defaults);
             a.add("--explicitcomparsion-url");
             a.add(explicitUrl.get());
-            return a;
-        } else {
-            return defaults;
         }
+        return Collections.unmodifiableList(a);
     }
 
     private List<String> getArgs(final String jobFilter, final String returnPath, final String chartDir) {
-        return Stream.concat(getArgs(jobFilter, returnPath).stream(), Stream.of(
+        List a = new ArrayList(Stream.concat(getArgs(jobFilter, returnPath).stream(), Stream.of(
                 "--chartdir",
-                chartDir,
-                "--wipecharts",
-                "true",
-                "--interpolate",
-                "true"
-        )).collect(Collectors.toList());
+                chartDir
+        )).collect(Collectors.toList()));
+        a.addAll(settings.getReportChartParams());
+        return Collections.unmodifiableList(a);
     }
 
     public int getJobReportSummary(final String jobName) {

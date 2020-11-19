@@ -40,6 +40,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -137,12 +141,23 @@ public class JavaServer {
                 xmlRpcPort,
                 fileDownloadPort,
                 sshPort,
-                webappPort
+                webappPort,
+                asList(props, Property.REPORT_EXEC_DEFAULTPARAMS.value),
+                asList(props, Property.REPORT_EXEC_DEFAULTCHARTPARAM.value)
         );
 
         final OToolService oToolService = new OToolService(settings);
 
         new JavaServer(settings, oToolService).start();
+    }
+
+    private static List<String> asList(Properties props, String key) {
+        String args = props.getProperty(key);
+        if (args == null || args.trim().isEmpty()){
+            return new ArrayList<>();
+        }
+        String[] split = args.trim().split("\\s+");
+        return Collections.unmodifiableList(Arrays.asList(split));
     }
 
     private enum Property {
@@ -156,7 +171,9 @@ public class JavaServer {
         JENKINS_JOBS_ROOT("root.jenkins.jobs"),
         JENKINS_JOB_ARCHIVE_ROOT("root.jenkins.job.archive"),
         CONFIGS_ROOT("root.configs"),
-        SCRIPTS_ROOT("root.scripts");
+        SCRIPTS_ROOT("root.scripts"),
+        REPORT_EXEC_DEFAULTPARAMS("report.exec.defaultparams"),
+        REPORT_EXEC_DEFAULTCHARTPARAM("Sreport.exec.defaultchartparams");
 
         private final String value;
 
