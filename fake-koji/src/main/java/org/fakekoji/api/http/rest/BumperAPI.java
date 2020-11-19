@@ -59,6 +59,7 @@ import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
 
 public class BumperAPI implements EndpointGroup {
     private static final String ADD_VARIANT = "/addVariant";
+    private static final String REMOVE_VARIANT = "/removeVariant";
 
     private final ConfigManager configManager;
     private final File buildsRoot;
@@ -241,7 +242,9 @@ public class BumperAPI implements EndpointGroup {
         return "\n"
                 + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
                 + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n"
-                + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n";
+                + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
+                + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
+                + "";
     }
 
     Result<JobUpdateResults, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
@@ -306,6 +309,15 @@ public class BumperAPI implements EndpointGroup {
     public void addEndpoints() {
         get(ADD_VARIANT, context -> {
             final Result<JobUpdateResults, OToolError> result = addTaskVariant(context.queryParamMap());
+            if (result.isError()) {
+                final OToolError error = result.getError();
+                context.result(error.message).status(error.code);
+            } else {
+                context.json(result.getValue());
+            }
+        });
+        get(REMOVE_VARIANT, context -> {
+            final Result<JobUpdateResults, OToolError> result = removeTaskVariant(context.queryParamMap());
             if (result.isError()) {
                 final OToolError error = result.getError();
                 context.result(error.message).status(error.code);
