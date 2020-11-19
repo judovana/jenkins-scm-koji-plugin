@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-class RestUtils {
+public class RestUtils {
 
     static Optional<String> extractParamValue(Map<String, List<String>> paramsMap, String param) {
         return Optional.ofNullable(paramsMap.get(param))
@@ -17,7 +17,7 @@ class RestUtils {
                 .map(list -> list.get(0));
     }
 
-    static Result<String, OToolError> extractMandatoryParamValue(Map<String, List<String>> paramsMap, String param) {
+    public static Result<String, OToolError> extractMandatoryParamValue(Map<String, List<String>> paramsMap, String param) {
         return extractParamValue(paramsMap, param).<Result<String, OToolError>>map(Result::ok)
                 .orElseGet(() -> Result.err(new OToolError(
                         "Missing mandatory parameter: '" + param + "'!",

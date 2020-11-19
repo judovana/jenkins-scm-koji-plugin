@@ -1,11 +1,12 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.apibuilder.EndpointGroup;
-import org.fakekoji.Utils;
+import org.fakekoji.api.http.rest.args.AddTaskVariantArgs;
+import org.fakekoji.api.http.rest.args.RemoveTaskVariantArgs;
 import org.fakekoji.core.AccessibleSettings;
-import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.BuildDirUpdater;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
@@ -29,26 +30,20 @@ import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.JDKVersion;
-import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.storage.StorageException;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,7 +53,6 @@ import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
 import static org.fakekoji.api.http.rest.OToolService.PRODUCTS;
-import static org.fakekoji.api.http.rest.RestUtils.extractMandatoryParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
@@ -250,69 +244,15 @@ public class BumperAPI implements EndpointGroup {
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n";
     }
 
-    private Optional<File> getLogsDir(final File buildDir) {
-        final File dataDir = new File(buildDir, "data");
-        if (dataDir.exists()) {
-            final File logsDir = new File(dataDir, "logs");
-            if (logsDir.exists()) {
-                return Optional.of(logsDir);
-            } else {
-                return Optional.empty();
-            }
-        } else {
-            return Optional.empty();
-        } 
-    }
-    
     Result<JobUpdateResults, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
-        return extractMandatoryParamValue(params, "name").flatMap(name -> {
+        return RemoveTaskVariantArgs.parse(params).flatMap(args -> {
             final TaskVariant taskVariant;
             try {
-                taskVariant = configManager.taskVariantManager.read(name);
+                taskVariant = configManager.taskVariantManager.read(args.name);
             } catch (StorageException e) {
                 return Result.err(new OToolError(e.getMessage(), 500));
             } catch (ManagementException e) {
                 return Result.err(new OToolError(e.getMessage(), 400));
-            }
-            if (taskVariant.getType().equals(Task.Type.BUILD)) {
-                updateBuildDirs((packageDir, versionDir, buildDir) -> {
-                    Arrays.stream(Objects.requireNonNull(buildDir.listFiles())).forEach(archiveDir -> {
-                        final String archiveName = String.join(
-                                "-",
-                                packageDir.getName(),
-                                versionDir.getName(),
-                                buildDir.getName() + "." + archiveDir.getName() + ".tarxz"
-                        );
-                        final File archive = new File(archiveDir, archiveName);
-                        if (!archive.exists()) {
-                            return;
-                        }
-                        final Result<OToolArchive, String> parseResult = OToolParser.create(configManager)
-                                .flatMap(parser -> parser.parseArchive(archiveName));
-                        if (parseResult.isError()) {
-                            return;
-                        }
-                        final OToolArchive oToolArchive = parseResult.getValue();
-                        final OToolArchive newArchive = new OToolArchive(
-                                oToolArchive,
-                                oToolArchive.getBuildVariants().stream()
-                                        .filter(tuple -> !tuple.x.equals(name))
-                                        .collect(Collectors.toList())
-                        );
-                        final File destFile = new File(archiveDir, newArchive.toNiceString());
-                        final File destDir = new File(buildDir, newArchive.getDirectoryName());
-                        Utils.moveDirSafe(archive, destFile);
-                        Utils.moveDirSafe(archiveDir, destDir);
-                        getLogsDir(buildDir).ifPresent(logsDir -> {
-                            final File archiveLogsDir = new File(logsDir, archiveDir.getName());
-                            if (!archiveLogsDir.exists()) {
-                                return;
-                            }
-                            final File destLogDir = new File(logsDir, newArchive.getDirectoryName());
-                            Utils.moveDirSafe(archiveLogsDir, destLogDir);
-                        });
-                    });
-                });
             }
             final Collection<Project> projects;
             try {
@@ -321,7 +261,11 @@ public class BumperAPI implements EndpointGroup {
             } catch (StorageException e) {
                 return Result.err(new OToolError(e.getMessage(), 500));
             }
-            final Result<JobUpdateResults, OToolError> result = modifyJobs(projects, new TaskVariantRemover(taskVariant));
+            final TaskVariantRemover remover = new TaskVariantRemover(taskVariant);
+            final Result<JobUpdateResults, OToolError> result = modifyJobs(projects, remover);
+            if (taskVariant.getType().equals(Task.Type.BUILD)) {
+                new BuildDirUpdater(buildsRoot, configManager).updateBuildDirs(remover);
+            }
             try {
                 configManager.taskVariantManager.delete(taskVariant.getId());
             } catch (StorageException e) {
@@ -334,165 +278,27 @@ public class BumperAPI implements EndpointGroup {
     }
 
     Result<JobUpdateResults, OToolError> addTaskVariant(final Map<String, List<String>> params) {
-        final Result<String, OToolError> nameResult = RestUtils.extractMandatoryParamValue(params, "name");
-        if (nameResult.isError()) {
-            return Result.err(nameResult.getError());
-        }
-        final Result<String, OToolError> typeResult = RestUtils.extractMandatoryParamValue(params, "type");
-        if (typeResult.isError()) {
-            return Result.err(typeResult.getError());
-        }
-        final Result<String, OToolError> valuesResult = RestUtils.extractMandatoryParamValue(params, "values");
-        if (valuesResult.isError()) {
-            return Result.err(valuesResult.getError());
-        }
-        final Result<String, OToolError> defaultValueResult = RestUtils.extractMandatoryParamValue(params, "defaultValue");
-        if (defaultValueResult.isError()) {
-            return Result.err(defaultValueResult.getError());
-        }
-        final String name = nameResult.getValue();
-        final Result<Task.Type, String> typeParseResult = Task.Type.parse(typeResult.getValue());
-        if (typeParseResult.isError()) {
-            return Result.err(new OToolError(typeParseResult.getError(), 400));
-        }
-        final Task.Type type = typeParseResult.getValue();
-        final Collection<TaskVariant> taskVariants;
-        final int order;
-        try {
-            taskVariants = configManager.taskVariantManager.readAll();
-            order = taskVariants.stream()
-                    .filter(taskVariant -> taskVariant.getType().equals(type))
-                    .max(Comparator.comparingInt(TaskVariant::getOrder))
-                    .orElseThrow(() -> new StorageException("Error while getting last taskVariant's order"))
-                    .getOrder() + 1;
-        } catch (StorageException e) {
-            return Result.err(new OToolError(e.getMessage(), 500));
-        }
-        final Set<String> taskVariantValues = taskVariants.stream()
-                .flatMap(taskVariant -> taskVariant.getVariants().keySet().stream())
-                .collect(Collectors.toSet());
-
-        final List<String> valuesList = Arrays
-                .stream(valuesResult.getValue().split(","))
-                .collect(Collectors.toList());
-        final Set<String> tmp = new HashSet<>();
-        for (final String value : valuesList) {
-            if (taskVariantValues.contains(value)) {
-                return Result.err(new OToolError("Value " + value + " already exists in another task variant", 400));
-            }
-            if (!tmp.add(value)) {
-                return Result.err(new OToolError("Duplicate value: " + value, 400));
-            }
-        }
-        final Map<String, TaskVariantValue> values = valuesList.stream()
-                .collect(Collectors.toMap(value -> value, value -> new TaskVariantValue(value, value)));
-        final String defaultValue = defaultValueResult.getValue();
-        if (!values.containsKey(defaultValue)) {
-            return Result.err(new OToolError("Default value '" + defaultValue + "' is not defined in values", 500));
-        }
-        final TaskVariant taskVariant = new TaskVariant(
-                name,
-                name,
-                type,
-                defaultValue,
-                order,
-                values,
-                false
-        );
-        try {
-            configManager.taskVariantManager.create(taskVariant);
-        } catch (StorageException e) {
-            return Result.err(new OToolError(e.getMessage(), 500));
-        } catch (ManagementException e) {
-            return Result.err(new OToolError(e.getMessage(), 400));
-        }
-        final Collection<Project> projects;
-        try {
-            final ConfigCache configCache = new ConfigCache(configManager);
-            projects = configCache.getProjects();
-        } catch (StorageException e) {
-            return Result.err(new OToolError(e.getMessage(), 500));
-        }
-        if (taskVariant.getType().equals(Task.Type.BUILD)) {
-            updateBuildDirs();
-        }
-        return modifyJobs(projects, new TaskVariantAdder(taskVariant));
-    }
-
-    interface BuildDirUpdater {
-        void update(final File packageDir, final File versionDir, final File buildDir);
-    }
-
-    private void updateBuildDirs(final BuildDirUpdater updater) {
-        Arrays.stream(Objects.requireNonNull(buildsRoot.listFiles())).forEach(packageDir ->
-                Arrays.stream(Objects.requireNonNull(packageDir.listFiles())).forEach(versionDir ->
-                        Arrays.stream(Objects.requireNonNull(versionDir.listFiles())).forEach(buildDir ->
-                                updater.update(packageDir, versionDir, buildDir)
-                        )
-                )
-        );
-    }
-
-    private void updateBuildDirs() {
-        Arrays.stream(Objects.requireNonNull(buildsRoot.listFiles())).forEach(packageDir ->
-                Arrays.stream(Objects.requireNonNull(packageDir.listFiles())).forEach(versionDir ->
-                        Arrays.stream(Objects.requireNonNull(versionDir.listFiles())).forEach(buildDir ->
-                                updateBuildDir(packageDir, versionDir, buildDir)
-                        )
-                )
-        );
-    }
-
-    private void updateBuildDir(final File packageDir, final File versionDir, final File buildDir) {
-        final Optional<File> logsDirOptional;
-        final File dataDir = new File(buildDir, "data");
-        if (dataDir.exists()) {
-            final File logsDir = new File(dataDir, "logs");
-            if (logsDir.exists()) {
-                logsDirOptional = Optional.of(logsDir);
-            } else {
-                logsDirOptional = Optional.empty();
-            }
-        } else {
-            logsDirOptional = Optional.empty();
-        }
-        Arrays.stream(Objects.requireNonNull(buildDir.listFiles())).forEach(archiveDir -> {
-            final String archiveName = String.join(
-                    "-",
-                    packageDir.getName(),
-                    versionDir.getName(),
-                    buildDir.getName() + "." + archiveDir.getName() + ".tarxz"
-            );
-            final File archive = new File(archiveDir, archiveName);
-            if (!archive.exists()) {
-                return;
-            }
-            final Result<OToolArchive, String> parseResult = OToolParser.create(configManager)
-                    .flatMap(parser -> parser.parseArchive(archiveName));
-            if (parseResult.isError()) {
-                return;
-            }
-            final OToolArchive oToolArchive = parseResult.getValue();
-            final File destFile = new File(archiveDir, oToolArchive.toNiceString());
-            final File destDir = new File(buildDir, oToolArchive.getDirectoryName());
+        return AddTaskVariantArgs.parse(configManager, params).flatMap(args -> {
+            final TaskVariant taskVariant = args.taskVariant;
             try {
-                Files.move(archive.toPath(), destFile.toPath());
-                Files.move(archiveDir.toPath(), destDir.toPath());
-            } catch (IOException e) {
-                e.printStackTrace();
+                configManager.taskVariantManager.create(taskVariant);
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            } catch (ManagementException e) {
+                return Result.err(new OToolError(e.getMessage(), 400));
             }
-            logsDirOptional.ifPresent(logsDir -> {
-                final File archiveLogsDir = new File(logsDir, archiveDir.getName());
-                if (!archiveLogsDir.exists()) {
-                    return;
-                }
-                final File destLogDir = new File(logsDir, oToolArchive.getDirectoryName());
-                try {
-                    Files.move(archiveLogsDir.toPath(), destLogDir.toPath());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
+            final Collection<Project> projects;
+            try {
+                final ConfigCache configCache = new ConfigCache(configManager);
+                projects = configCache.getProjects();
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            }
+            final TaskVariantAdder adder = new TaskVariantAdder(taskVariant);
+            if (taskVariant.getType().equals(Task.Type.BUILD)) {
+                new BuildDirUpdater(buildsRoot, configManager).updateBuildDirs(adder);
+            }
+            return modifyJobs(projects, adder);
         });
     }
 

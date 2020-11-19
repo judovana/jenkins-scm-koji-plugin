@@ -2,6 +2,7 @@ package org.fakekoji.jobmanager;
 
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.TestJob;
+import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
@@ -11,10 +12,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class TaskVariantAdder extends JobModifier {
+public class TaskVariantAdder extends JobModifier implements BuildDirUpdater.ArchiveTransformer {
 
     private final TaskVariant taskVariant;
-    
+
     public TaskVariantAdder(final TaskVariant taskVariant) {
         this.taskVariant = taskVariant;
     }
@@ -86,5 +87,10 @@ public class TaskVariantAdder extends JobModifier {
                 job.getScriptsRoot(),
                 job.getProjectVariables()
         );
+    }
+
+    @Override
+    public OToolArchive transform(OToolArchive archive) {
+        return archive;
     }
 }
