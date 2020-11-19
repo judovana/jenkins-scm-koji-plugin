@@ -169,6 +169,10 @@ public class AccessibleSettings {
     public String getJenkinsUrl() {
         return jenkins.toString();
     }
+    
+    public int getJenkinsPort() {
+        return jenkins.getPort();
+    }
 
     public int getXmlRpcPort() {
         return xmlRpcPort;

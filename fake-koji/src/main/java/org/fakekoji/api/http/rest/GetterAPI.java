@@ -93,6 +93,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String UNSAFE = "unsafe";
     private static final String WEBAPP = "webapp";
     private static final String XML_RPC = "xmlRpc";
+    private static final String JENKINS = "jenkins";
     private static final String JENKINS_URL = "jenkinsUrl";
 
     private static final String JDK_VERSIONS = "jdkVersions";
@@ -355,6 +356,9 @@ public class GetterAPI implements EndpointGroup {
                         case WEBAPP:
                             port = settings.getWebappPort();
                             break;
+                        case JENKINS:
+                            port = settings.getJenkinsPort();
+                            break;
                         default:
                             return Result.err("Unknown service: " + service);
                     }
@@ -368,6 +372,7 @@ public class GetterAPI implements EndpointGroup {
                 return "/port?service=[" + String.join(
                         "|",
                         SSH,
+                        JENKINS,
                         XML_RPC,
                         WEBAPP,
                         FILE_DOWNLOAD
