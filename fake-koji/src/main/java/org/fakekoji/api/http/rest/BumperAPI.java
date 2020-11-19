@@ -1,6 +1,7 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.apibuilder.EndpointGroup;
+import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
@@ -15,6 +16,7 @@ import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.PlatformBumper;
 import org.fakekoji.jobmanager.ProductBumper;
 import org.fakekoji.jobmanager.TaskVariantAdder;
+import org.fakekoji.jobmanager.TaskVariantRemover;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
@@ -56,6 +58,7 @@ import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
 import static org.fakekoji.api.http.rest.OToolService.PRODUCTS;
+import static org.fakekoji.api.http.rest.RestUtils.extractMandatoryParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
@@ -247,6 +250,89 @@ public class BumperAPI implements EndpointGroup {
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n";
     }
 
+    private Optional<File> getLogsDir(final File buildDir) {
+        final File dataDir = new File(buildDir, "data");
+        if (dataDir.exists()) {
+            final File logsDir = new File(dataDir, "logs");
+            if (logsDir.exists()) {
+                return Optional.of(logsDir);
+            } else {
+                return Optional.empty();
+            }
+        } else {
+            return Optional.empty();
+        } 
+    }
+    
+    Result<JobUpdateResults, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
+        return extractMandatoryParamValue(params, "name").flatMap(name -> {
+            final TaskVariant taskVariant;
+            try {
+                taskVariant = configManager.taskVariantManager.read(name);
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            } catch (ManagementException e) {
+                return Result.err(new OToolError(e.getMessage(), 400));
+            }
+            if (taskVariant.getType().equals(Task.Type.BUILD)) {
+                updateBuildDirs((packageDir, versionDir, buildDir) -> {
+                    Arrays.stream(Objects.requireNonNull(buildDir.listFiles())).forEach(archiveDir -> {
+                        final String archiveName = String.join(
+                                "-",
+                                packageDir.getName(),
+                                versionDir.getName(),
+                                buildDir.getName() + "." + archiveDir.getName() + ".tarxz"
+                        );
+                        final File archive = new File(archiveDir, archiveName);
+                        if (!archive.exists()) {
+                            return;
+                        }
+                        final Result<OToolArchive, String> parseResult = OToolParser.create(configManager)
+                                .flatMap(parser -> parser.parseArchive(archiveName));
+                        if (parseResult.isError()) {
+                            return;
+                        }
+                        final OToolArchive oToolArchive = parseResult.getValue();
+                        final OToolArchive newArchive = new OToolArchive(
+                                oToolArchive,
+                                oToolArchive.getBuildVariants().stream()
+                                        .filter(tuple -> !tuple.x.equals(name))
+                                        .collect(Collectors.toList())
+                        );
+                        final File destFile = new File(archiveDir, newArchive.toNiceString());
+                        final File destDir = new File(buildDir, newArchive.getDirectoryName());
+                        Utils.moveDirSafe(archive, destFile);
+                        Utils.moveDirSafe(archiveDir, destDir);
+                        getLogsDir(buildDir).ifPresent(logsDir -> {
+                            final File archiveLogsDir = new File(logsDir, archiveDir.getName());
+                            if (!archiveLogsDir.exists()) {
+                                return;
+                            }
+                            final File destLogDir = new File(logsDir, newArchive.getDirectoryName());
+                            Utils.moveDirSafe(archiveLogsDir, destLogDir);
+                        });
+                    });
+                });
+            }
+            final Collection<Project> projects;
+            try {
+                final ConfigCache configCache = new ConfigCache(configManager);
+                projects = configCache.getProjects();
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            }
+            final Result<JobUpdateResults, OToolError> result = modifyJobs(projects, new TaskVariantRemover(taskVariant));
+            try {
+                configManager.taskVariantManager.delete(taskVariant.getId());
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            } catch (ManagementException e) {
+                return Result.err(new OToolError(e.getMessage(), 400));
+            }
+            return result;
+        });
+    }
+
     Result<JobUpdateResults, OToolError> addTaskVariant(final Map<String, List<String>> params) {
         final Result<String, OToolError> nameResult = RestUtils.extractMandatoryParamValue(params, "name");
         if (nameResult.isError()) {
@@ -331,6 +417,20 @@ public class BumperAPI implements EndpointGroup {
             updateBuildDirs();
         }
         return modifyJobs(projects, new TaskVariantAdder(taskVariant));
+    }
+
+    interface BuildDirUpdater {
+        void update(final File packageDir, final File versionDir, final File buildDir);
+    }
+
+    private void updateBuildDirs(final BuildDirUpdater updater) {
+        Arrays.stream(Objects.requireNonNull(buildsRoot.listFiles())).forEach(packageDir ->
+                Arrays.stream(Objects.requireNonNull(packageDir.listFiles())).forEach(versionDir ->
+                        Arrays.stream(Objects.requireNonNull(versionDir.listFiles())).forEach(buildDir ->
+                                updater.update(packageDir, versionDir, buildDir)
+                        )
+                )
+        );
     }
 
     private void updateBuildDirs() {
