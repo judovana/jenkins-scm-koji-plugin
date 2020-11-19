@@ -30,9 +30,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.fakekoji.DataGenerator.JRE_SDK;
+import static org.fakekoji.DataGenerator.SDK;
+
 public class BumperApiTest {
     private final static String taskVariantId = "newtestvariant";
     private final static String defaultValue = "abcdefgh";
+    
 
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -268,6 +272,48 @@ public class BumperApiTest {
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
         }));
         Assert.assertTrue(result.isError());
+    }
+    @Test
+    public void removeBuildVariant() throws IOException {
+        final String taskVariantId = JRE_SDK;
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
+        DataGenerator.initBuildsRoot(settings.getDbFileRoot());
+        final File jobsRoot = settings.getJenkinsJobsRoot();
+        DataGenerator.createProjectJobs(settings);
+        final BumperAPI bumperApi = new BumperAPI(settings);
+        final Map<String, List<String>> params = Stream.of(new String[][]{
+                {"name", taskVariantId},
+        }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
+        final Set<String> taskIds = DataGenerator.getTasks()
+                .stream()
+                .map(Task::getId)
+                .collect(Collectors.toSet());
+        final Result<JobUpdateResults, OToolError> result = bumperApi.removeTaskVariant(params);
+        Assert.assertFalse(result.isError());
+        Assert.assertFalse(settings.getConfigManager().taskVariantManager.contains(taskVariantId));
+        final JobUpdateResults results = result.getValue();
+        Assert.assertEquals(47, results.jobsCreated.size());
+        Assert.assertTrue(results.jobsArchived.isEmpty());
+        Assert.assertTrue(results.jobsRevived.isEmpty());
+        Assert.assertTrue(results.jobsRewritten.isEmpty());
+        for (final JobUpdateResult jobResult : results.jobsCreated) {
+            final String[] parts = jobResult.message.split(" ");
+            final String prevJobName = parts[2];
+            final String currJobName = parts[4];
+            final String prevJobTaskId = prevJobName.split("-")[0];
+            final String currJobTaskId = currJobName.split("-")[0];
+            Assert.assertTrue(jobResult.success);
+            Assert.assertEquals(prevJobTaskId, currJobTaskId);
+            Assert.assertTrue(taskIds.contains(prevJobTaskId));
+            Assert.assertEquals(prevJobName.replace("." + SDK, ""), currJobName);
+            Assert.assertTrue(new File(jobsRoot, currJobName).exists());
+            Assert.assertFalse(new File(jobsRoot, prevJobName).exists());
+        }
+        Assert.assertEquals(
+                Utils.readResource("org/fakekoji/api/http/rest/post-remove-variant-builds-tree"),
+                toTree(settings.getDbFileRoot())
+        );
     }
 
     private Map<String, List<String>> createParamsMap(final String[][] params) {
