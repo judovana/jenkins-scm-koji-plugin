@@ -330,7 +330,7 @@ public class GetterAPI implements EndpointGroup {
 
             @Override
             public String about() {
-                return "/url/jenkins";
+                return "/jenkinsUrl";
             }
         };
     }
