@@ -26,7 +26,6 @@ package org.fakekoji.core;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
-import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -169,6 +168,10 @@ public class AccessibleSettings {
     public String getJenkinsUrl() {
         return jenkins.toString();
     }
+    
+    public int getJenkinsPort() {
+        return jenkins.getPort();
+    }
 
     public int getXmlRpcPort() {
         return xmlRpcPort;
@@ -204,35 +207,6 @@ public class AccessibleSettings {
 
     public ProjectMapping getProjectMapping() {
         return projectMapping;
-    }
-
-    private String getPublicValues(String property, String value) throws ProjectMappingExceptions.ProjectMappingException {
-        TreeMap<String, ResponseContainer.Response> responseTreeMap = new TreeMap<>();
-
-        responseTreeMap.put("repos", new ResponseContainer.GetPathResponse(localReposRoot.getAbsolutePath(), "Path to folder containing repositories"));
-        responseTreeMap.put("root", new ResponseContainer.GetPathResponse(dbFileRoot.getAbsolutePath(), "Path to folder containing builds"));
-        responseTreeMap.put("xport", new ResponseContainer.GetPortResponse(xmlRpcPort, "XML-RPC port"));
-        responseTreeMap.put("dport", new ResponseContainer.GetPortResponse(fileDownloadPort, "Download port"));
-        responseTreeMap.put("uport", new ResponseContainer.GetPortResponse(sshPort, "SSH upload port"));
-        responseTreeMap.put("allProducts", new ResponseContainer.GetAllProductsResponse(projectMapping));
-        responseTreeMap.put("allProjects", new ResponseContainer.GetAllProjectsResponse(projectMapping));
-        responseTreeMap.put("projectsOfProduct", new ResponseContainer.GetProjectsOfProductResponse(projectMapping, value));
-        responseTreeMap.put("projectOfNvra", new ResponseContainer.GetProjectOfNvraResponse(projectMapping, value));
-        responseTreeMap.put("productOfNvra", new ResponseContainer.GetProductOfNvraResponse(projectMapping, value));
-        responseTreeMap.put("productOfProject", new ResponseContainer.GetProductOfProjectResponse(projectMapping, value));
-        responseTreeMap.put("expectedArchesOfProject", new ResponseContainer.GetExpectedArchesOfProjectResponse(projectMapping, value));
-        responseTreeMap.put("expectedArchesOfNvr", new ResponseContainer.GetExpectedArchesOfNVR(projectMapping, value));
-        responseTreeMap.put("help", new ResponseContainer.GetHelpResponse(responseTreeMap));
-
-        if (responseTreeMap.get(property) == null) {
-            throw new ProjectMappingExceptions.BadRequestException();
-        }
-
-        return responseTreeMap.get(property).respond();
-    }
-
-    public String get(String property, String value) throws ProjectMappingExceptions.ProjectMappingException {
-        return getPublicValues(property, value);
     }
 
     private void warn(File f, String src) {
