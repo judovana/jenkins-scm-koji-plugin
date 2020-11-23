@@ -4,6 +4,7 @@ import org.fakekoji.DataGenerator;
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
+import org.fakekoji.jobmanager.BumpResult;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
@@ -17,10 +18,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -47,7 +46,7 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addBuildVariant() throws IOException, ManagementException, StorageException, InterruptedException {
+    public void addBuildVariant() throws IOException, ManagementException, StorageException {
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         DataGenerator.initBuildsRoot(settings.getDbFileRoot());
@@ -64,13 +63,13 @@ public class BumperApiTest {
                 .stream()
                 .map(Task::getId)
                 .collect(Collectors.toSet());
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(params);
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(params);
         Assert.assertFalse(result.isError());
         final TaskVariant taskVariant = settings.getConfigManager().taskVariantManager.read(taskVariantId);
         Assert.assertEquals(taskVariantId, taskVariant.getId());
         Assert.assertEquals(defaultValue, taskVariant.getDefaultValue());
         Assert.assertEquals(3, taskVariant.getOrder());
-        final JobUpdateResults results = result.getValue();
+        final JobUpdateResults results = result.getValue().getJobResults();
         Assert.assertEquals(47, results.jobsCreated.size());
         Assert.assertTrue(results.jobsArchived.isEmpty());
         Assert.assertTrue(results.jobsRevived.isEmpty());
@@ -110,9 +109,9 @@ public class BumperApiTest {
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
 
         }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(params);
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(params);
         Assert.assertFalse(result.isError());
-        final JobUpdateResults results = result.getValue();
+        final JobUpdateResults results = result.getValue().getJobResults();
         final Set<String> testTaskIds = DataGenerator.getTasks()
                 .stream()
                 .filter(task -> task.getType().equals(Task.Type.TEST))
@@ -148,7 +147,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", DataGenerator.JVM},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
@@ -163,7 +162,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
@@ -178,7 +177,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"type", "fd" },
                 {"defaultValue", defaultValue},
@@ -193,7 +192,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
@@ -208,7 +207,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
@@ -223,7 +222,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
@@ -238,7 +237,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
@@ -252,7 +251,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
@@ -266,7 +265,7 @@ public class BumperApiTest {
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
-        final Result<JobUpdateResults, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
+        final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
@@ -289,10 +288,10 @@ public class BumperApiTest {
                 .stream()
                 .map(Task::getId)
                 .collect(Collectors.toSet());
-        final Result<JobUpdateResults, OToolError> result = bumperApi.removeTaskVariant(params);
+        final Result<BumpResult, OToolError> result = bumperApi.removeTaskVariant(params);
         Assert.assertFalse(result.isError());
         Assert.assertFalse(settings.getConfigManager().taskVariantManager.contains(taskVariantId));
-        final JobUpdateResults results = result.getValue();
+        final JobUpdateResults results = result.getValue().getJobResults();
         Assert.assertEquals(47, results.jobsCreated.size());
         Assert.assertTrue(results.jobsArchived.isEmpty());
         Assert.assertTrue(results.jobsRevived.isEmpty());

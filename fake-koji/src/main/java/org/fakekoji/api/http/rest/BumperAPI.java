@@ -7,6 +7,7 @@ import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.BuildDirUpdater;
+import org.fakekoji.jobmanager.BumpResult;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
@@ -34,6 +35,7 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -46,6 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -56,8 +60,12 @@ import static org.fakekoji.api.http.rest.OToolService.PRODUCTS;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
+import static org.fakekoji.core.AccessibleSettings.objectMapper;
 
 public class BumperAPI implements EndpointGroup {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
+
     private static final String ADD_VARIANT = "/addVariant";
     private static final String REMOVE_VARIANT = "/removeVariant";
 
@@ -247,7 +255,7 @@ public class BumperAPI implements EndpointGroup {
                 + "";
     }
 
-    Result<JobUpdateResults, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
+    Result<BumpResult, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
         return RemoveTaskVariantArgs.parse(params).flatMap(args -> {
             final TaskVariant taskVariant;
             try {
@@ -265,22 +273,30 @@ public class BumperAPI implements EndpointGroup {
                 return Result.err(new OToolError(e.getMessage(), 500));
             }
             final TaskVariantRemover remover = new TaskVariantRemover(taskVariant);
-            final Result<JobUpdateResults, OToolError> result = modifyJobs(projects, remover);
-            if (taskVariant.getType().equals(Task.Type.BUILD)) {
-                new BuildDirUpdater(buildsRoot, configManager).updateBuildDirs(remover);
-            }
-            try {
-                configManager.taskVariantManager.delete(taskVariant.getId());
-            } catch (StorageException e) {
-                return Result.err(new OToolError(e.getMessage(), 500));
-            } catch (ManagementException e) {
-                return Result.err(new OToolError(e.getMessage(), 400));
-            }
-            return result;
+            return modifyJobs(projects, remover).flatMap(jobBumpResults -> {
+                final BuildDirUpdater.BuildUpdateSummary buildUpdateSummary;
+                if (taskVariant.getType().equals(Task.Type.BUILD)) {
+                    final BuildDirUpdater updater = new BuildDirUpdater(buildsRoot, configManager);
+                    updater.updateBuildDirs(remover);
+                    buildUpdateSummary = updater.getSummary();
+                } else {
+                    buildUpdateSummary = null;
+                }
+                String message;
+                try {
+                    configManager.taskVariantManager.delete(taskVariant.getId());
+                    message = null;
+                } catch (ManagementException | StorageException e) {
+                    final String error = "Failed to delete task variant config: " + e.getMessage();
+                    LOGGER.log(Level.SEVERE, error, e);
+                    message = error;
+                }
+                return Result.ok(new BumpResult(jobBumpResults, buildUpdateSummary, message));
+            });
         });
     }
 
-    Result<JobUpdateResults, OToolError> addTaskVariant(final Map<String, List<String>> params) {
+    Result<BumpResult, OToolError> addTaskVariant(final Map<String, List<String>> params) {
         return AddTaskVariantArgs.parse(configManager, params).flatMap(args -> {
             final TaskVariant taskVariant = args.taskVariant;
             try {
@@ -298,31 +314,36 @@ public class BumperAPI implements EndpointGroup {
                 return Result.err(new OToolError(e.getMessage(), 500));
             }
             final TaskVariantAdder adder = new TaskVariantAdder(taskVariant);
-            if (taskVariant.getType().equals(Task.Type.BUILD)) {
-                new BuildDirUpdater(buildsRoot, configManager).updateBuildDirs(adder);
-            }
-            return modifyJobs(projects, adder);
+            return modifyJobs(projects, adder).flatMap(results -> {
+                if (taskVariant.getType().equals(Task.Type.BUILD)) {
+                    final BuildDirUpdater buildDirUpdater = new BuildDirUpdater(buildsRoot, configManager);
+                    buildDirUpdater.updateBuildDirs(adder);
+                    return Result.ok(new BumpResult(results, buildDirUpdater.getSummary()));
+                } else {
+                    return Result.ok(new BumpResult(results));
+                }
+            });
         });
     }
 
     @Override
     public void addEndpoints() {
         get(ADD_VARIANT, context -> {
-            final Result<JobUpdateResults, OToolError> result = addTaskVariant(context.queryParamMap());
+            final Result<BumpResult, OToolError> result = addTaskVariant(context.queryParamMap());
             if (result.isError()) {
                 final OToolError error = result.getError();
                 context.result(error.message).status(error.code);
             } else {
-                context.json(result.getValue());
+                context.result(objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(result.getValue()));
             }
         });
         get(REMOVE_VARIANT, context -> {
-            final Result<JobUpdateResults, OToolError> result = removeTaskVariant(context.queryParamMap());
+            final Result<BumpResult, OToolError> result = removeTaskVariant(context.queryParamMap());
             if (result.isError()) {
                 final OToolError error = result.getError();
                 context.result(error.message).status(error.code);
             } else {
-                context.json(result.getValue());
+                context.result(objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(result.getValue()));
             }
         });
         get(PLATFORMS, context -> {
