@@ -1,16 +1,24 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.apibuilder.EndpointGroup;
+import org.fakekoji.api.http.rest.args.AddTaskVariantArgs;
+import org.fakekoji.api.http.rest.args.RemoveTaskVariantArgs;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
-import org.fakekoji.jobmanager.ProductBumper;
+import org.fakekoji.jobmanager.BuildDirUpdater;
+import org.fakekoji.jobmanager.BumpResult;
+import org.fakekoji.jobmanager.ConfigCache;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobModifier;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.jobmanager.PlatformBumper;
+import org.fakekoji.jobmanager.ProductBumper;
+import org.fakekoji.jobmanager.TaskVariantAdder;
+import org.fakekoji.jobmanager.TaskVariantRemover;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
@@ -24,10 +32,15 @@ import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.jobmanager.project.ReverseJDKProjectParser;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
+import org.fakekoji.model.Task;
+import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,8 +48,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static org.fakekoji.api.http.rest.OToolService.BUMP;
@@ -46,9 +60,17 @@ import static org.fakekoji.api.http.rest.OToolService.PRODUCTS;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
+import static org.fakekoji.core.AccessibleSettings.objectMapper;
 
 public class BumperAPI implements EndpointGroup {
 
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
+
+    private static final String ADD_VARIANT = "/addVariant";
+    private static final String REMOVE_VARIANT = "/removeVariant";
+
+    private final ConfigManager configManager;
+    private final File buildsRoot;
     private final JobUpdater jobUpdater;
     private final JDKProjectParser parser;
     private final ReverseJDKProjectParser reverseParser;
@@ -58,6 +80,8 @@ public class BumperAPI implements EndpointGroup {
     private final ConfigReader<Platform> platformConfigReader;
 
     BumperAPI(final AccessibleSettings settings) {
+        this.configManager = settings.getConfigManager();
+        buildsRoot = settings.getDbFileRoot();
         this.jobUpdater = settings.getJobUpdater();
         this.parser = settings.getJdkProjectParser();
         this.reverseParser = settings.getReverseJDKProjectParser();
@@ -93,7 +117,7 @@ public class BumperAPI implements EndpointGroup {
         return Result.ok(projects);
     }
 
-    Result<JobUpdateResults, OToolError> modifyJobs(final List<Project> projects, final JobModifier jobModifier) {
+    Result<JobUpdateResults, OToolError> modifyJobs(final Collection<Project> projects, final JobModifier jobModifier) {
         final Set<Job> jobs = new HashSet<>();
         try {
             for (final Project project : projects) {
@@ -225,11 +249,103 @@ public class BumperAPI implements EndpointGroup {
         final String prefix = MISC + '/' + BUMP;
         return "\n"
                 + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
-                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n";
+                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]\n"
+                + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
+                + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
+                + "";
+    }
+
+    Result<BumpResult, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
+        return RemoveTaskVariantArgs.parse(params).flatMap(args -> {
+            final TaskVariant taskVariant;
+            try {
+                taskVariant = configManager.taskVariantManager.read(args.name);
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            } catch (ManagementException e) {
+                return Result.err(new OToolError(e.getMessage(), 400));
+            }
+            final Collection<Project> projects;
+            try {
+                final ConfigCache configCache = new ConfigCache(configManager);
+                projects = configCache.getProjects();
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            }
+            final TaskVariantRemover remover = new TaskVariantRemover(taskVariant);
+            return modifyJobs(projects, remover).flatMap(jobBumpResults -> {
+                final BuildDirUpdater.BuildUpdateSummary buildUpdateSummary;
+                if (taskVariant.getType().equals(Task.Type.BUILD)) {
+                    final BuildDirUpdater updater = new BuildDirUpdater(buildsRoot, configManager);
+                    updater.updateBuildDirs(remover);
+                    buildUpdateSummary = updater.getSummary();
+                } else {
+                    buildUpdateSummary = null;
+                }
+                String message;
+                try {
+                    configManager.taskVariantManager.delete(taskVariant.getId());
+                    message = null;
+                } catch (ManagementException | StorageException e) {
+                    final String error = "Failed to delete task variant config: " + e.getMessage();
+                    LOGGER.log(Level.SEVERE, error, e);
+                    message = error;
+                }
+                return Result.ok(new BumpResult(jobBumpResults, buildUpdateSummary, message));
+            });
+        });
+    }
+
+    Result<BumpResult, OToolError> addTaskVariant(final Map<String, List<String>> params) {
+        return AddTaskVariantArgs.parse(configManager, params).flatMap(args -> {
+            final TaskVariant taskVariant = args.taskVariant;
+            try {
+                configManager.taskVariantManager.create(taskVariant);
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            } catch (ManagementException e) {
+                return Result.err(new OToolError(e.getMessage(), 400));
+            }
+            final Collection<Project> projects;
+            try {
+                final ConfigCache configCache = new ConfigCache(configManager);
+                projects = configCache.getProjects();
+            } catch (StorageException e) {
+                return Result.err(new OToolError(e.getMessage(), 500));
+            }
+            final TaskVariantAdder adder = new TaskVariantAdder(taskVariant);
+            return modifyJobs(projects, adder).flatMap(results -> {
+                if (taskVariant.getType().equals(Task.Type.BUILD)) {
+                    final BuildDirUpdater buildDirUpdater = new BuildDirUpdater(buildsRoot, configManager);
+                    buildDirUpdater.updateBuildDirs(adder);
+                    return Result.ok(new BumpResult(results, buildDirUpdater.getSummary()));
+                } else {
+                    return Result.ok(new BumpResult(results));
+                }
+            });
+        });
     }
 
     @Override
     public void addEndpoints() {
+        get(ADD_VARIANT, context -> {
+            final Result<BumpResult, OToolError> result = addTaskVariant(context.queryParamMap());
+            if (result.isError()) {
+                final OToolError error = result.getError();
+                context.result(error.message).status(error.code);
+            } else {
+                context.result(objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(result.getValue()));
+            }
+        });
+        get(REMOVE_VARIANT, context -> {
+            final Result<BumpResult, OToolError> result = removeTaskVariant(context.queryParamMap());
+            if (result.isError()) {
+                final OToolError error = result.getError();
+                context.result(error.message).status(error.code);
+            } else {
+                context.result(objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(result.getValue()));
+            }
+        });
         get(PLATFORMS, context -> {
             final Result<JobUpdateResults, OToolError> result = bumpPlatform(context.queryParamMap());
             if (result.isError()) {

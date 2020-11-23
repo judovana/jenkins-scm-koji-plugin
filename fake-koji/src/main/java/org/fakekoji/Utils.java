@@ -136,6 +136,17 @@ public class Utils {
     public static void moveDir(final File source, final File target) throws IOException {
         Files.move(source.toPath(), target.toPath());
     }
+    
+    public static void moveDirSafe(final File src, final File dst) {
+        final String srcAbs = src.getAbsolutePath();
+        final String dstAbs = dst.getAbsolutePath();
+        try {
+            LOGGER.info("Moving " + srcAbs + " to " + dstAbs);
+            Files.move(src.toPath(), dst.toPath());
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to move " + srcAbs + " to " + dstAbs, e);
+        }
+    }
 
     public static void moveDirByCopy(File source, File target) throws IOException {
         // we cannot simply move, because archive can, and likely is, diffferent mount point

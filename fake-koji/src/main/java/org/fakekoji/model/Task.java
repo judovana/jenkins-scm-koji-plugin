@@ -1,5 +1,6 @@
 package org.fakekoji.model;
 
+import org.fakekoji.functional.Result;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -374,6 +375,14 @@ public class Task implements  Comparable<Task> {
 
         public int getOrder() {
             return order;
+        }
+
+        public static Result<Type, String> parse(final String value) {
+            try {
+                return Result.ok(Type.valueOf(value));
+            } catch (IllegalArgumentException e) {
+                return Result.err("Invalid task type: " + value + ". Valid options are: " + BUILD + " and " + TEST + ".");
+            }
         }
     }
 }

@@ -1,18 +1,21 @@
 package org.fakekoji.jobmanager.manager;
 
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ManagementResult;
+import org.fakekoji.jobmanager.ManagementUtils;
 import org.fakekoji.jobmanager.Manager;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.Storage;
 import org.fakekoji.storage.StorageException;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class TaskVariantManager implements Manager<TaskVariant> {
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private final Storage<TaskVariant> storage;
 
@@ -51,7 +54,11 @@ public class TaskVariantManager implements Manager<TaskVariant> {
 
     @Override
     public TaskVariant delete(String id) throws StorageException, ManagementException {
-        return null;
+        ManagementUtils.checkID(id, storage);
+        LOGGER.info("Deleting task variant " + id);
+        final TaskVariant taskVariant = storage.load(id, TaskVariant.class);
+        storage.delete(id);
+        return taskVariant;
     }
 
     @Override

@@ -46,6 +46,22 @@ public class OToolArchive extends OToolBuild {
         );
 
     }
+    
+    public OToolArchive(
+            final OToolArchive archive,
+            final List<Tuple<String, String>> buildVariants
+    ) {
+        this(
+                archive.getPackageName(),
+                archive.getVersion(),
+                archive.getChangeSet(),
+                archive.getGarbage(),
+                archive.getProjectName(),
+                buildVariants,
+                archive.platform,
+                archive.suffix
+        );
+    }
 
     public List<Tuple<String, String>> getBuildVariants() {
         return buildVariants;
@@ -84,6 +100,11 @@ public class OToolArchive extends OToolBuild {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), buildVariants, platform, suffix);
+    }
+
+    @Override
+    public String toNiceString() {
+        return super.toNiceString() + "." + getDirectoryName() + "." + getSuffix();
     }
 
     @Override
