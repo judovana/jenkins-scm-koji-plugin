@@ -13,6 +13,12 @@
 
     <name>Koji SCM Lib</name>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version.old>1.8</java.version.old>
+        <java.version.new>8</java.version.new>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -36,6 +42,15 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <target>${java.version.old}</target>
+                    <source>${java.version.old}</source>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
