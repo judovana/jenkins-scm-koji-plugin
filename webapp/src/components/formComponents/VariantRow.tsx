@@ -100,7 +100,7 @@ const VariantRow: React.FC<VariantRowProps> = props => {
             {!!jenkinsJob && <a style={{
                 alignSelf: "flex-start",
                 fontSize: 12,
-            }} href={jenkinsJob.url}>{jenkinsJob.name}</a>}
+            }} href={jenkinsJob.url} target="_blank" rel="noopener noreferrer">{jenkinsJob.name}</a>}
         </div>)
 
         return (
