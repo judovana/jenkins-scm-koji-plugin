@@ -95,6 +95,7 @@ public class GetterAPI implements EndpointGroup {
     private static final String XML_RPC = "xmlRpc";
     private static final String JENKINS = "jenkins";
     private static final String JENKINS_URL = "jenkinsUrl";
+    private static final String STATUS = "status";
 
     private static final String JDK_VERSIONS = "jdkVersions";
     private static final String HELP = "help";
@@ -331,6 +332,20 @@ public class GetterAPI implements EndpointGroup {
             @Override
             public String about() {
                 return "/jenkinsUrl";
+            }
+        };
+    }
+
+    private QueryHandler getServiceHandler() {
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) {
+                return Result.ok("Otool is alive\n");
+            }
+
+            @Override
+            public String about() {
+                return "/"+SERVICE+" Will report health of otool process";
             }
         };
     }
@@ -1107,6 +1122,7 @@ public class GetterAPI implements EndpointGroup {
             put(LEGACY_PARSER, getLegacyParserHandler());
             put(VARIANTS, getVariantsHandler());
             put(JENKINS_URL, getJenkinsUrlHandler());
+            put(SERVICE, getServiceHandler());
         }});
     }
 
