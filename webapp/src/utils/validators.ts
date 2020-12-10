@@ -29,10 +29,10 @@ const requiredStringValidator = (value: StringInputValue): BasicValidation => {
 const stringListValidator = (required: boolean) => (
     value: StringListInputValue
 ): BasicValidation => {
-    if (required && (!value || value.length === 0)) {
-        return "required"
+    if (!value || value.length === 0 || (value.length === 1 && !value[0])) {
+        return required ? "required" : "ok"
     }
-    if (value && value.some(val => !val)) {
+    if (value.some(val => !val)) {
         return "whitespaces"
     }
     return "ok"
