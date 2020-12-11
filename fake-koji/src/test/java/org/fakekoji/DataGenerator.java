@@ -1945,7 +1945,7 @@ public class DataGenerator {
     public static void createProjectJobs(final AccessibleSettings settings) {
         getProjects().forEach(jdkProject -> {
             try {
-                settings.getJobUpdater().update(null, jdkProject);
+                settings.jenkinsJobUpdater.update(null, jdkProject);
             } catch (StorageException | ManagementException e) {
                 throw new RuntimeException(e);
             }
@@ -1971,6 +1971,10 @@ public class DataGenerator {
                 return 3;
             }
         };
+    }
+    
+    public static AccessibleSettings getSettings(final TemporaryFolder temporaryFolder) throws IOException {
+        return getSettings(initFolders(temporaryFolder));
     }
 
     public static AccessibleSettings getSettings(FolderHolder folderHolder) throws MalformedURLException {
