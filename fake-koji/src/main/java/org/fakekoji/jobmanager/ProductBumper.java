@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.Product;
@@ -14,11 +15,13 @@ public class ProductBumper extends JobModifier {
     private final String toPackageName;
 
     public ProductBumper(
+            final AccessibleSettings settings,
             final String fromPackageName,
             final String toPackageName,
             final JDKVersion fromJDKVersion,
             final JDKVersion toJDKVersion
     ) {
+        super(settings);
         this.fromPackageName = fromPackageName;
         this.toPackageName = toPackageName;
         this.fromJDKVersion = fromJDKVersion;

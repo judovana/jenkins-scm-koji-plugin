@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.OToolArchive;
@@ -14,7 +15,8 @@ public class TaskVariantRemover extends JobModifier implements BuildDirUpdater.A
 
     private final TaskVariant taskVariant;
 
-    public TaskVariantRemover(final TaskVariant taskVariant) {
+    public TaskVariantRemover(final AccessibleSettings settings, final TaskVariant taskVariant) {
+        super(settings);
         this.taskVariant = taskVariant;
     }
 

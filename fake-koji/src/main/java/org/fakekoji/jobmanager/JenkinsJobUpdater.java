@@ -1,8 +1,11 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.Utils;
+import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.model.Job;
+import org.fakekoji.jobmanager.model.JobBump;
+import org.fakekoji.jobmanager.model.JobCollisionAction;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.model.Project;
@@ -36,7 +39,7 @@ import java.util.stream.Stream;
 public class JenkinsJobUpdater implements JobUpdater {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
-    static final String JENKINS_JOB_CONFIG_FILE = "config.xml";
+    public static final String JENKINS_JOB_CONFIG_FILE = "config.xml";
 
     private final ConfigManager configManager;
     private final JDKProjectParser jdkProjectParser;
@@ -253,10 +256,10 @@ public class JenkinsJobUpdater implements JobUpdater {
         );
     }
 
-    public JobUpdateResults bump(final Set<Tuple<Job, Job>> jobTuples) {
+    public JobUpdateResults bump(final Set<JobBump> jobBumps, final JobCollisionAction action) {
         return new JobUpdateResults(
-                jobTuples.stream()
-                        .map(jobUpdateFunctionWrapper(getBumpFunction()))
+                jobBumps.stream()
+                        .map(jobUpdateFunctionWrapper(getBumpFunction(action)))
                         .collect(Collectors.toList()),
                 Collections.emptyList(),
                 Collections.emptyList(),
@@ -264,17 +267,18 @@ public class JenkinsJobUpdater implements JobUpdater {
         );
     }
 
-    public List<JobUpdateResult> checkBumpJobs(final Set<Tuple<Job, Job>> jobTuples) {
+    public Set<Tuple<Job, Job>> findCollisions(final Set<Tuple<Job, Job>> jobTuples) {
         final Set<String> jobNames = Stream.of(Objects.requireNonNull(jenkinsJobsRoot.list()))
                 .collect(Collectors.toSet());
         return jobTuples.stream()
                 .filter(jobTuple -> jobNames.contains(jobTuple.y.getName()))
-                .map(jobTuple -> new JobUpdateResult(
-                        jobTuple.x.getName() + " => " + jobTuple.y.getName(),
-                        false,
-                        jobTuple.y + " already exists"
-                ))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
+    }
+
+    public Function<Tuple<Job, Job>, JobBump> getCollisionCheck() {
+        final Set<String> jobNames = Stream.of(Objects.requireNonNull(jenkinsJobsRoot.list()))
+                .collect(Collectors.toSet());
+        return tuple -> new JobBump(tuple.x, tuple.y, jobNames.contains(tuple.y.getName()));
     }
 
     private <T> Function<T, JobUpdateResult> jobUpdateFunctionWrapper(JobUpdateFunction<T> updateFunction) {
@@ -362,57 +366,118 @@ public class JenkinsJobUpdater implements JobUpdater {
         };
     }
 
-    private JobUpdateFunction<Tuple<Job, Job>> getBumpFunction() {
-        final File jobsRoot = jenkinsJobsRoot;
-        return jobTuple -> {
-            final Job original = jobTuple.x;
-            final Job transformed = jobTuple.y;
-            final String originalName = original.getName();
-            final File originalDir = Paths.get(jobsRoot.getAbsolutePath(), originalName).toFile();
-            final String transformedName = transformed.getName();
-            final File transformedDir = Paths.get(jobsRoot.getAbsolutePath(), transformedName).toFile();
-            LOGGER.info("Bumping job " + originalName + " to " + transformedName);
-            LOGGER.info("Moving directory " + originalDir.getAbsolutePath() + " to " + transformedDir.getAbsolutePath());
-            Utils.moveDir(originalDir, transformedDir); //if exception is thrown from here, better to die with it
-            IOException deleteJobException = null;
-            try {
-                JenkinsCliWrapper.getCli().deleteJobs(originalName).throwIfNecessary();
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-                deleteJobException = ex;
-            }
-            final File jobConfig = Paths.get(transformedDir.getAbsolutePath(), JENKINS_JOB_CONFIG_FILE).toFile();
-            LOGGER.info("Rewriting config of " + transformedName);
-            IOException newCfgException = null;
-            try {
-                Utils.writeToFile(jobConfig, transformed.generateTemplate());
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-                newCfgException = ex;
-            }
-            IOException createJobException = null;
-            try {
-                JenkinsCliWrapper.getCli().createManuallyUploadedJob(jobsRoot.getAbsoluteFile(),transformedName).throwIfNecessary();
-            } catch (IOException ex) {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-                createJobException = ex;
-            }
-            if (deleteJobException == null && newCfgException == null && createJobException == null) {
-                return new JobUpdateResult(transformedName, true, "bumped from " + originalName + " to " + transformedName);
-            } else {
-                String s = "Exception(s) on the fly:";
-                if (deleteJobException != null) {
-                    s = s + " 1) deleteJobException " + deleteJobException.getMessage();
+    JobUpdateFunction<JobBump> getBumpFunction(final JobCollisionAction action) {
+        return jobBump -> {
+            final boolean isCollision = jobBump.isCollision;
+            final String fromName = jobBump.from.getName();
+            final String toName = jobBump.to.getName();
+            final File fromDir = Paths.get(jenkinsJobsRoot.getAbsolutePath(), fromName).toFile();
+            final File toDir = Paths.get(jenkinsJobsRoot.getAbsolutePath(), toName).toFile();
+            LOGGER.info("Bumping job " + fromName + " to " + toName);
+            if (isCollision) {
+                LOGGER.info("Collision: job " + toName + " already exists");
+                switch (action) {
+                    case KEEP_EXISTING:
+                        LOGGER.info("Keeping the existing job");
+                        archive(fromDir);
+                        final Result<Void, String> deleteJobResult = deleteJenkinsJob(fromName);
+                        final String message = "Collision: the existing config was kept";
+                        final String finalMessage;
+                        final boolean isSuccess;
+                        if (deleteJobResult.isError()) {
+                            finalMessage = message + ", Error: " + deleteJobResult.getError();
+                            isSuccess = false;
+                        } else {
+                            finalMessage = message;
+                            isSuccess = true;
+                        }
+                        return new JobUpdateResult(
+                                toName,
+                                isSuccess,
+                                finalMessage
+                        );
+                    case KEEP_BUMPED:
+                        LOGGER.info("Keeping the bumped job");
+                        archive(toDir);
+                        break;
+                    case STOP:
+                        return new JobUpdateResult(toName, false, "Collision: no changes done");
                 }
-                if (newCfgException != null) {
-                    s = s + " 2) newCfgException " + newCfgException.getMessage();
-                }
-                if (createJobException != null) {
-                    s = s + " 3) createJobException  " + createJobException.getMessage();
-                }
-                return new JobUpdateResult(transformedName, false, "bump from " + originalName + " to " + transformedName + " failed. See logs. " + s);
             }
+            Utils.moveDir(fromDir, toDir); //if exception is thrown from here, better to die with it
+            final Result<Void, String> deleteJobResult = deleteJenkinsJob(fromName);
+            final Result<Void, String> updateJobConfigResult = updateJenkinsJob(jobBump.to);
+            final Result<Void, String> createJobResult = createJenkinsJob(toName);
+            if (deleteJobResult.isOk() && updateJobConfigResult.isOk() && createJobResult.isOk()) {
+                return new JobUpdateResult(toName, true, "bumped from " + fromName + " to " + toName);
+            }
+            final StringBuilder errorMessage = new StringBuilder("Exception(s) on the fly:");
+            if (deleteJobResult.isError()) {
+                errorMessage.append(" 1) deleteJobException ").append(deleteJobResult.getError());
+            }
+            if (updateJobConfigResult.isError()) {
+                errorMessage.append(" 2) newCfgException ").append(updateJobConfigResult.getError());
+            }
+            if (createJobResult.isError()) {
+                errorMessage.append(" 3) createJobException ").append(createJobResult.getError());
+            }
+            return new JobUpdateResult(
+                    toName,
+                    false,
+                    "bump from " + fromName + " to " + toName + " failed. See logs. " + errorMessage
+            );
         };
+    }
+
+    void archive(final File file) throws IOException {
+        final String filename = file.getName();
+        LOGGER.info("Archiving " + file.getName());
+        File archiveFile = new File(jenkinsJobArchiveRoot, filename);
+        int counter = 1;
+        while (archiveFile.exists()) {
+            archiveFile = new File(jenkinsJobArchiveRoot, filename + '(' + counter + ')');
+            counter++;
+        }
+        Utils.moveDir(file, archiveFile);
+    }
+
+    private Result<Void, String> deleteJenkinsJob(final String jobName) {
+        try {
+            JenkinsCliWrapper.getCli().deleteJobs(jobName).throwIfNecessary();
+            return Result.ok(null);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            return Result.err(e.getMessage());
+        }
+    }
+
+    private Result<Void, String> createJenkinsJob(final String jobName) {
+        try {
+            JenkinsCliWrapper.getCli()
+                    .createManuallyUploadedJob(jenkinsJobsRoot.getAbsoluteFile(), jobName)
+                    .throwIfNecessary();
+            return Result.ok(null);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            return Result.err(e.getMessage());
+        }
+    }
+
+    private Result<Void, String> updateJenkinsJob(final Job job) {
+        final String jobName = job.getName();
+        LOGGER.info("Rewriting config of " + jobName);
+        final File jobConfigFile = Paths.get(
+                jenkinsJobsRoot.getAbsolutePath(),
+                jobName,
+                JENKINS_JOB_CONFIG_FILE
+        ).toFile();
+        try {
+            Utils.writeToFile(jobConfigFile, job.generateTemplate());
+            return Result.ok(null);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            return Result.err(e.getMessage());
+        }
     }
 
     private void createManuallyUploadedJob(final String jobName) throws Exception {
@@ -425,7 +490,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         ;
     }
 
-    private interface JobUpdateFunction<T> {
+    interface JobUpdateFunction<T> {
 
         JobUpdateResult apply(T t) throws Exception;
     }

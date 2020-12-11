@@ -2,15 +2,16 @@ package org.fakekoji.jobmanager;
 
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.model.Job;
-import org.fakekoji.jobmanager.model.JobUpdateResult;
+import org.fakekoji.jobmanager.model.JobBump;
+import org.fakekoji.jobmanager.model.JobCollisionAction;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 
-import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 public interface JobUpdater {
 
@@ -28,7 +29,9 @@ public interface JobUpdater {
 
     JobUpdateResults update(Task task) throws StorageException;
 
-    List<JobUpdateResult> checkBumpJobs(final Set<Tuple<Job, Job>> jobTuples);
+    Function<Tuple<Job, Job>, JobBump> getCollisionCheck();
 
-    JobUpdateResults bump(final Set<Tuple<Job, Job>> jobTuple);
+    Set<Tuple<Job, Job>> findCollisions(final Set<Tuple<Job, Job>> jobTuples);
+
+    JobUpdateResults bump(final Set<JobBump> jobTuple, final JobCollisionAction action);
 }

@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.OToolArchive;
@@ -16,7 +17,8 @@ public class TaskVariantAdder extends JobModifier implements BuildDirUpdater.Arc
 
     private final TaskVariant taskVariant;
 
-    public TaskVariantAdder(final TaskVariant taskVariant) {
+    public TaskVariantAdder(final AccessibleSettings settings, final TaskVariant taskVariant) {
+        super(settings);
         this.taskVariant = taskVariant;
     }
     
