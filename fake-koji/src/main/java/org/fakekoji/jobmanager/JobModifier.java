@@ -57,7 +57,7 @@ public abstract class JobModifier {
         final Set<Job> jobs = new HashSet<>();
         try {
             for (final Project project : projects) {
-                final Set<Job> projectJobs = settings.jdkProjectParser.parse(project);
+                final Set<Job> projectJobs = settings.getJdkProjectParser().parse(project);
                 jobs.addAll(projectJobs);
             }
             final Set<Tuple<Job, Optional<Job>>> jobTuples = jobs.stream()
@@ -66,7 +66,7 @@ public abstract class JobModifier {
             final Set<JobBump> jobsToBump = jobTuples.stream()
                     .filter(jobTuple -> jobTuple.y.isPresent())
                     .map(jobTuple -> new Tuple<>(jobTuple.x, jobTuple.y.get()))
-                    .map(settings.jenkinsJobUpdater.getCollisionCheck())
+                    .map(settings.getJenkinsJobUpdater().getCollisionCheck())
                     .collect(Collectors.toSet());
             if (!execute) {
                 return Result.ok(new JobUpdateResults(
@@ -108,7 +108,7 @@ public abstract class JobModifier {
             }
             final List<Project> assembledProjects = new ArrayList<>();
             for (final Set<Job> projectJobs : jobMap.values()) {
-                final Result<Project, String> result = settings.reverseJDKProjectParser.parseJobs(projectJobs);
+                final Result<Project, String> result = settings.getReverseJDKProjectParser().parseJobs(projectJobs);
                 if (result.isError()) {
                     return Result.err(new OToolError(result.getError(), 500));
                 } else {
@@ -119,15 +119,15 @@ public abstract class JobModifier {
                 final String id = project.getId();
                 switch (project.getType()) {
                     case JDK_PROJECT:
-                        settings.configManager.jdkProjectManager.update(id, (JDKProject) project);
+                        settings.getConfigManager().getJdkProjectManager().update(id, (JDKProject) project);
                         break;
                     case JDK_TEST_PROJECT:
-                        settings.configManager.jdkTestProjectManager.update(id, (JDKTestProject) project);
+                        settings.getConfigManager().getJdkTestProjectManager().update(id, (JDKTestProject) project);
                         break;
                 }
             }
             JenkinsJobUpdater.wakeUpJenkins();
-            return Result.ok(settings.jenkinsJobUpdater.bump(jobsToBump, jobCollisionAction));
+            return Result.ok(settings.getJenkinsJobUpdater().bump(jobsToBump, jobCollisionAction));
 
         } catch (StorageException e) {
             return Result.err(new OToolError(e.getMessage(), 500));

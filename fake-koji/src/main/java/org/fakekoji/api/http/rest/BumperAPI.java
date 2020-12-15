@@ -60,16 +60,16 @@ public class BumperAPI implements EndpointGroup {
 
     BumperAPI(final AccessibleSettings settings) {
         this.settings = settings;
-        jdkVersionConfigReader = new ConfigReader<>(settings.configManager.jdkVersionManager);
-        platformConfigReader = new ConfigReader<>(settings.configManager.platformManager);
+        jdkVersionConfigReader = new ConfigReader<>(settings.getConfigManager().getJdkVersionManager());
+        platformConfigReader = new ConfigReader<>(settings.getConfigManager().getPlatformManager());
     }
 
     private Result<List<Project>, OToolError> checkProjectIds(final List<String> projectIds) {
         final List<Project> projects = new ArrayList<>();
 
         try {
-            final JDKProjectManager jdkProjectManager = settings.configManager.jdkProjectManager;
-            final JDKTestProjectManager jdkTestProjectManager = settings.configManager.jdkTestProjectManager;
+            final JDKProjectManager jdkProjectManager = settings.getConfigManager().getJdkProjectManager();
+            final JDKTestProjectManager jdkTestProjectManager = settings.getConfigManager().getJdkTestProjectManager();
             for (final String projectId : projectIds) {
 
                 if (jdkProjectManager.contains(projectId)) {
@@ -164,12 +164,12 @@ public class BumperAPI implements EndpointGroup {
     }
 
     Result<BumpResult, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
-        final ConfigManager configManager = settings.configManager;
+        final ConfigManager configManager = settings.getConfigManager();
         final File buildsRoot = settings.getDbFileRoot();
         return RemoveTaskVariantArgs.parse(params).flatMap(args -> {
             final TaskVariant taskVariant;
             try {
-                taskVariant = configManager.taskVariantManager.read(args.name);
+                taskVariant = configManager.getTaskVariantManager().read(args.name);
             } catch (StorageException e) {
                 return Result.err(new OToolError(e.getMessage(), 500));
             } catch (ManagementException e) {
@@ -194,7 +194,7 @@ public class BumperAPI implements EndpointGroup {
                 }
                 String message;
                 try {
-                    configManager.taskVariantManager.delete(taskVariant.getId());
+                    configManager.getTaskVariantManager().delete(taskVariant.getId());
                     message = null;
                 } catch (ManagementException | StorageException e) {
                     final String error = "Failed to delete task variant config: " + e.getMessage();
@@ -207,12 +207,12 @@ public class BumperAPI implements EndpointGroup {
     }
 
     Result<BumpResult, OToolError> addTaskVariant(final Map<String, List<String>> params) {
-        final ConfigManager configManager = settings.configManager;
+        final ConfigManager configManager = settings.getConfigManager();
         final File buildsRoot = settings.getDbFileRoot();
         return AddTaskVariantArgs.parse(configManager, params).flatMap(args -> {
             final TaskVariant taskVariant = args.taskVariant;
             try {
-                configManager.taskVariantManager.create(taskVariant);
+                configManager.getTaskVariantManager().create(taskVariant);
             } catch (StorageException e) {
                 return Result.err(new OToolError(e.getMessage(), 500));
             } catch (ManagementException e) {

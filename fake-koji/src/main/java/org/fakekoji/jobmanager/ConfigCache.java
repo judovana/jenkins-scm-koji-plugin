@@ -30,35 +30,35 @@ public class ConfigCache {
 
 
     public ConfigCache(final ConfigManager configManager) throws StorageException {
-        buildProviderMap = configManager.buildProviderManager
+        buildProviderMap = configManager.getBuildProviderManager()
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(BuildProvider::getId, buildProvider -> buildProvider));
-        buildVariantMap = configManager.taskVariantManager
+        buildVariantMap = configManager.getTaskVariantManager()
                 .readAll()
                 .stream()
                 .filter(variant -> variant.getType().equals(Task.Type.BUILD))
                 .collect(Collectors.toMap(TaskVariant::getId, taskVariant -> taskVariant));
-        jdkProjectMap = configManager.jdkProjectManager
+        jdkProjectMap = configManager.getJdkProjectManager()
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(JDKProject::getId, jdkProject -> jdkProject));
-        jdkTestProjectMap = configManager.jdkTestProjectManager
+        jdkTestProjectMap = configManager.getJdkTestProjectManager()
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(JDKTestProject::getId, jdkTestProject-> jdkTestProject));
-        jdkVersionMap = configManager.jdkVersionManager
+        jdkVersionMap = configManager.getJdkVersionManager()
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(JDKVersion::getId, jdkVersion -> jdkVersion));
-        platformMap = configManager.platformManager
+        platformMap = configManager.getPlatformManager()
                 .readAll()
                 .stream()
                 .collect(Collectors.toMap(Platform::getId, platform -> platform));
-        taskMap = configManager.taskManager.readAll()
+        taskMap = configManager.getTaskManager().readAll()
                 .stream()
                 .collect(Collectors.toMap(Task::getId, task -> task));
-        testVariantMap = configManager.taskVariantManager
+        testVariantMap = configManager.getTaskVariantManager()
                 .readAll()
                 .stream()
                 .filter(variant -> variant.getType().equals(Task.Type.TEST))

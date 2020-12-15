@@ -279,22 +279,22 @@ public class BuildHelper {
             BuildProvider buildProvider
     ) throws StorageException {
 
-        final List<String> platforms = configManager.platformManager.readAll()
+        final List<String> platforms = configManager.getPlatformManager().readAll()
                 .stream()
                 .map(Platform::getId)
                 .distinct()
                 .collect(Collectors.toList());
-        final List<TaskVariant> buildTaskVariants = configManager.taskVariantManager.getBuildVariants();
+        final List<TaskVariant> buildTaskVariants = configManager.getTaskVariantManager().getBuildVariants();
 
-        final Set<String> packageNames = configManager.jdkVersionManager.readAll()
+        final Set<String> packageNames = configManager.getJdkVersionManager().readAll()
                 .stream()
                 .map(JDKVersion::getPackageNames)
                 .flatMap(List::stream)
                 .collect(Collectors.toSet());
 
         final OToolParser parser = new OToolParser(
-                configManager.jdkProjectManager.readAll(),
-                configManager.jdkVersionManager.readAll(),
+                configManager.getJdkProjectManager().readAll(),
+                configManager.getJdkVersionManager().readAll(),
                 buildTaskVariants
         );
 

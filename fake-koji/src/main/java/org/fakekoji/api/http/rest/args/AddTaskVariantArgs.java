@@ -50,7 +50,7 @@ public class AddTaskVariantArgs extends BumpArgs {
             final Collection<TaskVariant> taskVariants;
             final int order;
             try {
-                taskVariants = configManager.taskVariantManager.readAll();
+                taskVariants = configManager.getTaskVariantManager().readAll();
                 order = taskVariants.stream()
                         .filter(taskVariant -> taskVariant.getType().equals(taskType))
                         .max(Comparator.comparingInt(TaskVariant::getOrder))

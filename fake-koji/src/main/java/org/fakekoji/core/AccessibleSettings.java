@@ -73,10 +73,10 @@ public class AccessibleSettings {
     private final int fileDownloadPort;
     private final int sshPort;
     private final int webappPort;
-    public final ConfigManager configManager;
-    public final JDKProjectParser jdkProjectParser;
-    public final ReverseJDKProjectParser reverseJDKProjectParser;
-    public final JobUpdater jenkinsJobUpdater;
+    private final ConfigManager configManager;
+    private final JDKProjectParser jdkProjectParser;
+    private final ReverseJDKProjectParser reverseJDKProjectParser;
+    private final JobUpdater jenkinsJobUpdater;
     private ProjectMapping projectMapping;
 
     private final List<String> reportParams;
@@ -159,6 +159,22 @@ public class AccessibleSettings {
     public File getScriptsRoot() {
         warn(scriptsRoot, "scriptsRoot");
         return scriptsRoot;
+    }
+
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    public JDKProjectParser getJdkProjectParser() {
+        return jdkProjectParser;
+    }
+
+    public ReverseJDKProjectParser getReverseJDKProjectParser() {
+        return reverseJDKProjectParser;
+    }
+
+    public JobUpdater getJenkinsJobUpdater() {
+        return jenkinsJobUpdater;
     }
 
     public URL getJenkins() {

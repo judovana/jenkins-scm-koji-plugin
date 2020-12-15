@@ -47,9 +47,9 @@ public class OToolParser {
     public static Result<OToolParser, String> create(final ConfigManager configManager) {
         try {
             return Result.ok(new OToolParser(
-                    configManager.jdkProjectManager.readAll(),
-                    configManager.jdkVersionManager.readAll(),
-                    configManager.taskVariantManager.getBuildVariants()
+                    configManager.getJdkProjectManager().readAll(),
+                    configManager.getJdkVersionManager().readAll(),
+                    configManager.getTaskVariantManager().getBuildVariants()
             ));
         } catch (StorageException e) {
             return Result.err(e.getMessage());

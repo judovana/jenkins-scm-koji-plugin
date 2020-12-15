@@ -29,13 +29,13 @@ public class ConfigManager {
     public final static String JDK_TEST_PROJECTS = "jdkTestProjects";
     public final static String TASKS = "tasks";
 
-    public final BuildProviderManager buildProviderManager;
-    public final JDKVersionManager jdkVersionManager;
-    public final TaskVariantManager taskVariantManager;
-    public final PlatformManager platformManager;
-    public final JDKProjectManager jdkProjectManager;
-    public final JDKTestProjectManager jdkTestProjectManager;
-    public final TaskManager taskManager;
+    private final BuildProviderManager buildProviderManager;
+    private final JDKVersionManager jdkVersionManager;
+    private final TaskVariantManager taskVariantManager;
+    private final PlatformManager platformManager;
+    private final JDKProjectManager jdkProjectManager;
+    private final JDKTestProjectManager jdkTestProjectManager;
+    private final TaskManager taskManager;
 
     public ConfigManager(final AccessibleSettings settings) {
         final String storagePath = settings.getConfigRoot().getAbsolutePath();
@@ -66,5 +66,33 @@ public class ConfigManager {
         );
         jdkTestProjectManager = new JDKTestProjectManager(jdkTestProjectStorage);
         taskManager = new TaskManager(taskStorage);
+    }
+
+    public BuildProviderManager getBuildProviderManager() {
+        return buildProviderManager;
+    }
+
+    public JDKVersionManager getJdkVersionManager() {
+        return jdkVersionManager;
+    }
+
+    public TaskVariantManager getTaskVariantManager() {
+        return taskVariantManager;
+    }
+
+    public PlatformManager getPlatformManager() {
+        return platformManager;
+    }
+
+    public JDKProjectManager getJdkProjectManager() {
+        return jdkProjectManager;
+    }
+
+    public JDKTestProjectManager getJdkTestProjectManager() {
+        return jdkTestProjectManager;
+    }
+
+    public TaskManager getTaskManager() {
+        return taskManager;
     }
 }

@@ -55,13 +55,13 @@ public class CancelApi implements EndpointGroup {
     private final TaskVariantManager taskVariantManager;
 
     CancelApi(final AccessibleSettings settings) {
-        this.parser = settings.jdkProjectParser;
-        final ConfigManager configManager = settings.configManager;
-        this.jdkProjectManager = configManager.jdkProjectManager;
-        this.jdkTestProjectManager = configManager.jdkTestProjectManager;
-        this.platformManager = configManager.platformManager;
-        this.jdkVersionManager = configManager.jdkVersionManager;
-        this.taskVariantManager = configManager.taskVariantManager;
+        this.parser = settings.getJdkProjectParser();
+        final ConfigManager configManager = settings.getConfigManager();
+        this.jdkProjectManager = configManager.getJdkProjectManager();
+        this.jdkTestProjectManager = configManager.getJdkTestProjectManager();
+        this.platformManager = configManager.getPlatformManager();
+        this.jdkVersionManager = configManager.getJdkVersionManager();
+        this.taskVariantManager = configManager.getTaskVariantManager();
         this.settings = settings;
     }
 

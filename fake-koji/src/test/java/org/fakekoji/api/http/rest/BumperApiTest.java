@@ -74,7 +74,7 @@ public class BumperApiTest {
                 .collect(Collectors.toSet());
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(params);
         Assert.assertFalse(result.isError());
-        final TaskVariant taskVariant = settings.configManager.taskVariantManager.read(taskVariantId);
+        final TaskVariant taskVariant = settings.getConfigManager().getTaskVariantManager().read(taskVariantId);
         Assert.assertEquals(taskVariantId, taskVariant.getId());
         Assert.assertEquals(defaultValue, taskVariant.getDefaultValue());
         Assert.assertEquals(3, taskVariant.getOrder());
@@ -127,8 +127,8 @@ public class BumperApiTest {
                 .filter(task -> task.getType().equals(Task.Type.TEST))
                 .map(Task::getId)
                 .collect(Collectors.toSet());
-        Assert.assertTrue(settings.configManager.taskVariantManager.contains(taskVariantId));
-        final TaskVariant taskVariant = settings.configManager.taskVariantManager.read(taskVariantId);
+        Assert.assertTrue(settings.getConfigManager().getTaskVariantManager().contains(taskVariantId));
+        final TaskVariant taskVariant = settings.getConfigManager().getTaskVariantManager().read(taskVariantId);
         Assert.assertEquals(taskVariantId, taskVariant.getId());
         Assert.assertEquals(defaultValue, taskVariant.getDefaultValue());
         Assert.assertEquals(5, taskVariant.getOrder());
@@ -302,7 +302,7 @@ public class BumperApiTest {
                 .collect(Collectors.toSet());
         final Result<BumpResult, OToolError> result = bumperApi.removeTaskVariant(params);
         Assert.assertFalse(result.isError());
-        Assert.assertFalse(settings.configManager.taskVariantManager.contains(taskVariantId));
+        Assert.assertFalse(settings.getConfigManager().getTaskVariantManager().contains(taskVariantId));
         final JobUpdateResults results = result.getValue().getJobResults();
         Assert.assertEquals(47, results.jobsCreated.size());
         Assert.assertTrue(results.jobsArchived.isEmpty());

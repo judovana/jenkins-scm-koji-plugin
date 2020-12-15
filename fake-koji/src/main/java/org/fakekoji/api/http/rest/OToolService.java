@@ -133,7 +133,7 @@ public class OToolService {
                 .addStaticFiles("/webapp")
         );
 
-        final JobUpdater jenkinsJobUpdater = settings.jenkinsJobUpdater;
+        final JobUpdater jenkinsJobUpdater = settings.getJenkinsJobUpdater();
         final GetterAPI getterApi = new GetterAPI(settings);
 
         final OToolHandlerWrapper wrapper = oToolHandler -> context -> {
@@ -152,14 +152,14 @@ public class OToolService {
         };
 
         app.routes(() -> {
-            final ConfigManager configManager = settings.configManager;
-            final JDKTestProjectManager jdkTestProjectManager = configManager.jdkTestProjectManager;
-            final JDKProjectManager jdkProjectManager = configManager.jdkProjectManager;
-            final PlatformManager platformManager = configManager.platformManager;
-            final TaskManager taskManager = configManager.taskManager;
-            final JDKVersionManager jdkVersionManager = configManager.jdkVersionManager;
-            final BuildProviderManager buildProviderManager = configManager.buildProviderManager;
-            final TaskVariantManager taskVariantManager = configManager.taskVariantManager;
+            final ConfigManager configManager = settings.getConfigManager();
+            final JDKTestProjectManager jdkTestProjectManager = configManager.getJdkTestProjectManager();
+            final JDKProjectManager jdkProjectManager = configManager.getJdkProjectManager();
+            final PlatformManager platformManager = configManager.getPlatformManager();
+            final TaskManager taskManager = configManager.getTaskManager();
+            final JDKVersionManager jdkVersionManager = configManager.getJdkVersionManager();
+            final BuildProviderManager buildProviderManager = configManager.getBuildProviderManager();
+            final TaskVariantManager taskVariantManager = configManager.getTaskVariantManager();
 
             path(MISC, () -> {
                 get(HELP, wrapper.wrap(context -> {

@@ -31,7 +31,7 @@ public class ReverseJDKProjectParserTest {
 
     @Test
     public void parseJDKTestProjectJobs() {
-        final ReverseJDKProjectParser parser = settings.reverseJDKProjectParser;
+        final ReverseJDKProjectParser parser = settings.getReverseJDKProjectParser();
         final Result<Project, String> result = parser.parseJobs(DataGenerator.getJDKTestProjectJobs());
         Assert.assertEquals(
                 DataGenerator.getJDKTestProject(),
@@ -41,7 +41,7 @@ public class ReverseJDKProjectParserTest {
 
     @Test
     public void parseJDKProjectJobs() {
-        final ReverseJDKProjectParser parser = settings.reverseJDKProjectParser;
+        final ReverseJDKProjectParser parser = settings.getReverseJDKProjectParser();
         final Result<Project, String> result = parser.parseJobs(DataGenerator.getJDKProjectJobs());
         Assert.assertEquals(
                 DataGenerator.getJDKProject(),

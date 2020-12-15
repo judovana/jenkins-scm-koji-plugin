@@ -94,7 +94,7 @@ public class MatrixGenerator {
         }
 
         try {
-            cache = new ConfigCache(settings.configManager);
+            cache = new ConfigCache(settings.getConfigManager());
         } catch (StorageException se) {
             throw new RuntimeException(se);
         }
@@ -468,7 +468,7 @@ public class MatrixGenerator {
                 .filter(project -> matchProject(project.getId()))
                 .map(project -> {
                     try {
-                        return settings.jdkProjectParser.parse(project);
+                        return settings.getJdkProjectParser().parse(project);
                     } catch (ManagementException | StorageException e) {
                         throw new RuntimeException(e);
                     }

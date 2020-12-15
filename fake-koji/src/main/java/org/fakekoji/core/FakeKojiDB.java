@@ -257,7 +257,7 @@ public class FakeKojiDB {
                     hostname + ':' + settings.getFileDownloadPort()
             );
             buildHelper = BuildHelper.create(
-                    settings.configManager,
+                    settings.getConfigManager(),
                     params,
                     settings.getDbFileRoot(),
                     thisBuildProvider

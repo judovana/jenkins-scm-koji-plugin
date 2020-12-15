@@ -1814,35 +1814,35 @@ public class DataGenerator {
         }
 
         try {
-            final ConfigManager configManager = settings.configManager;
+            final ConfigManager configManager = settings.getConfigManager();
 
             for (final JDKVersion jdkVersion : getJDKVersions()) {
-                configManager.jdkVersionManager.create(jdkVersion);
+                configManager.getJdkVersionManager().create(jdkVersion);
             }
 
             for (final Platform platform : getPlatforms()) {
-                configManager.platformManager.create(platform);
+                configManager.getPlatformManager().create(platform);
             }
 
             for (final TaskVariant taskVariant : getTaskVariants()) {
-                configManager.taskVariantManager.create(taskVariant);
+                configManager.getTaskVariantManager().create(taskVariant);
             }
 
             for (final Task task : getTasks()) {
-                configManager.taskManager.create(task);
+                configManager.getTaskManager().create(task);
             }
 
             for (final JDKProject jdkProject : getJDKProjects()) {
-                configManager.jdkProjectManager.create(jdkProject);
+                configManager.getJdkProjectManager().create(jdkProject);
             }
 
             for (final JDKTestProject jdkTestProject : getJDKTestProjects()) {
-                configManager.jdkTestProjectManager.create(jdkTestProject);
+                configManager.getJdkTestProjectManager().create(jdkTestProject);
             }
 
             final Set<BuildProvider> buildProviderSet = getBuildProviders();
             for (final BuildProvider buildProvider : buildProviderSet) {
-                configManager.buildProviderManager.create(buildProvider);
+                configManager.getBuildProviderManager().create(buildProvider);
             }
         } catch (StorageException | ManagementException e) {
             throw new RuntimeException(e);
@@ -1945,7 +1945,7 @@ public class DataGenerator {
     public static void createProjectJobs(final AccessibleSettings settings) {
         getProjects().forEach(jdkProject -> {
             try {
-                settings.jenkinsJobUpdater.update(null, jdkProject);
+                settings.getJenkinsJobUpdater().update(null, jdkProject);
             } catch (StorageException | ManagementException e) {
                 throw new RuntimeException(e);
             }

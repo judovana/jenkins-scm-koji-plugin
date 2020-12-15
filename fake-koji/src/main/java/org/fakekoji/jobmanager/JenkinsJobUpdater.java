@@ -118,8 +118,8 @@ public class JenkinsJobUpdater implements JobUpdater {
     ) throws StorageException {
 
         final Set<Job> jobs = Stream.of(
-                configManager.jdkProjectManager.readAll(),
-                configManager.jdkTestProjectManager.readAll()
+                configManager.getJdkProjectManager().readAll(),
+                configManager.getJdkTestProjectManager().readAll()
         )
                 .flatMap(Collection::stream)
                 .map(jdkProject -> {
