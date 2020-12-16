@@ -8,16 +8,17 @@ import java.util.Map;
 
 import static org.fakekoji.api.http.rest.RestUtils.extractMandatoryParamValue;
 
-public class RemoveTaskVariantArgs {
+public class RemoveTaskVariantArgs extends BumpArgs {
     public final String name;
 
-    RemoveTaskVariantArgs(final String name) {
+    RemoveTaskVariantArgs(final BumpArgs bumpArgs, final String name) {
+        super(bumpArgs);
         this.name = name;
     }
 
     public static Result<RemoveTaskVariantArgs, OToolError> parse(final Map<String, List<String>> params) {
-        return extractMandatoryParamValue(params, "name").flatMap(name ->
-                Result.ok(new RemoveTaskVariantArgs(name))
-        );
+        return parseBumpArgs(params).flatMap(bumpArgs -> extractMandatoryParamValue(params, "name").flatMap(name ->
+                Result.ok(new RemoveTaskVariantArgs(bumpArgs, name))
+        ));
     }
 }

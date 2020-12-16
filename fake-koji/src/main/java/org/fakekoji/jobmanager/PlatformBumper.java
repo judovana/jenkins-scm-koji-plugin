@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.Platform;
@@ -10,9 +11,11 @@ public class PlatformBumper extends JobModifier {
     private final Platform to;
 
     public PlatformBumper(
+            final AccessibleSettings settings,
             final Platform from,
             final Platform to
     ) {
+        super(settings);
         this.from = from;
         this.to = to;
     }

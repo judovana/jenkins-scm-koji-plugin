@@ -134,6 +134,7 @@ public class Utils {
     }
 
     public static void moveDir(final File source, final File target) throws IOException {
+        LOGGER.info("Moving directory " + source.getAbsolutePath() + " to " + target.getAbsolutePath());
         Files.move(source.toPath(), target.toPath());
     }
     
