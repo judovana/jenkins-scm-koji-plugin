@@ -2,6 +2,7 @@ package org.fakekoji.api.http.rest;
 
 import io.javalin.apibuilder.EndpointGroup;
 import org.fakekoji.api.http.rest.args.AddTaskVariantArgs;
+import org.fakekoji.api.http.rest.args.BumpPlatformArgs;
 import org.fakekoji.api.http.rest.args.RemoveTaskVariantArgs;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
@@ -18,22 +19,16 @@ import org.fakekoji.jobmanager.TaskVariantRemover;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
-import org.fakekoji.jobmanager.project.JDKProjectManager;
-import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.JDKVersion;
-import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,7 +37,6 @@ import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
 import static org.fakekoji.api.http.rest.OToolService.PRODUCTS;
-import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
 import static org.fakekoji.core.AccessibleSettings.objectMapper;
@@ -56,36 +50,15 @@ public class BumperAPI implements EndpointGroup {
 
     private final AccessibleSettings settings;
     private final ConfigReader<JDKVersion> jdkVersionConfigReader;
-    private final ConfigReader<Platform> platformConfigReader;
 
     BumperAPI(final AccessibleSettings settings) {
         this.settings = settings;
         jdkVersionConfigReader = new ConfigReader<>(settings.getConfigManager().jdkVersionManager);
-        platformConfigReader = new ConfigReader<>(settings.getConfigManager().platformManager);
     }
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
-        final Optional<String> fromOptional = extractParamValue(paramsMap, "from");
-        final Optional<String> toOptional = extractParamValue(paramsMap, "to");
-        final Optional<String> projectsOptional = extractParamValue(paramsMap, "projects");
-        if (!fromOptional.isPresent()) {
-            return Result.err(new OToolError("Id of 'from' platform is missing", 400));
-        }
-        if (!toOptional.isPresent()) {
-            return Result.err(new OToolError("Id of 'to' platform is missing", 400));
-        }
-        if (!projectsOptional.isPresent()) {
-            return Result.err(new OToolError("projects are mandatory. Use get/projects?as=list to get them all", 400));
-        }
-        final String fromId = fromOptional.get();
-        final String toId = toOptional.get();
-        final List<String> projectIds = new ArrayList<>(Arrays.asList(projectsOptional.get().split(",")));
-        return platformConfigReader.read(fromId).flatMap(fromPlatform ->
-                platformConfigReader.read(toId).flatMap(toPlatform ->
-                        settings.getConfigManager().getProjects(projectIds).flatMap(projects ->
-                                new PlatformBumper(settings, fromPlatform, toPlatform).modifyJobs(projects)
-                        )
-                )
+        return BumpPlatformArgs.parse(settings.getConfigManager(), paramsMap).flatMap(args ->
+                new PlatformBumper(settings, args.from, args.to).modifyJobs(args.projects)
         );
     }
 
