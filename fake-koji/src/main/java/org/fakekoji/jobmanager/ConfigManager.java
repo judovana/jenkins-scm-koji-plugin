@@ -1,6 +1,8 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.api.http.rest.OToolError;
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.manager.BuildProviderManager;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
@@ -8,6 +10,7 @@ import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.BuildProvider;
@@ -17,8 +20,11 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.DirectoryJsonStorage;
 import org.fakekoji.storage.Storage;
+import org.fakekoji.storage.StorageException;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ConfigManager {
     public final static String BUILD_PROVIDERS = "buildProviders";
@@ -67,4 +73,27 @@ public class ConfigManager {
         jdkTestProjectManager = new JDKTestProjectManager(jdkTestProjectStorage);
         taskManager = new TaskManager(taskStorage);
     }
+    
+    public Result<List<Project>, OToolError> getProjects(final List<String> projectIds) {
+        final List<Project> projects = new ArrayList<>();
+        try {
+            for (final String projectId : projectIds) {
+                if (jdkProjectManager.contains(projectId)) {
+                    projects.add(jdkProjectManager.read(projectId));
+                    continue;
+                }
+                if (jdkTestProjectManager.contains(projectId)) {
+                    projects.add(jdkTestProjectManager.read(projectId));
+                    continue;
+                }
+                return Result.err(new OToolError("Unknown project: " + projectId, 400));
+            }
+        } catch (StorageException e) {
+            return Result.err(new OToolError(e.getMessage(), 500));
+        } catch (ManagementException e) {
+            return Result.err(new OToolError(e.getMessage(), 400));
+        }
+        return Result.ok(projects);
+    }
+
 }

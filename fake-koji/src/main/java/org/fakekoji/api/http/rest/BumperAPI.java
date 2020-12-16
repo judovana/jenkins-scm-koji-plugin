@@ -64,34 +64,6 @@ public class BumperAPI implements EndpointGroup {
         platformConfigReader = new ConfigReader<>(settings.getConfigManager().platformManager);
     }
 
-    private Result<List<Project>, OToolError> checkProjectIds(final List<String> projectIds) {
-        final List<Project> projects = new ArrayList<>();
-
-        try {
-            final JDKProjectManager jdkProjectManager = settings.getConfigManager().jdkProjectManager;
-            final JDKTestProjectManager jdkTestProjectManager = settings.getConfigManager().jdkTestProjectManager;
-            for (final String projectId : projectIds) {
-
-                if (jdkProjectManager.contains(projectId)) {
-                    projects.add(jdkProjectManager.read(projectId));
-                    continue;
-                }
-                if (jdkTestProjectManager.contains(projectId)) {
-                    projects.add(jdkTestProjectManager.read(projectId));
-                    continue;
-                }
-                return Result.err(new OToolError("Unknown project: " + projectId, 400));
-            }
-
-        } catch (StorageException e) {
-            return Result.err(new OToolError(e.getMessage(), 500));
-        } catch (ManagementException e) {
-            return Result.err(new OToolError(e.getMessage(), 400));
-        }
-
-        return Result.ok(projects);
-    }
-
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
         final Optional<String> fromOptional = extractParamValue(paramsMap, "from");
         final Optional<String> toOptional = extractParamValue(paramsMap, "to");
@@ -110,7 +82,7 @@ public class BumperAPI implements EndpointGroup {
         final List<String> projectIds = new ArrayList<>(Arrays.asList(projectsOptional.get().split(",")));
         return platformConfigReader.read(fromId).flatMap(fromPlatform ->
                 platformConfigReader.read(toId).flatMap(toPlatform ->
-                        checkProjectIds(projectIds).flatMap(projects ->
+                        settings.getConfigManager().getProjects(projectIds).flatMap(projects ->
                                 new PlatformBumper(settings, fromPlatform, toPlatform).modifyJobs(projects)
                         )
                 )
@@ -124,7 +96,7 @@ public class BumperAPI implements EndpointGroup {
             return getJDKVersion(fromProduct).flatMap(fromJDK ->
                     getJDKVersion(toProduct).flatMap(toJDK ->
                             extractProjectIds(paramsMap).flatMap(projectIds ->
-                                    checkProjectIds(projectIds).flatMap(projects ->
+                                    settings.getConfigManager().getProjects(projectIds).flatMap(projects ->
                                             new ProductBumper(
                                                     settings,
                                                     fromProduct.getPackageName(),
