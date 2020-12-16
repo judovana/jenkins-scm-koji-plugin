@@ -1972,6 +1972,10 @@ public class DataGenerator {
             }
         };
     }
+    
+    public static AccessibleSettings getSettings(final TemporaryFolder temporaryFolder) throws IOException {
+        return getSettings(initFolders(temporaryFolder));
+    }
 
     public static AccessibleSettings getSettings(FolderHolder folderHolder) throws MalformedURLException {
         return new AccessibleSettings(

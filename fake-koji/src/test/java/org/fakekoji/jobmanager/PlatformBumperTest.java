@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.DataGenerator;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.TaskJob;
@@ -20,18 +21,20 @@ import java.util.stream.Collectors;
 
 public class PlatformBumperTest {
 
+    private AccessibleSettings settings;
+
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Before
     public void setup() throws IOException {
-        DataGenerator.initFolders(temporaryFolder);
+        settings = DataGenerator.getSettings(temporaryFolder);
     }
 
     @Test
     public void bumpJDKProjectJobsWithoutMatch() {
         final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(DataGenerator.getF29x64(), DataGenerator.getRHEL7x64());
+        final PlatformBumper bumper = new PlatformBumper(settings, DataGenerator.getF29x64(), DataGenerator.getRHEL7x64());
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -44,7 +47,7 @@ public class PlatformBumperTest {
         final Platform from = DataGenerator.getRHEL7x64();
         final Platform to = DataGenerator.getF29x64();
         final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(from, to);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to);
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -55,7 +58,7 @@ public class PlatformBumperTest {
     @Test
     public void bumpJDKTestProjectJobsWithoutMatch() {
         final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(DataGenerator.getRHEL7Zx64(), DataGenerator.getRHEL7x64());
+        final PlatformBumper bumper = new PlatformBumper(settings, DataGenerator.getRHEL7Zx64(), DataGenerator.getRHEL7x64());
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -68,7 +71,7 @@ public class PlatformBumperTest {
         final Platform from = DataGenerator.getRHEL7x64();
         final Platform to = DataGenerator.getF29x64();
         final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(from, to);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to);
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -81,7 +84,7 @@ public class PlatformBumperTest {
         final Platform from = DataGenerator.getF29x64();
         final Platform to = DataGenerator.getRHEL7x64();
         final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(from, to);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to);
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
