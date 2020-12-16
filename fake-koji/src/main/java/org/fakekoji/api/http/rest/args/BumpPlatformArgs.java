@@ -6,6 +6,7 @@ import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.PlatformBumper;
 import org.fakekoji.jobmanager.manager.PlatformManager;
+import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
@@ -27,17 +28,20 @@ public class BumpPlatformArgs extends BumpArgs {
 
     final public Platform from;
     final public Platform to;
+    final public PlatformBumpVariant variant;
     final public List<Project> projects;
 
     BumpPlatformArgs(
             BumpArgs bumpArgs,
             final Platform from,
             final Platform to,
+            final PlatformBumpVariant variant,
             final List<Project> projects
     ) {
         super(bumpArgs);
         this.from = from;
         this.to = to;
+        this.variant = variant;
         this.projects = projects;
     }
 
@@ -59,10 +63,16 @@ public class BumpPlatformArgs extends BumpArgs {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
                 return Result.err(new OToolError(e.getMessage(), 400));
             }
+            final Result<PlatformBumpVariant, String> variantParseResult
+                    = PlatformBumpVariant.parse(params.variant);
+            if (variantParseResult.isError()) {
+                return Result.err(new OToolError(variantParseResult.getError(), 400));
+            }
+            final PlatformBumpVariant variant = variantParseResult.getValue();
             final List<String> projectsList = Arrays.asList(params.projects.split(","));
             return BumpArgs.parseBumpArgs(paramsMap).flatMap(bumpArgs ->
                     configManger.getProjects(projectsList).flatMap(projects ->
-                            Result.ok(new BumpPlatformArgs(bumpArgs, from, to, projects))
+                            Result.ok(new BumpPlatformArgs(bumpArgs, from, to, variant, projects))
                     )
             );
         });

@@ -2,6 +2,7 @@ package org.fakekoji.jobmanager;
 
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.Platform;
 
@@ -9,15 +10,18 @@ public class PlatformBumper extends JobModifier {
 
     private final Platform from;
     private final Platform to;
+    private final PlatformBumpVariant variant;
 
     public PlatformBumper(
             final AccessibleSettings settings,
             final Platform from,
-            final Platform to
+            final Platform to,
+            final PlatformBumpVariant variant
     ) {
         super(settings);
         this.from = from;
         this.to = to;
+        this.variant = variant;
     }
 
     @Override

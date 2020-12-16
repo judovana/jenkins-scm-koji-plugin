@@ -58,7 +58,7 @@ public class BumperAPI implements EndpointGroup {
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
         return BumpPlatformArgs.parse(settings.getConfigManager(), paramsMap).flatMap(args ->
-                new PlatformBumper(settings, args.from, args.to).modifyJobs(args.projects)
+                new PlatformBumper(settings, args.from, args.to, args.variant).modifyJobs(args.projects)
         );
     }
 
