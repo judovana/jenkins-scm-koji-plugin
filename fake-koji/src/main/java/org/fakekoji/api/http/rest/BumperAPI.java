@@ -102,7 +102,7 @@ public class BumperAPI implements EndpointGroup {
         final String prefix = MISC + '/' + BUMP;
         return "\n"
                 + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
-                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]&filterOrtasks=[todo]\n"
+                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]&variant=[build_only|test_only|both]&filterOrtasks=[todo]\n"
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
                 + "for all bumps you can specify jobCollisionAction=[stop|keep_bumped|keep_existing], default=stop and "
