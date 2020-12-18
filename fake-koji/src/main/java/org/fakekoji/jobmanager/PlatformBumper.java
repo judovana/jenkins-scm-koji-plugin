@@ -26,12 +26,28 @@ public class PlatformBumper extends JobModifier {
 
     @Override
     boolean shouldPass(BuildJob job) {
-        return isFromPlatform(job.getPlatform());
+        switch (variant) {
+            case BOTH:
+            case BUILD_ONLY:
+                return isFromPlatform(job.getPlatform());
+            case TEST_ONLY:
+            default:
+                return false;
+        }
     }
 
     @Override
     boolean shouldPass(TestJob job) {
-        return isFromPlatform(job.getPlatform()) || isFromBuildPlatform(job.getBuildPlatform());
+        switch (variant) {
+            case BOTH:
+                return isFromPlatform(job.getPlatform()) || isFromBuildPlatform(job.getBuildPlatform());
+            case BUILD_ONLY:
+                return isFromBuildPlatform(job.getBuildPlatform());
+            case TEST_ONLY:
+                return isFromPlatform(job.getPlatform());
+            default:
+                return false;
+        }
     }
 
     @Override
@@ -52,8 +68,24 @@ public class PlatformBumper extends JobModifier {
 
     @Override
     TestJob transform(TestJob job) {
-        final Platform platform = isFromPlatform(job.getPlatform()) ? to : job.getPlatform();
-        final Platform buildPlatform = isFromBuildPlatform(job.getBuildPlatform()) ? to : job.getBuildPlatform();
+        final Platform platform;
+        final Platform buildPlatform;
+        switch (variant) {
+            case BOTH:
+                platform = isFromPlatform(job.getPlatform()) ? to : job.getPlatform();
+                buildPlatform = isFromBuildPlatform(job.getBuildPlatform()) ? to : job.getBuildPlatform();
+                break;
+            case BUILD_ONLY:
+                platform = job.getPlatform();
+                buildPlatform = isFromBuildPlatform(job.getBuildPlatform()) ? to : job.getBuildPlatform();
+                break;
+            case TEST_ONLY:
+                platform = isFromPlatform(job.getPlatform()) ? to : job.getPlatform();
+                buildPlatform = job.getBuildPlatform();
+                break;
+            default:
+                return job;
+        }
         return new TestJob(
                 job.getPlatformProvider(),
                 job.getProjectName(),
