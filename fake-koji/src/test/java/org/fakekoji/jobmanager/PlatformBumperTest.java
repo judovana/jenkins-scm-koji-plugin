@@ -3,6 +3,7 @@ package org.fakekoji.jobmanager;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.TaskJob;
@@ -60,6 +61,73 @@ public class PlatformBumperTest {
                 .collect(Collectors.toSet());
         Assert.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
         Assert.assertTrue(tuples.stream().allMatch(isOk(from, to)));
+    }
+
+    @Test
+    public void bumpJDKProjectJobsWithMatchBuildOnly() {
+        final Platform from = DataGenerator.getRHEL7x64();
+        final Platform to = DataGenerator.getF29x64();
+        final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BUILD_ONLY);
+
+        final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
+                .map(bumper.getTransformFunction())
+                .collect(Collectors.toSet());
+        Assert.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assert.assertTrue(tuples.stream().allMatch(tuple -> {
+            if (tuple.x instanceof BuildJob) {
+                // is build job
+                final BuildJob buildJob = (BuildJob) tuple.x;
+                if (!tuple.y.isPresent()) {
+                    // if job is not bumped, then its platform should not be equal to 'from' platform
+                    return !buildJob.getPlatform().equals(from);
+                }
+                final BuildJob bumped = (BuildJob) tuple.y.get();
+                // if bumped job's platform equals to 'to' platform -> ok
+                return bumped.getPlatform().equals(to);
+            }
+            if (tuple.x instanceof TestJob) {
+                // id test job
+                final TestJob testJob = (TestJob) tuple.x;
+                if (!tuple.y.isPresent()) {
+                    // if job is not bumped, then its platform should not be equal to 'from' platform
+                    return !testJob.getBuildPlatform().equals(from);
+                }
+                final TestJob bumped = (TestJob) tuple.y.get();
+                // if bumped job's platform equals to 'to' platform -> ok
+                return bumped.getBuildPlatform().equals(to);
+            }
+            // if is neither build nor test, it should not be bumped
+            return !tuple.y.isPresent();
+        }));
+    }
+
+    @Test
+    public void bumpJDKProjectJobsWithMatchTestOnly() {
+        final Platform from = DataGenerator.getRHEL7x64();
+        final Platform to = DataGenerator.getF29x64();
+        final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.TEST_ONLY);
+
+        final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
+                .map(bumper.getTransformFunction())
+                .collect(Collectors.toSet());
+        Assert.assertEquals(2, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assert.assertTrue(tuples.stream().allMatch(tuple -> {
+            if (tuple.x instanceof TestJob) {
+                // is test job
+                final TestJob testJob = (TestJob) tuple.x;
+                if (!tuple.y.isPresent()) {
+                    // if job is not bumped, then its platform should not be equal to 'from' platform
+                    return !testJob.getPlatform().equals(from);
+                }
+                final TestJob bumped = (TestJob) tuple.y.get();
+                // bumped job's platform should equal to 'to' platform
+                return bumped.getPlatform().equals(to);
+            }
+            // if is not test job, should not be bumped
+            return !tuple.y.isPresent();
+        }));
     }
 
     @Test
