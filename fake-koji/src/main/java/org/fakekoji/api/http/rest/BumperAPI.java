@@ -1,6 +1,8 @@
 package org.fakekoji.api.http.rest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.javalin.apibuilder.EndpointGroup;
+import io.javalin.http.Context;
 import org.fakekoji.api.http.rest.args.AddTaskVariantArgs;
 import org.fakekoji.api.http.rest.args.BumpPlatformArgs;
 import org.fakekoji.api.http.rest.args.RemoveTaskVariantArgs;
@@ -60,7 +62,7 @@ public class BumperAPI implements EndpointGroup {
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
         return BumpPlatformArgs.parse(settings.getConfigManager(), paramsMap).flatMap(args ->
-                new PlatformBumper(settings, args.from, args.to, args.variant).modifyJobs(args.projects)
+                new PlatformBumper(settings, args.from, args.to, args.variant).modifyJobs(args.projects, args)
         );
     }
 
@@ -188,45 +190,25 @@ public class BumperAPI implements EndpointGroup {
             });
         });
     }
+    
+    private <T> void handleBumpResult(
+            final Context context,
+            final Result<T, OToolError> result
+    ) throws JsonProcessingException {
+        if (result.isError()) {
+            final OToolError error = result.getError();
+            context.result(error.message).status(error.code);
+        } else {
+            context.result(objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(result.getValue()));
+        }
+    }
 
     @Override
     public void addEndpoints() {
-        get(ADD_VARIANT, context -> {
-            final Result<BumpResult, OToolError> result = addTaskVariant(context.queryParamMap());
-            if (result.isError()) {
-                final OToolError error = result.getError();
-                context.result(error.message).status(error.code);
-            } else {
-                context.result(objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(result.getValue()));
-            }
-        });
-        get(REMOVE_VARIANT, context -> {
-            final Result<BumpResult, OToolError> result = removeTaskVariant(context.queryParamMap());
-            if (result.isError()) {
-                final OToolError error = result.getError();
-                context.result(error.message).status(error.code);
-            } else {
-                context.result(objectMapper.writer().withDefaultPrettyPrinter().writeValueAsString(result.getValue()));
-            }
-        });
-        get(PLATFORMS, context -> {
-            final Result<JobUpdateResults, OToolError> result = bumpPlatform(context.queryParamMap());
-            if (result.isError()) {
-                final OToolError error = result.getError();
-                context.result(error.message).status(error.code);
-            } else {
-                context.json(result.getValue());
-            }
-        });
-        get(PRODUCTS, context -> {
-            final Result<JobUpdateResults, OToolError> result = bumpProduct(context.queryParamMap());
-            if (result.isError()) {
-                final OToolError error = result.getError();
-                context.result(error.message).status(error.code);
-            } else {
-                context.json(result.getValue());
-            }
-        });
+        get(ADD_VARIANT, context -> handleBumpResult(context, addTaskVariant(context.queryParamMap())));
+        get(REMOVE_VARIANT, context -> handleBumpResult(context, removeTaskVariant(context.queryParamMap())));
+        get(PLATFORMS, context -> handleBumpResult(context, bumpPlatform(context.queryParamMap())));
+        get(PRODUCTS, context -> handleBumpResult(context, bumpProduct(context.queryParamMap())));
     }
 
     static class ConfigReader<T> {
