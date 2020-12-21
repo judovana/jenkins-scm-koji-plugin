@@ -47,6 +47,13 @@ import static org.fakekoji.core.AccessibleSettings.objectMapper;
 
 public class BumperAPI implements EndpointGroup {
 
+    public static final String BUMP_FROM = "from";
+    public static final String BUMP_TO = "to";
+    public static final String EXECUTE = "do";
+    public static final String JOB_COLLISION_ACTION = "jobCollisionAction";
+    public static final String PLATFORM_BUMP_VARIANT = "taskType";
+    public static final String PROJECTS = "projects";
+
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     private static final String ADD_VARIANT = "/addVariant";
@@ -103,17 +110,18 @@ public class BumperAPI implements EndpointGroup {
     }
 
     public static String getHelp() {
-        final String jobCollisionActions = JobCollisionAction.stringValues("|");
-        final String platformBumpVariants = PlatformBumpVariant.stringValues("|");
+        final String jobCollisionActionsHelp = JOB_COLLISION_ACTION + "=[" + JobCollisionAction.stringValues("|") + "]";
+        final String platformBumpVariantsHelp = PLATFORM_BUMP_VARIANT + "=[" + PlatformBumpVariant.stringValues("|") + "]";
         final String prefix = MISC + '/' + BUMP;
+        final String projectsHelp = PROJECTS + "[projectsId1,projectId2,..projectIdN]";
         return "\n"
-                + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
-                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]&variant=[" + platformBumpVariants + "]&filterOrtasks=[todo]\n"
+                + prefix + PRODUCTS + "?" + BUMP_FROM + "=[jdkVersionId,packageName]&" + BUMP_TO + "=[jdkVersionId,packageName]&" + projectsHelp + "\n"
+                + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&filter=[todo]\n"
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
-                + "for all bumps you can specify jobCollisionAction=[" + jobCollisionActions + "], default=stop and "
-                + "execute=[true|false], default=false"
-                + "";
+                + "for all bumps you can specify " + jobCollisionActionsHelp + ", default=stop and "
+                + EXECUTE + "=[true|false], default=false"
+                + "\n";
     }
 
     Result<BumpResult, OToolError> removeTaskVariant(final Map<String, List<String>> params) {

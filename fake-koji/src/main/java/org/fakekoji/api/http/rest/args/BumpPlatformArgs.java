@@ -4,7 +4,6 @@ import org.fakekoji.api.http.rest.OToolError;
 import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.PlatformBumper;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.Project;
@@ -12,16 +11,17 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.fakekoji.api.http.rest.BumperAPI.BUMP_FROM;
+import static org.fakekoji.api.http.rest.BumperAPI.BUMP_TO;
+import static org.fakekoji.api.http.rest.BumperAPI.PLATFORM_BUMP_VARIANT;
+import static org.fakekoji.api.http.rest.BumperAPI.PROJECTS;
 import static org.fakekoji.api.http.rest.RestUtils.extractMandatoryParamValue;
-import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 
 public class BumpPlatformArgs extends BumpArgs {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
@@ -79,10 +79,10 @@ public class BumpPlatformArgs extends BumpArgs {
     }
 
     static Result<ExtractedParams, OToolError> extractParams(final Map<String, List<String>> params) {
-        return extractMandatoryParamValue(params, "from").flatMap(from ->
-                extractMandatoryParamValue(params, "to").flatMap(to ->
-                        extractMandatoryParamValue(params, "projects").flatMap(projects ->
-                                extractMandatoryParamValue(params, "variant").flatMap(variant ->
+        return extractMandatoryParamValue(params, BUMP_FROM).flatMap(from ->
+                extractMandatoryParamValue(params, BUMP_TO).flatMap(to ->
+                        extractMandatoryParamValue(params, PROJECTS).flatMap(projects ->
+                                extractMandatoryParamValue(params, PLATFORM_BUMP_VARIANT).flatMap(variant ->
                                         Result.ok(new ExtractedParams(from, to, variant, projects))
                                 )
                         )

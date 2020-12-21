@@ -8,6 +8,9 @@ import org.fakekoji.jobmanager.model.JobCollisionAction;
 import java.util.List;
 import java.util.Map;
 
+import static org.fakekoji.api.http.rest.BumperAPI.EXECUTE;
+import static org.fakekoji.api.http.rest.BumperAPI.JOB_COLLISION_ACTION;
+
 public class BumpArgs {
     public final JobCollisionAction action;
     public boolean execute;
@@ -22,9 +25,9 @@ public class BumpArgs {
     }
 
     public static Result<BumpArgs, OToolError> parseBumpArgs(final Map<String, List<String>> paramsMap) {
-        final String executeParam = RestUtils.extractParamValue(paramsMap, "execute").orElse("false");
+        final String executeParam = RestUtils.extractParamValue(paramsMap, EXECUTE).orElse("false");
         final boolean execute = Boolean.parseBoolean(executeParam);
-        final Result<JobCollisionAction, String> actionResult = RestUtils.extractParamValue(paramsMap, "jobCollisionAction")
+        final Result<JobCollisionAction, String> actionResult = RestUtils.extractParamValue(paramsMap, JOB_COLLISION_ACTION)
                 .map(JobCollisionAction::parse)
                 .orElse(Result.ok(JobCollisionAction.STOP));
         if (actionResult.isError()) {
