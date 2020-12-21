@@ -40,6 +40,7 @@ import java.util.stream.Stream;
 
 import static org.fakekoji.DataGenerator.JRE_SDK;
 import static org.fakekoji.DataGenerator.SDK;
+import static org.fakekoji.api.http.rest.BumperAPI.EXECUTE;
 
 public class BumperApiTest {
     private final static String taskVariantId = "newtestvariant";
@@ -65,7 +66,7 @@ public class BumperApiTest {
                 {"name", taskVariantId},
                 {"type", "BUILD"},
                 {"defaultValue", defaultValue},
-                {"execute", "true"},
+                {EXECUTE, "true"},
                 {"values", defaultValue + ",value1,value2"}
         }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
         final Set<String> taskIds = DataGenerator.getTasks()
@@ -112,7 +113,7 @@ public class BumperApiTest {
         final BumperAPI bumperApi = new BumperAPI(settings);
         final Task.Type type = Task.Type.TEST;
         final Map<String, List<String>> params = Stream.of(new String[][]{
-                {"execute", "true"},
+                {EXECUTE, "true"},
                 {"name", taskVariantId},
                 {"type", type.getValue()},
                 {"defaultValue", defaultValue},
@@ -294,7 +295,7 @@ public class BumperApiTest {
         final BumperAPI bumperApi = new BumperAPI(settings);
         final Map<String, List<String>> params = Stream.of(new String[][]{
                 {"name", taskVariantId},
-                {"execute", "true"},
+                {EXECUTE, "true"},
         }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
         final Set<String> taskIds = DataGenerator.getTasks()
                 .stream()
