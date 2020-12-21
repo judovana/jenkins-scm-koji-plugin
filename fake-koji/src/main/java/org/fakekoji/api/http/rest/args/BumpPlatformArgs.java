@@ -91,14 +91,14 @@ public class BumpPlatformArgs extends BumpArgs {
     }
 
     private static class ExtractedParams {
-        private final String to;
         private final String from;
+        private final String to;
         private final String variant;
         private final String projects;
 
-        ExtractedParams(final String to, final String from, final String variant, final String projects) {
-            this.to = to;
+        ExtractedParams(final String from, final String to, final String variant, final String projects) {
             this.from = from;
+            this.to = to;
             this.variant = variant;
             this.projects = projects;
         }
