@@ -16,7 +16,9 @@ import org.fakekoji.jobmanager.PlatformBumper;
 import org.fakekoji.jobmanager.ProductBumper;
 import org.fakekoji.jobmanager.TaskVariantAdder;
 import org.fakekoji.jobmanager.TaskVariantRemover;
+import org.fakekoji.jobmanager.model.JobCollisionAction;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
+import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.JDKVersion;
@@ -99,13 +101,15 @@ public class BumperAPI implements EndpointGroup {
     }
 
     public static String getHelp() {
+        final String jobCollisionActions = JobCollisionAction.stringValues("|");
+        final String platformBumpVariants = PlatformBumpVariant.stringValues("|");
         final String prefix = MISC + '/' + BUMP;
         return "\n"
                 + prefix + PRODUCTS + "?from=[jdkVersionId,packageName]&to=[jdkVersionId,packageName]&projects=[projectsId1,projectId2,..projectIdN]\n"
-                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]&variant=[build_only|test_only|both]&filterOrtasks=[todo]\n"
+                + prefix + PLATFORMS + "?from=[platformId]&to=[platformId]&projects=[projectsId1,projectId2,..projectIdN]&variant=[" + platformBumpVariants + "]&filterOrtasks=[todo]\n"
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
-                + "for all bumps you can specify jobCollisionAction=[stop|keep_bumped|keep_existing], default=stop and "
+                + "for all bumps you can specify jobCollisionAction=[" + jobCollisionActions + "], default=stop and "
                 + "execute=[true|false], default=false"
                 + "";
     }

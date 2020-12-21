@@ -16,15 +16,17 @@ public enum JobCollisionAction {
         this.value = value;
     }
 
+    public static String stringValues(final String delimiter) {
+        return Arrays.stream(JobCollisionAction.values())
+                .map(variant -> variant.value)
+                .collect(Collectors.joining(delimiter));
+    }
+
     public static Result<JobCollisionAction, String> parse(final String value) {
         try {
-            return Result.ok(JobCollisionAction.valueOf(value));
+            return Result.ok(JobCollisionAction.valueOf(value.toUpperCase()));
         } catch (IllegalArgumentException e) {
-
-            final String options = Arrays.stream(JobCollisionAction.values())
-                    .map(action -> action.value)
-                    .collect(Collectors.joining(", "));
-            return Result.err("Invalid job collision action: " + value + ". Valid options are: " + options);
+            return Result.err("Invalid job collision action: " + value + ". Valid options are: " + stringValues(", "));
         }
     }
 }
