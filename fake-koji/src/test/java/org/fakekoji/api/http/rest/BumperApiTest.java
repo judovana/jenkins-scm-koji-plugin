@@ -4,11 +4,18 @@ import org.fakekoji.DataGenerator;
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
+import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.BumpResult;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
+import org.fakekoji.jobmanager.JobModifier;
 import org.fakekoji.jobmanager.ManagementException;
+import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.model.Job;
+import org.fakekoji.jobmanager.model.JobCollisionAction;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
+import org.fakekoji.jobmanager.model.PullJob;
+import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
@@ -25,17 +32,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.fakekoji.DataGenerator.JRE_SDK;
 import static org.fakekoji.DataGenerator.SDK;
+import static org.fakekoji.api.http.rest.BumperAPI.EXECUTE;
 
 public class BumperApiTest {
     private final static String taskVariantId = "newtestvariant";
     private final static String defaultValue = "abcdefgh";
-    
 
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -55,9 +64,10 @@ public class BumperApiTest {
         final BumperAPI bumperApi = new BumperAPI(settings);
         final Map<String, List<String>> params = Stream.of(new String[][]{
                 {"name", taskVariantId},
-                {"type", "BUILD" },
+                {"type", "BUILD"},
                 {"defaultValue", defaultValue},
-                {"values", defaultValue + ",value1,value2" }
+                {EXECUTE, "true"},
+                {"values", defaultValue + ",value1,value2"}
         }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
         final Set<String> taskIds = DataGenerator.getTasks()
                 .stream()
@@ -103,10 +113,11 @@ public class BumperApiTest {
         final BumperAPI bumperApi = new BumperAPI(settings);
         final Task.Type type = Task.Type.TEST;
         final Map<String, List<String>> params = Stream.of(new String[][]{
+                {EXECUTE, "true"},
                 {"name", taskVariantId},
                 {"type", type.getValue()},
                 {"defaultValue", defaultValue},
-                {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
+                {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
 
         }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(params);
@@ -151,7 +162,7 @@ public class BumperApiTest {
                 {"name", DataGenerator.JVM},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
-                {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
+                {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
         Assert.assertTrue(result.isError());
     }
@@ -179,9 +190,9 @@ public class BumperApiTest {
         DataGenerator.createProjectJobs(settings);
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
-                {"type", "fd" },
+                {"type", "fd"},
                 {"defaultValue", defaultValue},
-                {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
+                {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
         Assert.assertTrue(result.isError());
     }
@@ -196,7 +207,7 @@ public class BumperApiTest {
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
-                {"values", defaultValue + ",ijklmnopq,rstuvwxyz,rstuvwxyz" }
+                {"values", defaultValue + ",ijklmnopq,rstuvwxyz,rstuvwxyz"}
         }));
         Assert.assertTrue(result.isError());
     }
@@ -211,7 +222,7 @@ public class BumperApiTest {
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
-                {"values", "ijklmnopq,rstuvwxyz" }
+                {"values", "ijklmnopq,rstuvwxyz"}
         }));
         Assert.assertTrue(result.isError());
     }
@@ -226,7 +237,7 @@ public class BumperApiTest {
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
-                {"values", "" }
+                {"values", ""}
         }));
         Assert.assertTrue(result.isError());
     }
@@ -240,7 +251,7 @@ public class BumperApiTest {
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"type", Task.Type.BUILD.getValue()},
                 {"defaultValue", defaultValue},
-                {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
+                {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
         Assert.assertTrue(result.isError());
     }
@@ -254,7 +265,7 @@ public class BumperApiTest {
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"defaultValue", defaultValue},
-                {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
+                {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
         Assert.assertTrue(result.isError());
     }
@@ -268,10 +279,11 @@ public class BumperApiTest {
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(createParamsMap(new String[][]{
                 {"name", taskVariantId},
                 {"type", Task.Type.BUILD.getValue()},
-                {"values", defaultValue + ",ijklmnopq,rstuvwxyz" }
+                {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
         Assert.assertTrue(result.isError());
     }
+
     @Test
     public void removeBuildVariant() throws IOException {
         final String taskVariantId = JRE_SDK;
@@ -283,6 +295,7 @@ public class BumperApiTest {
         final BumperAPI bumperApi = new BumperAPI(settings);
         final Map<String, List<String>> params = Stream.of(new String[][]{
                 {"name", taskVariantId},
+                {EXECUTE, "true"},
         }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
         final Set<String> taskIds = DataGenerator.getTasks()
                 .stream()

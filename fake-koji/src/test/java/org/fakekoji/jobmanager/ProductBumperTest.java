@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.DataGenerator;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.model.JDKVersion;
@@ -17,13 +18,15 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class ProductBumperTest {
+    
+    private AccessibleSettings settings;
 
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
     @Before
     public void setup() throws IOException {
-        DataGenerator.initFolders(temporaryFolder);
+        settings = DataGenerator.getSettings(temporaryFolder);
     }
 
     @Test
@@ -33,7 +36,7 @@ public class ProductBumperTest {
         final String toPackage = DataGenerator.getJDK8Product().getPackageName();
         final JDKVersion fromJDKVersion = DataGenerator.getJDKVersion11();
         final JDKVersion toJDKVersion = DataGenerator.getJDKVersion8();
-        final ProductBumper bumper = new ProductBumper(fromPackage, toPackage, fromJDKVersion, toJDKVersion);
+        final ProductBumper bumper = new ProductBumper(settings, fromPackage, toPackage, fromJDKVersion, toJDKVersion);
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -48,7 +51,7 @@ public class ProductBumperTest {
         final JDKVersion fromJDKVersion = DataGenerator.getJDKVersion8();
         final JDKVersion toJDKVersion = DataGenerator.getJDKVersion11();
         final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
-        final ProductBumper bumper = new ProductBumper(fromPackage, toPackage, fromJDKVersion, toJDKVersion);
+        final ProductBumper bumper = new ProductBumper(settings, fromPackage, toPackage, fromJDKVersion, toJDKVersion);
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -63,7 +66,7 @@ public class ProductBumperTest {
         final JDKVersion fromJDKVersion = DataGenerator.getJDKVersion11();
         final JDKVersion toJDKVersion = DataGenerator.getJDKVersion8();
         final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
-        final ProductBumper bumper = new ProductBumper(fromPackage, toPackage, fromJDKVersion, toJDKVersion);
+        final ProductBumper bumper = new ProductBumper(settings, fromPackage, toPackage, fromJDKVersion, toJDKVersion);
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -78,7 +81,7 @@ public class ProductBumperTest {
         final JDKVersion fromJDKVersion = DataGenerator.getJDKVersion8();
         final JDKVersion toJDKVersion = DataGenerator.getJDKVersion11();
         final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
-        final ProductBumper bumper = new ProductBumper(fromPackage, toPackage, fromJDKVersion, toJDKVersion);
+        final ProductBumper bumper = new ProductBumper(settings, fromPackage, toPackage, fromJDKVersion, toJDKVersion);
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());

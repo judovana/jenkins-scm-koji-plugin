@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public class RestUtils {
 
-    static Optional<String> extractParamValue(Map<String, List<String>> paramsMap, String param) {
+    public static Optional<String> extractParamValue(Map<String, List<String>> paramsMap, String param) {
         return Optional.ofNullable(paramsMap.get(param))
                 .filter(list -> list.size() == 1)
                 .map(list -> list.get(0));

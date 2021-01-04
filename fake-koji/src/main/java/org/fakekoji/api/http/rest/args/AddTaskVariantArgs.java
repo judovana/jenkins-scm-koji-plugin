@@ -19,10 +19,11 @@ import java.util.stream.Collectors;
 
 import static org.fakekoji.api.http.rest.RestUtils.extractMandatoryParamValue;
 
-public class AddTaskVariantArgs {
+public class AddTaskVariantArgs extends BumpArgs {
     public final TaskVariant taskVariant;
 
-    public AddTaskVariantArgs(final TaskVariant taskVariant) {
+    public AddTaskVariantArgs(final BumpArgs bumpArgs, final TaskVariant taskVariant) {
+        super(bumpArgs);
         this.taskVariant = taskVariant;
     }
 
@@ -40,7 +41,7 @@ public class AddTaskVariantArgs {
             final ConfigManager configManager,
             final Map<String, List<String>> params
     ) {
-        return extractParams(params).flatMap(extParams -> {
+        return parseBumpArgs(params).flatMap(bumpArgs -> extractParams(params).flatMap(extParams -> {
             final Result<Task.Type, String> typeParseResult = Task.Type.parse(extParams.type);
             if (typeParseResult.isError()) {
                 return Result.err(new OToolError(typeParseResult.getError(), 400));
@@ -90,8 +91,8 @@ public class AddTaskVariantArgs {
                     taskVariantValues,
                     false
             );
-            return Result.ok(new AddTaskVariantArgs(taskVariant));
-        });
+            return Result.ok(new AddTaskVariantArgs(bumpArgs, taskVariant));
+        }));
     }
 
     private static class ExtractedParams {
