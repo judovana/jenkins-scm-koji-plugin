@@ -123,8 +123,8 @@ public class BumperAPI implements EndpointGroup {
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
                 + "  for all bumps you can specify " + jobCollisionActionsHelp + ", default=stop and " + EXECUTE + "=[true|false], default=false" + "\n"
-                + "    From " + JOB_COLLISION_ACTION + " the " + JobCollisionAction.KEEP_BUMPED
-                + "  is usually the one you need; X -> Y = " + JobCollisionAction.KEEP_EXISTING + " - archived is X ; " + JobCollisionAction.KEEP_BUMPED + ": archived is Y and  X is renamed to Y \n";
+                + "    From " + JOB_COLLISION_ACTION + " the " + JobCollisionAction.KEEP_BUMPED.value
+                + "  is usually the one you need; X -> Y = " + JobCollisionAction.KEEP_EXISTING.value + " - archived is X ; " + JobCollisionAction.KEEP_BUMPED.value + ": archived is Y and  X is renamed to Y \n";
     }
 
     Result<BumpResult, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
