@@ -1,8 +1,10 @@
 package org.fakekoji.api.http.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
+
 import org.fakekoji.api.http.rest.args.AddTaskVariantArgs;
 import org.fakekoji.api.http.rest.args.BumpPlatformArgs;
 import org.fakekoji.api.http.rest.args.RemoveTaskVariantArgs;
@@ -37,6 +39,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
+
 import static org.fakekoji.api.http.rest.OToolService.BUMP;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
@@ -121,7 +124,7 @@ public class BumperAPI implements EndpointGroup {
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
                 + "  for all bumps you can specify " + jobCollisionActionsHelp + ", default=stop and " + EXECUTE + "=[true|false], default=false" + "\n"
                 + "    From " + JOB_COLLISION_ACTION + " the " + JobCollisionAction.KEEP_BUMPED
-                + "  is usually the one you need; X -> Y = keep_existing - archived is X ; keep_bumped: archived is Y and  X is renamed to Y \n";
+                + "  is usually the one you need; X -> Y = " + JobCollisionAction.KEEP_EXISTING + " - archived is X ; " + JobCollisionAction.KEEP_BUMPED + ": archived is Y and  X is renamed to Y \n";
     }
 
     Result<BumpResult, OToolError> removeTaskVariant(final Map<String, List<String>> params) {
@@ -198,7 +201,7 @@ public class BumperAPI implements EndpointGroup {
             });
         });
     }
-    
+
     private <T> void handleBumpResult(
             final Context context,
             final Result<T, OToolError> result
