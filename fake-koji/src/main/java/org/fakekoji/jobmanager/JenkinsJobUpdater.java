@@ -404,7 +404,7 @@ public class JenkinsJobUpdater implements JobUpdater {
                         return new JobUpdateResult(toName, false, "Collision: no changes done");
                 }
             }
-            Utils.moveDir(fromDir, toDir); //if exception is thrown from here, better to die with it
+            Utils.moveDir(fromDir, toDir); //just move, not copying, should be the same mount in all cases, and it is huge speedup. If exception is thrown from here, better to die with it
             final Result<Void, String> deleteJobResult = deleteJenkinsJob(fromName);
             final Result<Void, String> updateJobConfigResult = updateJenkinsJob(jobBump.to);
             final Result<Void, String> createJobResult = createJenkinsJob(toName);
@@ -438,7 +438,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             archiveFile = new File(jenkinsJobArchiveRoot, filename + '(' + counter + ')');
             counter++;
         }
-        Utils.moveDir(file, archiveFile);
+        Utils.moveDirByCopy(file, archiveFile);
     }
 
     private Result<Void, String> deleteJenkinsJob(final String jobName) {
