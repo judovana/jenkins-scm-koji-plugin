@@ -9,6 +9,7 @@ import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.core.utils.matrix.SummaryReportRunner;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
+import org.fakekoji.core.utils.matrix.formatter.HtmlAjaxFormatter;
 import org.fakekoji.core.utils.matrix.formatter.HtmlFormatter;
 import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFillingFormatter;
 import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFormatter;
@@ -322,7 +323,9 @@ public class OToolService {
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
-                    if ("htmlspan".equals(format)) {
+                    if ("baseajax".equals(format)) {
+                        context.header("Content-Type","text/html; charset=UTF-8").status(OK).result("<html>"+m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlAjaxFormatter(names, projects))+"</html>");
+                    } else if ("htmlspan".equals(format)) {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlSpanningFormatter(names, projects)));
                     } else if ("html".equals(format)) {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlFormatter(names, projects)));
