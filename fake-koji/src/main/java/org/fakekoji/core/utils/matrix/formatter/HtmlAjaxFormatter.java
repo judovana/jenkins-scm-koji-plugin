@@ -8,7 +8,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HtmlAjaxFormatter extends HtmlFormatter {
+public class HtmlAjaxFormatter extends HtmlSpanningFormatter{
     private final File errorStream = null; //maybe to append it somewhen somewhere
 
     public HtmlAjaxFormatter(final boolean expandNames, final String[] projects) {
