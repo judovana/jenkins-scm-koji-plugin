@@ -117,12 +117,12 @@ public class ResultsDb implements EndpointGroup {
         }
 
         private synchronized void set(String nvr, String job, Integer buildId, ScoreWithTimeStamp result) {
-            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId);
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, true);
             scores.add(result);
         }
 
         private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score) {
-            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId);
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, true);
             ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
             for (ScoreWithTimeStamp oldOne : scores) {
                 if (oldOne.equals(newOne)) {
@@ -131,32 +131,94 @@ public class ResultsDb implements EndpointGroup {
                 }
             }
             scores.add(newOne);
+            saveOnCount();
+            return null;
+        }
+
+        private synchronized ScoreWithTimeStamp del(String nvr, String job, Integer buildId, Integer score) {
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, false);
+            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
+            for (ScoreWithTimeStamp oldOne : scores) {
+                if (oldOne.equals(newOne)) {
+                    int deleteions = delChain(nvr, job, buildId, oldOne);
+                    if (deleteions == 0){
+                        LOGGER.log(Level.WARNING, "deletion of " + nvr +", "+job+", "+buildId+", "+score+" is bad, deleted: "+deleteions);
+                    }
+                    saveOnCount();
+                    return oldOne;
+                }
+            }
+            return null;
+        }
+
+        private void saveOnCount() {
             added++;
             if (added > 50) {
                 save();
                 added = 0;
             }
-            return null;
         }
 
         @NotNull
-        private List<ScoreWithTimeStamp> getChain(String nvr, String job, Integer buildId) {
+        private synchronized List<ScoreWithTimeStamp> getChain(String nvr, String job, Integer buildId, boolean putIfNeeded) {
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
             if (jobs == null) {
                 jobs = Collections.synchronizedMap(new HashMap<>());
-                nvras.put(nvr, jobs);
+                 if (putIfNeeded) {
+                     nvras.put(nvr, jobs);
+                 }
             }
             Map<Integer, List<ScoreWithTimeStamp>> jobIds = jobs.get(job);
             if (jobIds == null) {
                 jobIds = Collections.synchronizedMap(new HashMap<>());
-                jobs.put(job, jobIds);
+                if (putIfNeeded) {
+                    jobs.put(job, jobIds);
+                }
             }
             List<ScoreWithTimeStamp> scores = jobIds.get(buildId);
             if (scores == null) {
                 scores = Collections.synchronizedList(new ArrayList<>());
-                jobIds.put(buildId, scores);
+                if (putIfNeeded) {
+                    jobIds.put(buildId, scores);
+                }
             }
             return scores;
+        }
+
+        @NotNull
+        private int delChain(String nvr, String job, Integer buildId, ScoreWithTimeStamp oldOne) {
+            int deletions = 0;
+            Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
+            if (jobs == null){
+                return -1;
+            }
+            Map<Integer, List<ScoreWithTimeStamp>> jobIds = jobs.get(job);
+            if (jobIds == null){
+                return -1;
+            }
+            List<ScoreWithTimeStamp> scores = jobIds.get(buildId);
+            if (scores == null){
+                return -1;
+            }
+            if(scores.remove(oldOne)){
+                deletions++;
+            }
+            if (scores.isEmpty()){
+                if (jobIds.remove(buildId, scores)){
+                    deletions++;
+                }
+            }
+            if (jobIds.isEmpty()){
+                if (jobs.remove(job, jobIds)){
+                    deletions ++;
+                }
+            }
+            if (jobs.isEmpty()){
+                if (nvras.remove(nvr, jobs)){
+                    deletions ++;
+                }
+            }
+            return deletions;
         }
 
         private synchronized Map<String, Map<String, Map<Integer, List<ScoreWithTimeStamp>>>> get() {
@@ -168,6 +230,7 @@ public class ResultsDb implements EndpointGroup {
 
     public static final String SET = "set";
     public static final String GET = "get";
+    public static final String DEL = "del";
     public static final String NVRS = "nvrs";
     private final AccessibleSettings settings;
     private final DB db;
@@ -183,8 +246,9 @@ public class ResultsDb implements EndpointGroup {
         return "\n"
                 + MISC + '/' + RESULTS_DB + "/nvrs will return set of nvrs in results db" + "\n"
                 + MISC + '/' + RESULTS_DB + "/get will return the score of job of nvr of buildId" + "\n"
+                + MISC + '/' + RESULTS_DB + "/del will removethe result for job,nvr,buildId,score, ba careful" + "\n"
                 + MISC + '/' + RESULTS_DB + "/set will set the result for job,nvr,buildId,score" + "\n"
-                + " Negative jobId is manual touch, negative score is manual action, time is automated\n"
+                + " Negative jobId is manual touch, time is automated\n"
                 + " for set nvr, job, buildId and score are mandatory, For get not, but you will get all matching results\n";
     }
 
@@ -201,7 +265,16 @@ public class ResultsDb implements EndpointGroup {
         });
         get(SET, context -> {
             try {
-                String s = addScore(context);
+                String s = addDelScore(context, SET);
+                context.status(OToolService.OK).result(s);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+        });
+        get(DEL, context -> {
+            try {
+                String s = addDelScore(context, DEL);
                 context.status(OToolService.OK).result(s);
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
@@ -225,7 +298,7 @@ public class ResultsDb implements EndpointGroup {
         return l.stream().sorted().collect(Collectors.joining("\n"))+"\n";
     }
 
-    private String addScore(Context context) {
+    private String addDelScore(final Context context, final String finalAction) {
         String job = context.queryParam("job");
         String nvr = context.queryParam("nvr");
         String buildId = context.queryParam("buildId");
@@ -233,6 +306,19 @@ public class ResultsDb implements EndpointGroup {
         if (job == null || nvr == null || buildId == null || score == null) {
             throw new RuntimeException("SET job, nvr buildId, and score are mandatory");
         }
+        if (finalAction.equals(SET)) {
+            return setHelper(job, nvr, buildId, score);
+        } else if (finalAction.equals(DEL)) {
+            return delHelper(job, nvr, buildId, score);
+        } else {
+            String s = "unknown action " + finalAction;
+            //throw  new RuntimeException(s);
+            return s;
+        }
+    }
+
+    @NotNull
+    private String setHelper(String job, String nvr, String buildId, String score) {
         ScoreWithTimeStamp original = db.set(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
         if (original == null) {
             return "inserted";
@@ -240,6 +326,17 @@ public class ResultsDb implements EndpointGroup {
             String s = "Not replacing " + original.score + " from " + new Date(original.timestamp).toString();
             //throw  new RuntimeException(s);
             return s;
+        }
+    }
+
+    private String delHelper(String job, String nvr, String buildId, String score) {
+        ScoreWithTimeStamp original = db.del(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
+        if (original == null) {
+            String s = "Not deleted " + nvr +", "+job+", "+buildId+", "+score;
+            //throw  new RuntimeException(s);
+            return s;
+        } else {
+            return "deleted";
         }
     }
 
