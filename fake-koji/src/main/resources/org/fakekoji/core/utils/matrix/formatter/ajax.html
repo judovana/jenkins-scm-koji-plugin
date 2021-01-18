@@ -329,7 +329,7 @@
     }
 
     function putNewRecord(lnvr, ljob, lscore) {
-      var info = addData(ljob, [getNextManualBuildId(lnvr, ljob), lscore, new Date().getMilliseconds()])
+      var info = addData(ljob, [getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime()])
       sendToServer(lnvr, ljob, info);
       modal.style.display = "none";
       applyAllData()
@@ -356,13 +356,17 @@
     }
 
     function showAll(job) {
-      var results = data.get(job);
-      if (results == null) {
+      if (NVR == undefined || NVR == null || NVR == "") {
         alert("No nvr selected")
         return
       }
+      var results = data.get(job);
+      if (results == null) {
+        results=[];
+      }
       var s = "<h5>" + NVR + "</h5>";
-      s += "<h3><a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
+      s += "<h3><button class=\"reloadButton\" type=\"button\" onClick=\"reloadJob('"+job+"')\" style=\"display:inline\">reload-job</button>"
+      s += "<a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
       for (var i = 0; i < results.length; i++) {
         result = results[i];
         s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
@@ -407,6 +411,7 @@
       }
     }
   </script>
+<div id="header" style="position: fixed; z-index: 5000; top:0px;">
   <div>
     <div style="float:left">
       <input type="checkbox" id="authorAuto" name="autor" value="automated" checked="true">
@@ -447,4 +452,7 @@
     <span style="background-color: black;"><a href="test`">incorrect run (manual)</a></span>
     <span style="background-color: orange;"><a href="test`">failed (manual)</a></span>
   </div>
-  <h2 id="nvrTitle">no nvr</h2>
+  <h4 id="nvrTitle">no nvr</h4>
+  </div>
+<div id="fakeHeader"  style="height: 180px;"> <!-- aprox sum of fixed div above-->
+</div>

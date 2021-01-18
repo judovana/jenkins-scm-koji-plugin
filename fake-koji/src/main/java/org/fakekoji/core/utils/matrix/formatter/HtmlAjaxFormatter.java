@@ -40,7 +40,7 @@ public class HtmlAjaxFormatter extends HtmlSpanningFormatter {
     String cell(final String jobId, final String content) {
         return renderTableCell(content+
                 "<button class=\"waiverButton\" type=\"button\" onClick=\"showAll('"+jobId+"')\">results+waive</button>"+
-                "<button class=\"reloadButton\" type=\"button\" onClick=\"reloadJob('"+jobId+"')\">reload-job</button>"
+                "<button class=\"reloadButton\" type=\"button\" onClick=\"reloadJob('"+jobId+"')\" style=\"display:none\">reload-job</button>"
                 , "id=\""+jobId+"\"");
     }
 }
