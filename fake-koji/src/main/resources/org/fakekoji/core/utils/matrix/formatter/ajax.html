@@ -1,0 +1,450 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    /* The Modal (background) */
+    .modal {
+      display: none;
+      /* Hidden by default */
+      position: fixed;
+      /* Stay in place */
+      z-index: 1;
+      /* Sit on top */
+      padding-top: 100px;
+      /* Location of the box */
+      left: 0;
+      top: 0;
+      width: 100%;
+      /* Full width */
+      height: 100%;
+      /* Full height */
+      overflow: auto;
+      /* Enable scroll if needed */
+      background-color: rgb(0, 0, 0);
+      /* Fallback color */
+      background-color: rgba(0, 0, 0, 0.4);
+      /* Black w/ opacity */
+    }
+
+    /* Modal Content */
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+    }
+
+    /* The Close Button */
+    .close {
+      color: #aaaaaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body onload="loadNvrs()">
+  <!-- The Modal -->
+  <div id="myModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p id="modalContent">Some text in the Modal..</p>
+    </div>
+
+  </div>
+  <script>
+    var url = "http://hydra.brq.redhat.com"
+    var historyUrl = url + ":88/history/nvrs/"
+    var jenkins = url + ":8080"
+    var jenkinsJob = jenkins + "/job"
+    var otool = url + ":8888"
+    var dburl = otool + "/misc/resultsDb"
+    var get = dburl + "/get?"
+    var nvrs = dburl + "/nvrs"
+    var builds = otool + "/get/builds"
+    var processed = otool + "/misc/re/test"
+    var data = new Map()
+    var NVR = ""
+
+    function resortAllData() {
+      var sortString = document.getElementById("sort").value;
+      if (sortString == "best") {
+        data.forEach((value, key, map) => {
+          value.sort(function (a, b) { return a.score - b.score });
+        })
+      }
+      if (sortString == "worst") {
+        data.forEach((value, key, map) => {
+          value.sort(function (a, b) { return b.score - a.score });
+        })
+      }
+    }
+
+    function applyAllData() {
+      resortAllData()
+      var tables = document.getElementsByClassName("resultsTable");
+      var table = tables[0];
+      for (var i = 0, row; row = table.rows[i]; i++) {
+        for (var j = 0, col; col = row.cells[j]; j++) {
+          if (i == 0 || j == 0 || i == table.rows.length - 1 || j == table.rows[i].cells.length - 1) {
+            col.style.backgroundColor = "lightblue";
+          } else {
+            if (col.innerHTML == null || col.innerHTML.trim() == "" || col.innerHTML == "0") {
+              col.style.backgroundColor = "#EEEEEE";
+            } else {
+              result = getIded(col, true)
+              if (result != null) {
+                result.style.backgroundColor = jobToColor(result.getAttribute("id"))
+              } else {
+                col.style.backgroundColor = "lightgray"
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function jobToColor(job) {
+      if (data.has(job)) {
+        return buildInfosToColor(data.get(job))
+      } else {
+        return "gray"
+      }
+
+    }
+
+    function buildInfosToColor(infos) {
+      return buildToColor(infos[0]);
+    }
+
+    function buildToColor(info) {
+      if (info.build >= 0) {
+        // warning, thid method is duplicated code from: HydraDailyReport.getSeriousness*
+        // is necessary to kept in sync
+        if (info.score == 0) {
+          return "green"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "lightgreen"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "yellow"
+        } else {
+          return "red"
+        }
+      } else {
+        if (info.score == 0) {
+          return "darkgreen"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "purple"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "magenta"
+        } else if (info.score > 100 && info.score <= 100000) {
+          return "black"
+        }else {
+          return "orange"
+        }
+      }
+    }
+
+    function getIded(element, deep) {
+      if (element.getAttribute("id")) {
+        return element;
+      } else if (deep == true) {
+        var children = element.children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          result = getIded(child, deep)
+          if (result != null) {
+            return result
+          }
+        }
+      }
+      return null;
+    }
+
+    function loadNvrJob(nvr, job, element) {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            document.getElementById(element).innerHTML = this.responseText;
+          } else {
+            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+          }
+        };
+      }
+      if (job == null) {
+        xhttp.open("GET", get + "nvr=" + nvr, true);
+      } else {
+        xhttp.open("GET", get + "nvr=" + nvr + "&job=" + job, true);
+      }
+      xhttp.send();
+    }
+
+    function getAllData(nvr) {
+      if (nvr == undefined || nvr == null || nvr == "") {
+        alert("No nvr selected")
+        return
+      }
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            var lines = this.responseText.split("\n")
+            data = new Map();
+            NVR = nvr;
+            for (i = 0; i < lines.length; i++) {
+              var parts = lines[i].split(":");
+              if (parts.length != 4) {
+                console.log("bad db record: " + lines[i]);
+              } else {
+                lnvr = parts[0]
+                ljob = parts[1]
+                buildScoreAndTime = [parts[2], parts[3].split(";")[0], parts[3].split(";")[1]]
+                addData(ljob, buildScoreAndTime)
+              }
+            }
+            addData("tck-jp8-ojdk8~rpms-el8z2.x86_64-release.sdk-el8z2.x86_64.beaker-x11.defaultgc.legacy.lnxagent.jfroff", [1, 2, 3]);
+            addData("tck-jp8-ojdk8~rpms-el8z2.x86_64-release.sdk-el8z2.x86_64.beaker-x11.defaultgc.legacy.lnxagent.jfroff", [4, 5, 6]);
+            addData("reproducers~security-jp8-ojdk8~rpms-el8z2.x86_64-release.sdk-el8z2.x86_64.beaker-x11.defaultgc.legacy.lnxagent.jfroff", [4, 5, 6]);
+            addData("reproducers~security-jp8-ojdk8~rpms-el8z2.x86_64-release.sdk-el8z2.x86_64.beaker-x11.defaultgc.legacy.lnxagent.jfroff", [1, 2, 3]);
+            applyAllData();
+          } else {
+            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      };
+      xhttp.open("GET", get + "nvr=" + nvr, true);
+      xhttp.send();
+    }
+
+    function addData(key, value) {
+      var info = { build: value[0], score: value[1], time: value[2] }
+      if (data.has(key)) {
+        data.get(key).push(info)
+      } else {
+        data.set(key, [info])
+      }
+      return info;
+    }
+
+    function loadNvrs() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            var allNvrs = this.responseText.split("\n");
+            var r = "";
+            var y = -1;
+            for (x = 0; x < allNvrs.length; x++) {
+              var cnvr = allNvrs[x]
+              if (cnvr.match(document.getElementById("nvrFilter").value)) {
+                y++
+                r += "<div id=nvr" + y + " onClick='selectNvr(" + y + "," + allNvrs.length + ",\"" + cnvr + "\")'  >" + cnvr + "</div>";
+              }
+            }
+            document.getElementById("nvrs").innerHTML = r;
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const preSelect = urlParams.get('nvr')
+            if (preSelect != null && preSelect != "") {
+              for (i = 0; i < allNvrs.length; i++) {
+                if (allNvrs[i] == preSelect) {
+                  selectNvr(i, allNvrs.length, allNvrs[i]);
+                  break
+                }
+              }
+            }
+          } else {
+            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      };
+      xhttp.open("GET", nvrs, true);
+      xhttp.send();
+    }
+
+    function selectNvr(counter, count, nvr) {
+      for (i = 0; i < count; i++) {
+        if (document.getElementById("nvr" + i) == null) {
+          break;
+        }
+        document.getElementById("nvr" + i).style.backgroundColor = "yellow";
+      }
+      document.getElementById("nvr" + counter).style.backgroundColor = "blue";
+      getAllData(nvr)
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            var lines = this.responseText.split("\n")
+            var s = ""
+            for (i = 0; i < lines.length; i++) {
+              var line = lines[i]
+              if (line.match(".*" + nvr + "$")) {
+                s = s + " | <a target='_blank' href='" + historyUrl + "/" + line + "'> " + line + " </a> | "
+              }
+            }
+            document.getElementById("nvrTitle").innerHTML = "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh"
+          } else {
+            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      };
+      xhttp.open("GET", processed, true);
+      xhttp.send();
+    }
+
+    function sendToServer(lnvr, ljob, info) {
+      alert("failed to write " + url + "; details:" + this.status + ":" + this.responseText);
+    }
+
+    function getNextManualBuildId(lnvr, ljob) {
+      if (data.has(ljob)) {
+        var values = data.get(ljob)
+        var min = 0;
+        for (i = 0; i < values.length; i++) {
+          if (values[i].build < min) {
+            min = values[i].build
+          }
+        }
+        return min - 1;
+      } else {
+        return -1;
+      }
+    }
+
+    function putNewRecord(lnvr, ljob, lscore) {
+      var info = addData(ljob, [getNextManualBuildId(lnvr, ljob), lscore, new Date().getMilliseconds()])
+      sendToServer(lnvr, ljob, info);
+      modal.style.display = "none";
+      applyAllData()
+    }
+
+    function waiveOk(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 0)
+    }
+
+    function waiveIgnore(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 40)
+    }
+
+    function waiveRe(lnvr, ljob, action) {
+      putNewRecord(lnvr, ljob, 100)
+      //re - reschedule, now - re/now, done - nothinf
+    }
+
+    function waiveIncorrect(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 100000)
+    }
+    function waiveFailed(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 10000000)
+    }
+
+    function showAll(job) {
+      var results = data.get(job);
+      if (results == null) {
+        alert("No nvr selected")
+        return
+      }
+      var s = "<h5>" + NVR + "</h5>";
+      s += "<h3><a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
+      for (var i = 0; i < results.length; i++) {
+        result = results[i];
+        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
+      }
+      s = s +
+        "<button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")' type='button'>waive - ok</button>" +
+        "<button onClick='waiveIgnore(\"" + NVR + "\",\"" + job + "\")'      type='button'>waive - ignored</button>" +
+        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"done\")'type='button'>waive and resheduled</button>" +
+        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re\")'  type='button'>waive and do reschedule</button>" +
+        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"now\")' type='button'>waive and do buildnow</button>" +
+        "<button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'   type='button'>waive - incorrect</button>" +
+        "<button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'       type='button'>waive - failed</button>"
+      s += "<br/><p><a href='#" + job + "'>" + job + "</a></p>";
+      document.getElementById("modalContent").innerHTML = s;
+      modal.style.display = "block";
+    }
+
+    // Get the modal
+    var modal = document.getElementById("myModal");
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function () {
+      modal.style.display = "none";
+    }
+
+    function showHideButtons(clazz) {
+      var btns = document.getElementsByClassName(clazz);
+      var btnVisibility = btns[0].style.display;
+      for (var i = 0, btn; btn = btns[i]; i++) {
+        if (btnVisibility == "none") {
+          btn.style.display = "inline"
+        } else {
+          btn.style.display = "none"
+        }
+      }
+    }
+  </script>
+  <div>
+    <div style="float:left">
+      <input type="checkbox" id="authorAuto" name="autor" value="automated" checked="true">
+      <label for="authorAuto"> automated</label><br>
+      <input type="checkbox" id="authorMan" name="autor" value="manual" checked="true">
+      <label for="authorMan"> manual</label><br>
+    </div>
+    <div style="float:left">
+      <select id="sort" name="sort" onChange="applyAllData()">
+        <option>best</option>
+        <option>worst</option>
+        <option>newest</option>
+        <option>oldest</option>
+        <option>buildid</option>
+        <option>revbuildid</option>
+      </select><br />
+      <button type="button" onClick="showHideButtons('waiverButton')">show/hide waive buttons</button><br />
+      <button type="button" onClick="showHideButtons('reloadButton')">show/hide reload buttons</button><br />
+    </div>
+    <div style="float:left">
+      <input type="text" id="nvrFilter" value=".*" /><br />
+      <button type="button" onClick="loadNvrs()">reload list</button><br />
+      <button type="button" onClick="getAllData(NVR)">refresh data</button>
+    </div>
+    <div id="nvrs" style="height:100px; overflow:scroll">
+    </div>
+  </div>
+  <div>
+    <span style="background-color: gray;"><a href="test`">unknown (not yet run)</a></span>
+    <span style="background-color: green;"><a href="test`">ok (automated)</a></span>
+    <span style="background-color: lightgreen;"><a href="test`">ok (automated)</a></span>
+    <span style="background-color: yellow;"><a href="test`">needs inspection (automated)</a></span>
+    <span style="background-color: red;"><a href="test`">failed (automated)</a></span>
+    <span>...</span>
+    <span style="background-color: darkgreen;"><a href="test`">pass (manual)</a></span>
+    <span style="background-color: purple;"><a href="test`">ignored (manual)</a></span>
+    <span style="background-color: magenta;"><a href="test`">rescheduled (manual)</a></span>
+    <span style="background-color: black;"><a href="test`">incorrect run (manual)</a></span>
+    <span style="background-color: orange;"><a href="test`">failed (manual)</a></span>
+  </div>
+  <h2 id="nvrTitle">no nvr</h2>

@@ -297,6 +297,16 @@ public class JenkinsCliWrapper {
         }
     }
 
+    public ClientResponse reloadJob(String name) {
+        String cmd = "reload-job " + name;
+        try {
+            ClientResponse r = syncSshExec(cmd);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
+
     public ClientResponse getJob(String name) {
         String cmd = "get-job " + name;
         try {

@@ -6,7 +6,9 @@ import org.fakekoji.core.utils.matrix.cell.TitleCell;
 import org.fakekoji.core.utils.matrix.cell.UpperCornerCell;
 import org.fakekoji.core.utils.matrix.cell.UrlCell;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class HtmlFormatter implements Formatter {
@@ -151,12 +153,12 @@ public class HtmlFormatter implements Formatter {
         return "<span style=\"" + style + "\">" + content + "</span>";
     }
 
-    String renderTableCell() {
-        return "<td />";
-    }
-
-    String renderTableCell(final String content) {
-        return "<td>" + content + "</td>";
+    String renderTableCell(final String content, String... attributes) {
+        String atts = Arrays.stream(attributes).collect(Collectors.joining(" "));
+        if (atts.trim().length()>0){
+            atts = " " + atts;
+        }
+        return "<td"+atts+">" + content + "</td>";
     }
 
     String renderTableCell(final String content, final int span) {

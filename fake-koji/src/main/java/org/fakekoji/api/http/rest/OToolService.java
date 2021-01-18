@@ -119,7 +119,7 @@ public class OToolService {
                 + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
-                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=htmlspan/html/plain/fill (fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=baseajax/htmlspan/html/plain/fill (baseajax have optional nvr; fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n"
                 + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n"
@@ -324,7 +324,7 @@ public class OToolService {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
                     if ("baseajax".equals(format)) {
-                        context.header("Content-Type","text/html; charset=UTF-8").status(OK).result("<html>"+m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlAjaxFormatter(names, projects))+"</html>");
+                        context.header("Content-Type","text/html; charset=UTF-8").status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlAjaxFormatter(names, projects)));
                     } else if ("htmlspan".equals(format)) {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlSpanningFormatter(names, projects)));
                     } else if ("html".equals(format)) {
