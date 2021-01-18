@@ -30,7 +30,7 @@ public class HtmlFormatter implements Formatter {
 
     @Override
     public String tableStart() {
-        return "<table>\n";
+        return "<table class=\"resultsTable\" >\n";
     }
 
     @Override
