@@ -10,9 +10,9 @@ import org.fakekoji.core.FakeBuild;
 import org.fakekoji.core.utils.OToolParser;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
@@ -37,7 +37,6 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -51,7 +50,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
 
@@ -64,6 +62,7 @@ public class RedeployApi implements EndpointGroup {
     //eg list of nvras in processed.txt for test
     //eg list new api content of fake koji for build?
     //already filtered via other filters?
+    private static final String RELOAD = "load"; //requires jobid, and is there simply to make relaod of job easier
     private static final String REDEPLOY_TEST = "test"; //test have sense with all the swithces before, build do not. build needs only 1/2 nvra
     private static final String REDEPLOY_BUILD = "build"; //only jdkProject in addtion to removal VR from processed.txt, it cleans  FAILED, ERROR and smaller then 4bytes files from local-builds
     private static final String REDEPLOY_RUN = "run"; //job=jobName&build=id resore archve/changelog.xml as build.xml and execute build now
@@ -108,6 +107,8 @@ public class RedeployApi implements EndpointGroup {
 
     public static String getHelp() {
         return "\n"
+                + MISC + '/' + REDEPLOY + "/" + RELOAD + "\n"
+                + "  requires job=name. Will simply reload this job from disk.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_RUN + "\n"
                 + "  requires job=name&build=number; will rereun given job. It is invoking build now, with fake checkout. Job should not be in queue.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_CHECKOUT + "\n"
@@ -180,6 +181,26 @@ public class RedeployApi implements EndpointGroup {
                 String force = context.queryParam("force");
                 StringBuilder sb = forceCheckoutOnJob(job, nvr, "true".equals(force));
                 context.status(OToolService.OK).result(sb.toString());
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+
+        });
+        get(RELOAD, context -> {
+            try {
+                String job = context.queryParam(RERUN_JOB);
+                if (job == null) {
+                    throw new RuntimeException(RERUN_JOB + " is required parameter for " + RELOAD);
+                }
+                JenkinsCliWrapper.ClientResponse cr = JenkinsCliWrapper.getCli().reloadJob(job);
+                try {
+                    cr.throwIfNecessary();
+                } catch (Exception ex) {
+                    LOGGER.log(Level.WARNING, ex.getMessage(), cr.toString());
+                    context.status(500).result(ex.getMessage() + ": " + cr.toString());
+                }
+                context.status(OToolService.OK).result(cr.toString());
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
@@ -387,14 +408,14 @@ public class RedeployApi implements EndpointGroup {
             Utils.RemovedNvrsResult details = Utils.removeNvrFromProcessed(processed, nvr);
             if (details.removed() <= 0 || details.removedUniq() <= 0) {
                 String ew = "Error";
-                if (force){
+                if (force) {
                     ew = "Warning";
                 }
                 sb.append(" " + ew + " ! Nothing removed - " + details.toString() + "\n");
-                removed= false;
+                removed = false;
             } else {
                 sb.append("  Ok - " + details.toString() + "\n");
-                removed=true;
+                removed = true;
             }
         }
         if (removed || force) {
@@ -469,7 +490,7 @@ public class RedeployApi implements EndpointGroup {
             super(context);
             this.clazz = clazz;
             if (clazz.equals(BuildJob.class)) {
-                this.build="true";
+                this.build = "true";
             }
         }
 
