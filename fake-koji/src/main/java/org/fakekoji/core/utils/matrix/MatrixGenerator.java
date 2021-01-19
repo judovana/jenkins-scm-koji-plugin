@@ -122,8 +122,8 @@ public class MatrixGenerator {
         for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
             final Collection<Platform.Provider> platformProviders = Stream.concat(
-                    providers.stream(),
-                    platform.getProviders().stream()
+                    providers.stream().sorted(),
+                    platform.getProviders().stream().sorted()
             ).collect(Collectors.toList());
             for (Platform.Provider provider : platformProviders) {
                 for (Task task : cache.getTasks()) {
@@ -143,7 +143,9 @@ public class MatrixGenerator {
                 }
             }
         }
-        return new ArrayList<>(map.values());
+        List<TestSpec> r = new ArrayList<>(map.values());
+        Collections.sort(r);
+        return r;
     }
 
     private Platform clonePlatformForProviders(Platform origPlatform) {
@@ -190,6 +192,7 @@ public class MatrixGenerator {
         final Collection<TaskVariant> allVariants = cache.getBuildTaskVariants();
         final Collection<TaskVariant> testOnlyVariants = allVariants
                 .stream()
+                .sorted()
                 .filter(TaskVariant::isSupportsSubpackages)
                 .collect(Collectors.toList());
         final List<List<String>> variantsProducts = Stream.of(
@@ -202,9 +205,9 @@ public class MatrixGenerator {
         for (Platform origPlatform : cache.getPlatforms()) {
             Platform platform = clonePlatformForProviders(origPlatform);
             final Collection<Platform.Provider> platformProviders = Stream.concat(
-                    providers.stream(),
-                    platform.getProviders().stream()
-            ).collect(Collectors.toList());
+                    providers.stream().sorted(),
+                    platform.getProviders().stream().sorted()
+            ).sorted().collect(Collectors.toList());
             for (Platform.Provider provider : platformProviders) {
                 for (Project project : cache.getProjects())
                     if (matchProject(project.getId())) {
@@ -217,7 +220,9 @@ public class MatrixGenerator {
                     }
             }
         }
-        return new ArrayList<>(map.values());
+        List<BuildSpec> r = new ArrayList(map.values());
+        Collections.sort(r);
+        return r;
     }
 
     private boolean matchProject(String project) {

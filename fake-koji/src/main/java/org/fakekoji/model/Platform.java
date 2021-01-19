@@ -191,7 +191,9 @@ public class Platform implements  Comparable<Platform> {
         }
     }
 
-    public static class Provider {
+    public static class Provider implements Comparable<Provider>{
+
+
         private final String id;
         private final List<String> hwNodes;
         private final List<String> vmNodes;
@@ -250,6 +252,11 @@ public class Platform implements  Comparable<Platform> {
                     ", hwNodes=" + hwNodes + tail +
                     ", vmNodes=" + vmNodes + tail +
                     '}';
+        }
+
+        @Override
+        public int compareTo(@NotNull Provider provider) {
+            return id.compareTo(provider.id);
         }
     }
 
