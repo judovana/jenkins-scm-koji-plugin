@@ -290,8 +290,11 @@
               } else {
                 lnvr = parts[0]
                 ljob = parts[1]
-                buildScoreAndTime = [parts[2], parts[3].split(";")[0], parts[3].split(";")[1]]
-                addData(ljob, buildScoreAndTime)
+                socresAndStamps=parts[3].split(/\s+/)
+                for (x = 0; x < socresAndStamps.length; x++) {
+                  buildScoreAndTime = [parts[2], socresAndStamps[x].split(";")[0], socresAndStamps[x].split(";")[1]]
+                  addData(ljob, buildScoreAndTime)
+                }
               }
             }
             addData("tck-jp8-ojdk8~rpms-el8z2.x86_64-release.sdk-el8z2.x86_64.beaker-x11.defaultgc.legacy.lnxagent.jfroff", [1, 2, 3]);

@@ -16,14 +16,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResultsDbTest {
 
+    public static final int MIN_SIZE = 877;
     private static ResultsDb db;
     private static AtomicInteger failures = new AtomicInteger(0);
     private static AtomicInteger checks = new AtomicInteger(0);
     private static AtomicInteger exs = new AtomicInteger(0);
 
-    private static AtomicInteger ttl = new AtomicInteger(200_000);
+    private static AtomicInteger ttl = new AtomicInteger(100_000);
 
     private static abstract class Trouble implements Runnable {
+
+        private static int score = 0;
+        private static int scoreHelper = 0;
         @Override
         public void run() {
             while (ttl.get() > 0) {
@@ -51,18 +55,26 @@ public class ResultsDbTest {
                 return;
             }
             checks.incrementAndGet();
-            String[] ch = check.split("\n");
-            for (String s : ch) {
-                String[] ss = s.split(":");
-                if (ss.length < 4) {
-                    System.out.println("bad record: " + s);
+            String[] lines = check.split("\n");
+            for (String line : lines) {
+                String[] linePart = line.split(":");
+                if (linePart.length < 4) {
+                    System.out.println("bad record1: " + line);
                     failures.incrementAndGet();
                 }
-                for (int i = 3; i < ss.length; i++) {
-                    String[] sss = ss[i].split(";");
-                    if (sss.length != 2) {
-                        System.out.println("bad record: " + s + " (" + ss[i] + ")");
+                for (int i = 3; i < linePart.length; i++) {
+                    String[] scores= linePart[i].split("\\s+");
+                    if (scores.length < 1) {
+                        System.out.println("bad record2: " + linePart);
                         failures.incrementAndGet();
+                    } else {
+                        for(String sscore: scores) {
+                            String[] scoreAndTimeStamp = sscore.split(";");
+                            if (scoreAndTimeStamp.length != 2) {
+                                System.out.println("bad record3: " + line + " (" + sscore + ")");
+                                failures.incrementAndGet();
+                            }
+                        }
                     }
                 }
 
@@ -72,7 +84,7 @@ public class ResultsDbTest {
         private void set() {
             try {
                 String s = "" + getNext();
-                String a = db.getSet(s, s, s, s);
+                String a = db.getSet(s, s, s, ""+getNextScore());
                 String check = db.getScore(null, null, null);
                 checkCheck(check);
             }catch (ResultsDb.ItemNotFoundException e){
@@ -113,7 +125,7 @@ public class ResultsDbTest {
         private void del() {
             try {
                 String s = "" + getNext();
-                String a = db.getSet(s, s, s, s);
+                String a = db.getSet(s, s, s, ""+getThisScore());
                 String check = db.getScore(null, null, null);
                 checkCheck(check);
             }catch (ResultsDb.ItemNotFoundException e){
@@ -125,6 +137,17 @@ public class ResultsDbTest {
         }
 
         abstract int getNext();
+
+        int getNextScore(){
+            scoreHelper++;
+            if (scoreHelper%10000 == 0) {
+                score++;
+            }
+            return score;
+        }
+        int getThisScore(){
+            return score;
+        }
     }
 
     private static class TenSequentialTroubles extends Trouble {
@@ -252,15 +275,15 @@ public class ResultsDbTest {
         long l0 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("0)"+l0);
         //878 is minimal growth of file
-        Assert.assertTrue(l1+800<l2);
-        Assert.assertTrue(l2+800<l3);
-        Assert.assertTrue(l3+800<l4);
-        Assert.assertTrue(l4+800<l5);
+        Assert.assertTrue(l1+ MIN_SIZE <l2);
+        Assert.assertTrue(l2+MIN_SIZE<l3);
+        Assert.assertTrue(l3+MIN_SIZE<l4);
+        Assert.assertTrue(l4+MIN_SIZE<l5);
         Assert.assertTrue(l5==l6);
         Assert.assertTrue(l6==l7);
-        Assert.assertTrue(l7>l8+800);
-        Assert.assertTrue(l8>l9+800);
-        Assert.assertTrue(l9>l0+800);
+        Assert.assertTrue(l7>l8+MIN_SIZE);
+        Assert.assertTrue(l8>l9+MIN_SIZE);
+        Assert.assertTrue(l9>l0+MIN_SIZE);
 
 
     }
