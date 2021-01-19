@@ -237,8 +237,8 @@ public class MatrixGeneratorTest {
     public void showPerProjectsMatrix() throws ManagementException, StorageException, IOException {
         final ConfigManager configManager = settings.getConfigManager();
         final ConfigCache configCache = new ConfigCache(configManager);
-        final List<String> jdkProjectNames = configCache.getJdkProjects().stream().map(JDKProject::getId).collect(Collectors.toList());
-        final List<String> jdkTestProjectNames = configCache.getJdkTestProjects().stream().map(JDKTestProject::getId).collect(Collectors.toList());
+        final List<String> jdkProjectNames = configCache.getJdkProjects().stream().map(JDKProject::getId).sorted().collect(Collectors.toList());
+        final List<String> jdkTestProjectNames = configCache.getJdkTestProjects().stream().map(JDKTestProject::getId).sorted().collect(Collectors.toList());
         final List<List<String>> jdkProjectLists = Arrays.asList(jdkProjectNames, jdkTestProjectNames);
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final String expectedContent = readResource("per_projects_matrices");
