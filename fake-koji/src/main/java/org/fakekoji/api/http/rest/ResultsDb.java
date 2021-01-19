@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public class ResultsDb implements EndpointGroup {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
     public static final String MAIN_DELIMITER = ":";
     private static final String SECONDARY_DELIMITER = " ";
-
+    public static final int LIMIT_TO_SAVE = 50;
 
     private static class ScoreWithTimeStamp {
 
@@ -72,7 +73,7 @@ public class ResultsDb implements EndpointGroup {
 
     private class DB {
         private final Map<String/*nvr*/, Map<String/*job*/, Map<Integer/*jobId*/, List<ScoreWithTimeStamp>>>> nvras = Collections.synchronizedMap(new HashMap<>());
-        int added = 0;
+        AtomicInteger added = new AtomicInteger(0);
 
         public DB() {
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -152,10 +153,10 @@ public class ResultsDb implements EndpointGroup {
         }
 
         private void saveOnCount() {
-            added++;
-            if (added > 50) {
+            added.incrementAndGet();
+            if (added.get() > LIMIT_TO_SAVE) {
                 save();
-                added = 0;
+                added.set(0);
             }
         }
 
@@ -293,7 +294,16 @@ public class ResultsDb implements EndpointGroup {
 
     }
 
-    private String getNvrs() {
+
+    String getSet(String job, String nvr, String buildId, String score){
+        return setHelper(job, nvr, buildId, score);
+    }
+
+    String getDel(String job, String nvr, String buildId, String score){
+        return delHelper(job, nvr, buildId, score);
+    }
+
+    synchronized  String getNvrs() {
         List l = new ArrayList<>(db.get().keySet());
         return l.stream().sorted().collect(Collectors.joining("\n"))+"\n";
     }
@@ -318,7 +328,7 @@ public class ResultsDb implements EndpointGroup {
     }
 
     @NotNull
-    private String setHelper(String job, String nvr, String buildId, String score) {
+    synchronized  private String setHelper(String job, String nvr, String buildId, String score) {
         ScoreWithTimeStamp original = db.set(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
         if (original == null) {
             return "inserted";
@@ -329,7 +339,7 @@ public class ResultsDb implements EndpointGroup {
         }
     }
 
-    private String delHelper(String job, String nvr, String buildId, String score) {
+    private synchronized  String delHelper(String job, String nvr, String buildId, String score) {
         ScoreWithTimeStamp original = db.del(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
         if (original == null) {
             String s = "Not deleted " + nvr +", "+job+", "+buildId+", "+score;
@@ -343,20 +353,20 @@ public class ResultsDb implements EndpointGroup {
     String throwOrReturn(String id) {
         boolean ratherThrow = true;
         if (ratherThrow) {
-            throw new RuntimeException(id + " not found");
+            throw new ItemNotFoundException(id + " not found");
         } else {
             return "";
         }
     }
 
-    private String getScore(Context context) {
+    private synchronized  String getScore(Context context) {
         String nvr = context.queryParam("nvr");
         String job = context.queryParam("job");
         String buildId = context.queryParam("buildId");
         return getScore(nvr, job, buildId);
     }
 
-    private String getScore(String nvr, String job, String buildId) {
+    synchronized String getScore(String nvr, String job, String buildId) {
 
         StringBuilder r = new StringBuilder();
         if (nvr != null) {
@@ -395,7 +405,7 @@ public class ResultsDb implements EndpointGroup {
         return r.toString();
     }
 
-    private String iterateJobs(String nvr, Set<Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>>> jobs, String job, String buildId) {
+    private synchronized String iterateJobs(String nvr, Set<Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>>> jobs, String job, String buildId) {
         StringBuilder r = new StringBuilder();
         for (Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>> jobEntry : jobs) {
             if (job == null || job.equals(jobEntry.getKey())) {
@@ -406,7 +416,7 @@ public class ResultsDb implements EndpointGroup {
         return r.toString();
     }
 
-    private String iterateBuildIds(String buildId, Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds, String nvr, String job) {
+    private synchronized String iterateBuildIds(String buildId, Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds, String nvr, String job) {
         StringBuilder r = new StringBuilder();
         for (Map.Entry<Integer, List<ScoreWithTimeStamp>> buildIdEntry : buildIds) {
             if (buildId == null || buildId.equals(buildIdEntry.getKey().toString())) {
@@ -417,7 +427,13 @@ public class ResultsDb implements EndpointGroup {
         return r.toString();
     }
 
-    private String scoresOut(List<ScoreWithTimeStamp> scores) {
+    private synchronized String scoresOut(List<ScoreWithTimeStamp> scores) {
         return scores.stream().map(ScoreWithTimeStamp::toString).collect(Collectors.joining(SECONDARY_DELIMITER));
+    }
+
+    class ItemNotFoundException extends RuntimeException {
+        public ItemNotFoundException(String s) {
+            super(s);
+        }
     }
 }
