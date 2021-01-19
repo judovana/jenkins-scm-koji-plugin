@@ -13,9 +13,9 @@
       /* Hidden by default */
       position: fixed;
       /* Stay in place */
-      z-index: 1;
+      z-index: 1000000;
       /* Sit on top */
-      padding-top: 100px;
+      padding-top: 180px;
       /* Location of the box */
       left: 0;
       top: 0;
@@ -83,15 +83,56 @@
 
     function resortAllData() {
       var sortString = document.getElementById("sort").value;
+      data.forEach((value, key, map) => {
+        sortSplitHide(value, sortString);
+      })
+    }
+
+    function sortSplitHide(value, sortString) {
+      var auto = document.getElementById("authorAuto").checked;
+      var man = document.getElementById("authorMan").checked;
+      if (auto == false && man == false) {
+        return
+      }
       if (sortString == "best") {
-        data.forEach((value, key, map) => {
-          value.sort(function (a, b) { return a.score - b.score });
-        })
+        value.sort(function (a, b) { return a.score - b.score });
       }
       if (sortString == "worst") {
-        data.forEach((value, key, map) => {
-          value.sort(function (a, b) { return b.score - a.score });
-        })
+        value.sort(function (a, b) { return b.score - a.score });
+      }
+      if (sortString == "oldest") {
+        value.sort(function (a, b) { return a.time - b.time });
+      }
+      if (sortString == "newest") {
+        value.sort(function (a, b) { return b.time - a.time });
+      }
+      if (sortString == "buildid") {
+        value.sort(function (a, b) { return a.build - b.build });
+      }
+      if (sortString == "revbuildid") {
+        value.sort(function (a, b) { return b.build - a.build });
+      }
+      if (auto == true && man == true) {
+        return
+      }
+      var autos = Array();
+      var mans = Array();
+      var together
+      for (var i = 0; i < value.length; i++) {
+        var v = (value[i]);
+        if (v.build < 0) {
+          mans.push(v)
+        } else {
+          autos.push(v)
+        }
+      }
+      if (auto == true && man == false) {
+        together = autos.concat(mans)
+      } else if (auto == false && man == true) {
+        together = mans.concat(autos)
+      }
+      for (var i = 0; i < value.length; i++) {
+        value[i] = together[i]
       }
     }
 
@@ -125,18 +166,23 @@
       } else {
         return "gray"
       }
-
     }
 
     function buildInfosToColor(infos) {
-      return buildToColor(infos[0]);
+      if (infos.length > 0) {
+        return buildToColor(infos[0]);
+      } else {
+        return "gray"
+      }
     }
 
     function buildToColor(info) {
       if (info.build >= 0) {
         // warning, thid method is duplicated code from: HydraDailyReport.getSeriousness*
         // is necessary to kept in sync
-        if (info.score == 0) {
+        if (info.score < 0) {
+          return "gray"
+        } else if (info.score == 0) {
           return "green"
         } else if (info.score > 0 && info.score <= 40) {
           return "lightgreen"
@@ -154,8 +200,38 @@
           return "magenta"
         } else if (info.score > 100 && info.score <= 100000) {
           return "black"
-        }else {
+        } else {
           return "orange"
+        }
+      }
+    }
+
+    function buildToText(info) {
+      if (info.build >= 0) {
+        // warning, thid method is duplicated code from: HydraDailyReport.getSeriousness*
+        // is necessary to kept in sync
+        if (info.score < 0) {
+          return "no data (automated)"
+        } else if (info.score == 0) {
+          return "ok (automated)"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "ok (automated)"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "needs inspection (automated)"
+        } else {
+          return "failed/regressed (automated)"
+        }
+      } else {
+        if (info.score == 0) {
+          return "pass (manual)"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "ignored (manual)"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "rescheduled (manual)"
+        } else if (info.score > 100 && info.score <= 100000) {
+          return "incorrect run (manual)"
+        } else {
+          return "failed (manual)"
         }
       }
     }
@@ -242,7 +318,27 @@
       return info;
     }
 
+    function setLegend() {
+      var legends = document.getElementsByClassName("legend");
+      for (i = 0; i < legends.length; i++) {
+        legend = legends[i];
+        var typeChar = legend.id.substring(0, 1);
+        var type = 0;
+        if (typeChar == "m") {
+          type = -1
+        }
+        if (typeChar == "a") {
+          type = 1
+        }
+        var weight = legend.id.substring(1);
+        var info = { build: type, score: weight, time: 0 }
+        legend.style.backgroundColor = buildToColor(info);
+        legend.innerHTML = buildToText(info)
+      }
+    }
+
     function loadNvrs() {
+      setLegend()
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4) {
@@ -287,6 +383,7 @@
       }
       document.getElementById("nvr" + counter).style.backgroundColor = "blue";
       getAllData(nvr)
+      window.document.title = nvr
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4) {
@@ -299,7 +396,7 @@
                 s = s + " | <a target='_blank' href='" + historyUrl + "/" + line + "'> " + line + " </a> | "
               }
             }
-            document.getElementById("nvrTitle").innerHTML = "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh"
+            document.getElementById("nvrTitle").innerHTML = "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh. See matrix in <a target='_blank' href=\"" + otool + "/misc/help" + "\">help</a>"
           } else {
             alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
           }
@@ -362,14 +459,14 @@
       }
       var results = data.get(job);
       if (results == null) {
-        results=[];
+        results = [];
       }
       var s = "<h5>" + NVR + "</h5>";
-      s += "<h3><button class=\"reloadButton\" type=\"button\" onClick=\"reloadJob('"+job+"')\" style=\"display:inline\">reload-job</button>"
+      s += "<h3><button class=\"reloadButton\" type=\"button\" onClick=\"reloadJob('" + job + "')\" style=\"display:inline\">reload-job</button>"
       s += "<a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
       for (var i = 0; i < results.length; i++) {
         result = results[i];
-        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
+        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
       }
       s = s +
         "<button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")' type='button'>waive - ok</button>" +
@@ -411,48 +508,49 @@
       }
     }
   </script>
-<div id="header" style="position: fixed; z-index: 5000; top:0px;">
-  <div>
-    <div style="float:left">
-      <input type="checkbox" id="authorAuto" name="autor" value="automated" checked="true">
-      <label for="authorAuto"> automated</label><br>
-      <input type="checkbox" id="authorMan" name="autor" value="manual" checked="true">
-      <label for="authorMan"> manual</label><br>
+  <div id="header" style="position: fixed; z-index: 5000; top:0px;">
+    <div>
+      <div style="float:left">
+        <input type="checkbox" id="authorAuto" name="autor" value="automated" checked="true" onChange="applyAllData()">
+        <label for="authorAuto"> automated</label><br>
+        <input type="checkbox" id="authorMan" name="autor" value="manual" checked="true" onChange="applyAllData()">
+        <label for="authorMan"> manual</label><br>
+      </div>
+      <div style="float:left">
+        <select id="sort" name="sort" onChange="applyAllData()">
+          <option>best</option>
+          <option>worst</option>
+          <option>newest</option>
+          <option>oldest</option>
+          <option>buildid</option>
+          <option>revbuildid</option>
+        </select><br />
+        <button type="button" onClick="showHideButtons('waiverButton')">show/hide waive buttons</button><br />
+        <button type="button" onClick="showHideButtons('reloadButton')">show/hide reload buttons</button><br />
+      </div>
+      <div style="float:left">
+        <input type="text" id="nvrFilter" value=".*" /><br />
+        <button type="button" onClick="loadNvrs()">reload list</button><br />
+        <button type="button" onClick="getAllData(NVR)">refresh data</button>
+      </div>
+      <div id="nvrs" style="height:100px; overflow:scroll">
+      </div>
     </div>
-    <div style="float:left">
-      <select id="sort" name="sort" onChange="applyAllData()">
-        <option>best</option>
-        <option>worst</option>
-        <option>newest</option>
-        <option>oldest</option>
-        <option>buildid</option>
-        <option>revbuildid</option>
-      </select><br />
-      <button type="button" onClick="showHideButtons('waiverButton')">show/hide waive buttons</button><br />
-      <button type="button" onClick="showHideButtons('reloadButton')">show/hide reload buttons</button><br />
+    <div>
+      <a class="legend" id="a-1" href="test`">xxx</a>
+      <a class="legend" id="a0" href="test`">xxx</a>
+      <a class="legend" id="a40" href="test`">xxx</a>
+      <a class="legend" id="a100" href="test`">xxx</a>
+      <a class="legend" id="a101" href="test`">xxx</a>
+      <span>...</span>
+      <a class="legend" id="m0" href="test`">xxx</a>
+      <a class="legend" id="m40" href="test`">xxx</a>
+      <a class="legend" id="m100" href="test`">xxx</a>
+      <a class="legend" id="m101" href="test`">xxx</a>
+      <a class="legend" id="m100001" href="test`">xxx</a>
     </div>
-    <div style="float:left">
-      <input type="text" id="nvrFilter" value=".*" /><br />
-      <button type="button" onClick="loadNvrs()">reload list</button><br />
-      <button type="button" onClick="getAllData(NVR)">refresh data</button>
-    </div>
-    <div id="nvrs" style="height:100px; overflow:scroll">
-    </div>
+    <h4 id="nvrTitle">no nvr</h4>
   </div>
-  <div>
-    <span style="background-color: gray;"><a href="test`">unknown (not yet run)</a></span>
-    <span style="background-color: green;"><a href="test`">ok (automated)</a></span>
-    <span style="background-color: lightgreen;"><a href="test`">ok (automated)</a></span>
-    <span style="background-color: yellow;"><a href="test`">needs inspection (automated)</a></span>
-    <span style="background-color: red;"><a href="test`">failed (automated)</a></span>
-    <span>...</span>
-    <span style="background-color: darkgreen;"><a href="test`">pass (manual)</a></span>
-    <span style="background-color: purple;"><a href="test`">ignored (manual)</a></span>
-    <span style="background-color: magenta;"><a href="test`">rescheduled (manual)</a></span>
-    <span style="background-color: black;"><a href="test`">incorrect run (manual)</a></span>
-    <span style="background-color: orange;"><a href="test`">failed (manual)</a></span>
+  <div id="fakeHeader" style="height: 180px;">
+    <!-- aprox sum of fixed div above-->
   </div>
-  <h4 id="nvrTitle">no nvr</h4>
-  </div>
-<div id="fakeHeader"  style="height: 180px;"> <!-- aprox sum of fixed div above-->
-</div>
