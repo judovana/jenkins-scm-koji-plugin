@@ -476,7 +476,7 @@
         "<button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'   type='button'>waive - incorrect</button>" +
         "<button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'       type='button'>waive - failed</button>"
       s += "<br/><p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
-      s += "<pre style='overflow: scroll'>(CACHED=true sh) TckScripts/jenkins/summary_report/customSearch.sh --jobfilter "+job+" --nvrfilter "+NVR+" --explicitcomparsion-url "+historyUrl+"latest  --time [daysToPast] ; #no params for help</pre>";
+      s += "<pre style='overflow: scroll'>(CACHED=true sh) TckScripts/jenkins/summary_report/customSearch.sh --jobfilter "+job+" --nvrfilter "+NVR+" --explicitcomparsion-url "+historyUrl+"latest  --time [daysToPast] ; #no params for help; to savce result to db use: --cacheUrl \""+dburl+"/set?nvr={NVR}&job={JOB}&buildId={BUILDID}&score={SCORE}\" </pre>";
       document.getElementById("modalContent").innerHTML = s;
       modal.style.display = "block";
     }
