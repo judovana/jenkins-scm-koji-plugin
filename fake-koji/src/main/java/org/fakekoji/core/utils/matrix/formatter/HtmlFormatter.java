@@ -8,7 +8,6 @@ import org.fakekoji.core.utils.matrix.cell.UrlCell;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class HtmlFormatter implements Formatter {
@@ -137,16 +136,24 @@ public class HtmlFormatter implements Formatter {
         return "<td>" + body + "</td>";
     }
 
+    private static String blankIfNotHref(String href) {
+        if (href.startsWith("#")) {
+            return "";
+        } else {
+            return "target='_blank'";
+        }
+    }
+
     String renderHtmlCell(final String body, final String href) {
-        return "<td><a href=\"" + href + "\">" + body + "</a></td>";
+        return "<td><a " + blankIfNotHref(href) + " href=\"" + href + "\">" + body + "</a></td>";
     }
 
     String renderHtmlAnchor(final String body, final String href) {
-        return "<a href=\"" + href + "\">" + body + "</a>";
+        return "<a " + blankIfNotHref(href) + " href=\"" + href + "\">" + body + "</a>";
     }
 
     String renderHtmlAnchor(final String body, final String href, final String classes) {
-        return "<a class=\"" + classes + "\" href=\"" + href + "\">" + body + "</a>";
+        return "<a " + blankIfNotHref(href) + " class=\"" + classes + "\" href=\"" + href + "\">" + body + "</a>";
     }
 
     String renderSpan(final String content, final String style) {
@@ -155,10 +162,10 @@ public class HtmlFormatter implements Formatter {
 
     String renderTableCell(final String content, String... attributes) {
         String atts = Arrays.stream(attributes).collect(Collectors.joining(" "));
-        if (atts.trim().length()>0){
+        if (atts.trim().length() > 0) {
             atts = " " + atts;
         }
-        return "<td"+atts+">" + content + "</td>";
+        return "<td" + atts + ">" + content + "</td>";
     }
 
     String renderTableCell(final String content, final int span) {
