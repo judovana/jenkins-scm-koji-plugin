@@ -273,6 +273,10 @@
     }
 
     function getAllData(nvr) {
+      getAllData(nvr, true)
+    }
+
+    function getAllData(nvr, async) {
       if (nvr == undefined || nvr == null || nvr == "") {
         alert("No nvr selected")
         return
@@ -304,7 +308,7 @@
           }
         }
       };
-      xhttp.open("GET", get + "nvr=" + nvr, true);
+      xhttp.open("GET", get + "nvr=" + nvr, async);
       xhttp.send();
     }
 
@@ -428,8 +432,8 @@
     function putNewRecord(lnvr, ljob, lscore) {
       var info = addData(ljob, [getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime()])
       sendToServer(lnvr, ljob, info);
+      applyAllData() //FIXME! once ready, replace applyAllData by  getAllData(NVR) to sync immediately. From that scope, sendToServer have to be sync!.. maybe also getAllData...
       modal.style.display = "none";
-      applyAllData()
     }
 
     function waiveOk(lnvr, ljob) {
