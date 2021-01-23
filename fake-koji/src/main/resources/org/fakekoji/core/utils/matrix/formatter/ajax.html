@@ -80,6 +80,9 @@
     var builds = otool + "/get/builds"
     var misc = otool + "/misc"
     var processed = misc + "/re/test"
+    var reTest = misc + "/re/test"
+    var reNow = misc + "/re/now"
+    var reLoad = misc + "/re/load"
     var data = new Map()
     var NVR = ""
 
@@ -435,9 +438,8 @@
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function () {
           if (this.readyState == 4) {
-            if (this.status == 200) {
-              otoolLogger(this.responseText)
-            } else {
+            otoolLogger(this.responseText)
+            if (this.status != 200) {
               alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
             }
           }
@@ -445,6 +447,14 @@
         xhttp.open("GET", lurl, false);
         xhttp.send();
         return true
+      }
+    }
+
+    function otoolsDo(lnvr, ljob, info) {
+      if (document.getElementById("otoolDo").checked == true){
+        return "true"
+      } else {
+        return "false"
       }
     }
 
@@ -484,7 +494,31 @@
 
     function waiveRe(lnvr, ljob, action) {
       putNewRecord(lnvr, ljob, 100)
-      //re - reschedule, now - re/now, done - nothinf
+      if (action == "re") {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4) {
+            otoolLogger(this.responseText)
+            if (this.status != 200) {
+              alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+            }
+          }
+        }
+        xhttp.open("GET", reTest + "?nvr=" + lnvr + "&whitelist=" + ljob + "&do=" + otoolsDo(), true);
+        xhttp.send();
+      } else if (action == "now") {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4) {
+            otoolLogger(this.responseText)
+            if (this.status != 200) {
+              alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+            }
+          }
+        }
+        xhttp.open("GET", reNow + "?whitelist=" + ljob + "&do=" + otoolsDo(), true);
+        xhttp.send();
+      }
     }
 
     function waiveIncorrect(lnvr, ljob) {
@@ -492,6 +526,20 @@
     }
     function waiveFailed(lnvr, ljob) {
       putNewRecord(lnvr, ljob, 10000000)
+    }
+
+    function reloadJob(ljob) {
+      var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4) {
+            otoolLogger(this.responseText)
+            if (this.status != 200) {
+              alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+            }
+          }
+        }
+        xhttp.open("GET", reLoad + "?job=" + ljob + "&do=" + otoolsDo(), true);
+        xhttp.send();
     }
 
     function showAll(job) {
@@ -565,6 +613,8 @@
         <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
         <input type="checkbox" id="dbReadOnly" name="dbReadOnly" value="dbReadOnly" checked="true">
         <label for="dbReadOnly">db is read only</label><br>
+        <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo" >
+        <label for="otoolDo">otool's do=?</label><br>
       </div>
       <div style="float:left">
         <select id="sort" name="sort" onChange="applyAllData()">
@@ -601,6 +651,6 @@
     </div>
     <h4 id="nvrTitle">no nvr</h4>
   </div>
-  <div id="fakeHeader" style="height: 240px;   display: flex; align-items: flex-end;">
+  <div id="fakeHeader" style="height: 240px;   display: flex; align-items: flex-end;color: gray;">
     <!-- aprox sum of fixed div above-->
   </div>
