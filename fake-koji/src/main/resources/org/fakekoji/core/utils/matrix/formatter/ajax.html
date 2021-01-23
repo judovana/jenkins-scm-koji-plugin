@@ -314,8 +314,16 @@
       xhttp.send();
     }
 
+    function infoFromArray(value) {
+      return { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]) }
+    }
+
     function addData(key, value) {
-      var info = { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]) }
+      var info = infoFromArray(value)
+      return addInfo(key, info)
+    }
+
+    function addInfo(key, info) {
       if (data.has(key)) {
         data.get(key).push(info)
       } else {
@@ -417,18 +425,27 @@
     }
 
     function sendToServer(lnvr, ljob, info) {
-      var xhttp = new XMLHttpRequest();
-      xhttp.onreadystatechange = function () {
-        if (this.readyState == 4) {
-          if (this.status == 200) {
-            otoolLogger(this.responseText)
-          } else {
-            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+      var lurl = set + "nvr=" + lnvr + "&job=" + ljob + "&buildId=" + info.build + "&score=" + info.score
+      dbReadOnly = document.getElementById("dbReadOnly").checked
+      if (dbReadOnly) {
+        addInfo(ljob, info);
+        otoolLogger("db read only, not executing: " + lurl)
+        return false
+      } else {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4) {
+            if (this.status == 200) {
+              otoolLogger(this.responseText)
+            } else {
+              alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+            }
           }
         }
+        xhttp.open("GET", lurl, false);
+        xhttp.send();
+        return true
       }
-      xhttp.open("GET", set + "nvr=" + lnvr + "&job=" + ljob + "&buildId=" + info.build + "&score=" + info.score, false);
-      xhttp.send();
     }
 
     function getNextManualBuildId(lnvr, ljob) {
@@ -447,9 +464,13 @@
     }
 
     function putNewRecord(lnvr, ljob, lscore) {
-      var info = addData(ljob, [getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime()])
-      sendToServer(lnvr, ljob, info);
-      getAllData(NVR, false)
+      var info = infoFromArray([getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime()])
+      var sent = sendToServer(lnvr, ljob, info);
+      if (sent) {
+        getAllData(NVR, false)
+      } else {
+        applyAllData();
+      }
       modal.style.display = "none";
     }
 
@@ -541,6 +562,9 @@
           <option>remove manual</option>
           <option>remove automatic</option>
         </select><br />
+        <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
+        <input type="checkbox" id="dbReadOnly" name="dbReadOnly" value="dbReadOnly" checked="true">
+        <label for="dbReadOnly">db is read only</label><br>
       </div>
       <div style="float:left">
         <select id="sort" name="sort" onChange="applyAllData()">
