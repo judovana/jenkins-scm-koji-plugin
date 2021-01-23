@@ -81,6 +81,7 @@
     var misc = otool + "/misc"
     var processed = misc + "/re/test"
     var reTest = misc + "/re/test"
+    var reBuild = misc + "/re/build"
     var reNow = misc + "/re/now"
     var reLoad = misc + "/re/load"
     var data = new Map()
@@ -504,7 +505,11 @@
             }
           }
         }
-        xhttp.open("GET", reTest + "?nvr=" + lnvr + "&whitelist=" + ljob + "&do=" + otoolsDo(), true);
+        if (ljob.startsWith("build-")){
+          xhttp.open("GET", reBuild + "?nvr=" + lnvr + "&whitelist=" + ljob + "&build=true&do=" + otoolsDo(), true);
+        } else {
+          xhttp.open("GET", reTest + "?nvr=" + lnvr + "&whitelist=" + ljob + "&do=" + otoolsDo(), true);
+        }
         xhttp.send();
       } else if (action == "now") {
         var xhttp = new XMLHttpRequest();
@@ -612,7 +617,7 @@
         </select><br />
         <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
         <input type="checkbox" id="dbReadOnly" name="dbReadOnly" value="dbReadOnly" checked="true">
-        <label for="dbReadOnly">db is read only</label><br>
+        <label for="dbReadOnly">db is read only</label>
         <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo" >
         <label for="otoolDo">otool's do=?</label><br>
       </div>
