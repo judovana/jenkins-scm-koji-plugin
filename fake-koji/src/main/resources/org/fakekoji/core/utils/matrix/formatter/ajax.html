@@ -75,6 +75,7 @@
     var otool = url + ":8888"
     var dburl = otool + "/misc/resultsDb"
     var get = dburl + "/get?"
+    var set = dburl + "/set?"
     var nvrs = dburl + "/nvrs"
     var builds = otool + "/get/builds"
     var misc = otool + "/misc"
@@ -132,7 +133,7 @@
       } else if (automan == "remove automatic") {
         together = mans
       }
-      value.length=together.length
+      value.length = together.length
       for (var i = 0; i < value.length; i++) {
         value[i] = together[i]
       }
@@ -411,8 +412,23 @@
       xhttp.send();
     }
 
+    function otoolLogger(s) {
+      document.getElementById("fakeHeader").innerHTML = document.getElementById("fakeHeader").innerHTML + s + "</br>"
+    }
+
     function sendToServer(lnvr, ljob, info) {
-      alert("failed to write " + url + "; details:" + this.status + ":" + this.responseText);
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            otoolLogger(this.responseText)
+          } else {
+            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      }
+      xhttp.open("GET", set + "nvr=" + lnvr + "&job=" + ljob + "&buildId=" + info.build + "&score=" + info.score, false);
+      xhttp.send();
     }
 
     function getNextManualBuildId(lnvr, ljob) {
@@ -433,7 +449,7 @@
     function putNewRecord(lnvr, ljob, lscore) {
       var info = addData(ljob, [getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime()])
       sendToServer(lnvr, ljob, info);
-      applyAllData() //FIXME! once ready, replace applyAllData by  getAllData(NVR) to sync immediately. From that scope, sendToServer have to be sync!.. maybe also getAllData...
+      getAllData(NVR, false)
       modal.style.display = "none";
     }
 
@@ -514,7 +530,8 @@
       }
     }
   </script>
-  <div id="header" style="position: fixed; z-index: 5000; top:0px; background-color: white; border-style:  solid; border-width: 1px;">
+  <div id="header"
+    style="position: fixed; z-index: 5000; top:0px; background-color: white; border-style:  solid; border-width: 1px;">
     <div>
       <div style="float:left">
         <select id="automan" name="automan" onChange="getAllData(NVR)">
@@ -560,6 +577,6 @@
     </div>
     <h4 id="nvrTitle">no nvr</h4>
   </div>
-  <div id="fakeHeader" style="height: 200px;">
+  <div id="fakeHeader" style="height: 240px;   display: flex; align-items: flex-end;">
     <!-- aprox sum of fixed div above-->
   </div>
