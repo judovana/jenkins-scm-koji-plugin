@@ -408,13 +408,19 @@
           if (this.status == 200) {
             var lines = this.responseText.split("\n")
             var s = ""
+            var combo = "<select id=\"multiNVR\" name=\"multiNVR\" >"
             for (i = 0; i < lines.length; i++) {
               var line = lines[i]
               if (line.match(".*" + nvr + "$")) {
                 s = s + " | <a target='_blank' href='" + historyUrl + "/" + line + "'> " + line + " </a> | "
+                combo=combo+"<option>"+line+"</option>"
               }
             }
-            document.getElementById("nvrTitle").innerHTML = "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh. See matrix in <a target='_blank' href=\"" + otool + "/misc/help" + "\">help</a>"
+            combo = combo + "</select>"
+            document.getElementById("nvrTitle").innerHTML = 
+            "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh. See matrix in <a target='_blank' href=\"" + otool + "/misc/help" + "\">help</a>"+
+            "<br/>"+
+            "If NVR for selected VR is not strigt, select: "+combo
           } else {
             alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
           }
@@ -422,6 +428,10 @@
       };
       xhttp.open("GET", processed, true);
       xhttp.send();
+    }
+
+    function getSelectedNvr() {
+      return document.getElementById("multiNVR").value
     }
 
     function otoolLogger(s) {
@@ -506,9 +516,9 @@
           }
         }
         if (ljob.startsWith("build-")){
-          xhttp.open("GET", reBuild + "?nvr=" + lnvr + "&whitelist=" + ljob + "&build=true&do=" + otoolsDo(), true);
+          xhttp.open("GET", reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true&do=" + otoolsDo(), true);
         } else {
-          xhttp.open("GET", reTest + "?nvr=" + lnvr + "&whitelist=" + ljob + "&do=" + otoolsDo(), true);
+          xhttp.open("GET", reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&do=" + otoolsDo(), true);
         }
         xhttp.send();
       } else if (action == "now") {
@@ -654,7 +664,7 @@
       <a class="legend" id="m101" href="test`">xxx</a>
       <a class="legend" id="m100001" href="test`">xxx</a>
     </div>
-    <h4 id="nvrTitle">no nvr</h4>
+    <span id="nvrTitle">no nvr</span>
   </div>
   <div id="fakeHeader" style="height: 240px;   display: flex; align-items: flex-end;color: gray;">
     <!-- aprox sum of fixed div above-->
