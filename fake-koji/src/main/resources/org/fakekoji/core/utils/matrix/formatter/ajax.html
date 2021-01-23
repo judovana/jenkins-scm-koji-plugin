@@ -84,17 +84,13 @@
 
     function resortAllData() {
       var sortString = document.getElementById("sort").value;
+      var automan = document.getElementById("automan").value;
       data.forEach((value, key, map) => {
-        sortSplitHide(value, sortString);
+        sortSplitHide(value, sortString, automan);
       })
     }
 
-    function sortSplitHide(value, sortString) {
-      var auto = document.getElementById("authorAuto").checked;
-      var man = document.getElementById("authorMan").checked;
-      if (auto == false && man == false) {
-        return
-      }
+    function sortSplitHide(value, sortString, automan) {
       if (sortString == "best") {
         value.sort(function (a, b) { return a.score - b.score });
       }
@@ -113,12 +109,12 @@
       if (sortString == "revbuildid") {
         value.sort(function (a, b) { return b.build - a.build });
       }
-      if (auto == true && man == true) {
+      if (automan == "mix automated and manual") {
         return
       }
       var autos = Array();
       var mans = Array();
-      var together
+      var together;
       for (var i = 0; i < value.length; i++) {
         var v = (value[i]);
         if (v.build < 0) {
@@ -127,11 +123,16 @@
           autos.push(v)
         }
       }
-      if (auto == true && man == false) {
+      if (automan == "put manual to bottom") {
         together = autos.concat(mans)
-      } else if (auto == false && man == true) {
+      } else if (automan == "put automatic to bottom") {
         together = mans.concat(autos)
+      } else if (automan == "remove manual") {
+        together = autos
+      } else if (automan == "remove automatic") {
+        together = mans
       }
+      value.length=together.length
       for (var i = 0; i < value.length; i++) {
         value[i] = together[i]
       }
@@ -516,10 +517,13 @@
   <div id="header" style="position: fixed; z-index: 5000; top:0px; background-color: white; border-style:  solid; border-width: 1px;">
     <div>
       <div style="float:left">
-        <input type="checkbox" id="authorAuto" name="autor" value="automated" checked="true" onChange="applyAllData()">
-        <label for="authorAuto"> automated</label><br>
-        <input type="checkbox" id="authorMan" name="autor" value="manual" checked="true" onChange="applyAllData()">
-        <label for="authorMan"> manual</label><br>
+        <select id="automan" name="automan" onChange="getAllData(NVR)">
+          <option>mix automated and manual</option>
+          <option>put manual to bottom</option>
+          <option>put automatic to bottom</option>
+          <option>remove manual</option>
+          <option>remove automatic</option>
+        </select><br />
       </div>
       <div style="float:left">
         <select id="sort" name="sort" onChange="applyAllData()">
