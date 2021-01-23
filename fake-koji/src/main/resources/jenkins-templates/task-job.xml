@@ -22,8 +22,8 @@
     %{BUILDER}
     </builders>
     <publishers>
-%{VM_POST_BUILD_TASK}
 %{POST_BUILD_TASKS}
+%{VM_POST_BUILD_TASK}
     </publishers>
     <buildWrappers/>
 </project>
