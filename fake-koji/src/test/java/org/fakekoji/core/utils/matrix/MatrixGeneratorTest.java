@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 
 public class MatrixGeneratorTest {
 
+    private static final String BLANK = "target='_blank'";
+
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -94,9 +96,9 @@ public class MatrixGeneratorTest {
                 + summary + "  Col1  Col2  Col3  " + summary + "  \n";
         Assert.assertEquals(plainTextOutput, expectedPlainTextOutput);
 
-        final String anchor = "<a href=\"" + url + "\">";
+        final String anchor = "<a "+BLANK+" href=\"" + url + "\">";
         final String expectedHtmlOutput = "<table class=\"resultsTable\" >\n"
-                + "<tr><td><a href=\"#\">" + projectName + "</a></td><td>Col1</td><td>Col2</td><td>Col3</td><td><a href=\"#\">" + projectName + "</a></td></tr>\n"
+                + "<tr><td><a  href=\"#\">" + projectName + "</a></td><td>Col1</td><td>Col2</td><td>Col3</td><td><a  href=\"#\">" + projectName + "</a></td></tr>\n"
                 + "<tr><td>Row1</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
                 + "<tr><td>Row2</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row2</td></tr>\n"
                 + "<tr>" + summaryTd + "<td>Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
@@ -109,7 +111,7 @@ public class MatrixGeneratorTest {
 
         final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
         final String expectedSpanningHtmlOutput = "<table class=\"resultsTable\" >\n"
-                + "<tr><td><a href=\"#\">uName</a></td><td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td><td><a href=\"#\">uName</a></td></tr>\n"
+                + "<tr><td><a  href=\"#\">uName</a></td><td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td><td><a  href=\"#\">uName</a></td></tr>\n"
                 + "<tr><td>Row1</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
                 + "<tr><td>Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td></td><td>Row2</td></tr>\n"
                 + "<tr>" + summaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + summaryTd + "</tr>\n"
@@ -155,9 +157,9 @@ public class MatrixGeneratorTest {
         final String summary = count + "/" + total;
         final String summaryTd = "<td>" + summary + "</td>";
 
-        final String anchor = "<a href=\"" + url + "\">";
+        final String anchor = "<a " + BLANK + " href=\"" + url + "\">";
         final String expectedProjectsCell = "<td>" + projectList.stream()
-                .map(proj -> "<a href=\"#\">" + proj + "</a>")
+                .map(proj -> "<a  href=\"#\">" + proj + "</a>")
                 .collect(Collectors.joining(" ")) + "</td>";
         final String expectedHtmlOutput = "<table class=\"resultsTable\" >\n"
                 + "<tr>" + expectedProjectsCell + "<td>Col1</td><td>Col2</td><td>Col3</td>" + expectedProjectsCell + "</tr>\n"
@@ -173,7 +175,7 @@ public class MatrixGeneratorTest {
 
         final String spanningSummaryTd = "<td colspan=\"2\">" + summary + "</td>";
         final String expectedProjectsCells = projectList.stream()
-                .map(proj -> "<td><a href=\"#\">" + proj + "</a></td>")
+                .map(proj -> "<td><a  href=\"#\">" + proj + "</a></td>")
                 .collect(Collectors.joining());
         final String expectedSpanningHtmlOutput = "<table class=\"resultsTable\" >\n"
                 + "<tr>" + expectedProjectsCells + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + expectedProjectsCells + "</tr>\n"
