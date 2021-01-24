@@ -324,7 +324,7 @@ public class OToolService {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
                     if ("baseajax".equals(format)) {
-                        context.header("Content-Type","text/html; charset=UTF-8").status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlAjaxFormatter(names, projects)));
+                        context.header("Content-Type","text/html; charset=UTF-8").status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlAjaxFormatter(names, projects, settings)));
                     } else if ("htmlspan".equals(format)) {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlSpanningFormatter(names, projects)));
                     } else if ("html".equals(format)) {
