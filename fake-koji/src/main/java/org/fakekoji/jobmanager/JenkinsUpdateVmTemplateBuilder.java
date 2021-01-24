@@ -1,11 +1,15 @@
 package org.fakekoji.jobmanager;
 
+import org.fakekoji.model.OToolVariable;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class JenkinsUpdateVmTemplateBuilder implements CharSequence {
@@ -20,17 +24,22 @@ public class JenkinsUpdateVmTemplateBuilder implements CharSequence {
     private final String node;
     private final String provider;
     private final String scriptsRoot;
-    private final String shutdownVariables;
+    private final List<OToolVariable> shutdownVariables;
     private final String destroyScript;
     private final String platformName;
 
     private final String template;
-    private final String postTask;
 
 
     public JenkinsUpdateVmTemplateBuilder(
-            String name, String node, String provider, String scriptsRoot, String shutdownVariables,
-            String destroyScript, String platformName, String template, String postTask) {
+            String name,
+            String node,
+            String provider,
+            String scriptsRoot,
+            List<OToolVariable> shutdownVariables,
+            String destroyScript,
+            String platformName,
+            String template) {
         this.name = name;
         this.node = "StandardIntelVMs".equals(node)?"StandardIntelVMs||Hydra-VmUpdater ":node; //FIXME this hardoced list:(
         this.provider = provider;
@@ -39,7 +48,6 @@ public class JenkinsUpdateVmTemplateBuilder implements CharSequence {
         this.destroyScript = destroyScript;
         this.platformName = platformName;
         this.template = template;
-        this.postTask = postTask;
     }
 
     public String getName() {
@@ -58,44 +66,40 @@ public class JenkinsUpdateVmTemplateBuilder implements CharSequence {
                 Objects.equals(shutdownVariables, that.shutdownVariables) &&
                 Objects.equals(destroyScript, that.destroyScript) &&
                 Objects.equals(platformName, that.platformName) &&
-                Objects.equals(template, that.template) &&
-                Objects.equals(postTask, that.postTask);
+                Objects.equals(template, that.template);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, node, provider, scriptsRoot, shutdownVariables, destroyScript, platformName, template, postTask);
+        return Objects.hash(name, node, provider, scriptsRoot, shutdownVariables, destroyScript, platformName, template);
     }
 
     public static JenkinsUpdateVmTemplateBuilder getUpdateTemplate(
             String name, String node, String provider, File scriptsRoot, String platformName) throws IOException {
         return new JenkinsUpdateVmTemplateBuilder(
-                name, node, provider, scriptsRoot.getAbsolutePath(), "",
+                name, node, provider, scriptsRoot.getAbsolutePath(), new ArrayList<>(),
                 Paths.get(scriptsRoot.getAbsolutePath(), JenkinsJobTemplateBuilder.JENKINS, provider, JenkinsJobTemplateBuilder.DESTROY_SCRIPT_NAME).toAbsolutePath().toString(),
                 platformName,
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.UPDATE_VM_JOB),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE)
-        );
+                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.UPDATE_VM_JOB));
     }
 
 
-    public String expand() {
+    public String expand() throws IOException {
         String r = template
                 .replace(NODE, node)
                 .replace(PROVIDER, provider)
                 .replace(SCRIPTS_ROOT, scriptsRoot);
         if (platformName.equals("local")) {
-            r = r.replace(JenkinsJobTemplateBuilder.VM_POST_BUILD_TASK, "");
+            r = JenkinsJobTemplateBuilder.
+                    buildPostBuildTaskTemplate(r, provider, platformName, new File(scriptsRoot),shutdownVariables, false, false);
         } else {
-            r = r.replace(JenkinsJobTemplateBuilder.VM_POST_BUILD_TASK, postTask);
+            r = JenkinsJobTemplateBuilder.
+                    buildPostBuildTaskTemplate(r, provider, platformName, new File(scriptsRoot),shutdownVariables, true, false);
         }
-        r = r.replace(JenkinsJobTemplateBuilder.SHUTDOWN_VARIABLES, shutdownVariables)
-                .replace(JenkinsJobTemplateBuilder.DESTROY_SCRIPT, destroyScript)
-                .replace(JenkinsJobTemplateBuilder.PLATFORM_NAME, platformName);
         return JenkinsJobTemplateBuilder.prettyPrint(r);
     }
 
-    public InputStream expandToStream() {
+    public InputStream expandToStream() throws IOException {
         return new ByteArrayInputStream(expand().getBytes(StandardCharsets.UTF_8));
     }
 

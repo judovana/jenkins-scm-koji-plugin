@@ -52,6 +52,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.DESTROY_SCRIPT_NAME;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JENKINS;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JOB_NAME_SHORTENED;
+
 
 public class DataGenerator {
 
@@ -986,6 +990,63 @@ public class DataGenerator {
                 ),
                 0
         );
+    }
+
+
+    public static String getPostTasks(String scriptsRoot, boolean vm, boolean analyser, String provider, String shortenedName, String vmPlatformName) {
+        if (!vm && !analyser) {
+            return "";
+        }
+        String s =
+                "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
+                "            <tasks>\n";
+        if (analyser) {
+            s = s + getAnnalyzePostTask(scriptsRoot);
+        }
+        if (vm) {
+            s = s + getVmShutdownPostTask(scriptsRoot, provider, shortenedName, vmPlatformName);
+        }
+        s = s +
+                "            </tasks>\n" +
+                "        </hudson.plugins.postbuildtask.PostbuildTask>\n";
+        return s;
+    }
+    public static String getVmShutdownPostTask(String scriptsRoot, String provider, String shortenedName, String vmPlatformName) {
+         return
+                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
+                "                    <logTexts>\n" +
+                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
+                "                            <logText>.*</logText>\n" +
+                "                            <operator>OR</operator>\n" +
+                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
+                "                    </logTexts>\n" +
+                "                    <EscalateStatus>true</EscalateStatus>\n" +
+                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
+                "                    <script>#!/bin/bash&#13;"+getShortenedVar(shortenedName) + " bash " + Paths.get(scriptsRoot, JENKINS, provider, DESTROY_SCRIPT_NAME) + " " + vmPlatformName + "&#13;</script>\n" +
+                "                </hudson.plugins.postbuildtask.TaskProperties>\n";
+    }
+
+    private static String getShortenedVar(String shortenedName) {
+        if (shortenedName==null){
+            return "";
+        } else {
+            return "OTOOL_" + JOB_NAME_SHORTENED + '=' + shortenedName;
+        }
+    }
+
+    public static String getAnnalyzePostTask(String scriptsRoot) {
+        return
+                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
+                "                    <logTexts>\n" +
+                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
+                "                            <logText>.*</logText>\n" +
+                "                            <operator>OR</operator>\n" +
+                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
+                "                    </logTexts>\n" +
+                "                    <EscalateStatus>false</EscalateStatus>\n" +
+                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
+                "                    <script>#!/bin/bash&#13;" + scriptsRoot + "/otool/wrappers/analyzeAndReportJenkinsJob.sh&#13;</script>\n" +
+                "                </hudson.plugins.postbuildtask.TaskProperties>\n";
     }
 
     public static final String BUILD_POST_BUILD_TASK =

@@ -34,7 +34,7 @@
         </hudson.tasks.Shell>
     </builders>
     <publishers>
-        %{VM_POST_BUILD_TASK}
+        %{POST_BUILD_TASK_PLUGIN}
     </publishers>
     <buildWrappers/>
 </project>

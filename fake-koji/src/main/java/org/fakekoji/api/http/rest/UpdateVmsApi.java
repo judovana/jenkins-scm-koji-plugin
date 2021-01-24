@@ -77,7 +77,7 @@ public class UpdateVmsApi {
         return allUpdates;
     }
 
-    public String getXmls(List<JenkinsUpdateVmTemplateBuilder> allUpdates ) {
+    public String getXmls(List<JenkinsUpdateVmTemplateBuilder> allUpdates ) throws IOException {
         StringBuilder list = new StringBuilder();
         for (JenkinsUpdateVmTemplateBuilder update : allUpdates) {
             list.append(" #### " + update.getName() + " ####\n");
@@ -90,7 +90,7 @@ public class UpdateVmsApi {
         return String.join("\n", allUpdates);
     }
 
-    public String create(List<JenkinsUpdateVmTemplateBuilder> updateJobs){
+    public String create(List<JenkinsUpdateVmTemplateBuilder> updateJobs) throws IOException {
         StringBuilder sb = new StringBuilder();
         for(JenkinsUpdateVmTemplateBuilder  juvt: updateJobs) {
             JenkinsCliWrapper.ClientResponse result = JenkinsCliWrapper.getCli().createUpdateJob(juvt);
@@ -99,7 +99,7 @@ public class UpdateVmsApi {
         return sb.toString();
     }
 
-    public String update(List<JenkinsUpdateVmTemplateBuilder> updateJobs){
+    public String update(List<JenkinsUpdateVmTemplateBuilder> updateJobs) throws IOException {
         StringBuilder sb = new StringBuilder();
         for(JenkinsUpdateVmTemplateBuilder  juvt: updateJobs) {
             JenkinsCliWrapper.ClientResponse result = JenkinsCliWrapper.getCli().updateUpdateJob(juvt);

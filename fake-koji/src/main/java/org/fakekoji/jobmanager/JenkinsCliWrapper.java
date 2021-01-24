@@ -397,7 +397,7 @@ public class JenkinsCliWrapper {
         }
     }
 
-    public ClientResponse createUpdateJob(JenkinsUpdateVmTemplateBuilder j) {
+    public ClientResponse createUpdateJob(JenkinsUpdateVmTemplateBuilder j) throws IOException {
         return createJob(j.getName(), j.expandToStream());
     }
 
@@ -405,7 +405,7 @@ public class JenkinsCliWrapper {
         return deleteJobs(j.getName());
     }
 
-    public ClientResponse updateUpdateJob(JenkinsUpdateVmTemplateBuilder j) {
+    public ClientResponse updateUpdateJob(JenkinsUpdateVmTemplateBuilder j) throws IOException {
         return updateJob(j.getName(), j.expandToStream());
     }
 }
