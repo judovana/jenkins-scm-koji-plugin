@@ -1045,7 +1045,7 @@ public class DataGenerator {
                 "                    </logTexts>\n" +
                 "                    <EscalateStatus>false</EscalateStatus>\n" +
                 "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;" + scriptsRoot + "/otool/wrappers/analyzeAndReportJenkinsJob.sh&#13;</script>\n" +
+                "                    <script>#!/bin/bash&#13;bash " + scriptsRoot + "/otool/wrappers/analyzeAndReportJenkinsJob.sh&#13;</script>\n" +
                 "                </hudson.plugins.postbuildtask.TaskProperties>\n";
     }
 

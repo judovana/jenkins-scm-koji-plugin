@@ -7,5 +7,5 @@
             </logTexts>
             <EscalateStatus>false</EscalateStatus>
             <RunIfJobSuccessful>false</RunIfJobSuccessful>
-            <script>#!/bin/bash&#13;%{ANALYSE_SCRIPT}&#13;</script>
+            <script>#!/bin/bash&#13;bash %{ANALYSE_SCRIPT}&#13;</script>
         </hudson.plugins.postbuildtask.TaskProperties>
