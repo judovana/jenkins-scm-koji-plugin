@@ -450,7 +450,7 @@
           if (this.readyState == 4) {
             otoolLogger(this.responseText)
             if (this.status != 200) {
-              alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+              alert("failed to read " + lurl + "; details:" + this.status + ":" + this.responseText);
             }
           }
         }
@@ -472,10 +472,15 @@
     }
 
     function otoolsDo(lnvr, ljob, info) {
+      var isBuildJob = ljob.startsWith("build-")
       if (document.getElementById("otoolDo").checked == true){
-        return "true"
+        if (isBuildJob){
+          return "&do=force"
+        } else {
+          return "&do=true"
+        }
       } else {
-        return "false"
+        return "" //more info
       }
     }
 
@@ -516,13 +521,13 @@
     function waiveRe(lnvr, ljob, action) {
       putNewRecord(lnvr, ljob, 100)
       if (action == "re") {
-        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&do=" + otoolsDo()
+        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + otoolsDo(lnvr, ljob)
         if (ljob.startsWith("build-")){
-          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true&do=" + otoolsDo()
+          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
         }
         otoolCall(lurl, true)
       } else if (action == "now") {
-        otoolCall(reNow + "?whitelist=" + ljob + "&do=" + otoolsDo(), true)
+        otoolCall(reNow + "?whitelist=" + ljob + otoolsDo(lnvr, ljob), true)
       }
     }
 
@@ -534,7 +539,7 @@
     }
 
     function reloadJob(ljob) {
-      otoolCall("GET", reLoad + "?job=" + ljob + "&do=" + otoolsDo(), true);
+      otoolCall("GET", reLoad + "?job=" + ljob + otoolsDo(null, ljob), true);
     }
 
     function showAll(job) {
@@ -558,7 +563,6 @@
         "<button onClick='waiveIgnore(\"" + NVR + "\",\"" + job + "\")'       style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 40 }) + ";\" type='button'>waive - ignored</button>" +
         "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"done\")' style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and resheduled</button>" +
         "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re\")'   style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule</button>" +
-        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"now\")'  style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do buildnow</button>" +
         "<button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'    style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 101 }) + ";\" type='button'>waive - incorrect</button>" +
         "<button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'       style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100001 }) + ";\" type='button'>waive - failed</button>"
       s += "<br/><p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
