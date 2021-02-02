@@ -68,7 +68,7 @@
 
   </div>
   <script>
-    var otool="{OTOOL_BASE_URL}"      //eg: "http://hydra.brq.redhat.com:8888"
+    var otool = "{OTOOL_BASE_URL}"      //eg: "http://hydra.brq.redhat.com:8888"
     var historyUrl = "{HISTORY_URL}"  //eg: "http://hydra.brq.redhat.com:88/history/nvrs"
     var jenkins = "{JENKINS_BASE_URL}"//eg: "http://hydra.brq.redhat.com:8080"
     var jenkinsJob = jenkins + "/job"
@@ -80,6 +80,7 @@
     var misc = otool + "/misc"
     var processed = misc + "/re/test"
     var reTest = misc + "/re/test"
+    var reCheckout = misc + "/re/checkout"
     var reBuild = misc + "/re/build"
     var reNow = misc + "/re/now"
     var reLoad = misc + "/re/load"
@@ -383,7 +384,7 @@
               }
             }
           } else {
-            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+            alert("failed to read " + nvrs + "; details:" + this.status + ":" + this.responseText);
           }
         }
       };
@@ -401,7 +402,7 @@
       document.getElementById("nvr" + counter).style.backgroundColor = "blue";
       getAllData(nvr)
       window.document.title = nvr
-      document.getElementById("nvrTitle").innerHTML = "loading Name for VR of " + nvr 
+      document.getElementById("nvrTitle").innerHTML = "loading Name for VR of " + nvr
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4) {
@@ -413,16 +414,16 @@
               var line = lines[i]
               if (line.match(".*" + nvr + "$")) {
                 s = s + " | <a target='_blank' href='" + historyUrl + "/" + line + "'> " + line + " </a> | "
-                combo=combo+"<option>"+line+"</option>"
+                combo = combo + "<option>" + line + "</option>"
               }
             }
             combo = combo + "</select>"
-            document.getElementById("nvrTitle").innerHTML = 
-            "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh. See matrix in <a target='_blank' href=\"" + otool + "/misc/help" + "\">help</a>"+
-            "<br/>"+
-            "If NVR for selected VR is not strigt, select: "+combo
+            document.getElementById("nvrTitle").innerHTML =
+              "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh. See matrix in <a target='_blank' href=\"" + otool + "/misc/help" + "\">help</a>" +
+              "<br/>" +
+              "If NVR for selected VR is not strigt, select: " + combo
           } else {
-            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+            alert("failed to read " + processed + "; details:" + this.status + ":" + this.responseText);
           }
         }
       };
@@ -440,22 +441,23 @@
     }
 
     function otoolLogger(s) {
+      console.log("" + s + "");
       document.getElementById("fakeHeader").innerHTML = document.getElementById("fakeHeader").innerHTML + s + "</br>"
     }
 
     function otoolCall(lurl, async) {
       otoolLogger(lurl)
       var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function () {
-          if (this.readyState == 4) {
-            otoolLogger(this.responseText)
-            if (this.status != 200) {
-              alert("failed to read " + lurl + "; details:" + this.status + ":" + this.responseText);
-            }
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          otoolLogger(this.responseText)
+          if (this.status != 200) {
+            alert("failed to read " + lurl + "; details:" + this.status + ":" + this.responseText);
           }
         }
-       xhttp.open("GET", lurl, async);
-       xhttp.send();
+      }
+      xhttp.open("GET", lurl, async);
+      xhttp.send();
     }
 
     function sendToServer(lnvr, ljob, info) {
@@ -473,8 +475,8 @@
 
     function otoolsDo(lnvr, ljob, info) {
       var isBuildJob = ljob.startsWith("build-")
-      if (document.getElementById("otoolDo").checked == true){
-        if (isBuildJob){
+      if (document.getElementById("otoolDo").checked == true) {
+        if (isBuildJob) {
           return "&do=force"
         } else {
           return "&do=true"
@@ -520,9 +522,17 @@
 
     function waiveRe(lnvr, ljob, action) {
       putNewRecord(lnvr, ljob, 100)
-      if (action == "re") {
+      if (action == "re-now") {
         var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + otoolsDo(lnvr, ljob)
-        if (ljob.startsWith("build-")){
+        if (ljob.startsWith("build-")) {
+          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
+        }
+        otoolCall(lurl, false)
+        var lurl2 = reCheckout + "?job=" + ljob + otoolsDo(lnvr, "faked-non-build-we-need-just-true-not-forcw")
+        otoolCall(lurl2, true)
+      } else if (action == "re") {
+        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + otoolsDo(lnvr, ljob)
+        if (ljob.startsWith("build-")) {
           lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
         }
         otoolCall(lurl, true)
@@ -563,6 +573,7 @@
         "<button onClick='waiveIgnore(\"" + NVR + "\",\"" + job + "\")'       style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 40 }) + ";\" type='button'>waive - ignored</button>" +
         "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"done\")' style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and resheduled</button>" +
         "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re\")'   style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule</button>" +
+        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re-now\")'   style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule+checkout</button>" +
         "<button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'    style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 101 }) + ";\" type='button'>waive - incorrect</button>" +
         "<button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'       style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100001 }) + ";\" type='button'>waive - failed</button>"
       s += "<br/><p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
@@ -612,7 +623,7 @@
         <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
         <input type="checkbox" id="dbReadOnly" name="dbReadOnly" value="dbReadOnly" checked="true">
         <label for="dbReadOnly">db is read only</label>
-        <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo" >
+        <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo">
         <label for="otoolDo">otool's do=?</label><br>
       </div>
       <div style="float:left">
