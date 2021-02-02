@@ -42,7 +42,7 @@
       margin: auto;
       padding: 20px;
       border: 1px solid #888;
-      width: 80%;
+      width: 90%;
     }
 
     /* The Close Button */
@@ -573,14 +573,15 @@
         result = results[i];
         s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
       }
-      s = s +
-        "<button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")'           style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 0 }) + ";\" type='button'>waive - ok</button>" +
-        "<button onClick='waiveIgnore(\"" + NVR + "\",\"" + job + "\")'       style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 40 }) + ";\" type='button'>waive - ignored</button>" +
-        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"done\")' style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and resheduled</button>" +
-        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re\")'   style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule</button>" +
-        "<button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re-now\")'   style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule+checkout</button>" +
-        "<button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'    style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 101 }) + ";\" type='button'>waive - incorrect</button>" +
-        "<button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'       style=\" border-style: solid; border-color:" + buildToColor({ build: -1, score: 100001 }) + ";\" type='button'>waive - failed</button>"
+      s = s + "<div  style=\"border-style: solid; border-color: black; text-align: center; \">" + 
+        "  <button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")'              style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 0 }) + ";\"   type='button'>waive - ok</button>" +
+        "  <button onClick='waiveIgnore(\"" + NVR + "\",\"" + job + "\")'          style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 40 }) + ";\"  type='button'>waive - ignored</button>" +
+        "  <button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"done\")'    style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and resheduled</button>" +
+        "  <button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re\")'      style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule</button>" +
+        "  <button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re-now\")'  style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule+checkout</button>" +
+        "  <button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'       style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 101 }) + ";\" type='button'>waive - incorrect</button>" +
+        "  <button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'          style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100001 }) + ";\" type='button'>waive - failed</button>"
+      s = s + "</div>"
       s += "<br/><p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
       s += "<pre style='overflow: scroll'>(CACHED=true sh) TckScripts/jenkins/summary_report/customSearch.sh --jobfilter " + job + " --nvrfilter " + NVR + " --explicitcomparsion-url " + historyUrl + "/latest  --time [daysToPast] ; #no params for help; to save result to db use: --cacheUrl \"" + dburl + "/set?nvr={NVR}&job={JOB}&buildId={BUILDID}&score={SCORE}\" ;  to rerun if necessary: --redeployUrl " + misc + "/re/{TASK}?whitelist={JOB}&nvr={NVR}&do=true --redeployCount 2 </pre>";
       document.getElementById("modalContent").innerHTML = s;
