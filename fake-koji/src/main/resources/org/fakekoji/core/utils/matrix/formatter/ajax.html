@@ -92,10 +92,10 @@
     var data = new Map()
     var NVR = ""
     var lastJobDetailsClicked = null
-    var LEFT="LEFT"
-    var RIGHT="RIGHT"
-    var UP="UP"
-    var DOWN="DOWN"
+    var LEFT = "LEFT"
+    var RIGHT = "RIGHT"
+    var UP = "UP"
+    var DOWN = "DOWN"
 
     function resortAllData() {
       var sortString = document.getElementById("sort").value;
@@ -496,6 +496,14 @@
       }
     }
 
+    function hideOnWaive() {
+      if (document.getElementById("hideOnWaive").checked == true) {
+        return true
+      } else {
+        return false
+      }
+    }
+
     function getNextManualBuildId(lnvr, ljob) {
       if (data.has(ljob)) {
         var values = data.get(ljob)
@@ -519,7 +527,12 @@
       } else {
         applyAllData();
       }
-      modal.style.display = "none";
+      if (hideOnWaive()) {
+        modal.style.display = "none";
+      } else {
+        modal.style.display = "none";
+        showAll(lastJobDetailsClicked)
+      }
     }
 
     function waiveOk(lnvr, ljob) {
@@ -563,7 +576,7 @@
     }
 
     function showAll(job) {
-      lastJobDetailsClicked=job
+      lastJobDetailsClicked = job
       if (NVR == undefined || NVR == null || NVR == "") {
         alert("No nvr selected")
         return
@@ -571,6 +584,11 @@
       var results = data.get(job);
       if (results == null) {
         results = [];
+      }
+      if (hideOnWaive()) {
+        modal.style.opacity = 1
+      } else {
+        modal.style.opacity = 1 //not good idea, maybe to add +- buttons?
       }
       var s = "<h5>" + NVR + "</h5>";
       s += "<h3><button class=\"reloadButton\" type=\"button\" onClick=\"reloadJob('" + job + "')\" style=\"display:inline\">reload-job</button>"
@@ -630,10 +648,84 @@
     }
 
     function moveDetails(direction) {
-      if (modal.style.display == "block"){
-        console.log("moving " + lastJobDetailsClicked + " "+direction);
-        modal.style.display = "none";
-        showAll(lastJobDetailsClicked);
+      if (modal.style.display == "block" && lastJobDetailsClicked != null) {
+        console.log("moving " + lastJobDetailsClicked + " " + direction);
+        //find coords of our cell
+        var tables = document.getElementsByClassName("resultsTable");
+        var table = tables[0];
+        var x = -1;
+        var y = -1;
+        for (var i = 0, row; row = table.rows[i]; i++) {
+          for (var j = 0, col; col = row.cells[j]; j++) {
+            result = getIded(col, true)
+            if (result != null) {
+              if (result.getAttribute("id") == lastJobDetailsClicked) {
+                y = i;
+                x = j;
+              }
+            }
+          }
+        }
+        //in direction, found nearest cell with content
+        var futureId = null
+        if (x >= 0 && y >= 0) {
+          if (direction == LEFT) {
+            var row = table.rows[y]
+            for (var j = x - 1, col; col = row.cells[j]; j--) {
+              if (j < 1 ) {
+                break;
+              }
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else if (direction == RIGHT) {
+            var row = table.rows[y]
+            for (var j = x + 1, col; col = row.cells[j]; j++) {
+              if (j >= row.cells.length - 2) {
+                break;
+              }
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else if (direction == UP) {
+            for (var i = y - 1, row; row = table.rows[i]; i--) {
+              if (i < 1) {
+                break;
+              }
+              col = row.cells[x]
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else if (direction == DOWN) {
+            for (var i = y + 1, row; row = table.rows[i]; i++) {
+              if (i >= table.rows.length - 2) {
+                break;
+              }
+              col = row.cells[x]
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else {
+            console.log("Unknown direction: " + direction)
+          }
+          if (futureId != null) {
+            modal.style.display = "none";
+            lastJobDetailsClicked = futureId
+            showAll(lastJobDetailsClicked);
+          }
+        }
       }
     }
 
@@ -665,6 +757,8 @@
         <label for="dbReadOnly">db is read only</label>
         <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo">
         <label for="otoolDo">otool's do=?</label><br>
+        <input type="checkbox" id="hideOnWaive" name="hideOnWaive" value="hideOnWaive" checked="true">
+        <label for="hideOnWaive">hide on waive</label><br>
       </div>
       <div style="float:left">
         <select id="sort" name="sort" onChange="applyAllData()">
