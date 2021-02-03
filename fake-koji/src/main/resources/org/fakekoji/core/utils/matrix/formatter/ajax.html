@@ -91,6 +91,11 @@
     var reLoad = misc + "/re/load"
     var data = new Map()
     var NVR = ""
+    var lastJobDetailsClicked = null
+    var LEFT="LEFT"
+    var RIGHT="RIGHT"
+    var UP="UP"
+    var DOWN="DOWN"
 
     function resortAllData() {
       var sortString = document.getElementById("sort").value;
@@ -558,6 +563,7 @@
     }
 
     function showAll(job) {
+      lastJobDetailsClicked=job
       if (NVR == undefined || NVR == null || NVR == "") {
         alert("No nvr selected")
         return
@@ -608,6 +614,26 @@
         case 27: // esc
           modal.style.display = "none";
           break;
+        case 37: // left
+          moveDetails(LEFT)
+          break;
+        case 38: // up
+          moveDetails(UP)
+          break;
+        case 39: // right
+          moveDetails(RIGHT)
+          break;
+        case 40: // down
+          moveDetails(DOWN)
+          break;
+      }
+    }
+
+    function moveDetails(direction) {
+      if (modal.style.display == "block"){
+        console.log("moving " + lastJobDetailsClicked + " "+direction);
+        modal.style.display = "none";
+        showAll(lastJobDetailsClicked);
       }
     }
 
