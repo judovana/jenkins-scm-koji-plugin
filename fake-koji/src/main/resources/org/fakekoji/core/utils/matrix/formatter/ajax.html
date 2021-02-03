@@ -573,7 +573,7 @@
         result = results[i];
         s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
       }
-      s = s + "<div  style=\"border-style: solid; border-color: black; text-align: center; \">" + 
+      s = s + "<div  style=\"border-style: solid; border-color: black; text-align: center; \">" +
         "  <button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")'              style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 0 }) + ";\"   type='button'>waive - ok</button>" +
         "  <button onClick='waiveIgnore(\"" + NVR + "\",\"" + job + "\")'          style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 40 }) + ";\"  type='button'>waive - ignored</button>" +
         "  <button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"done\")'    style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and resheduled</button>" +
@@ -601,6 +601,14 @@
     // When the user clicks on <span> (x), close the modal
     span.onclick = function () {
       modal.style.display = "none";
+    }
+    // when ecs is pressed
+    document.onkeydown = function (e) {
+      switch (e.which) {
+        case 27: // esc
+          modal.style.display = "none";
+          break;
+      }
     }
 
     function showHideButtons(clazz) {
