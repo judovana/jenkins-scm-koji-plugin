@@ -62,7 +62,7 @@
   </style>
 </head>
 
-<body onload="loadNvrs()">
+<body onload="loadNvrs(true)">
   <!-- The Modal -->
   <div id="myModal" class="modal">
     <!-- Modal content -->
@@ -365,8 +365,20 @@
       }
     }
 
-    function loadNvrs() {
+    function loadNvrs(firstCall) {
       setLegend()
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      if (firstCall) {
+        const automanFilterParam = urlParams.get('automanFilter')
+        const sortParam = urlParams.get('sort')
+        if (automanFilterParam != null && automanFilterParam != "") {
+          document.getElementById("automan").selectedIndex = automanFilterParam
+        }
+        if (sortParam != null && sortParam != "") {
+          document.getElementById("sort").selectedIndex = sortParam
+        }
+      }
       var xhttp = new XMLHttpRequest();
       xhttp.onreadystatechange = function () {
         if (this.readyState == 4) {
@@ -672,7 +684,7 @@
           if (direction == LEFT) {
             var row = table.rows[y]
             for (var j = x - 1, col; col = row.cells[j]; j--) {
-              if (j < 1 ) {
+              if (j < 1) {
                 break;
               }
               result = getIded(col, true)
@@ -774,7 +786,7 @@
       </div>
       <div style="float:left">
         <input type="text" id="nvrFilter" value=".*" /><br />
-        <button type="button" onClick="loadNvrs()">reload list</button><br />
+        <button type="button" onClick="loadNvrs(false)">reload list</button><br />
         <button type="button" onClick="getAllData(NVR)">refresh data</button>
       </div>
       <div id="nvrs" style="height:100px; overflow:scroll">
