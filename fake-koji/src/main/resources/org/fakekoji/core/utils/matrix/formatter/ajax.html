@@ -370,6 +370,7 @@
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
       if (firstCall) {
+        const readOnlyParam = urlParams.get('readOnly')
         const automanFilterParam = urlParams.get('automanFilter')
         const sortParam = urlParams.get('sort')
         if (automanFilterParam != null && automanFilterParam != "") {
@@ -377,6 +378,29 @@
         }
         if (sortParam != null && sortParam != "") {
           document.getElementById("sort").selectedIndex = sortParam
+        }
+        if (readOnlyParam != null && sortParam != "") {
+          var readOnlys = document.getElementById("readOnlys")
+          var dbReadOnly = document.getElementById("dbReadOnly")
+          var otoolDo = document.getElementById("otoolDo")
+          if (readOnlyParam == "true") {
+            readOnlys.style.visibility="hidden"
+            dbReadOnly.checked=true
+            otoolDo.checked=false
+          } else if (readOnlyParam == "visible") {
+            readOnlys.style.visibility="block"
+            dbReadOnly.checked=true
+            otoolDo.checked=false
+          } else if (readOnlyParam == "false") {
+            readOnlys.style.visibility="block"
+            dbReadOnly.checked=false
+            otoolDo.checked=true
+          } else if (readOnlyParam == "hidden") {
+            readOnlys.style.visibility="hidden"
+            dbReadOnly.checked=false
+            otoolDo.checked=true
+          }
+          
         }
       }
       var xhttp = new XMLHttpRequest();
@@ -757,20 +781,26 @@
     style="position: fixed; z-index: 5000; top:0px; background-color: white; border-style:  solid; border-width: 1px;">
     <div>
       <div style="float:left">
-        <select id="automan" name="automan" onChange="getAllData(NVR)">
-          <option>mix automated and manual</option>
-          <option>put manual to bottom</option>
-          <option>put automatic to bottom</option>
-          <option>remove manual</option>
-          <option>remove automatic</option>
-        </select><br />
-        <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
-        <input type="checkbox" id="dbReadOnly" name="dbReadOnly" value="dbReadOnly" checked="true">
-        <label for="dbReadOnly">db is read only</label>
-        <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo">
-        <label for="otoolDo">otool's do=?</label><br>
-        <input type="checkbox" id="hideOnWaive" name="hideOnWaive" value="hideOnWaive" checked="true">
-        <label for="hideOnWaive">hide on waive</label><br>
+        <div>
+          <select id="automan" name="automan" onChange="getAllData(NVR)">
+            <option>mix automated and manual</option>
+            <option>put manual to bottom</option>
+            <option>put automatic to bottom</option>
+            <option>remove manual</option>
+            <option>remove automatic</option>
+          </select><br/>
+          <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
+        </div>
+        <div id="readOnlys">
+          <input type="checkbox" id="dbReadOnly" name="dbReadOnly" value="dbReadOnly">
+          <label for="dbReadOnly">db is read only</label>
+          <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo" checked="true">
+          <label for="otoolDo">otool's do=?</label><br>
+        </div>
+        <div>
+          <input type="checkbox" id="hideOnWaive" name="hideOnWaive" value="hideOnWaive" checked="true">
+          <label for="hideOnWaive">hide on waive</label><br>
+        </div>
       </div>
       <div style="float:left">
         <select id="sort" name="sort" onChange="applyAllData()">

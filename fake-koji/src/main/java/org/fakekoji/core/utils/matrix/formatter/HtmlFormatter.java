@@ -56,7 +56,7 @@ public class HtmlFormatter implements Formatter {
     }
 
     String expandIfNeeded(int counter, String fullTitle, String rowTitle, String columnTitle) {
-        if (!expandNames || projects.length > 1) {
+        if (!expandNames) {
             return "" + counter;
         }
         String[] rowParts = rowTitle.split("\\?");
