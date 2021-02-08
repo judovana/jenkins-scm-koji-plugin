@@ -52,6 +52,7 @@ public class BumperAPI implements EndpointGroup {
 
     public static final String BUMP_FROM = "from";
     public static final String BUMP_TO = "to";
+    public static final String FILTER = "filter";
     public static final String EXECUTE = "do";
     public static final String JOB_COLLISION_ACTION = "jobCollisionAction";
     public static final String PLATFORM_BUMP_VARIANT = "taskType";
@@ -72,7 +73,7 @@ public class BumperAPI implements EndpointGroup {
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
         return BumpPlatformArgs.parse(settings.getConfigManager(), paramsMap).flatMap(args ->
-                new PlatformBumper(settings, args.from, args.to, args.variant).modifyJobs(args.projects, args)
+                new PlatformBumper(settings, args.from, args.to, args.variant, args.filter).modifyJobs(args.projects, args)
         );
     }
 
@@ -119,7 +120,7 @@ public class BumperAPI implements EndpointGroup {
         final String projectsHelp = PROJECTS + "[projectsId1,projectId2,..projectIdN]";
         return "\n"
                 + prefix + PRODUCTS + "?" + BUMP_FROM + "=[jdkVersionId,packageName]&" + BUMP_TO + "=[jdkVersionId,packageName]&" + projectsHelp + "\n"
-                + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&filter=[todo]\n"
+                + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&"+FILTER+"=[regex]\n"
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
                 + "  for all bumps you can specify " + jobCollisionActionsHelp + ", default=stop and " + EXECUTE + "=[true|false], default=false" + "\n"

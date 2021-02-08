@@ -6,22 +6,28 @@ import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.Platform;
 
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 public class PlatformBumper extends JobModifier {
 
     private final Platform from;
     private final Platform to;
     private final PlatformBumpVariant variant;
+    private final Optional<Pattern> filter;
 
     public PlatformBumper(
             final AccessibleSettings settings,
             final Platform from,
             final Platform to,
-            final PlatformBumpVariant variant
+            final PlatformBumpVariant variant,
+            final Optional<Pattern> filter
     ) {
         super(settings);
         this.from = from;
         this.to = to;
         this.variant = variant;
+        this.filter = filter;
     }
 
     @Override
@@ -29,7 +35,7 @@ public class PlatformBumper extends JobModifier {
         switch (variant) {
             case BOTH:
             case BUILD_ONLY:
-                return isFromPlatform(job.getPlatform());
+                return isFromPlatform(job.getPlatform()) && matches(job.getName());
             case TEST_ONLY:
             default:
                 return false;
@@ -40,13 +46,21 @@ public class PlatformBumper extends JobModifier {
     boolean shouldPass(TestJob job) {
         switch (variant) {
             case BOTH:
-                return isFromPlatform(job.getPlatform()) || isFromBuildPlatform(job.getBuildPlatform());
+                return (isFromPlatform(job.getPlatform()) || isFromBuildPlatform(job.getBuildPlatform())) && matches(job.getName());
             case BUILD_ONLY:
-                return isFromBuildPlatform(job.getBuildPlatform());
+                return isFromBuildPlatform(job.getBuildPlatform()) && matches(job.getName());
             case TEST_ONLY:
-                return isFromPlatform(job.getPlatform());
+                return isFromPlatform(job.getPlatform()) && matches(job.getName());
             default:
                 return false;
+        }
+    }
+
+    private boolean matches(String name) {
+        if (filter == null || !filter.isPresent()){
+            return true;
+        } else {
+            return  filter.get().matcher(name).matches();
         }
     }
 

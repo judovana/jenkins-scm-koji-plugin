@@ -14,20 +14,25 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import static org.fakekoji.api.http.rest.BumperAPI.BUMP_FROM;
 import static org.fakekoji.api.http.rest.BumperAPI.BUMP_TO;
+import static org.fakekoji.api.http.rest.BumperAPI.FILTER;
 import static org.fakekoji.api.http.rest.BumperAPI.PLATFORM_BUMP_VARIANT;
 import static org.fakekoji.api.http.rest.BumperAPI.PROJECTS;
 import static org.fakekoji.api.http.rest.RestUtils.extractMandatoryParamValue;
+import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 
 public class BumpPlatformArgs extends BumpArgs {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     final public Platform from;
     final public Platform to;
+    final public Optional<Pattern> filter;
     final public PlatformBumpVariant variant;
     final public List<Project> projects;
 
@@ -35,12 +40,14 @@ public class BumpPlatformArgs extends BumpArgs {
             BumpArgs bumpArgs,
             final Platform from,
             final Platform to,
+            final Optional<Pattern> filter,
             final PlatformBumpVariant variant,
             final List<Project> projects
     ) {
         super(bumpArgs);
         this.from = from;
         this.to = to;
+        this.filter = filter;
         this.variant = variant;
         this.projects = projects;
     }
@@ -70,20 +77,29 @@ public class BumpPlatformArgs extends BumpArgs {
             }
             final PlatformBumpVariant variant = variantParseResult.getValue();
             final List<String> projectsList = Arrays.asList(params.projects.split(","));
+            final Optional<Pattern> filter =  Optional.ofNullable(compileFilter(params.filter));
             return BumpArgs.parseBumpArgs(paramsMap).flatMap(bumpArgs ->
                     configManger.getProjects(projectsList).flatMap(projects ->
-                            Result.ok(new BumpPlatformArgs(bumpArgs, from, to, variant, projects))
+                            Result.ok(new BumpPlatformArgs(bumpArgs, from, to, filter, variant, projects))
                     )
             );
         });
     }
 
+    private static Pattern compileFilter(Optional<String> filter) {
+        if  (filter == null || !filter.isPresent()){
+            return null;
+        }
+        return Pattern.compile(filter.get());
+    }
+
     static Result<ExtractedParams, OToolError> extractParams(final Map<String, List<String>> params) {
+        final Optional<String> filter = extractParamValue(params, FILTER);
         return extractMandatoryParamValue(params, BUMP_FROM).flatMap(from ->
                 extractMandatoryParamValue(params, BUMP_TO).flatMap(to ->
                         extractMandatoryParamValue(params, PROJECTS).flatMap(projects ->
                                 extractMandatoryParamValue(params, PLATFORM_BUMP_VARIANT).flatMap(variant ->
-                                        Result.ok(new ExtractedParams(from, to, variant, projects))
+                                        Result.ok(new ExtractedParams(from, to, variant, projects, filter))
                                 )
                         )
                 )
@@ -95,12 +111,14 @@ public class BumpPlatformArgs extends BumpArgs {
         private final String to;
         private final String variant;
         private final String projects;
+        private final Optional<String> filter;
 
-        ExtractedParams(final String from, final String to, final String variant, final String projects) {
+        ExtractedParams(final String from, final String to, final String variant, final String projects, Optional<String> filter) {
             this.from = from;
             this.to = to;
             this.variant = variant;
             this.projects = projects;
+            this.filter = filter;
         }
     }
 }

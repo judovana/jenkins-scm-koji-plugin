@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class PlatformBumperTest {
@@ -40,7 +41,8 @@ public class PlatformBumperTest {
                 settings,
                 DataGenerator.getF29x64(),
                 DataGenerator.getRHEL7x64(),
-                PlatformBumpVariant.BOTH
+                PlatformBumpVariant.BOTH,
+                Optional.empty()
         );
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
@@ -54,7 +56,7 @@ public class PlatformBumperTest {
         final Platform from = DataGenerator.getRHEL7x64();
         final Platform to = DataGenerator.getF29x64();
         final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH, Optional.empty());
 
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
@@ -68,7 +70,7 @@ public class PlatformBumperTest {
         final Platform from = DataGenerator.getRHEL7x64();
         final Platform to = DataGenerator.getF29x64();
         final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BUILD_ONLY);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BUILD_ONLY, Optional.empty());
 
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
@@ -107,7 +109,7 @@ public class PlatformBumperTest {
         final Platform from = DataGenerator.getRHEL7x64();
         final Platform to = DataGenerator.getF29x64();
         final Set<Job> jobs = DataGenerator.getJDKProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.TEST_ONLY);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.TEST_ONLY, Optional.empty());
 
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
@@ -137,7 +139,8 @@ public class PlatformBumperTest {
                 settings,
                 DataGenerator.getRHEL7Zx64(),
                 DataGenerator.getRHEL7x64(),
-                PlatformBumpVariant.BOTH
+                PlatformBumpVariant.BOTH,
+                Optional.empty()
         );
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
@@ -151,7 +154,7 @@ public class PlatformBumperTest {
         final Platform from = DataGenerator.getRHEL7x64();
         final Platform to = DataGenerator.getF29x64();
         final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH, Optional.empty());
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
@@ -160,17 +163,46 @@ public class PlatformBumperTest {
     }
 
     @Test
+    public void bumpJDKTestProjectJobsWithAllMatchingFiltered() {
+        final Platform from = DataGenerator.getRHEL7x64();
+        final Platform to = DataGenerator.getF29x64();
+        final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH, Optional.of(Pattern.compile("tck.*")));
+        final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
+                .map(bumper.getTransformFunction())
+                .collect(Collectors.toSet());
+        Assert.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assert.assertFalse(tuples.stream().allMatch(isOk(from, to)));
+    }
+
+
+    @Test
     public void bumpJDKTestProjectJobsWithSomeMatching() {
         final Platform from = DataGenerator.getF29x64();
         final Platform to = DataGenerator.getRHEL7x64();
         final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
-        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH);
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH, Optional.empty());
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
         Assert.assertEquals(2, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
         Assert.assertTrue(tuples.stream().allMatch(isOk(from, to)));
     }
+
+    @Test
+    public void bumpJDKTestProjectJobsWithSomeMatchingFitlered() {
+        final Platform from = DataGenerator.getF29x64();
+        final Platform to = DataGenerator.getRHEL7x64();
+        final Set<Job> jobs = DataGenerator.getJDKTestProjectJobs();
+        final PlatformBumper bumper = new PlatformBumper(settings, from, to, PlatformBumpVariant.BOTH, Optional.of(Pattern.compile(".*wayland.*")));
+        final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
+                .map(bumper.getTransformFunction())
+                .collect(Collectors.toSet());
+        Assert.assertEquals(1, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assert.assertFalse(tuples.stream().allMatch(isOk(from, to)));
+    }
+
+
 
     private Predicate<Tuple<Job, Optional<Job>>> isOk(final Platform from, final Platform to) {
         return tuple -> {
