@@ -45,10 +45,11 @@ import static org.fakekoji.DataGenerator.TEST_PROJECT_NAME;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.DESTROY_SCRIPT_NAME;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JDK_VERSION_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JENKINS;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JOB_NAME_SHORTENED;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.FAKEKOJI_XML_RPC_API_TEMPLATE;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.KOJI_XML_RPC_API_TEMPLATE;
-import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.POST_BUILD_TASK_PLUGIN;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.POST_BUILD_TASK_PLUGIN_ANALYSE;
+import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JenkinsTemplate.POST_BUILD_TASK_PLUGIN_DESTROYVM;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.LOCAL;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.NO_CHANGE_RETURN_VAR;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.OJDK_VAR;
@@ -257,24 +258,10 @@ public class JenkinsJobTemplateBuilderTest {
 
         final Platform vmPlatform = DataGenerator.getF29x64();
 
-        final String expectedTemplate = "<hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
-                "    <tasks>\n" +
-                "        <hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "            <logTexts>\n" +
-                "                <hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                    <logText>.*</logText>\n" +
-                "                    <operator>OR</operator>\n" +
-                "                </hudson.plugins.postbuildtask.LogProperties>\n" +
-                "            </logTexts>\n" +
-                "            <EscalateStatus>true</EscalateStatus>\n" +
-                "            <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "            <script>#!/bin/bash&#13; bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName() + "&#13;</script>\n" +
-                "        </hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "    </tasks>\n" +
-                "</hudson.plugins.postbuildtask.PostbuildTask>\n";
+        final String expectedTemplate = DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), true, true, VAGRANT, null, vmPlatform.getVmName()).replaceAll("(?m)^        ", "");
 
-        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(VM_POST_BUILD_TASK_TEMPLATE), dummyNamesProvider)
-                .buildVmPostBuildTaskTemplate(VAGRANT, vmPlatform.getVmName(), scriptsRoot, new ArrayList<>()).prettyPrint();
+        final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(POST_BUILD_TASK_PLUGIN), dummyNamesProvider)
+                .buildPostBuildTaskTemplate(VAGRANT, vmPlatform.getVmName(), scriptsRoot, new ArrayList<>(), true, true).prettyPrint();
 
         Assert.assertEquals(expectedTemplate, actualTemplate);
     }
@@ -357,23 +344,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "        </hudson.tasks.Shell>\n" +
                 "    </builders>\n" +
                 "    <publishers>\n" +
-                "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
-                "            <tasks>\n" +
-                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "                    <logTexts>\n" +
-                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                            <logText>.*</logText>\n" +
-                "                            <operator>OR</operator>\n" +
-                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                    </logTexts>\n" +
-                "                    <EscalateStatus>true</EscalateStatus>\n" +
-                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=" + buildJob.getShortName() + " bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + vmPlatform.getVmName()
-                + "&#13;</script>\n" +
-                "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "            </tasks>\n" +
-                "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
                 DataGenerator.BUILD_POST_BUILD_TASK +
+                DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), true, true, VAGRANT, buildJob.getShortName(), vmPlatform.getVmName()) +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
                 "</project>\n";
@@ -461,6 +433,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    </builders>\n" +
                 "    <publishers>\n" +
                 DataGenerator.BUILD_POST_BUILD_TASK +
+                DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), false, true, null, null, null) +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
                 "</project>\n";
@@ -560,6 +533,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "    </builders>\n" +
                 "    <publishers>\n" +
                 DataGenerator.TEST_POST_BUILD_TASK +
+                DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), false, true, null, null, null) +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
                 "</project>\n";
@@ -658,22 +632,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "        </hudson.tasks.Shell>\n" +
                 "    </builders>\n" +
                 "    <publishers>\n" +
-                "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
-                "            <tasks>\n" +
-                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "                    <logTexts>\n" +
-                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                            <logText>.*</logText>\n" +
-                "                            <operator>OR</operator>\n" +
-                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                    </logTexts>\n" +
-                "                    <EscalateStatus>true</EscalateStatus>\n" +
-                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + " bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
-                + "&#13;</script>\n" + "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "            </tasks>\n" +
-                "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
                 DataGenerator.TEST_POST_BUILD_TASK +
+                DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), true, true, VAGRANT, testJob.getShortName(), testPlatform.getVmName()) +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
                 "</project>\n";
@@ -769,29 +729,15 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_jfr=" + testVariants.get(jfr).getId() + XML_NEW_LINE +
                 "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
                 "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
-                "export OTOOL_ystream=true"  + XML_NEW_LINE +
+                "export OTOOL_ystream=true" + XML_NEW_LINE +
                 "export OTOOL_zstream=false" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
                 "    </builders>\n" +
                 "    <publishers>\n" +
-                "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
-                "            <tasks>\n" +
-                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "                    <logTexts>\n" +
-                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                            <logText>.*</logText>\n" +
-                "                            <operator>OR</operator>\n" +
-                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                    </logTexts>\n" +
-                "                    <EscalateStatus>true</EscalateStatus>\n" +
-                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_" + JOB_NAME_SHORTENED + '=' + testJob.getShortName() + " bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
-                + "&#13;</script>\n" + "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "            </tasks>\n" +
-                "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
                 DataGenerator.TEST_POST_BUILD_TASK +
+                DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), true, true, VAGRANT, testJob.getShortName(), testPlatform.getVmName()) +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
                 "</project>\n";
@@ -897,23 +843,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "        </hudson.plugins.build__timeout.BuildStepWithTimeout>\n" +
                 "    </builders>\n" +
                 "    <publishers>\n" +
-                "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
-                "            <tasks>\n" +
-                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "                    <logTexts>\n" +
-                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                            <logText>.*</logText>\n" +
-                "                            <operator>OR</operator>\n" +
-                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                    </logTexts>\n" +
-                "                    <EscalateStatus>true</EscalateStatus>\n" +
-                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + " bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
-                + "&#13;</script>\n" +
-                "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "            </tasks>\n" +
-                "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
                 DataGenerator.TEST_POST_BUILD_TASK +
+                DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), true, true, VAGRANT, testJob.getShortName(), testPlatform.getVmName()) +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
                 "</project>\n";
@@ -1012,23 +943,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "        </hudson.tasks.Shell>\n" +
                 "    </builders>\n" +
                 "    <publishers>\n" +
-                "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
-                "            <tasks>\n" +
-                "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "                    <logTexts>\n" +
-                "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                            <logText>.*</logText>\n" +
-                "                            <operator>OR</operator>\n" +
-                "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
-                "                    </logTexts>\n" +
-                "                    <EscalateStatus>true</EscalateStatus>\n" +
-                "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + " bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
-                + "&#13;</script>\n" +
-                "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
-                "            </tasks>\n" +
-                "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
                 DataGenerator.TEST_POST_BUILD_TASK +
+                DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(), true, true, VAGRANT, testJob.getShortName(), testPlatform.getVmName()) +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
                 "</project>\n";
@@ -1086,12 +1002,22 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.plugins.textfinder.TextFinderPublisher plugin=\"text-finder@1.10.3\">\n" +
                 "            <primaryTextFinder>\n" +
                 "                <regexp>### CHANGES DETECTED ###</regexp>\n" +
+                "                <buildId/>\n" +
                 "                <succeedIfFound>false</succeedIfFound>\n" +
                 "                <unstableIfFound>true</unstableIfFound>\n" +
                 "                <notBuiltIfFound>false</notBuiltIfFound>\n" +
                 "                <alsoCheckConsoleOutput>true</alsoCheckConsoleOutput>\n" +
                 "            </primaryTextFinder>\n" +
-                "            <additionalTextFinders/>\n" +
+                "            <additionalTextFinders>\n" +
+                "                <hudson.plugins.textfinder.TextFinderModel>\n" +
+                "                    <regexp>nothing_ever</regexp>\n" +
+                "                    <buildId>^future VR: </buildId>\n" +
+                "                    <succeedIfFound>false</succeedIfFound>\n" +
+                "                    <unstableIfFound>false</unstableIfFound>\n" +
+                "                    <notBuiltIfFound>false</notBuiltIfFound>\n" +
+                "                    <alsoCheckConsoleOutput>true</alsoCheckConsoleOutput>\n" +
+                "                </hudson.plugins.textfinder.TextFinderModel>\n" +
+                "            </additionalTextFinders>\n" +
                 "        </hudson.plugins.textfinder.TextFinderPublisher>\n" +
                 "    </publishers>\n" +
                 "    <buildWrappers/>\n" +
@@ -1227,23 +1153,8 @@ public class JenkinsJobTemplateBuilderTest {
                         "        </hudson.tasks.Shell>\n" +
                         "    </builders>\n" +
                         "    <publishers>\n" +
-                        "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
-                        "            <tasks>\n" +
-                        "                <hudson.plugins.postbuildtask.TaskProperties>\n" +
-                        "                    <logTexts>\n" +
-                        "                        <hudson.plugins.postbuildtask.LogProperties>\n" +
-                        "                            <logText>.*</logText>\n" +
-                        "                            <operator>OR</operator>\n" +
-                        "                        </hudson.plugins.postbuildtask.LogProperties>\n" +
-                        "                    </logTexts>\n" +
-                        "                    <EscalateStatus>true</EscalateStatus>\n" +
-                        "                    <RunIfJobSuccessful>false</RunIfJobSuccessful>\n" +
-                        "                    <script>#!/bin/bash&#13;OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + " bash " + Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, VAGRANT, DESTROY_SCRIPT_NAME) + " " + testPlatform.getVmName()
-                        + "&#13;</script>\n" +
-                        "                </hudson.plugins.postbuildtask.TaskProperties>\n" +
-                        "            </tasks>\n" +
-                        "        </hudson.plugins.postbuildtask.PostbuildTask>\n" +
                         DataGenerator.TEST_POST_BUILD_TASK +
+                        DataGenerator.getPostTasks(scriptsRoot.getAbsolutePath(),true, true, VAGRANT, testJob.getShortName(),  testPlatform.getVmName())+
                         "    </publishers>\n" +
                         "    <buildWrappers/>\n" +
                         "</project>\n";

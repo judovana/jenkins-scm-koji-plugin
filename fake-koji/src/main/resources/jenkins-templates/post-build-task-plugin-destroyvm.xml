@@ -1,5 +1,3 @@
-<hudson.plugins.postbuildtask.PostbuildTask plugin="postbuild-task@1.8">
-    <tasks>
         <hudson.plugins.postbuildtask.TaskProperties>
             <logTexts>
                 <hudson.plugins.postbuildtask.LogProperties>
@@ -11,5 +9,3 @@
             <RunIfJobSuccessful>false</RunIfJobSuccessful>
             <script>#!/bin/bash&#13;%{SHUTDOWN_VARIABLES} bash %{DESTROY_SCRIPT} %{PLATFORM_NAME}&#13;</script>
         </hudson.plugins.postbuildtask.TaskProperties>
-    </tasks>
-</hudson.plugins.postbuildtask.PostbuildTask>

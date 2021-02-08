@@ -7,6 +7,7 @@ import org.fakekoji.core.utils.matrix.cell.UpperCornerCell;
 import org.fakekoji.core.utils.matrix.cell.UrlCell;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class HtmlSpanningFormatter extends HtmlFormatter {
@@ -47,9 +48,9 @@ public class HtmlSpanningFormatter extends HtmlFormatter {
         if (size == span) {
             return stringBuilder.toString();
         }
-        stringBuilder.append(cellGroup.isEmpty() ? renderTableCell("0") : renderTableCell());
+        stringBuilder.append(cellGroup.isEmpty() ? renderTableCell("0") : renderTableCell(""));
         for (int i = 1; i < span - size; i++) {
-            stringBuilder.append(renderTableCell());
+            stringBuilder.append(renderTableCell(""));
         }
         return stringBuilder.toString();
     }

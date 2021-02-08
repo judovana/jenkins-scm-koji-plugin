@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 
 public class MatrixGeneratorTest {
 
+    private static final String BLANK = "target='_blank'";
+
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -94,9 +96,9 @@ public class MatrixGeneratorTest {
                 + summary + "  Col1  Col2  Col3  " + summary + "  \n";
         Assert.assertEquals(plainTextOutput, expectedPlainTextOutput);
 
-        final String anchor = "<a href=\"" + url + "\">";
-        final String expectedHtmlOutput = "<table>\n"
-                + "<tr><td><a href=\"#\">" + projectName + "</a></td><td>Col1</td><td>Col2</td><td>Col3</td><td><a href=\"#\">" + projectName + "</a></td></tr>\n"
+        final String anchor = "<a "+BLANK+" href=\"" + url + "\">";
+        final String expectedHtmlOutput = "<table class=\"resultsTable\" >\n"
+                + "<tr><td><a  href=\"#\">" + projectName + "</a></td><td>Col1</td><td>Col2</td><td>Col3</td><td><a  href=\"#\">" + projectName + "</a></td></tr>\n"
                 + "<tr><td>Row1</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
                 + "<tr><td>Row2</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row2</td></tr>\n"
                 + "<tr>" + summaryTd + "<td>Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
@@ -108,10 +110,10 @@ public class MatrixGeneratorTest {
         Assert.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
 
         final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
-        final String expectedSpanningHtmlOutput = "<table>\n"
-                + "<tr><td><a href=\"#\">uName</a></td><td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td><td><a href=\"#\">uName</a></td></tr>\n"
+        final String expectedSpanningHtmlOutput = "<table class=\"resultsTable\" >\n"
+                + "<tr><td><a  href=\"#\">uName</a></td><td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td><td><a  href=\"#\">uName</a></td></tr>\n"
                 + "<tr><td>Row1</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
-                + "<tr><td>Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td /><td>Row2</td></tr>\n"
+                + "<tr><td>Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td></td><td>Row2</td></tr>\n"
                 + "<tr>" + summaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + summaryTd + "</tr>\n"
                 + "</table>";
         Assert.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
@@ -155,11 +157,11 @@ public class MatrixGeneratorTest {
         final String summary = count + "/" + total;
         final String summaryTd = "<td>" + summary + "</td>";
 
-        final String anchor = "<a href=\"" + url + "\">";
+        final String anchor = "<a " + BLANK + " href=\"" + url + "\">";
         final String expectedProjectsCell = "<td>" + projectList.stream()
-                .map(proj -> "<a href=\"#\">" + proj + "</a>")
+                .map(proj -> "<a  href=\"#\">" + proj + "</a>")
                 .collect(Collectors.joining(" ")) + "</td>";
-        final String expectedHtmlOutput = "<table>\n"
+        final String expectedHtmlOutput = "<table class=\"resultsTable\" >\n"
                 + "<tr>" + expectedProjectsCell + "<td>Col1</td><td>Col2</td><td>Col3</td>" + expectedProjectsCell + "</tr>\n"
                 + "<tr><td>Row1</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a>" + anchor + "[1]</a></td><td>Row1</td></tr>\n"
                 + "<tr><td>Row2</td><td>" + anchor + "[1]</a>" + anchor + "[2]</a>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>Row2</td></tr>\n"
@@ -173,12 +175,12 @@ public class MatrixGeneratorTest {
 
         final String spanningSummaryTd = "<td colspan=\"2\">" + summary + "</td>";
         final String expectedProjectsCells = projectList.stream()
-                .map(proj -> "<td><a href=\"#\">" + proj + "</a></td>")
+                .map(proj -> "<td><a  href=\"#\">" + proj + "</a></td>")
                 .collect(Collectors.joining());
-        final String expectedSpanningHtmlOutput = "<table>\n"
+        final String expectedSpanningHtmlOutput = "<table class=\"resultsTable\" >\n"
                 + "<tr>" + expectedProjectsCells + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + expectedProjectsCells + "</tr>\n"
                 + "<tr><td colspan=\"2\">Row1</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[3]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td colspan=\"2\">Row1</td></tr>\n"
-                + "<tr><td colspan=\"2\">Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td /><td colspan=\"2\">Row2</td></tr>\n"
+                + "<tr><td colspan=\"2\">Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td></td><td colspan=\"2\">Row2</td></tr>\n"
                 + "<tr>" + spanningSummaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + spanningSummaryTd + "</tr>\n"
                 + "</table>";
         final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
@@ -237,8 +239,8 @@ public class MatrixGeneratorTest {
     public void showPerProjectsMatrix() throws ManagementException, StorageException, IOException {
         final ConfigManager configManager = settings.getConfigManager();
         final ConfigCache configCache = new ConfigCache(configManager);
-        final List<String> jdkProjectNames = configCache.getJdkProjects().stream().map(JDKProject::getId).collect(Collectors.toList());
-        final List<String> jdkTestProjectNames = configCache.getJdkTestProjects().stream().map(JDKTestProject::getId).collect(Collectors.toList());
+        final List<String> jdkProjectNames = configCache.getJdkProjects().stream().map(JDKProject::getId).sorted().collect(Collectors.toList());
+        final List<String> jdkTestProjectNames = configCache.getJdkTestProjects().stream().map(JDKTestProject::getId).sorted().collect(Collectors.toList());
         final List<List<String>> jdkProjectLists = Arrays.asList(jdkProjectNames, jdkTestProjectNames);
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         final String expectedContent = readResource("per_projects_matrices");

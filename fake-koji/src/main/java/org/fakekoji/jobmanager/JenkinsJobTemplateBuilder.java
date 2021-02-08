@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -57,7 +58,9 @@ public class JenkinsJobTemplateBuilder {
     static final String BUILD_VARIANTS = "%{BUILD_VARIANTS}";
     static final String PLATFORM = "%{PLATFORM}";
     static final String IS_BUILT = "%{IS_BUILT}";
-    static final String VM_POST_BUILD_TASK = "%{VM_POST_BUILD_TASK}";
+    static final String POST_BUILD_TASK_PLUGIN = "%{POST_BUILD_TASK_PLUGIN}";
+    static final String POST_BUILD_TASK_PLUGIN_ANALYSE = "%{POST_BUILD_TASK_PLUGIN_ANALYSE}";
+    static final String POST_BUILD_TASK_PLUGIN_DESTROYVM = "%{POST_BUILD_TASK_PLUGIN_DESTROYVM}";
     static final String POST_BUILD_TASKS = "%{POST_BUILD_TASKS}";
     static final String NODES = "%{NODES}";
     static final String BUILDER_SCRIPT = "%{BUILDER}";
@@ -70,6 +73,7 @@ public class JenkinsJobTemplateBuilder {
     static final String PULL_SCRIPT = "%{PULL_SCRIPT}";
     static final String MASTER_LABEL = "%{MASTER_LABEL}";
     static final String DESTROY_SCRIPT = "%{DESTROY_SCRIPT}";
+    static final String ANALYSE_SCRIPT = "%{ANALYSE_SCRIPT}";
     static final String SCM_POLL_SCHEDULE = "%{SCM_POLL_SCHEDULE}";
     static final String TRIGGER = "%{TRIGGER}";
 
@@ -80,11 +84,12 @@ public class JenkinsJobTemplateBuilder {
     static final String VAGRANT = "vagrant";
     static final String PULL_SCRIPT_NAME = "pull.sh";
     static final String RUN_SCRIPT_NAME = "run.sh";
-    static final String DESTROY_SCRIPT_NAME = "destroy.sh";
-    static final String BASH = "bash";
-    static final String SHEBANG = "#!/bin/sh";
+    public static final String DESTROY_SCRIPT_NAME = "destroy.sh";
+    public static final String ANALYSE_SCRIPT_NAME = "otool/wrappers/analyzeAndReportJenkinsJob.sh";
+    public static final String BASH = "bash";
+    public static final String SHEBANG = "#!/bin/sh";
 
-    static final String JENKINS = "jenkins";
+    public static final String JENKINS = "jenkins";
 
     public static final String OTOOL_BASH_VAR_PREFIX = "OTOOL_";
     static final String VM_NAME_OR_LOCAL_VAR = "VM_NAME_OR_LOCAL";
@@ -99,10 +104,10 @@ public class JenkinsJobTemplateBuilder {
     public static final String NO_CHANGE_RETURN_VAR = "NO_CHANGE_RETURN";
     static final String JOB_NAME = "JOB_NAME";
     //this name is used to creation of VM name, which vagrant enforces to 60 chars
-    static final String JOB_NAME_SHORTENED = "JOB_NAME_SHORTENED";
-    static final String OS_VAR = "OS";
-    static final String OS_NAME_VAR = "OS_NAME";
-    static final String OS_VERSION_VAR = "OS_VERSION";
+    public static final String JOB_NAME_SHORTENED = "JOB_NAME_SHORTENED";
+    public static final String OS_VAR = "OS";
+    public static final String OS_NAME_VAR = "OS_NAME";
+    public static final String OS_VERSION_VAR = "OS_VERSION";
 
     public static final String SOURCES= "src";
     public static final String NOARCH= "noarch";
@@ -313,24 +318,54 @@ public class JenkinsJobTemplateBuilder {
                             false
                     )
             );
-            return buildVmPostBuildTaskTemplate(provider, platform.getVmName(), scriptsRoot, shutdownVars);
+            template =  buildPostBuildTaskTemplate(template, provider, platform.getVmName(), scriptsRoot, shutdownVars, true, true);
+            return this;
         }
-        template = template.replace(VM_POST_BUILD_TASK, "");
+        template = buildPostBuildTaskTemplate(template, provider, platform.getVmName(), scriptsRoot, new ArrayList<>(), false, true);
         return this;
     }
 
-    JenkinsJobTemplateBuilder buildVmPostBuildTaskTemplate(
-            String platformProvider,
-            String platformVMName,
-            File scriptsRoot,
-            List<OToolVariable> shutdownVariables
+    JenkinsJobTemplateBuilder buildPostBuildTaskTemplate(
+            final String platformProvider,
+            final String platformVMName,
+            final File scriptsRoot,
+            final List<OToolVariable> shutdownVariables,
+            final boolean shutdownVm,
+            final boolean analyseResults
     ) throws IOException {
-        template = template
-                .replace(VM_POST_BUILD_TASK, loadTemplate(JenkinsTemplate.VM_POST_BUILD_TASK_TEMPLATE))
-                .replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, platformProvider, DESTROY_SCRIPT_NAME).toString())
-                .replace(SHUTDOWN_VARIABLES, getExportedVariablesString(shutdownVariables, ""))
-                .replace(PLATFORM_NAME, platformVMName);
+        template = buildPostBuildTaskTemplate(template, platformProvider, platformVMName,scriptsRoot, shutdownVariables, shutdownVm, analyseResults);
         return this;
+    }
+   static String  buildPostBuildTaskTemplate(
+            final String input,
+            final String platformProvider,
+            final String platformVMName,
+            final File scriptsRoot,
+            final List<OToolVariable> shutdownVariables,
+            final boolean shutdownVm,
+            final boolean analyseResults
+    ) throws IOException {
+       String i = input;
+       String postbuild = "";
+       if (shutdownVm || analyseResults) {
+           postbuild = loadTemplate(JenkinsTemplate.POST_BUILD_TASK_PLUGIN);
+       }
+       i = i.replace(POST_BUILD_TASK_PLUGIN, postbuild);
+       String shutdownTemplate = "";
+       if (shutdownVm){
+           shutdownTemplate = loadTemplate(JenkinsTemplate.POST_BUILD_TASK_PLUGIN_DESTROYVM);
+       }
+       i = i.replace(POST_BUILD_TASK_PLUGIN_DESTROYVM, shutdownTemplate);
+       String analyseTemplate = "";
+       if (analyseResults){
+           analyseTemplate = loadTemplate(JenkinsTemplate.POST_BUILD_TASK_PLUGIN_ANALYSE);
+       }
+       i = i.replace(POST_BUILD_TASK_PLUGIN_ANALYSE, analyseTemplate);
+       i = i.replace(DESTROY_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), JENKINS, platformProvider, DESTROY_SCRIPT_NAME).toString())
+               .replace(ANALYSE_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), ANALYSE_SCRIPT_NAME).toString())
+               .replace(SHUTDOWN_VARIABLES, getExportedVariablesString(shutdownVariables, ""))
+               .replace(PLATFORM_NAME, platformVMName);
+       return i;
     }
 
     public JenkinsJobTemplateBuilder buildPostBuildTasks(String postBuildTasksTemplate) {
@@ -342,7 +377,7 @@ public class JenkinsJobTemplateBuilder {
         return getExportedVariablesString(exportedVariables, XML_NEW_LINE);
     }
 
-    private String getExportedVariablesString(final List<OToolVariable> exportedVariables, String terminal) {
+    private static  String getExportedVariablesString(final List<OToolVariable> exportedVariables, String terminal) {
         return exportedVariables
                 .stream()
                 .map(var -> var.getVariableString(terminal))
@@ -402,7 +437,9 @@ public class JenkinsJobTemplateBuilder {
         TIMEOUTSHELL_SCRIPT_TEMPLATE("timeoutedshell-script"),
         TASK_JOB_TEMPLATE("task-job"),
         TRIGGER("trigger"),
-        VM_POST_BUILD_TASK_TEMPLATE("vm-post-build-task"),
+        POST_BUILD_TASK_PLUGIN("post-build-task-plugin"),
+        POST_BUILD_TASK_PLUGIN_ANALYSE("post-build-task-plugin-analyse"),
+        POST_BUILD_TASK_PLUGIN_DESTROYVM("post-build-task-plugin-destroyvm"),
         VIEW("view"),
         VIEW_DEFAULT_COLUMNS("view-columns"),
         UPDATE_VM_JOB("update-vm-job");

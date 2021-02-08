@@ -1,0 +1,6 @@
+<hudson.plugins.postbuildtask.PostbuildTask plugin="postbuild-task@1.8">
+    <tasks>
+        %{POST_BUILD_TASK_PLUGIN_ANALYSE}
+        %{POST_BUILD_TASK_PLUGIN_DESTROYVM}
+    </tasks>
+</hudson.plugins.postbuildtask.PostbuildTask>

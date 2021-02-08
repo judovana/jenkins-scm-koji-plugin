@@ -9,6 +9,7 @@ import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
 import org.fakekoji.core.utils.matrix.SummaryReportRunner;
 import org.fakekoji.core.utils.matrix.TestEqualityFilter;
+import org.fakekoji.core.utils.matrix.formatter.HtmlAjaxFormatter;
 import org.fakekoji.core.utils.matrix.formatter.HtmlFormatter;
 import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFillingFormatter;
 import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFormatter;
@@ -118,12 +119,13 @@ public class OToolService {
                 + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
-                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=htmlspan/html/plain/fill (fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=baseajax/htmlspan/html/plain/fill (baseajax have optional nvr; fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n"
                 + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n"
                 + "  names=true will chage numbers to somehow more describing texts in html formatters. With huge squezing can go wil. Is sometimes buggy with platforms\n"
-                + "  explicitcomparsion=url by default null, unused, to load remote file with listed lates released NVRs to comapre with\n";
+                + "  explicitcomparsion=url by default null, unused, to load remote file with listed lates released NVRs to comapre with\n"
+                + "  baseajax have few runtime switches: automanFilter=index sort=index readOnly=[true(visible)/false(hidden)]. Defaults are 0,0,false\n";
     }
 
     public OToolService(AccessibleSettings settings) {
@@ -299,7 +301,7 @@ public class OToolService {
                     String trex = context.queryParam(MATRIX_TREGEX);
                     String brex = context.queryParam(MATRIX_BREGEX);
                     String format = context.queryParam(MATRIX_FORMAT);
-                    boolean names = notNullBoolean(context, "names", false);
+                    Boolean namesParam = nullableBooleanObject(context, "names", null);
                     boolean tos = notNullBoolean(context, "tos", true);
                     boolean tarch = notNullBoolean(context, "tarch", true);
                     boolean tprovider = notNullBoolean(context, "tprovider", false);
@@ -317,12 +319,24 @@ public class OToolService {
                     TestEqualityFilter tf = new TestEqualityFilter(tos, tarch, tprovider, tsuite, tvars);
                     BuildEqualityFilter bf = new BuildEqualityFilter(bos, barch, bprovider, bproject, bjdk, bvars);
                     String[] projects = project == null ? new String[0] : project.split(",");
+                    boolean names;
+                    if (namesParam == null) {
+                        if (projects.length == 1) {
+                            names = true;
+                        } else {
+                            names = false;
+                        }
+                    } else {
+                        names = namesParam;
+                    }
                     MatrixGenerator m = new MatrixGenerator(settings, trex, brex, tf, bf, projects);
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));
                     }
-                    if ("htmlspan".equals(format)) {
+                    if ("baseajax".equals(format)) {
+                        context.header("Content-Type", "text/html; charset=UTF-8").status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlAjaxFormatter(names, projects, settings)));
+                    } else if ("htmlspan".equals(format)) {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlSpanningFormatter(names, projects)));
                     } else if ("html".equals(format)) {
                         context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlFormatter(names, projects)));
@@ -471,6 +485,14 @@ public class OToolService {
     }
 
     public static boolean notNullBoolean(Context context, String key, boolean defoult) {
+        if (context.queryParam(key) == null) {
+            return defoult;
+        } else {
+            return Boolean.valueOf(context.queryParam(key));
+        }
+    }
+
+    public static Boolean nullableBooleanObject(Context context, String key, Boolean defoult) {
         if (context.queryParam(key) == null) {
             return defoult;
         } else {

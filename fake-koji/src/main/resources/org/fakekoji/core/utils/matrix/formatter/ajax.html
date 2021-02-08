@@ -1,0 +1,843 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    :target {
+      border-color: #3399FF;
+      border-style: dashed;
+    }
+
+    /* The Modal (background) */
+    .modal {
+      display: none;
+      /* Hidden by default */
+      position: fixed;
+      /* Stay in place */
+      z-index: 1000000;
+      /* Sit on top */
+      padding-top: 200px;
+      /* Location of the box */
+      left: 0;
+      top: 0;
+      width: 100%;
+      /* Full width */
+      height: 100%;
+      /* Full height */
+      overflow: auto;
+      /* Enable scroll if needed */
+      background-color: rgb(0, 0, 0);
+      /* Fallback color */
+      background-color: rgba(0, 0, 0, 0.4);
+      /* Black w/ opacity */
+    }
+
+    /* Modal Content */
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 90%;
+    }
+
+    /* The Close Button */
+    .close {
+      color: #aaaaaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body onload="loadNvrs(true)">
+  <!-- The Modal -->
+  <div id="myModal" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p id="modalContent">Some text in the Modal..</p>
+    </div>
+
+  </div>
+  <script>
+    var otool = "{OTOOL_BASE_URL}"      //eg: "http://hydra.brq.redhat.com:8888"
+    var historyUrl = "{HISTORY_URL}"  //eg: "http://hydra.brq.redhat.com:88/history/nvrs"
+    var jenkins = "{JENKINS_BASE_URL}"//eg: "http://hydra.brq.redhat.com:8080"
+    var jenkinsJob = jenkins + "/job"
+    var dburl = otool + "/misc/resultsDb"
+    var get = dburl + "/get?"
+    var set = dburl + "/set?"
+    var nvrs = dburl + "/nvrs"
+    var builds = otool + "/get/builds"
+    var misc = otool + "/misc"
+    var processed = misc + "/re/test"
+    var reTest = misc + "/re/test"
+    var reCheckout = misc + "/re/checkout"
+    var reBuild = misc + "/re/build"
+    var reNow = misc + "/re/now"
+    var reLoad = misc + "/re/load"
+    var data = new Map()
+    var NVR = ""
+    var lastJobDetailsClicked = null
+    var LEFT = "LEFT"
+    var RIGHT = "RIGHT"
+    var UP = "UP"
+    var DOWN = "DOWN"
+
+    function resortAllData() {
+      var sortString = document.getElementById("sort").value;
+      var automan = document.getElementById("automan").value;
+      data.forEach((value, key, map) => {
+        sortSplitHide(value, sortString, automan);
+      })
+    }
+
+    function sortSplitHide(value, sortString, automan) {
+      if (sortString == "best") {
+        value.sort(function (a, b) { return a.score - b.score });
+      }
+      if (sortString == "worst") {
+        value.sort(function (a, b) { return b.score - a.score });
+      }
+      if (sortString == "oldest") {
+        value.sort(function (a, b) { return a.time - b.time });
+      }
+      if (sortString == "newest") {
+        value.sort(function (a, b) { return b.time - a.time });
+      }
+      if (sortString == "buildid") {
+        value.sort(function (a, b) { return a.build - b.build });
+      }
+      if (sortString == "revbuildid") {
+        value.sort(function (a, b) { return b.build - a.build });
+      }
+      if (automan == "mix automated and manual") {
+        return
+      }
+      var autos = Array();
+      var mans = Array();
+      var together;
+      for (var i = 0; i < value.length; i++) {
+        var v = (value[i]);
+        if (v.build < 0) {
+          mans.push(v)
+        } else {
+          autos.push(v)
+        }
+      }
+      if (automan == "put manual to bottom") {
+        together = autos.concat(mans)
+      } else if (automan == "put automatic to bottom") {
+        together = mans.concat(autos)
+      } else if (automan == "remove manual") {
+        together = autos
+      } else if (automan == "remove automatic") {
+        together = mans
+      }
+      value.length = together.length
+      for (var i = 0; i < value.length; i++) {
+        value[i] = together[i]
+      }
+    }
+
+    function applyAllData() {
+      resortAllData()
+      var tables = document.getElementsByClassName("resultsTable");
+      var table = tables[0];
+      for (var i = 0, row; row = table.rows[i]; i++) {
+        for (var j = 0, col; col = row.cells[j]; j++) {
+          if (i == 0 || j == 0 || i == table.rows.length - 1 || j == table.rows[i].cells.length - 1) {
+            col.style.backgroundColor = "lightblue";
+          } else {
+            if (col.innerHTML == null || col.innerHTML.trim() == "" || col.innerHTML == "0") {
+              col.style.backgroundColor = "#EEEEEE";
+            } else {
+              result = getIded(col, true)
+              if (result != null) {
+                result.style.backgroundColor = jobToColor(result.getAttribute("id"))
+              } else {
+                col.style.backgroundColor = "lightgray"
+              }
+            }
+          }
+        }
+      }
+    }
+
+    function jobToColor(job) {
+      if (data.has(job)) {
+        return buildInfosToColor(data.get(job))
+      } else {
+        return "gray"
+      }
+    }
+
+    function buildInfosToColor(infos) {
+      if (infos.length > 0) {
+        return buildToColor(infos[0]);
+      } else {
+        return "gray"
+      }
+    }
+
+    function buildToColor(info) {
+      if (info.build >= 0) {
+        // warning, thid method is duplicated code from: HydraDailyReport.getSeriousness*
+        // is necessary to kept in sync
+        if (info.score < 0) {
+          return "gray"
+        } else if (info.score == 0) {
+          return "green"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "lightgreen"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "yellow"
+        } else {
+          return "red"
+        }
+      } else {
+        if (info.score == 0) {
+          return "darkgreen"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "purple"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "magenta"
+        } else if (info.score > 100 && info.score <= 100000) {
+          return "black"
+        } else {
+          return "orange"
+        }
+      }
+    }
+
+    function buildToText(info) {
+      if (info.build >= 0) {
+        // warning, thid method is duplicated code from: HydraDailyReport.getSeriousness*
+        // is necessary to kept in sync
+        if (info.score < 0) {
+          return "no data (automated)"
+        } else if (info.score == 0) {
+          return "ok (automated)"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "ok (automated)"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "needs inspection (automated)"
+        } else {
+          return "failed/regressed (automated)"
+        }
+      } else {
+        if (info.score == 0) {
+          return "pass (manual)"
+        } else if (info.score > 0 && info.score <= 40) {
+          return "ignored (manual)"
+        } else if (info.score > 40 && info.score <= 100) {
+          return "rescheduled (manual)"
+        } else if (info.score > 100 && info.score <= 100000) {
+          return "incorrect run (manual)"
+        } else {
+          return "failed (manual)"
+        }
+      }
+    }
+
+    function getIded(element, deep) {
+      if (element.getAttribute("id")) {
+        return element;
+      } else if (deep == true) {
+        var children = element.children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          result = getIded(child, deep)
+          if (result != null) {
+            return result
+          }
+        }
+      }
+      return null;
+    }
+
+    function loadNvrJob(nvr, job, element) {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            document.getElementById(element).innerHTML = this.responseText;
+          } else {
+            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+          }
+        };
+      }
+      if (job == null) {
+        xhttp.open("GET", get + "nvr=" + nvr, true);
+      } else {
+        xhttp.open("GET", get + "nvr=" + nvr + "&job=" + job, true);
+      }
+      xhttp.send();
+    }
+
+    function getAllData(nvr) {
+      getAllData(nvr, true)
+    }
+
+    function getAllData(nvr, async) {
+      if (nvr == undefined || nvr == null || nvr == "") {
+        alert("No nvr selected")
+        return
+      }
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            var lines = this.responseText.split("\n")
+            data = new Map();
+            NVR = nvr;
+            for (i = 0; i < lines.length; i++) {
+              var parts = lines[i].split(":");
+              if (parts.length != 4) {
+                console.log("bad db record: " + lines[i]);
+              } else {
+                lnvr = parts[0]
+                ljob = parts[1]
+                socresAndStamps = parts[3].split(/\s+/)
+                for (x = 0; x < socresAndStamps.length; x++) {
+                  buildScoreAndTime = [parts[2], socresAndStamps[x].split(";")[0], socresAndStamps[x].split(";")[1]]
+                  addData(ljob, buildScoreAndTime)
+                }
+              }
+            }
+            applyAllData();
+          } else {
+            alert("failed to read " + url + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      };
+      xhttp.open("GET", get + "nvr=" + nvr, async);
+      xhttp.send();
+    }
+
+    function infoFromArray(value) {
+      return { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]) }
+    }
+
+    function addData(key, value) {
+      var info = infoFromArray(value)
+      return addInfo(key, info)
+    }
+
+    function addInfo(key, info) {
+      if (data.has(key)) {
+        data.get(key).push(info)
+      } else {
+        data.set(key, [info])
+      }
+      return info;
+    }
+
+    function setLegend() {
+      var legends = document.getElementsByClassName("legend");
+      for (i = 0; i < legends.length; i++) {
+        legend = legends[i];
+        var typeChar = legend.id.substring(0, 1);
+        var type = 0;
+        if (typeChar == "m") {
+          type = -1
+        }
+        if (typeChar == "a") {
+          type = 1
+        }
+        var weight = legend.id.substring(1);
+        var info = { build: type, score: weight, time: 0 }
+        legend.style.backgroundColor = buildToColor(info);
+        legend.innerHTML = buildToText(info)
+      }
+    }
+
+    function loadNvrs(firstCall) {
+      setLegend()
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      if (firstCall) {
+        const readOnlyParam = urlParams.get('readOnly')
+        const automanFilterParam = urlParams.get('automanFilter')
+        const sortParam = urlParams.get('sort')
+        if (automanFilterParam != null && automanFilterParam != "") {
+          document.getElementById("automan").selectedIndex = automanFilterParam
+        }
+        if (sortParam != null && sortParam != "") {
+          document.getElementById("sort").selectedIndex = sortParam
+        }
+        if (readOnlyParam != null && sortParam != "") {
+          var readOnlys = document.getElementById("readOnlys")
+          var dbReadOnly = document.getElementById("dbReadOnly")
+          var otoolDo = document.getElementById("otoolDo")
+          if (readOnlyParam == "true") {
+            readOnlys.style.visibility="hidden"
+            dbReadOnly.checked=true
+            otoolDo.checked=false
+          } else if (readOnlyParam == "visible") {
+            readOnlys.style.visibility="block"
+            dbReadOnly.checked=true
+            otoolDo.checked=false
+          } else if (readOnlyParam == "false") {
+            readOnlys.style.visibility="block"
+            dbReadOnly.checked=false
+            otoolDo.checked=true
+          } else if (readOnlyParam == "hidden") {
+            readOnlys.style.visibility="hidden"
+            dbReadOnly.checked=false
+            otoolDo.checked=true
+          }
+          
+        }
+      }
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            var allNvrs = this.responseText.split("\n");
+            var r = "";
+            var y = -1;
+            for (x = 0; x < allNvrs.length; x++) {
+              var cnvr = allNvrs[x]
+              if (cnvr.match(document.getElementById("nvrFilter").value)) {
+                y++
+                r += "<div id=nvr" + y + " onClick='selectNvr(" + y + "," + allNvrs.length + ",\"" + cnvr + "\")'  >" + cnvr + "</div>";
+              }
+            }
+            document.getElementById("nvrs").innerHTML = r;
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            const preSelect = urlParams.get('nvr')
+            if (preSelect != null && preSelect != "") {
+              for (i = 0; i < allNvrs.length; i++) {
+                if (allNvrs[i] == preSelect) {
+                  selectNvr(i, allNvrs.length, allNvrs[i]);
+                  break
+                }
+              }
+            }
+          } else {
+            alert("failed to read " + nvrs + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      };
+      xhttp.open("GET", nvrs, true);
+      xhttp.send();
+    }
+
+    function selectNvr(counter, count, nvr) {
+      for (i = 0; i < count; i++) {
+        if (document.getElementById("nvr" + i) == null) {
+          break;
+        }
+        document.getElementById("nvr" + i).style.backgroundColor = "yellow";
+      }
+      document.getElementById("nvr" + counter).style.backgroundColor = "blue";
+      getAllData(nvr)
+      window.document.title = nvr
+      document.getElementById("nvrTitle").innerHTML = "loading Name for VR of " + nvr
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          if (this.status == 200) {
+            var lines = this.responseText.split("\n")
+            var s = ""
+            var combo = "<select id=\"multiNVR\" name=\"multiNVR\" >"
+            for (i = 0; i < lines.length; i++) {
+              var line = lines[i]
+              if (line.match(".*" + nvr + "$")) {
+                s = s + " | <a target='_blank' href='" + historyUrl + "/" + line + "'> " + line + " </a> | "
+                combo = combo + "<option>" + line + "</option>"
+              }
+            }
+            combo = combo + "</select>"
+            document.getElementById("nvrTitle").innerHTML =
+              "cache populated as " + s + " via TckScripts/jenkins/summary_report/nvrWrapper.sh. See matrix in <a target='_blank' href=\"" + otool + "/misc/help" + "\">help</a>" +
+              "<br/>" +
+              "If NVR for selected VR is not strigt, select: " + combo
+          } else {
+            alert("failed to read " + processed + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      };
+      xhttp.open("GET", processed, true);
+      xhttp.send();
+    }
+
+    function getSelectedNvr() {
+      var lele = document.getElementById("multiNVR")
+      if (lele == undefined || lele == null) {
+        alert("Operation requiring NameVersionRelease was used, but Name is not yet deducted")
+        return "unknown"
+      }
+      return lele.value
+    }
+
+    function otoolLogger(s) {
+      console.log("" + s + "");
+      document.getElementById("fakeHeader").innerHTML = document.getElementById("fakeHeader").innerHTML + s + "</br>"
+    }
+
+    function otoolCall(lurl, async) {
+      otoolLogger(lurl)
+      var xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          otoolLogger(this.responseText)
+          if (this.status != 200) {
+            alert("failed to read " + lurl + "; details:" + this.status + ":" + this.responseText);
+          }
+        }
+      }
+      xhttp.open("GET", lurl, async);
+      xhttp.send();
+    }
+
+    function sendToServer(lnvr, ljob, info) {
+      var lurl = set + "nvr=" + lnvr + "&job=" + ljob + "&buildId=" + info.build + "&score=" + info.score
+      dbReadOnly = document.getElementById("dbReadOnly").checked
+      if (dbReadOnly) {
+        addInfo(ljob, info);
+        otoolLogger("db read only, not executing: " + lurl)
+        return false
+      } else {
+        otoolCall(lurl, false);
+        return true
+      }
+    }
+
+    function otoolsDo(lnvr, ljob, info) {
+      var isBuildJob = ljob.startsWith("build-")
+      if (document.getElementById("otoolDo").checked == true) {
+        if (isBuildJob) {
+          return "&do=force"
+        } else {
+          return "&do=true"
+        }
+      } else {
+        return "" //more info
+      }
+    }
+
+    function hideOnWaive() {
+      if (document.getElementById("hideOnWaive").checked == true) {
+        return true
+      } else {
+        return false
+      }
+    }
+
+    function getNextManualBuildId(lnvr, ljob) {
+      if (data.has(ljob)) {
+        var values = data.get(ljob)
+        var min = 0;
+        for (i = 0; i < values.length; i++) {
+          if (values[i].build < min) {
+            min = values[i].build
+          }
+        }
+        return min - 1;
+      } else {
+        return -1;
+      }
+    }
+
+    function putNewRecord(lnvr, ljob, lscore) {
+      var info = infoFromArray([getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime()])
+      var sent = sendToServer(lnvr, ljob, info);
+      if (sent) {
+        getAllData(NVR, false)
+      } else {
+        applyAllData();
+      }
+      if (hideOnWaive()) {
+        modal.style.display = "none";
+      } else {
+        modal.style.display = "none";
+        showAll(lastJobDetailsClicked)
+      }
+    }
+
+    function waiveOk(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 0)
+    }
+
+    function waiveIgnore(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 40)
+    }
+
+    function waiveRe(lnvr, ljob, action) {
+      putNewRecord(lnvr, ljob, 100)
+      if (action == "re-now") {
+        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + otoolsDo(lnvr, ljob)
+        if (ljob.startsWith("build-")) {
+          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
+        }
+        otoolCall(lurl, false)
+        var lurl2 = reCheckout + "?job=" + ljob + otoolsDo(lnvr, "faked-non-build-we-need-just-true-not-forcw")
+        otoolCall(lurl2, true)
+      } else if (action == "re") {
+        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + otoolsDo(lnvr, ljob)
+        if (ljob.startsWith("build-")) {
+          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
+        }
+        otoolCall(lurl, true)
+      } else if (action == "now") {
+        otoolCall(reNow + "?whitelist=" + ljob + otoolsDo(lnvr, ljob), true)
+      }
+    }
+
+    function waiveIncorrect(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 100000)
+    }
+    function waiveFailed(lnvr, ljob) {
+      putNewRecord(lnvr, ljob, 10000000)
+    }
+
+    function reloadJob(ljob) {
+      otoolCall("GET", reLoad + "?job=" + ljob + otoolsDo(null, ljob), true);
+    }
+
+    function showAll(job) {
+      lastJobDetailsClicked = job
+      if (NVR == undefined || NVR == null || NVR == "") {
+        alert("No nvr selected")
+        return
+      }
+      var results = data.get(job);
+      if (results == null) {
+        results = [];
+      }
+      if (hideOnWaive()) {
+        modal.style.opacity = 1
+      } else {
+        modal.style.opacity = 1 //not good idea, maybe to add +- buttons?
+      }
+      var s = "<h5>" + NVR + "</h5>";
+      s += "<h3><button class=\"reloadButton\" type=\"button\" onClick=\"reloadJob('" + job + "')\" style=\"display:inline\">reload-job</button>"
+      s += "<a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
+      for (var i = 0; i < results.length; i++) {
+        result = results[i];
+        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
+      }
+      s = s + "<div  style=\"border-style: solid; border-color: black; text-align: center; \">" +
+        "  <button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")'              style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 0 }) + ";\"   type='button'>waive - ok</button>" +
+        "  <button onClick='waiveIgnore(\"" + NVR + "\",\"" + job + "\")'          style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 40 }) + ";\"  type='button'>waive - ignored</button>" +
+        "  <button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"done\")'    style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and resheduled</button>" +
+        "  <button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re\")'      style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule</button>" +
+        "  <button onClick='waiveRe(\"" + NVR + "\",\"" + job + "\", \"re-now\")'  style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100 }) + ";\" type='button'>waive and do reschedule+checkout</button>" +
+        "  <button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'       style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 101 }) + ";\" type='button'>waive - incorrect</button>" +
+        "  <button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'          style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100001 }) + ";\" type='button'>waive - failed</button>"
+      s = s + "</div>"
+      s += "<br/><p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
+      s += "<pre style='overflow: scroll'> (CACHED=true) EXPLICIT_COMPARSION=true  sh TckScripts/jenkins/summary_report/customSearch.sh --jobfilter " + job + " --nvrfilter " + NVR + " --time [daysToPast] ; #no params for help; to save result to db prefix by: SAVE_DB=true  to rerun if necessary prefix by: ALLOW_REDEPLOY=2 </pre>";
+      document.getElementById("modalContent").innerHTML = s;
+      modal.style.display = "block";
+    }
+
+    // Get the modal
+    var modal = document.getElementById("myModal");
+    // Get the <span> element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function () {
+      modal.style.display = "none";
+    }
+    // when ecs is pressed
+    document.onkeydown = function (e) {
+      switch (e.which) {
+        case 27: // esc
+          modal.style.display = "none";
+          break;
+        case 37: // left
+          moveDetails(LEFT)
+          break;
+        case 38: // up
+          moveDetails(UP)
+          break;
+        case 39: // right
+          moveDetails(RIGHT)
+          break;
+        case 40: // down
+          moveDetails(DOWN)
+          break;
+      }
+    }
+
+    function moveDetails(direction) {
+      if (modal.style.display == "block" && lastJobDetailsClicked != null) {
+        console.log("moving " + lastJobDetailsClicked + " " + direction);
+        //find coords of our cell
+        var tables = document.getElementsByClassName("resultsTable");
+        var table = tables[0];
+        var x = -1;
+        var y = -1;
+        for (var i = 0, row; row = table.rows[i]; i++) {
+          for (var j = 0, col; col = row.cells[j]; j++) {
+            result = getIded(col, true)
+            if (result != null) {
+              if (result.getAttribute("id") == lastJobDetailsClicked) {
+                y = i;
+                x = j;
+              }
+            }
+          }
+        }
+        //in direction, found nearest cell with content
+        var futureId = null
+        if (x >= 0 && y >= 0) {
+          if (direction == LEFT) {
+            var row = table.rows[y]
+            for (var j = x - 1, col; col = row.cells[j]; j--) {
+              if (j < 1) {
+                break;
+              }
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else if (direction == RIGHT) {
+            var row = table.rows[y]
+            for (var j = x + 1, col; col = row.cells[j]; j++) {
+              if (j >= row.cells.length - 2) {
+                break;
+              }
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else if (direction == UP) {
+            for (var i = y - 1, row; row = table.rows[i]; i--) {
+              if (i < 1) {
+                break;
+              }
+              col = row.cells[x]
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else if (direction == DOWN) {
+            for (var i = y + 1, row; row = table.rows[i]; i++) {
+              if (i >= table.rows.length - 2) {
+                break;
+              }
+              col = row.cells[x]
+              result = getIded(col, true)
+              if (result != null) {
+                futureId = result.getAttribute("id")
+                break
+              }
+            }
+          } else {
+            console.log("Unknown direction: " + direction)
+          }
+          if (futureId != null) {
+            modal.style.display = "none";
+            lastJobDetailsClicked = futureId
+            showAll(lastJobDetailsClicked);
+          }
+        }
+      }
+    }
+
+    function showHideButtons(clazz) {
+      var btns = document.getElementsByClassName(clazz);
+      var btnVisibility = btns[0].style.display;
+      for (var i = 0, btn; btn = btns[i]; i++) {
+        if (btnVisibility == "none") {
+          btn.style.display = "inline"
+        } else {
+          btn.style.display = "none"
+        }
+      }
+    }
+  </script>
+  <div id="header"
+    style="position: fixed; z-index: 5000; top:0px; background-color: white; border-style:  solid; border-width: 1px;">
+    <div>
+      <div style="float:left">
+        <div>
+          <select id="automan" name="automan" onChange="getAllData(NVR)">
+            <option>mix automated and manual</option>
+            <option>put manual to bottom</option>
+            <option>put automatic to bottom</option>
+            <option>remove manual</option>
+            <option>remove automatic</option>
+          </select><br/>
+          <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
+        </div>
+        <div id="readOnlys">
+          <input type="checkbox" id="dbReadOnly" name="dbReadOnly" value="dbReadOnly">
+          <label for="dbReadOnly">db is read only</label>
+          <input type="checkbox" id="otoolDo" name="otoolDo" value="otoolDo" checked="true">
+          <label for="otoolDo">otool's do=?</label><br>
+        </div>
+        <div>
+          <input type="checkbox" id="hideOnWaive" name="hideOnWaive" value="hideOnWaive" checked="true">
+          <label for="hideOnWaive">hide on waive</label><br>
+        </div>
+      </div>
+      <div style="float:left">
+        <select id="sort" name="sort" onChange="applyAllData()">
+          <option>best</option>
+          <option>worst</option>
+          <option>newest</option>
+          <option>oldest</option>
+          <option>buildid</option>
+          <option>revbuildid</option>
+        </select><br />
+        <button type="button" onClick="showHideButtons('waiverButton')">show/hide waive buttons</button><br />
+        <button type="button" onClick="showHideButtons('reloadButton')">show/hide reload buttons</button><br />
+      </div>
+      <div style="float:left">
+        <input type="text" id="nvrFilter" value=".*" /><br />
+        <button type="button" onClick="loadNvrs(false)">reload list</button><br />
+        <button type="button" onClick="getAllData(NVR)">refresh data</button>
+      </div>
+      <div id="nvrs" style="height:120px; overflow:scroll">
+      </div>
+    </div>
+  <br/>
+    <div style="text-align: center;">
+      <a class="legend" id="a-1" href="test`">xxx</a>
+      <a class="legend" id="a0" href="test`">xxx</a>
+      <a class="legend" id="a40" href="test`">xxx</a>
+      <a class="legend" id="a100" href="test`">xxx</a>
+      <a class="legend" id="a101" href="test`">xxx</a>
+      <span>...</span>
+      <a class="legend" id="m0" href="test`">xxx</a>
+      <a class="legend" id="m40" href="test`">xxx</a>
+      <a class="legend" id="m100" href="test`">xxx</a>
+      <a class="legend" id="m101" href="test`">xxx</a>
+      <a class="legend" id="m100001" href="test`">xxx</a>
+    </div>
+    <span id="nvrTitle">no nvr</span>
+  </div>
+  <div id="fakeHeader" style="height: 240px;   display: flex; align-items: flex-end;color: gray;">
+    <!-- aprox sum of fixed div above-->
+  </div>

@@ -297,6 +297,16 @@ public class JenkinsCliWrapper {
         }
     }
 
+    public ClientResponse reloadJob(String name) {
+        String cmd = "reload-job " + name;
+        try {
+            ClientResponse r = syncSshExec(cmd);
+            return r;
+        } catch (IOException | InterruptedException ex) {
+            return new ClientResponse(-1, "", "", ex, cmd);
+        }
+    }
+
     public ClientResponse getJob(String name) {
         String cmd = "get-job " + name;
         try {
@@ -387,7 +397,7 @@ public class JenkinsCliWrapper {
         }
     }
 
-    public ClientResponse createUpdateJob(JenkinsUpdateVmTemplateBuilder j) {
+    public ClientResponse createUpdateJob(JenkinsUpdateVmTemplateBuilder j) throws IOException {
         return createJob(j.getName(), j.expandToStream());
     }
 
@@ -395,7 +405,7 @@ public class JenkinsCliWrapper {
         return deleteJobs(j.getName());
     }
 
-    public ClientResponse updateUpdateJob(JenkinsUpdateVmTemplateBuilder j) {
+    public ClientResponse updateUpdateJob(JenkinsUpdateVmTemplateBuilder j) throws IOException {
         return updateJob(j.getName(), j.expandToStream());
     }
 }

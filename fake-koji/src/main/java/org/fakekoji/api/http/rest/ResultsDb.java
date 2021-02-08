@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -30,7 +31,7 @@ public class ResultsDb implements EndpointGroup {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
     public static final String MAIN_DELIMITER = ":";
     private static final String SECONDARY_DELIMITER = " ";
-
+    public static final int LIMIT_TO_SAVE = 50;
 
     private static class ScoreWithTimeStamp {
 
@@ -72,7 +73,7 @@ public class ResultsDb implements EndpointGroup {
 
     private class DB {
         private final Map<String/*nvr*/, Map<String/*job*/, Map<Integer/*jobId*/, List<ScoreWithTimeStamp>>>> nvras = Collections.synchronizedMap(new HashMap<>());
-        int added = 0;
+        AtomicInteger added = new AtomicInteger(0);
 
         public DB() {
             Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -117,12 +118,12 @@ public class ResultsDb implements EndpointGroup {
         }
 
         private synchronized void set(String nvr, String job, Integer buildId, ScoreWithTimeStamp result) {
-            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId);
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, true);
             scores.add(result);
         }
 
         private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score) {
-            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId);
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, true);
             ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
             for (ScoreWithTimeStamp oldOne : scores) {
                 if (oldOne.equals(newOne)) {
@@ -131,32 +132,94 @@ public class ResultsDb implements EndpointGroup {
                 }
             }
             scores.add(newOne);
-            added++;
-            if (added > 50) {
-                save();
-                added = 0;
+            saveOnCount();
+            return null;
+        }
+
+        private synchronized ScoreWithTimeStamp del(String nvr, String job, Integer buildId, Integer score) {
+            List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, false);
+            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
+            for (ScoreWithTimeStamp oldOne : scores) {
+                if (oldOne.equals(newOne)) {
+                    int deleteions = delChain(nvr, job, buildId, oldOne);
+                    if (deleteions == 0){
+                        LOGGER.log(Level.WARNING, "deletion of " + nvr +", "+job+", "+buildId+", "+score+" is bad, deleted: "+deleteions);
+                    }
+                    saveOnCount();
+                    return oldOne;
+                }
             }
             return null;
         }
 
+        private void saveOnCount() {
+            added.incrementAndGet();
+            if (added.get() > LIMIT_TO_SAVE) {
+                save();
+                added.set(0);
+            }
+        }
+
         @NotNull
-        private List<ScoreWithTimeStamp> getChain(String nvr, String job, Integer buildId) {
+        private synchronized List<ScoreWithTimeStamp> getChain(String nvr, String job, Integer buildId, boolean putIfNeeded) {
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
             if (jobs == null) {
                 jobs = Collections.synchronizedMap(new HashMap<>());
-                nvras.put(nvr, jobs);
+                 if (putIfNeeded) {
+                     nvras.put(nvr, jobs);
+                 }
             }
             Map<Integer, List<ScoreWithTimeStamp>> jobIds = jobs.get(job);
             if (jobIds == null) {
                 jobIds = Collections.synchronizedMap(new HashMap<>());
-                jobs.put(job, jobIds);
+                if (putIfNeeded) {
+                    jobs.put(job, jobIds);
+                }
             }
             List<ScoreWithTimeStamp> scores = jobIds.get(buildId);
             if (scores == null) {
                 scores = Collections.synchronizedList(new ArrayList<>());
-                jobIds.put(buildId, scores);
+                if (putIfNeeded) {
+                    jobIds.put(buildId, scores);
+                }
             }
             return scores;
+        }
+
+        @NotNull
+        private int delChain(String nvr, String job, Integer buildId, ScoreWithTimeStamp oldOne) {
+            int deletions = 0;
+            Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
+            if (jobs == null){
+                return -1;
+            }
+            Map<Integer, List<ScoreWithTimeStamp>> jobIds = jobs.get(job);
+            if (jobIds == null){
+                return -1;
+            }
+            List<ScoreWithTimeStamp> scores = jobIds.get(buildId);
+            if (scores == null){
+                return -1;
+            }
+            if(scores.remove(oldOne)){
+                deletions++;
+            }
+            if (scores.isEmpty()){
+                if (jobIds.remove(buildId, scores)){
+                    deletions++;
+                }
+            }
+            if (jobIds.isEmpty()){
+                if (jobs.remove(job, jobIds)){
+                    deletions ++;
+                }
+            }
+            if (jobs.isEmpty()){
+                if (nvras.remove(nvr, jobs)){
+                    deletions ++;
+                }
+            }
+            return deletions;
         }
 
         private synchronized Map<String, Map<String, Map<Integer, List<ScoreWithTimeStamp>>>> get() {
@@ -168,6 +231,7 @@ public class ResultsDb implements EndpointGroup {
 
     public static final String SET = "set";
     public static final String GET = "get";
+    public static final String DEL = "del";
     public static final String NVRS = "nvrs";
     private final AccessibleSettings settings;
     private final DB db;
@@ -183,8 +247,9 @@ public class ResultsDb implements EndpointGroup {
         return "\n"
                 + MISC + '/' + RESULTS_DB + "/nvrs will return set of nvrs in results db" + "\n"
                 + MISC + '/' + RESULTS_DB + "/get will return the score of job of nvr of buildId" + "\n"
+                + MISC + '/' + RESULTS_DB + "/del will removethe result for job,nvr,buildId,score, ba careful" + "\n"
                 + MISC + '/' + RESULTS_DB + "/set will set the result for job,nvr,buildId,score" + "\n"
-                + " Negative jobId is manual touch, negative score is manual action, time is automated\n"
+                + " Negative jobId is manual touch, time is automated\n"
                 + " for set nvr, job, buildId and score are mandatory, For get not, but you will get all matching results\n";
     }
 
@@ -201,7 +266,16 @@ public class ResultsDb implements EndpointGroup {
         });
         get(SET, context -> {
             try {
-                String s = addScore(context);
+                String s = addDelScore(context, SET);
+                context.status(OToolService.OK).result(s);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+        });
+        get(DEL, context -> {
+            try {
+                String s = addDelScore(context, DEL);
                 context.status(OToolService.OK).result(s);
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
@@ -220,12 +294,21 @@ public class ResultsDb implements EndpointGroup {
 
     }
 
-    private String getNvrs() {
+
+    String getSet(String job, String nvr, String buildId, String score){
+        return setHelper(job, nvr, buildId, score);
+    }
+
+    String getDel(String job, String nvr, String buildId, String score){
+        return delHelper(job, nvr, buildId, score);
+    }
+
+    synchronized  String getNvrs() {
         List l = new ArrayList<>(db.get().keySet());
         return l.stream().sorted().collect(Collectors.joining("\n"))+"\n";
     }
 
-    private String addScore(Context context) {
+    private String addDelScore(final Context context, final String finalAction) {
         String job = context.queryParam("job");
         String nvr = context.queryParam("nvr");
         String buildId = context.queryParam("buildId");
@@ -233,6 +316,19 @@ public class ResultsDb implements EndpointGroup {
         if (job == null || nvr == null || buildId == null || score == null) {
             throw new RuntimeException("SET job, nvr buildId, and score are mandatory");
         }
+        if (finalAction.equals(SET)) {
+            return setHelper(job, nvr, buildId, score);
+        } else if (finalAction.equals(DEL)) {
+            return delHelper(job, nvr, buildId, score);
+        } else {
+            String s = "unknown action " + finalAction;
+            //throw  new RuntimeException(s);
+            return s;
+        }
+    }
+
+    @NotNull
+    synchronized  private String setHelper(String job, String nvr, String buildId, String score) {
         ScoreWithTimeStamp original = db.set(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
         if (original == null) {
             return "inserted";
@@ -243,23 +339,34 @@ public class ResultsDb implements EndpointGroup {
         }
     }
 
+    private synchronized  String delHelper(String job, String nvr, String buildId, String score) {
+        ScoreWithTimeStamp original = db.del(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
+        if (original == null) {
+            String s = "Not deleted " + nvr +", "+job+", "+buildId+", "+score;
+            //throw  new RuntimeException(s);
+            return s;
+        } else {
+            return "deleted";
+        }
+    }
+
     String throwOrReturn(String id) {
         boolean ratherThrow = true;
         if (ratherThrow) {
-            throw new RuntimeException(id + " not found");
+            throw new ItemNotFoundException(id + " not found");
         } else {
             return "";
         }
     }
 
-    private String getScore(Context context) {
+    private synchronized  String getScore(Context context) {
         String nvr = context.queryParam("nvr");
         String job = context.queryParam("job");
         String buildId = context.queryParam("buildId");
         return getScore(nvr, job, buildId);
     }
 
-    private String getScore(String nvr, String job, String buildId) {
+    synchronized String getScore(String nvr, String job, String buildId) {
 
         StringBuilder r = new StringBuilder();
         if (nvr != null) {
@@ -298,7 +405,7 @@ public class ResultsDb implements EndpointGroup {
         return r.toString();
     }
 
-    private String iterateJobs(String nvr, Set<Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>>> jobs, String job, String buildId) {
+    private synchronized String iterateJobs(String nvr, Set<Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>>> jobs, String job, String buildId) {
         StringBuilder r = new StringBuilder();
         for (Map.Entry<String, Map<Integer, List<ScoreWithTimeStamp>>> jobEntry : jobs) {
             if (job == null || job.equals(jobEntry.getKey())) {
@@ -309,7 +416,7 @@ public class ResultsDb implements EndpointGroup {
         return r.toString();
     }
 
-    private String iterateBuildIds(String buildId, Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds, String nvr, String job) {
+    private synchronized String iterateBuildIds(String buildId, Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> buildIds, String nvr, String job) {
         StringBuilder r = new StringBuilder();
         for (Map.Entry<Integer, List<ScoreWithTimeStamp>> buildIdEntry : buildIds) {
             if (buildId == null || buildId.equals(buildIdEntry.getKey().toString())) {
@@ -320,7 +427,13 @@ public class ResultsDb implements EndpointGroup {
         return r.toString();
     }
 
-    private String scoresOut(List<ScoreWithTimeStamp> scores) {
+    private synchronized String scoresOut(List<ScoreWithTimeStamp> scores) {
         return scores.stream().map(ScoreWithTimeStamp::toString).collect(Collectors.joining(SECONDARY_DELIMITER));
+    }
+
+    class ItemNotFoundException extends RuntimeException {
+        public ItemNotFoundException(String s) {
+            super(s);
+        }
     }
 }

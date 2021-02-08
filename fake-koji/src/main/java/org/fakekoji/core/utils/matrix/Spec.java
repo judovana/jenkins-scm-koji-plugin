@@ -9,7 +9,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-abstract class Spec {
+abstract class Spec implements  Comparable<Spec> {
+
+    public int compareTo(Spec var1){
+        return this.toString().compareTo(var1.toString());
+    }
 
     protected final Platform platform;
     protected final Platform.Provider provider;
