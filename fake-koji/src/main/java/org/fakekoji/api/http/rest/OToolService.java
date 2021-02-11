@@ -125,7 +125,7 @@ public class OToolService {
                 + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n"
                 + "  names=true will chage numbers to somehow more describing texts in html formatters. With huge squezing can go wil. Is sometimes buggy with platforms\n"
                 + "  explicitcomparsion=url by default null, unused, to load remote file with listed lates released NVRs to comapre with\n"
-                + "  baseajax have few runtime switches: automanFilter=index sort=index readOnly=[true(visible)/false(hidden)]. Defaults are 0,0,false\n";
+                + "  baseajax have few runtime switches: automanFilter=index sort=index readOnly=[true(visible)/false(hidden)/total]. Defaults are 0,0,false\n";
     }
 
     public OToolService(AccessibleSettings settings) {
