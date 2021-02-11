@@ -399,6 +399,16 @@
             readOnlys.style.visibility="hidden"
             dbReadOnly.checked=false
             otoolDo.checked=true
+          } else if (readOnlyParam == "total") {
+            readOnlys.style.visibility="hidden"
+            dbReadOnly.checked=false
+            otoolDo.checked=true
+            document.getElementById("fakeHeader").style.visibility="hidden"
+            document.getElementById("fakeHeader").style.height="0px"
+            document.getElementById("header").style.visibility="hidden"
+            showHideButtons('waiverButton')
+          } else {
+            otoolLogger("Unknown value to readOnly=" + readOnlyParam)
           }
           
         }
