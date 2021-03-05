@@ -29,7 +29,8 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
                     new KojiChangeEntry("Build NVR", Collections.singletonList(new Hyperlink(build.getNvr()))),
                     new KojiChangeEntry("Build Tags", Collections.singletonList(new Hyperlink(String.join(", ", build.getTags())))),
                     new KojiChangeEntry("Build RPMs/Tarballs", getListFromRPMs(build.getRpms())),
-                    new KojiChangeEntry("Build Sources", getListFromUrl(build.getSrcUrl()))
+                    new KojiChangeEntry("Build Sources", getListFromUrl(build.getSrcUrl())),
+                    new KojiChangeEntry("Actions", getActions())
             );
             entries = Collections.unmodifiableList(list);
         } else {
@@ -82,6 +83,47 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
     }
 
+    private String nvr1() {
+        return build.getNvr();
+    }
+
+    private String nvr2() {
+        return build.getName() + "-" + build.getVersion() + "-" + build.getRelease();
+    }
+
+    private List<Hyperlink> getActions() {
+        List<Hyperlink> r = new ArrayList<>();
+        r.add(new Hyperlink("                           "));
+        r.add(new Hyperlink("Most of htem missbehaves for builds, pulls and some others. Limit usage to Tests."));
+        r.add(checkoutNvr(nvr1()));
+        if (haveDualNvr()) {
+            r.add(checkoutNvr(nvr2()));
+        }
+        r.add(new Hyperlink("re/run", down("kojiScmRe?type=run&id=" + getRun().getId()), "copy " + getRun().getId() + "/changelog.xml as build.xml and Build Now"));
+        r.add(testNvr(nvr1()));
+        if (haveDualNvr()) {
+            r.add(testNvr(nvr2()));
+        }
+        r.add(new Hyperlink("re/checkout", down("kojiScmRe?type=checkout"), "remove build.xml and Build Now. If all builds are in processed.txt, will evolve to fail"));
+        return r;
+    }
+
+    private String down(String s) {
+        return "../../../../../../"+s+"&job="+ getRun().getFullDisplayName().split("\\s+")[0];
+    }
+
+    private boolean haveDualNvr() {
+        return !nvr1().equals(nvr2());
+    }
+
+    private Hyperlink testNvr(String nvr) {
+        return new Hyperlink("re/test?nvr=", down("kojiScmRe?type=test&nvr=" + nvr), "remove " + nvr + " from processed.txt Build Now");
+    }
+
+    private Hyperlink checkoutNvr(String nvr) {
+        return new Hyperlink("re/checkout?nvr=", down("kojiScmRe?type=checkout&nvr=" + nvr), "remove build.xml, remove " + nvr + " from processed.txt Build Now");
+    }
+
     private static List<Hyperlink> getListFromRPMs(List<RPM> rpms) {
         Predicate<RPM> predicate;
         if (atLeastOneRPMHasUrl(rpms)) {
@@ -90,8 +132,8 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
             predicate = (rpm) -> true;
         }
         return rpms.stream()
-                   .filter(predicate)
-                   .map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl(), rpm.getHashSum()))
+                .filter(predicate)
+                .map(rpm -> new Hyperlink(rpm.toString(), rpm.getUrl(), rpm.getHashSum()))
                    .collect(Collectors.toList());
     }
 
