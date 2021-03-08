@@ -7,7 +7,9 @@ import hudson.plugins.scm.koji.model.RPM;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.RepositoryBrowser;
 import java.io.File;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -30,7 +32,7 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
                     new KojiChangeEntry("Build Tags", Collections.singletonList(new Hyperlink(String.join(", ", build.getTags())))),
                     new KojiChangeEntry("Build RPMs/Tarballs", getListFromRPMs(build.getRpms())),
                     new KojiChangeEntry("Build Sources", getListFromUrl(build.getSrcUrl())),
-                    new KojiChangeEntry("Actions", getActions())
+                    new KojiChangeEntry("Otool Actions", getActions())
             );
             entries = Collections.unmodifiableList(list);
         } else {
@@ -94,22 +96,32 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
     private List<Hyperlink> getActions() {
         List<Hyperlink> r = new ArrayList<>();
         r.add(new Hyperlink("                           "));
-        r.add(new Hyperlink("Most of htem missbehaves for builds, pulls and some others. Limit usage to Tests."));
+        r.add(new Hyperlink("           help            ", misc() + "/help"));
+        r.add(new Hyperlink("                           "));
         r.add(checkoutNvr(nvr1()));
         if (haveDualNvr()) {
             r.add(checkoutNvr(nvr2()));
         }
-        r.add(new Hyperlink("re/run", down("kojiScmRe?type=run&id=" + getRun().getId()), "copy " + getRun().getId() + "/changelog.xml as build.xml and Build Now"));
+        r.add(new Hyperlink("re/run", prefix("run?do=true&job="+getJobName()+"&build=" + getRun().getId()), "copy " + getRun().getId() + "/changelog.xml as build.xml and Build Now"));
         r.add(testNvr(nvr1()));
         if (haveDualNvr()) {
             r.add(testNvr(nvr2()));
         }
-        r.add(new Hyperlink("re/checkout", down("kojiScmRe?type=checkout"), "remove build.xml and Build Now. If all builds are in processed.txt, will evolve to fail"));
+        r.add(new Hyperlink("re/checkout", prefix("checkout?&job=" + getJobName() + "&do=true"), "remove build.xml and Build Now. If all builds are in processed.txt, will evolve to fail"));
+        r.add(new Hyperlink("re/load", prefix("load?job=" + getJobName()), "simply relaod the job"));
         return r;
     }
 
-    private String down(String s) {
-        return "../../../../../../"+s+"&job="+ getRun().getFullDisplayName().split("\\s+")[0];
+    private String prefix(String s) {
+        return misc() + "/re/" + s;
+    }
+
+    private String misc() {
+        return getOtoolUrl() + "/misc";
+    }
+
+    private String getJobName() {
+        return getRun().getFullDisplayName().split("\\s+")[0];
     }
 
     private boolean haveDualNvr() {
@@ -117,11 +129,32 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
     }
 
     private Hyperlink testNvr(String nvr) {
-        return new Hyperlink("re/test?nvr=", down("kojiScmRe?type=test&nvr=" + nvr), "remove " + nvr + " from processed.txt Build Now");
+        if (getJobName().startsWith("build-")) {
+            return new Hyperlink("re/build?nvr=", prefix("build?nvr=" + nvr + "&whitelist=" + getJobName() + "&do=true"), "remove " + nvr + " from processed.txt Build Now");
+        } else {
+            return new Hyperlink("re/test?nvr=", prefix("test?nvr=" + nvr + "&whitelist=" + getJobName() + "&do=true"), "remove " + nvr + " from processed.txt Build Now");
+        }
     }
 
     private Hyperlink checkoutNvr(String nvr) {
-        return new Hyperlink("re/checkout?nvr=", down("kojiScmRe?type=checkout&nvr=" + nvr), "remove build.xml, remove " + nvr + " from processed.txt Build Now");
+        return new Hyperlink("re/checkout?nvr=", prefix("checkout?job=" + getJobName() + "&do=true&nvr=" + nvr), "remove build.xml, remove " + nvr + " from processed.txt Build Now");
+    }
+
+    private static final String OTOOL_URL = "OTOOL_URL_JENKINS_SMC_KOJI_PLUGIN";
+
+    public String getOtoolUrl() {
+        try {
+            if (System.getenv(OTOOL_URL) != null) {
+                return System.getenv(OTOOL_URL);
+            }
+            InetAddress inetAddress = InetAddress.getLocalHost();
+//                System.out.println("IP Address:- " + inetAddress.getHostAddress());
+//                System.out.println("Host Name:- " + inetAddress.getHostName());
+//                System.out.println("Localhost:- " + inetAddress.getLocalHost());
+            return "http://" + inetAddress.getHostName() + ":8888";
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static List<Hyperlink> getListFromRPMs(List<RPM> rpms) {
