@@ -27,6 +27,7 @@ import hudson.Extension;
 import hudson.model.RootAction;
 
 @Extension
+//accessible via http://...:1234/kojiScmRe/
 public class KojiScmRe implements RootAction {
 
     @Override
