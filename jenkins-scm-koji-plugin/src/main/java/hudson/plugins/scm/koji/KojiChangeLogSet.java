@@ -108,6 +108,7 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
             r.add(testNvr(nvr2()));
         }
         r.add(new Hyperlink("re/checkout", prefix("checkout?&job=" + getJobName() + "&do=true"), "remove build.xml and Build Now. If all builds are in processed.txt, will evolve to fail"));
+        r.add(new Hyperlink("re/processed", prefix("processed?job=" + getJobName()), "show processed.txt"));
         r.add(new Hyperlink("re/load", prefix("load?job=" + getJobName()), "simply relaod the job"));
         return r;
     }
