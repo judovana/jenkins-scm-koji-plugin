@@ -106,6 +106,22 @@
     }
 
     function sortSplitHide(value, sortString, automan) {
+      var timeIndex = document.getElementById("timeRestriction1").selectedIndex
+      var daysToFilter = parseFloat(document.getElementById("doubleTimeFilter1").value)
+      var nwvalue;
+      var timeBorder = new Date().getTime() - Math.round(daysToFilter * 24 * 60 * 60 * 1000) //milis, in otool db, it sholud be also milis
+
+      if (timeIndex == 1) {
+        nwvalue = value.filter(item => item.time - timeBorder >= 0)
+      } else if (timeIndex == 2) {
+        nwvalue = value.filter(item => item.time - timeBorder <= 0)
+      } else {
+        nwvalue = value;
+      }
+      value.length = nwvalue.length
+      for (var i = 0; i < value.length; i++) {
+        value[i] = nwvalue[i]
+      }
       if (sortString == "best") {
         value.sort(function (a, b) { return a.score - b.score });
       }
@@ -373,44 +389,52 @@
         const readOnlyParam = urlParams.get('readOnly')
         const automanFilterParam = urlParams.get('automanFilter')
         const sortParam = urlParams.get('sort')
+        const time1 = urlParams.get('time1')
+        const time1value = urlParams.get('time1value')
         if (automanFilterParam != null && automanFilterParam != "") {
           document.getElementById("automan").selectedIndex = automanFilterParam
         }
         if (sortParam != null && sortParam != "") {
           document.getElementById("sort").selectedIndex = sortParam
         }
+        if (time1 != null && time1 != "") {
+          document.getElementById("timeRestriction1").selectedIndex = time1
+        }
+        if (time1value != null && time1value != "") {
+          document.getElementById("doubleTimeFilter1").value = time1value
+        }
         if (readOnlyParam != null && sortParam != "") {
           var readOnlys = document.getElementById("readOnlys")
           var dbReadOnly = document.getElementById("dbReadOnly")
           var otoolDo = document.getElementById("otoolDo")
           if (readOnlyParam == "true") {
-            readOnlys.style.visibility="hidden"
-            dbReadOnly.checked=true
-            otoolDo.checked=false
+            readOnlys.style.visibility = "hidden"
+            dbReadOnly.checked = true
+            otoolDo.checked = false
           } else if (readOnlyParam == "visible") {
-            readOnlys.style.visibility="block"
-            dbReadOnly.checked=true
-            otoolDo.checked=false
+            readOnlys.style.visibility = "block"
+            dbReadOnly.checked = true
+            otoolDo.checked = false
           } else if (readOnlyParam == "false") {
-            readOnlys.style.visibility="block"
-            dbReadOnly.checked=false
-            otoolDo.checked=true
+            readOnlys.style.visibility = "block"
+            dbReadOnly.checked = false
+            otoolDo.checked = true
           } else if (readOnlyParam == "hidden") {
-            readOnlys.style.visibility="hidden"
-            dbReadOnly.checked=false
-            otoolDo.checked=true
+            readOnlys.style.visibility = "hidden"
+            dbReadOnly.checked = false
+            otoolDo.checked = true
           } else if (readOnlyParam == "total") {
-            readOnlys.style.visibility="hidden"
-            dbReadOnly.checked=false
-            otoolDo.checked=true
-            document.getElementById("fakeHeader").style.visibility="hidden"
-            document.getElementById("fakeHeader").style.height="0px"
-            document.getElementById("header").style.visibility="hidden"
+            readOnlys.style.visibility = "hidden"
+            dbReadOnly.checked = false
+            otoolDo.checked = true
+            document.getElementById("fakeHeader").style.visibility = "hidden"
+            document.getElementById("fakeHeader").style.height = "0px"
+            document.getElementById("header").style.visibility = "hidden"
             showHideButtons('waiverButton')
           } else {
             otoolLogger("Unknown value to readOnly=" + readOnlyParam)
           }
-          
+
         }
       }
       var xhttp = new XMLHttpRequest();
@@ -641,7 +665,7 @@
       s += "<a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
       for (var i = 0; i < results.length; i++) {
         result = results[i];
-        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + "</a></div>"
+        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + " (days " + (Number.parseFloat(new Date().getTime()-result.time)/Number.parseFloat(24*60*60*1000)).toFixed(2)+ " ago)</a></div>"
       }
       s = s + "<div  style=\"border-style: solid; border-color: black; text-align: center; \">" +
         "  <button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")'              style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 0 }) + ";\"   type='button'>waive - ok</button>" +
@@ -798,7 +822,7 @@
             <option>put automatic to bottom</option>
             <option>remove manual</option>
             <option>remove automatic</option>
-          </select><br/>
+          </select><br />
           <span>Note, if you remove records by this,<br /> you have to reload data to get them back</span><br />
         </div>
         <div id="readOnlys">
@@ -825,6 +849,17 @@
         <button type="button" onClick="showHideButtons('reloadButton')">show/hide reload buttons</button><br />
       </div>
       <div style="float:left">
+        <select id="timeRestriction1" name="timeRestriction1" onChange="getAllData(NVR)">
+          <option>no time restriction </option>
+          <option>ignore results older then </option>
+          <option>ignore results newer then </option>
+        </select><br />
+        <input type="text" id="doubleTimeFilter1" value="0" /><br />
+        <span>days. Decimals allowed</span><br />
+        <span>Server is UTC,</span><br />
+        <span>may missbehave for non UTC</span><br />
+      </div>
+      <div style="float:left">
         <input type="text" id="nvrFilter" value=".*" /><br />
         <button type="button" onClick="loadNvrs(false)">reload list</button><br />
         <button type="button" onClick="getAllData(NVR)">refresh data</button>
@@ -832,7 +867,7 @@
       <div id="nvrs" style="height:120px; overflow:scroll">
       </div>
     </div>
-  <br/>
+    <br />
     <div style="text-align: center;">
       <a class="legend" id="a-1" href="test`">xxx</a>
       <a class="legend" id="a0" href="test`">xxx</a>
