@@ -96,8 +96,10 @@
     var RIGHT = "RIGHT"
     var UP = "UP"
     var DOWN = "DOWN"
+    var toShow = true;
 
     function resortAllData() {
+      toShow = true;
       var sortString = document.getElementById("sort").value;
       var automan = document.getElementById("automan").value;
       data.forEach((value, key, map) => {
@@ -105,16 +107,35 @@
       })
     }
 
+    function isNumber(num) {
+      if (num.match(/^[\+-]*[\d.,e]+$/)) {
+        return true
+      } else {
+        return false
+      }
+    }
+
     function sortSplitHide(value, sortString, automan) {
       var timeIndex = document.getElementById("timeRestriction1").selectedIndex
-      var daysToFilter = parseFloat(document.getElementById("doubleTimeFilter1").value)
       var nwvalue;
-      var timeBorder = new Date().getTime() - Math.round(daysToFilter * 24 * 60 * 60 * 1000) //milis, in otool db, it sholud be also milis
-
-      if (timeIndex == 1) {
-        nwvalue = value.filter(item => item.time - timeBorder >= 0)
-      } else if (timeIndex == 2) {
-        nwvalue = value.filter(item => item.time - timeBorder <= 0)
+      if (timeIndex != 0) {
+        var daysToFilter = document.getElementById("doubleTimeFilter1").value
+        var timeBorder;
+        if (isNumber(daysToFilter)) {
+          timeBorder = new Date().getTime() - Math.round(parseFloat(daysToFilter) * 24 * 60 * 60 * 1000) //milis, in otool db, it sholud be also milis
+        } else {
+          //eg 2020-01-01 00:00:01 is ok "" is bad "0" is bad but 0 is also ok.. jsut fyi...
+          timeBorder = new Date(daysToFilter).getTime()
+        }
+        if (toShow && (Object.is(timeBorder, NaN) || Object.is(timeBorder, null) || Object.is(timeBorder, undefined) || timeBorder == "")) {
+          alert(daysToFilter + " Is not an number nor date, and still you try to use it use eg 1 or '2020-01-01 00:00:01'");
+          toShow = false;
+        }
+        if (timeIndex == 1) {
+          nwvalue = value.filter(item => item.time - timeBorder >= 0)
+        } else if (timeIndex == 2) {
+          nwvalue = value.filter(item => item.time - timeBorder <= 0)
+        }
       } else {
         nwvalue = value;
       }
@@ -665,7 +686,7 @@
       s += "<a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
       for (var i = 0; i < results.length; i++) {
         result = results[i];
-        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toString() + " (days " + (Number.parseFloat(new Date().getTime()-result.time)/Number.parseFloat(24*60*60*1000)).toFixed(2)+ " ago)</a></div>"
+        s = s + "<div style='background-color:" + buildToColor(result) + "'><a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toISOString() + " (days " + (Number.parseFloat(new Date().getTime() - result.time) / Number.parseFloat(24 * 60 * 60 * 1000)).toFixed(2) + " ago)</a></div>"
       }
       s = s + "<div  style=\"border-style: solid; border-color: black; text-align: center; \">" +
         "  <button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")'              style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 0 }) + ";\"   type='button'>waive - ok</button>" +
