@@ -9,6 +9,7 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.OToolVariable;
+import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -231,7 +232,15 @@ public class JenkinsJobTemplateBuilder {
         );
         return this;
     }
+    private static class VmWithNodes {
+        final String vmName;
+        final List<String> nodes;
 
+        public VmWithNodes(String vmName, List<String> nodes) {
+            this.vmName = vmName;
+            this.nodes = nodes;
+        }
+    }
     public JenkinsJobTemplateBuilder buildScriptTemplate(
             Task task,
             String provider,
@@ -244,40 +253,7 @@ public class JenkinsJobTemplateBuilder {
                 .filter(p -> p.getId().equals(provider))
                 .findFirst()
                 .get(); // TODO: should throw an exception (ManagementException I guess)
-        final String vmName;
-        final List<String> nodes;
-        switch (task.getMachinePreference()) {
-            case HW:
-                if (platformProvider.getHwNodes().isEmpty()) {
-                    vmName = platform.getVmName();
-                    nodes = platformProvider.getVmNodes();
-                } else {
-                    vmName = LOCAL;
-                    nodes = platformProvider.getHwNodes();
-                }
-                break;
-            case HW_ONLY:
-                vmName = LOCAL;
-                nodes = platformProvider.getHwNodes();
-                break;
-            case VM:
-                if (platformProvider.getVmNodes().isEmpty()) {
-                    vmName = LOCAL;
-                    nodes = platformProvider.getHwNodes();
-                } else {
-                    vmName = platform.getVmName();
-                    nodes = platformProvider.getVmNodes();
-                }
-                break;
-            case VM_ONLY:
-                vmName = platform.getVmName();
-                nodes = platformProvider.getVmNodes();
-                break;
-            default:
-                throw new RuntimeException("Unknown machine preference");
-        }
         exportedVariables.add(new OToolVariable(PLATFORM_PROVIDER_VAR, platformProvider.getId()));
-        exportedVariables.add(new OToolVariable(VM_NAME_OR_LOCAL_VAR, vmName));
         if (job != null) {
             if (job.getName() != null) {
                 exportedVariables.add(new OToolVariable(JOB_NAME, job.getName()));
@@ -290,6 +266,8 @@ public class JenkinsJobTemplateBuilder {
         exportedVariables.add(new OToolVariable(OS_NAME_VAR, platform.getOs()));
         exportedVariables.add(new OToolVariable(OS_VERSION_VAR, platform.getVersionNumber()));
         exportedVariables.add(new OToolVariable(ARCH_VAR, platform.getArchitecture()));
+        final  VmWithNodes  mWithNodes = getVmWithNodes(task, platform, exportedVariables, platformProvider);
+        exportedVariables.add(new OToolVariable(VM_NAME_OR_LOCAL_VAR, mWithNodes.vmName));
         final String usedBuilder;
         if (task.getTimeoutInHours() <= 0 /*from help on this field, minimal timeout is 3 minutes. We are in hours here*/) {
             usedBuilder = loadTemplate(JenkinsTemplate.PLAINSHELL_SCRIPT_TEMPLATE);
@@ -297,13 +275,13 @@ public class JenkinsJobTemplateBuilder {
             usedBuilder = loadTemplate(JenkinsTemplate.TIMEOUTSHELL_SCRIPT_TEMPLATE);
         }
         template = template
-                .replace(NODES, String.join("||", nodes))
+                .replace(NODES, String.join("||", mWithNodes.nodes))
                 .replace(BUILDER_SCRIPT, usedBuilder)
                 .replace(TASK_SCRIPT, task.getScript())
                 .replace(RUN_SCRIPT, Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME).toString())
                 .replace(EXPORTED_VARIABLES, getExportedVariablesString(exportedVariables))
                 .replace(TIMEOUT_MINUTES, ""+(task.getTimeoutInHours()*60));
-        if (!vmName.equals(LOCAL)) {
+        if (!mWithNodes.vmName.equals(LOCAL)) {
             List<OToolVariable> shutdownVars = Collections.singletonList(
                     new OToolVariable(
                             JOB_NAME_SHORTENED,
@@ -318,11 +296,53 @@ public class JenkinsJobTemplateBuilder {
                             false
                     )
             );
-            template =  buildPostBuildTaskTemplate(template, provider, platform.getVmName(), scriptsRoot, shutdownVars, true, true);
+            template = buildPostBuildTaskTemplate(template, provider, platform.getVmName(), scriptsRoot, shutdownVars, true, true);
             return this;
         }
         template = buildPostBuildTaskTemplate(template, provider, platform.getVmName(), scriptsRoot, new ArrayList<>(), false, true);
         return this;
+    }
+
+    @NotNull
+    private static VmWithNodes getVmWithNodes(Task task, Platform platform, List<OToolVariable> exportedVariables, Platform.Provider platformProvider) {
+        final VmWithNodes mWithNodes;
+        switch (task.getMachinePreference()) {
+            case HW:
+                if (platformProvider.getHwNodes().isEmpty()) {
+                    mWithNodes = new VmWithNodes(platform.getVmName(), expand(platformProvider.getVmNodes(), exportedVariables));
+                } else {
+                    mWithNodes = new VmWithNodes(LOCAL, expand(platformProvider.getHwNodes(), exportedVariables));
+                }
+                break;
+            case HW_ONLY:
+                mWithNodes = new VmWithNodes(LOCAL, expand(platformProvider.getHwNodes(), exportedVariables));
+                break;
+            case VM:
+                if (platformProvider.getVmNodes().isEmpty()) {
+                    mWithNodes = new VmWithNodes(LOCAL, expand(platformProvider.getHwNodes(), exportedVariables));
+                } else {
+                    mWithNodes = new VmWithNodes(platform.getVmName(), expand(platformProvider.getVmNodes(), exportedVariables));
+                }
+                break;
+            case VM_ONLY:
+                mWithNodes = new VmWithNodes(platform.getVmName(), expand(platformProvider.getVmNodes(), exportedVariables));
+                break;
+            default:
+                throw new RuntimeException("Unknown machine preference");
+        }
+        return mWithNodes;
+    }
+
+    public static List<String> expand(List<String> nodes, List<OToolVariable> exportedVariables) {
+        List<String> r = new ArrayList<>(nodes.size());
+        for (String node : nodes) {
+            String nwNode = node;
+            for (OToolVariable var : exportedVariables) {
+                nwNode = nwNode.replace("%{" + var.getFullName() + "}", var.getValue());
+            }
+            r.add(nwNode);
+        }
+        return r;
     }
 
     JenkinsJobTemplateBuilder buildPostBuildTaskTemplate(
@@ -333,7 +353,7 @@ public class JenkinsJobTemplateBuilder {
             final boolean shutdownVm,
             final boolean analyseResults
     ) throws IOException {
-        template = buildPostBuildTaskTemplate(template, platformProvider, platformVMName,scriptsRoot, shutdownVariables, shutdownVm, analyseResults);
+        template = buildPostBuildTaskTemplate(template, platformProvider, platformVMName, scriptsRoot, shutdownVariables, shutdownVm, analyseResults);
         return this;
     }
    static String  buildPostBuildTaskTemplate(

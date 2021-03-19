@@ -499,7 +499,7 @@ public class DataGenerator {
         return new Platform.Provider(
                 "vagrant",
                 Arrays.asList("Hydra", "Norn"),
-                Arrays.asList("Odin", "Tyr")
+                Arrays.asList("Odin", "Tyr", "os-%{OTOOL_OS_NAME}")
         );
     }
 

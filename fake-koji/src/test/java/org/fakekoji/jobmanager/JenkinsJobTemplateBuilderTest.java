@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.fakekoji.DataGenerator.BUILD_PROVIDER_1_DOWNLOAD_URL;
 import static org.fakekoji.DataGenerator.BUILD_PROVIDER_1_TOP_URL;
@@ -586,7 +588,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes().stream().map(s -> s.replace("%{OTOOL_OS_NAME}","el")).collect(Collectors.toList())) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +
@@ -686,7 +688,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <dirPerNvr>false</dirPerNvr>\n" +
                 "        <maxPreviousBuilds>10</maxPreviousBuilds>\n" +
                 "    </scm>\n" +
-                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes()) + "</assignedNode>\n" +
+                "    <assignedNode>" + String.join("||", testPlatform.getProviders().get(0).getVmNodes().stream().map(s -> s.replace("%{OTOOL_OS_NAME}","el")).collect(Collectors.toList())) + "</assignedNode>\n" +
                 "    <canRoam>false</canRoam>\n" +
                 "    <disabled>false</disabled>\n" +
                 "    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>\n" +

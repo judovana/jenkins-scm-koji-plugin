@@ -79,6 +79,10 @@ public class OToolVariable {
         return name;
     }
 
+    public String getFullName() {
+        return (this.isDefaultPrefix() ? JenkinsJobTemplateBuilder.OTOOL_BASH_VAR_PREFIX : "") + this.getName();
+    }
+
     public String getValue() {
         return value;
     }
@@ -107,7 +111,7 @@ public class OToolVariable {
     }
 
     public String getVariableString(final String terminal) {
-        final String name = (this.isDefaultPrefix() ? JenkinsJobTemplateBuilder.OTOOL_BASH_VAR_PREFIX : "") + this.getName();
+        final String name = getFullName();
         return (this.isCommentedOut() ? '#' : "") +
                 (this.isExported() ? EXPORT + ' ' : "") +
                 name +

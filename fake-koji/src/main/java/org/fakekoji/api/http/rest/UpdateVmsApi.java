@@ -3,6 +3,7 @@ package org.fakekoji.api.http.rest;
 import io.javalin.http.Context;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.JenkinsUpdateVmTemplateBuilder;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.model.Platform;
@@ -42,7 +43,7 @@ public class UpdateVmsApi {
                 //todo, make configurable?
                 String currentlyOnlyUpdateAbleProvidr = "vagrant";
                 if (provider.getId().equals(currentlyOnlyUpdateAbleProvidr)) {
-                    for (String vmProvider : provider.getVmNodes()) {
+                    for (String vmProvider : JenkinsJobTemplateBuilder.expand(provider.getVmNodes(), new ArrayList<>(0)/*todo soehow provide real values?*/)) {
                         String name = "update-" + platform.getVmName() + "-" + vmProvider;
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
@@ -52,7 +53,7 @@ public class UpdateVmsApi {
                             }
                         }
                     }
-                    for (String hwProvider : provider.getHwNodes()) {
+                    for (String hwProvider : JenkinsJobTemplateBuilder.expand(provider.getHwNodes(), new ArrayList<>(0)/*todo soehow provide real values?*/)) {
                         String name = "update-" + hwProvider + "-" + platform.getVmName();
                         if (filter.matcher(name).matches()) {
                             JenkinsUpdateVmTemplateBuilder juvt = JenkinsUpdateVmTemplateBuilder.getUpdateTemplate(
