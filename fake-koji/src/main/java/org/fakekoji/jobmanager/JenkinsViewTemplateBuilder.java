@@ -127,12 +127,36 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         this.template = template;
     }
 
-    public static JenkinsViewTemplateBuilder getPlatformTemplate(VersionlessPlatform platform) throws IOException {
+    public static class NestedViewTemplateProvider extends ViewTemplateProvider {
+        protected JenkinsJobTemplateBuilder.JenkinsTemplate getTemplate() {
+            return JenkinsJobTemplateBuilder.JenkinsTemplate.NESTED_VIEW;
+        }
+    }
+
+    public static class ViewTemplateProvider {
+        protected JenkinsJobTemplateBuilder.JenkinsTemplate getTemplate() {
+            return JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW;
+        }
+
+        protected String loadTemplate() throws IOException {
+            return JenkinsJobTemplateBuilder.loadTemplate(getTemplate());
+        }
+
+        protected JenkinsJobTemplateBuilder.JenkinsTemplate getColumnsTemplate() {
+            return JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS;
+        }
+
+        protected String loadColumnsTemplate() throws IOException {
+            return JenkinsJobTemplateBuilder.loadTemplate(getColumnsTemplate());
+        }
+    }
+
+    public static JenkinsViewTemplateBuilder getPlatformTemplate(ViewTemplateProvider vtp, VersionlessPlatform platform) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getPlatformmViewName(platform.getId()),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                vtp.loadColumnsTemplate(),
                 getPlatformViewRegex(false, platform, false),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+                vtp.loadTemplate());
     }
 
     private static String getPlatformViewRegex(boolean isBuild, VersionlessPlatform platform, boolean isForBuild) {
@@ -143,12 +167,12 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return prefix + platform.os + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.arch + getPlatformSuffixRegexString(isBuild) + ".*";
     }
 
-    public static JenkinsViewTemplateBuilder getPlatformTemplate(String platform, List<Platform> platforms) throws IOException {
+    public static JenkinsViewTemplateBuilder getPlatformTemplate(ViewTemplateProvider vtp, String platform, List<Platform> platforms) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getPlatformmViewName(platform),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                vtp.loadColumnsTemplate(),
                 getPlatformViewRegex(false, platform, platforms, false),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+                vtp.loadTemplate());
     }
 
     private static String getPlatformmViewName(String viewName) {
@@ -192,12 +216,12 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         //(major|minor)
     }
 
-    public static JenkinsViewTemplateBuilder getProjectTemplate(String project, VersionlessPlatform platform) throws IOException {
+    public static  JenkinsViewTemplateBuilder getProjectTemplate(ViewTemplateProvider vtp, String project, VersionlessPlatform platform) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getProjectViewName(project, Optional.of(platform.getId())),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                vtp.loadColumnsTemplate(),
                 getProjectViewRegex(project, platform),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+                vtp.loadTemplate());
     }
 
     private static String getProjectViewRegex(String project, VersionlessPlatform platform) {
@@ -206,20 +230,20 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
                 + pull(project);
     }
 
-    public static JenkinsViewTemplateBuilder getProjectTemplate(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+    public static JenkinsViewTemplateBuilder getProjectTemplate(ViewTemplateProvider vtp, String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getProjectViewName(viewName, platform),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                vtp.loadColumnsTemplate(),
                 getProjectViewRegex(viewName, platform, platforms),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+                vtp.loadTemplate());
     }
 
-    public static JenkinsViewTemplateBuilder getVariantTempalte(String id) throws IOException {
+    public static  JenkinsViewTemplateBuilder getVariantTempalte(ViewTemplateProvider vtp, String id) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 id,
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS),
+                vtp.loadColumnsTemplate(),
                 "^"+id+"[_\\.-].*"+"|"+".*[_\\.-]"+id+"[_\\.-].*"+"|"+".*[_\\.-]"+id+"$",
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+                vtp.loadTemplate());
     }
 
     private static String getProjectViewName(String viewName, Optional<String> platform) {
@@ -252,24 +276,24 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return "pull" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project;
     }
 
-    public static JenkinsViewTemplateBuilder getTaskTemplate(String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
+    public static JenkinsViewTemplateBuilder getTaskTemplate(ViewTemplateProvider vtp, String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getTaskViewName(task, Optional.of(platform.getId())),
-                columns.orElse(JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS)),
+                columns.orElse(vtp.loadColumnsTemplate()),
                 getTaskViewRegex(task, platform),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+                vtp.loadTemplate());
     }
 
     private static String getTaskViewRegex(String task, VersionlessPlatform platform) {
         return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform, false);
     }
 
-    public static JenkinsViewTemplateBuilder getTaskTemplate(String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+    public static JenkinsViewTemplateBuilder getTaskTemplate(ViewTemplateProvider vtp, String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
         return new JenkinsViewTemplateBuilder(
                 getTaskViewName(viewName, platform),
-                columns.orElse(JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS)),
+                columns.orElse(vtp.loadColumnsTemplate()),
                 getTaskViewRegex(viewName, platform, platforms),
-                JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW));
+                vtp.loadTemplate());
     }
 
     private static String getTaskViewName(String viewName, Optional<String> platform) {

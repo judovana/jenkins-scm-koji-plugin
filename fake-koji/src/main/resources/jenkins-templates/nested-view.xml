@@ -1,0 +1,15 @@
+<hudson.plugins.nested__view.NestedView plugin="nested-view@1.17">
+    <name>%{VIEW_NAME}</name>
+    <filterExecutors>true</filterExecutors>
+    <filterQueue>true</filterQueue>
+    <properties class="hudson.model.View$PropertyList"/>
+    <views>
+        %{SUBVIEWS}
+    </views>
+    <columns>
+        <columns>
+            <hudson.views.WeatherColumn/>
+            <hudson.views.StatusColumn/>
+        </columns>
+    </columns>
+</hudson.plugins.nested__view.NestedView>

@@ -93,64 +93,78 @@ public class ViewsAppi {
         return jvt.stream().filter(jvtb -> filter.matcher(jvtb.getName()).matches()).collect(Collectors.toList());
     }
 
-    private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects, List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches, List<JDKVersion> jdkVersions) {
+    private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects,
+            List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches, List<JDKVersion> jdkVersions)  throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
+            for(String tab: new String[]{"projects", "tasks", "paltforms", "javas", "variants"}) {
+                if (tab.equals("projects")){
+                    addAllProjects(allPlatforms, projects, jvt, Optional.empty());
+                }
+            }
         return jvt;
     }
 
     private List<JenkinsViewTemplateBuilder> getDirectViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects,
             List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
-        jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
+        jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(getVtp(), "pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
         for (Task p : allTasks) {
-            jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), Task.getViewColumnsAsOptional(p), Optional.empty(), Optional.of(allPlatforms)));
+            jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(getVtp(), p.getId(), Task.getViewColumnsAsOptional(p), Optional.empty(), Optional.of(allPlatforms)));
         }
-        for (String p : projects) {
-            jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.empty(), Optional.of(allPlatforms)));
-        }
+        addAllProjects(allPlatforms, projects, jvt, Optional.empty());
         for (Platform p : allPlatforms) {
-            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(p.getId(), allPlatforms));
+            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(getVtp(), p.getId(), allPlatforms));
         }
         for (JenkinsViewTemplateBuilder.VersionlessPlatform p : versionlessPlatforms) {
-            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(p));
+            jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(getVtp(), p));
         }
         for (List<String> subArch : subArches) {
             for (String s : subArch) {
-                jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(s, allPlatforms));
+                jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(getVtp(), s, allPlatforms));
             }
         }
         for (Platform platform : allPlatforms) {
             for (Task p : allTasks) {
-                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), Task.getViewColumnsAsOptional(p), Optional.of(platform.getId()), Optional.of(allPlatforms)));
+                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(getVtp(), p.getId(), Task.getViewColumnsAsOptional(p), Optional.of(platform.getId()), Optional.of(allPlatforms)));
             }
-            for (String p : projects) {
-                jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(platform.getId()), Optional.of(allPlatforms)));
-            }
+            addAllProjects(allPlatforms, projects, jvt, Optional.of(platform.getId()));
         }
         for (JenkinsViewTemplateBuilder.VersionlessPlatform platform : versionlessPlatforms) {
             for (Task p : allTasks) {
-                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), Task.getViewColumnsAsOptional(p), platform));
+                jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(getVtp(), p.getId(), Task.getViewColumnsAsOptional(p), platform));
             }
             for (String p : projects) {
-                jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, platform));
+                jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(getVtp(), p, platform));
             }
         }
         for (List<String> subArch : subArches) {
             for (String s : subArch) {
                 for (Task p : allTasks) {
-                    jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(p.getId(), Task.getViewColumnsAsOptional(p), Optional.of(s), Optional.of(allPlatforms)));
+                    jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(getVtp(), p.getId(), Task.getViewColumnsAsOptional(p), Optional.of(s), Optional.of(allPlatforms)));
                 }
-                for (String p : projects) {
-                    jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(p, Optional.of(s), Optional.of(allPlatforms)));
-                }
+                addAllProjects(allPlatforms, projects, jvt, Optional.of(s));
             }
         }
         for(TaskVariant taskVariant: taskVariants){
             for(TaskVariantValue taskVariantValue: taskVariant.getVariants().values()){
-                jvt.add(JenkinsViewTemplateBuilder.getVariantTempalte(taskVariantValue.getId()));
+                jvt.add(JenkinsViewTemplateBuilder.getVariantTempalte(getVtp(), taskVariantValue.getId()));
             }
         }
         return jvt;
+    }
+
+    private JenkinsViewTemplateBuilder.ViewTemplateProvider getVtp() {
+        if (nested) {
+            return new JenkinsViewTemplateBuilder.NestedViewTemplateProvider();
+        } else {
+            return new JenkinsViewTemplateBuilder.ViewTemplateProvider();
+        }
+    }
+
+    private void addAllProjects(List<Platform> allPlatforms, List<String> projects, List<JenkinsViewTemplateBuilder> jvt, Optional<String> platform) throws IOException {
+        for (String p : projects) {
+            jvt.add(JenkinsViewTemplateBuilder.getProjectTemplate(getVtp(), p, platform, Optional.of(allPlatforms)));
+        }
     }
 
     private String getMatches(List<String> jobs, JenkinsViewTemplateBuilder j) {

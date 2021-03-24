@@ -15,7 +15,7 @@ public class JenkinsViewTemplateBuilderTest {
     @Test
     public void basicProjectTempalte() throws IOException {
         String name = "ojdk11~udev~upstream";
-        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getProjectTemplate(name, Optional.empty(), Optional.empty());
+        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getProjectTemplate(new JenkinsViewTemplateBuilder.ViewTemplateProvider(), name, Optional.empty(), Optional.empty());
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>~" + name + "</name>\n" +
@@ -54,7 +54,7 @@ public class JenkinsViewTemplateBuilderTest {
     @Test
     public void basicTaskTempalteWithDefaultColumns() throws IOException {
         String name = "reproducers~security";
-        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getTaskTemplate(name, Optional.empty(), Optional.empty(), Optional.empty());
+        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getTaskTemplate(new JenkinsViewTemplateBuilder.ViewTemplateProvider(), name, Optional.empty(), Optional.empty(), Optional.empty());
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>" + name + "</name>\n" +
@@ -93,7 +93,7 @@ public class JenkinsViewTemplateBuilderTest {
     @Test
     public void basicTaskTempalteWithColumns() throws IOException {
         String name = "jcstress";
-        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getTaskTemplate(name, Optional.of("<myColumn/>"), Optional.empty(), Optional.empty());
+        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getTaskTemplate(new JenkinsViewTemplateBuilder.ViewTemplateProvider(), name, Optional.of("<myColumn/>"), Optional.empty(), Optional.empty());
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>jcstress</name>\n" +
@@ -131,7 +131,7 @@ public class JenkinsViewTemplateBuilderTest {
                 new ArrayList<Platform.Provider>(), "plat7.form",
                 Platform.TestStableYZupdates.NaN, Platform.TestStableYZupdates.NaN,
                 new ArrayList<String>(), new ArrayList<OToolVariable>());
-        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getPlatformTemplate(name, Arrays.asList(p));
+        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getPlatformTemplate(new JenkinsViewTemplateBuilder.ViewTemplateProvider(), name, Arrays.asList(p));
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>." + name + "</name>\n" +
@@ -174,7 +174,7 @@ public class JenkinsViewTemplateBuilderTest {
                 new ArrayList<Platform.Provider>(), "plat7.form",
                 Platform.TestStableYZupdates.NaN, Platform.TestStableYZupdates.NaN,
                 new ArrayList<String>(), new ArrayList<OToolVariable>());
-        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getPlatformTemplate(name, Arrays.asList(p));
+        JenkinsViewTemplateBuilder template = JenkinsViewTemplateBuilder.getPlatformTemplate(new JenkinsViewTemplateBuilder.ViewTemplateProvider(), name, Arrays.asList(p));
 
         final String expectedTemplate = "<hudson.model.ListView>\n" +
                 "    <name>." + name + "</name>\n" +

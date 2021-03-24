@@ -461,6 +461,7 @@ public class JenkinsJobTemplateBuilder {
         POST_BUILD_TASK_PLUGIN_ANALYSE("post-build-task-plugin-analyse"),
         POST_BUILD_TASK_PLUGIN_DESTROYVM("post-build-task-plugin-destroyvm"),
         VIEW("view"),
+        NESTED_VIEW("nested-view"),
         VIEW_DEFAULT_COLUMNS("view-columns"),
         UPDATE_VM_JOB("update-vm-job");
 
