@@ -1,6 +1,7 @@
 package org.fakekoji.jobmanager;
 
 import org.fakekoji.jobmanager.model.Job;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,6 +132,20 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         protected JenkinsJobTemplateBuilder.JenkinsTemplate getTemplate() {
             return JenkinsJobTemplateBuilder.JenkinsTemplate.NESTED_VIEW;
         }
+
+        @Override
+        protected String getPlatformmViewName(String viewName) {
+            return viewName;
+        }
+
+        @Override
+        protected String getProjectViewName(String viewName, Optional<String> platform) {
+            if (!platform.isPresent()) {
+                return viewName;
+            } else {
+                return viewName + "-" + platform.get();
+            }
+        }
     }
 
     public static class ViewTemplateProvider {
@@ -149,11 +164,23 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         protected String loadColumnsTemplate() throws IOException {
             return JenkinsJobTemplateBuilder.loadTemplate(getColumnsTemplate());
         }
+
+        protected String getPlatformmViewName(String viewName) {
+            return "." + viewName;
+        }
+
+        protected String getProjectViewName(String viewName, Optional<String> platform) {
+            if (!platform.isPresent()) {
+                return "~" + viewName;
+            } else {
+                return "~" + viewName + "-" + platform.get();
+            }
+        }
     }
 
     public static JenkinsViewTemplateBuilder getPlatformTemplate(ViewTemplateProvider vtp, VersionlessPlatform platform) throws IOException {
         return new JenkinsViewTemplateBuilder(
-                getPlatformmViewName(platform.getId()),
+                vtp.getPlatformmViewName(platform.getId()),
                 vtp.loadColumnsTemplate(),
                 getPlatformViewRegex(false, platform, false),
                 vtp.loadTemplate());
@@ -169,14 +196,18 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
 
     public static JenkinsViewTemplateBuilder getPlatformTemplate(ViewTemplateProvider vtp, String platform, List<Platform> platforms) throws IOException {
         return new JenkinsViewTemplateBuilder(
-                getPlatformmViewName(platform),
+                vtp.getPlatformmViewName(platform),
                 vtp.loadColumnsTemplate(),
                 getPlatformViewRegex(false, platform, platforms, false),
                 vtp.loadTemplate());
     }
 
-    private static String getPlatformmViewName(String viewName) {
-        return "." + viewName;
+    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(ViewTemplateProvider vtp, JDKVersion jp) throws IOException {
+        return new JenkinsViewTemplateBuilder(
+                jp.getId(),
+                vtp.loadColumnsTemplate(),
+                ".*" + getMajorDelimiter() + jp.getId() + getMinorDelimiter() + ".*",
+                vtp.loadTemplate());
     }
 
 
@@ -218,7 +249,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
 
     public static  JenkinsViewTemplateBuilder getProjectTemplate(ViewTemplateProvider vtp, String project, VersionlessPlatform platform) throws IOException {
         return new JenkinsViewTemplateBuilder(
-                getProjectViewName(project, Optional.of(platform.getId())),
+                vtp.getProjectViewName(project, Optional.of(platform.getId())),
                 vtp.loadColumnsTemplate(),
                 getProjectViewRegex(project, platform),
                 vtp.loadTemplate());
@@ -232,7 +263,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
 
     public static JenkinsViewTemplateBuilder getProjectTemplate(ViewTemplateProvider vtp, String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
         return new JenkinsViewTemplateBuilder(
-                getProjectViewName(viewName, platform),
+                vtp.getProjectViewName(viewName, platform),
                 vtp.loadColumnsTemplate(),
                 getProjectViewRegex(viewName, platform, platforms),
                 vtp.loadTemplate());
@@ -246,14 +277,6 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
                 vtp.loadTemplate());
     }
 
-    private static String getProjectViewName(String viewName, Optional<String> platform) {
-        if (!platform.isPresent()) {
-            return "~" + viewName;
-        } else {
-            return "~" + viewName + "-" + platform.get();
-        }
-    }
-
     private static String getProjectViewRegex(String project, Optional<String> platform, Optional<List<Platform>> platforms) {
         if (!platform.isPresent()) {
             return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + ".*" + "|"
@@ -261,7 +284,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         } else {
             if (platforms.isPresent()) {
                 return ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get(), false) + "|" +
-                        "build" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get(), true) + "|"
+                        "build" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get(),
+                        true) + "|"
                         + pull(project);
 
             } else {

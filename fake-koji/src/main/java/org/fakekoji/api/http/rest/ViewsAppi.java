@@ -88,7 +88,7 @@ public class ViewsAppi {
         if (nested){
              jvt = getNestedViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, subArches, jdkVersions);
         } else {
-           jvt = getDirectViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, subArches);
+           jvt = getDirectViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, subArches, jdkVersions);
         }
         return jvt.stream().filter(jvtb -> filter.matcher(jvtb.getName()).matches()).collect(Collectors.toList());
     }
@@ -96,21 +96,31 @@ public class ViewsAppi {
     private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects,
             List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches, List<JDKVersion> jdkVersions)  throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
-            for(String tab: new String[]{"projects", "tasks", "paltforms", "javas", "variants"}) {
+            for(String tab: new String[]{"projects", "tasks", "platforms", "jdkVersions", "variants"}) {
                 if (tab.equals("projects")){
                     addAllProjects(allPlatforms, projects, jvt, Optional.empty());
+                }
+                if (tab.equals("jdkVersions")){
+                    getAllJdkVersions(jdkVersions, jvt);
                 }
             }
         return jvt;
     }
 
+    private void getAllJdkVersions(List<JDKVersion> jdkVersions, List<JenkinsViewTemplateBuilder> jvt) throws IOException {
+        for (JDKVersion jp : jdkVersions) {
+            jvt.add(JenkinsViewTemplateBuilder.getJavaPlatformTemplate(getVtp(),jp));
+        }
+    }
+
     private List<JenkinsViewTemplateBuilder> getDirectViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects,
-            List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches) throws IOException {
+            List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches, List<JDKVersion> jdkVersions)  throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(getVtp(), "pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
         for (Task p : allTasks) {
             jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate(getVtp(), p.getId(), Task.getViewColumnsAsOptional(p), Optional.empty(), Optional.of(allPlatforms)));
         }
+        getAllJdkVersions(jdkVersions, jvt);
         addAllProjects(allPlatforms, projects, jvt, Optional.empty());
         for (Platform p : allPlatforms) {
             jvt.add(JenkinsViewTemplateBuilder.getPlatformTemplate(getVtp(), p.getId(), allPlatforms));
