@@ -317,4 +317,9 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     public CharSequence subSequence(int start, int end) {
         return name.subSequence(start, end);
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

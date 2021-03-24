@@ -3,6 +3,7 @@ package org.fakekoji.api.http.rest;
 import io.javalin.http.Context;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
+import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
@@ -10,6 +11,7 @@ import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
+import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
@@ -26,16 +28,19 @@ public class ViewsAppi {
 
     private final boolean skipEmpty;
     private final Pattern filter;
+    private final boolean nested;
 
     ViewsAppi(Context context) {
         this.filter = Pattern.compile(context.queryParam(OToolService.FILTER) == null ? ".*" : context.queryParam(OToolService.FILTER));
         this.skipEmpty = OToolService.notNullBoolean(context, OToolService.SKIP_EMPTY, false);
+        this.nested = OToolService.notNullBoolean(context, OToolService.NESTED, false);
     }
 
     @NotNull
-    List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager, TaskVariantManager variantManager) throws StorageException, IOException {
+    List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager, TaskVariantManager variantManager,  JDKVersionManager jdkVersionManager) throws StorageException, IOException {
         List<TaskVariant> taskVariants = variantManager.readAll();
         List<JDKTestProject> jdkTestProjecs = jdkTestProjectManager.readAll();
+        List<JDKVersion> jdkVersions = jdkVersionManager.readAll();
         List<JDKProject> jdkProjects = jdkProjectManager.readAll();
         List<Platform> allPlatforms = platformManager.readAll();
         List<Task> allTasks = taskManager.readAll();
@@ -79,6 +84,22 @@ public class ViewsAppi {
         Collections.sort(arches);
         Collections.sort(versionlessPlatforms);
         List<List<String>> subArches = Arrays.asList(osses, ossesVersioned, arches);
+        List<JenkinsViewTemplateBuilder> jvt;
+        if (nested){
+             jvt = getNestedViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, subArches, jdkVersions);
+        } else {
+           jvt = getDirectViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, subArches);
+        }
+        return jvt.stream().filter(jvtb -> filter.matcher(jvtb.getName()).matches()).collect(Collectors.toList());
+    }
+
+    private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects, List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches, List<JDKVersion> jdkVersions) {
+        List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
+        return jvt;
+    }
+
+    private List<JenkinsViewTemplateBuilder> getDirectViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects,
+            List<JenkinsViewTemplateBuilder.VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         jvt.add(JenkinsViewTemplateBuilder.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms)));
         for (Task p : allTasks) {
@@ -129,7 +150,7 @@ public class ViewsAppi {
                 jvt.add(JenkinsViewTemplateBuilder.getVariantTempalte(taskVariantValue.getId()));
             }
         }
-        return jvt.stream().filter(jvtb -> filter.matcher(jvtb.getName()).matches()).collect(Collectors.toList());
+        return jvt;
     }
 
     private String getMatches(List<String> jobs, JenkinsViewTemplateBuilder j) {

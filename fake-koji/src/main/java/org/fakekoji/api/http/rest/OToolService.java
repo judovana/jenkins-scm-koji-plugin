@@ -77,6 +77,7 @@ public class OToolService {
     public static final String PRODUCTS = "/products";
     static final String FILTER = "filter";
     static final String SKIP_EMPTY = "skipEmpty";
+    static final String NESTED = "nested";
     static final String ONLY_HW = "onlyHW";
     static final String ONLY_VM = "onlyVM";
     private static final String UPDATE_JOBS = "updateJobs";
@@ -111,12 +112,15 @@ public class OToolService {
                 + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
                 + "                optional argument project=    to regenerate only single project     \n"
                 + "                and whitelist=regec to lmit the search even more  \n"
+                + "\n"
                 + MISC + "/" + UPDATE_JOBS + "/{" + UPDATE_JOBS_LIST + "," + UPDATE_JOBS_XMLS + "," + UPDATE_JOBS_CREATE + "," + UPDATE_JOBS_REMOVE + "," + UPDATE_JOBS_UPDATE + "}\n"
                 + "                will affect update machines jobs\n"
                 + "                params: " + FILTER + "=regex " + ONLY_HW + "=bool " + ONLY_VM + "=bool\n"
+                + "\n"
                 + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL + "," + VIEWS_DETAILS + "," + VIEWS_XMLS + "," + VIEWS_CREATE + "," + VIEWS_REMOVE + "," + VIEWS_UPDATE + "," + VIEWS_MATCHES + "," + VIEWS_MATCHES_JENKINS + "}\n"
                 + "                will affect jenkins views\n"
-                + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false\n"
+                + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false " + NESTED + "=true/false\n"
+                + "\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
                 + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=baseajax/htmlspan/html/plain/fill (baseajax have optional nvr; fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
@@ -210,7 +214,7 @@ public class OToolService {
                 path(VIEWS, () -> {
                     get(VIEWS_CREATE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.create(jvt, jobs);
                                 context.status(OK).result(results);
@@ -218,7 +222,7 @@ public class OToolService {
                     ));
                     get(VIEWS_REMOVE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.delete(jvt, jobs);
                                 context.status(OK).result(results);
@@ -226,7 +230,7 @@ public class OToolService {
                     ));
                     get(VIEWS_UPDATE, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 String results = va.update(jvt, jobs);
                                 context.status(OK).result(results);
@@ -234,7 +238,7 @@ public class OToolService {
                     ));
                     get(VIEWS_LIST_OTOOL, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 if (va.isSkipEmpty()) {
                                     List<String> jobs = getterApi.getAllOtoolJobs();
                                     String viewsAndMatchesToPrint = va.listNonEmpty(jvt, jobs);
@@ -247,7 +251,7 @@ public class OToolService {
                     ));
                     get(VIEWS_DETAILS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 List<String> allJenkinsJobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(allJenkinsJobs);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
@@ -257,7 +261,7 @@ public class OToolService {
                     ));
                     get(VIEWS_XMLS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 if (va.isSkipEmpty()) {
                                     List<String> jobs = getterApi.getAllOtoolJobs();
                                     context.status(OK).result(va.getNonEmptyXmls(jvt, jobs));
@@ -268,14 +272,14 @@ public class OToolService {
                     ));
                     get(VIEWS_MATCHES, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 List<String> jobs = getterApi.getAllOtoolJobs();
                                 context.status(OK).result(va.printMatches(jvt, jobs));
                             }
                     ));
                     get(VIEWS_MATCHES_JENKINS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
-                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager);
+                                List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
                                 List<String> jobs = GetterAPI.getAllJenkinsJobs();
                                 Collections.sort(jobs);
                                 context.status(OK).result(va.printMatches(jvt, jobs));
