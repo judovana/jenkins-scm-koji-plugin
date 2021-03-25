@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -22,6 +23,62 @@ import java.util.regex.Pattern;
     <!-- .*-ojdk11~shenandoah~upstream~cpu-.*  instead of .*-ojdk11~shenandoah~upstream~cpu-.*-.*
  */
 public class JenkinsViewTemplateBuilder implements CharSequence {
+
+    public static class JenkinsViewTemplateBuilderFolder extends JenkinsViewTemplateBuilder {
+        static final String SUBVIEWS = "%{SUBVIEWS}";
+        private final List<JenkinsViewTemplateBuilder> views = new ArrayList<>();
+
+        public JenkinsViewTemplateBuilderFolder(String name) throws IOException {
+            super(name, "columns-unused-nvdir", "regex-unused-nvdir", new NestedViewTemplateProvider().loadTemplate());
+        }
+
+        public List<JenkinsViewTemplateBuilder> getViews() {
+            return views;
+        }
+
+        @Override
+        public String expand() {
+            return super.expand().replace(SUBVIEWS, expandInners());
+        }
+
+        private CharSequence expandInners() {
+            StringBuilder sb = new StringBuilder();
+            for (JenkinsViewTemplateBuilder jvtb : views) {
+                sb.append(jvtb.expand());
+            }
+            return sb.toString();
+        }
+
+        @Override
+        public String toString() {
+            return toString(0);
+        }
+
+        public String toString(int depth) {
+            return spaces(depth) + super.toString() + " (" + views.size() + ")" + endConditionally() + innersToString(depth);
+        }
+
+        private String endConditionally() {
+            if (views.isEmpty()) {
+                return "";
+            } else {
+                return "\n";
+            }
+        }
+
+        private String innersToString(int depth) {
+            depth += 2;
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < views.size(); i++) {
+                JenkinsViewTemplateBuilder jvtb = views.get(i);
+                sb.append(spaces(depth)).append(jvtb.toString(depth));
+                if (i < views.size() - 1) {
+                    sb.append("\n");
+                }
+            }
+            return sb.toString();
+        }
+    }
 
     public static class VersionlessPlatform implements CharSequence, Comparable<VersionlessPlatform> {
         private final String os;
@@ -149,6 +206,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     }
 
     public static class ViewTemplateProvider {
+
         protected JenkinsJobTemplateBuilder.JenkinsTemplate getTemplate() {
             return JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW;
         }
@@ -178,7 +236,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         }
     }
 
-    public static JenkinsViewTemplateBuilder getPlatformTemplate(ViewTemplateProvider vtp, VersionlessPlatform platform) throws IOException {
+    public static JenkinsViewTemplateBuilder getPlatformTemplate(VersionlessPlatform platform) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getPlatformmViewName(platform.getId()),
                 vtp.loadColumnsTemplate(),
@@ -194,7 +253,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return prefix + platform.os + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.arch + getPlatformSuffixRegexString(isBuild) + ".*";
     }
 
-    public static JenkinsViewTemplateBuilder getPlatformTemplate(ViewTemplateProvider vtp, String platform, List<Platform> platforms) throws IOException {
+    public static JenkinsViewTemplateBuilder getPlatformTemplate(String platform, List<Platform> platforms) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getPlatformmViewName(platform),
                 vtp.loadColumnsTemplate(),
@@ -202,7 +262,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
                 vtp.loadTemplate());
     }
 
-    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(ViewTemplateProvider vtp, JDKVersion jp) throws IOException {
+    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 jp.getId(),
                 vtp.loadColumnsTemplate(),
@@ -247,7 +308,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         //(major|minor)
     }
 
-    public static  JenkinsViewTemplateBuilder getProjectTemplate(ViewTemplateProvider vtp, String project, VersionlessPlatform platform) throws IOException {
+    public static JenkinsViewTemplateBuilder getProjectTemplate(String project, VersionlessPlatform platform) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getProjectViewName(project, Optional.of(platform.getId())),
                 vtp.loadColumnsTemplate(),
@@ -261,7 +323,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
                 + pull(project);
     }
 
-    public static JenkinsViewTemplateBuilder getProjectTemplate(ViewTemplateProvider vtp, String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+    public static JenkinsViewTemplateBuilder getProjectTemplate(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getProjectViewName(viewName, platform),
                 vtp.loadColumnsTemplate(),
@@ -269,11 +332,12 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
                 vtp.loadTemplate());
     }
 
-    public static  JenkinsViewTemplateBuilder getVariantTempalte(ViewTemplateProvider vtp, String id) throws IOException {
+    public static JenkinsViewTemplateBuilder getVariantTempalte(String id) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 id,
                 vtp.loadColumnsTemplate(),
-                "^"+id+"[_\\.-].*"+"|"+".*[_\\.-]"+id+"[_\\.-].*"+"|"+".*[_\\.-]"+id+"$",
+                "^" + id + "[_\\.-].*" + "|" + ".*[_\\.-]" + id + "[_\\.-].*" + "|" + ".*[_\\.-]" + id + "$",
                 vtp.loadTemplate());
     }
 
@@ -300,7 +364,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return "pull" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project;
     }
 
-    public static JenkinsViewTemplateBuilder getTaskTemplate(ViewTemplateProvider vtp, String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
+    public static JenkinsViewTemplateBuilder getTaskTemplate(String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 getTaskViewName(task, Optional.of(platform.getId())),
                 columns.orElse(vtp.loadColumnsTemplate()),
@@ -312,7 +377,8 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform, false);
     }
 
-    public static JenkinsViewTemplateBuilder getTaskTemplate(ViewTemplateProvider vtp, String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+    public static JenkinsViewTemplateBuilder getTaskTemplate(String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+        ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 getTaskViewName(viewName, platform),
                 columns.orElse(vtp.loadColumnsTemplate()),
@@ -369,5 +435,17 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
     @Override
     public String toString() {
         return name;
+    }
+
+    public String toString(int depth) {
+        return spaces(depth) + toString();
+    }
+
+    private static String spaces(int depth) {
+        StringBuilder sb = new StringBuilder();
+        while (sb.length() < depth) {
+            sb.append(" ");
+        }
+        return sb.toString();
     }
 }
