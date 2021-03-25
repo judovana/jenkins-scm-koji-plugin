@@ -267,7 +267,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return new JenkinsViewTemplateBuilder(
                 jp.getId(),
                 vtp.loadColumnsTemplate(),
-                ".*" + getMajorDelimiter() + jp.getId() + getMinorDelimiter() + ".*",
+                ".*" + getMajorDelimiter() + jp.getId() + getMajorDelimiter() + ".*",
                 vtp.loadTemplate());
     }
 
