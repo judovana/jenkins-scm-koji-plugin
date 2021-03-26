@@ -1,19 +1,14 @@
-package org.fakekoji.jobmanager;
+package org.fakekoji.jobmanager.views;
 
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /*
      <!-- ~ojdk11~shenandoah~upstream~cpu-otherStuf -->
@@ -22,180 +17,26 @@ import java.util.regex.Pattern;
     <!-- mind the dashes, mind the build!-->
     <!-- .*-ojdk11~shenandoah~upstream~cpu-.*  instead of .*-ojdk11~shenandoah~upstream~cpu-.*-.*
  */
-public class JenkinsViewTemplateBuilder implements CharSequence {
+public class JenkinsViewTemplateBuilderFactory {
 
-    public static class JenkinsViewTemplateBuilderFolder extends JenkinsViewTemplateBuilder {
-        static final String SUBVIEWS = "%{SUBVIEWS}";
-        private final List<JenkinsViewTemplateBuilder> views = new ArrayList<>();
-
-        public JenkinsViewTemplateBuilderFolder(String name) throws IOException {
-            super(name, null, null, new NestedViewTemplateProvider().loadTemplate());
-        }
-
-        public List<JenkinsViewTemplateBuilder> getViews() {
-            return views;
-        }
-
-        @Override
-        public String expand() {
-            return super.expand().replace(SUBVIEWS, expandInners());
-        }
-
-        private CharSequence expandInners() {
-            StringBuilder sb = new StringBuilder();
-            for (JenkinsViewTemplateBuilder jvtb : views) {
-                sb.append(jvtb.expand());
-            }
-            return sb.toString();
-        }
-
-        @Override
-        public String toString() {
-            return toExtendedPrint(Optional.empty(), false, false, 0);
-        }
-
-        @Override
-        public String toExtendedPrint(Optional<List<String>> jobs, boolean details, boolean matches) {
-            return toExtendedPrint(jobs, details, matches, 0);
-        }
-
-        @Override
-        protected String toExtendedPrint(Optional<List<String>> jobs, boolean details, boolean matches, int depth) {
-            return spaces(depth) + getName() + " (" + views.size() + ")\n" + innersToString(jobs, details, matches, depth);
-        }
-
-        private String innersToString(Optional<List<String>> jobs, boolean details, boolean matches, int depth) {
-            depth += 2;
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < views.size(); i++) {
-                JenkinsViewTemplateBuilder jvtb = views.get(i);
-                sb.append(spaces(depth)).append(jvtb.toExtendedPrint(jobs, details, matches, depth));
-            }
-            if (sb.length() > 1) {
-                sb = sb.delete(sb.length() - 2, sb.length() - 1);
-            }
-            return sb.toString();
-        }
-
-        @Override
-        public boolean clearOutMatches(Optional<List<String>> jobs) {
-            if (jobs.isPresent()) {
-                for (int i = 0; i < views.size(); i++) {
-                    JenkinsViewTemplateBuilder view = views.get(i);
-                    if (view.clearOutMatches(jobs)) {
-                        views.remove(i);
-                        i--;
-                    }
-                }
-                return views.isEmpty();
-            } else {
-                return false;
-            }
-        }
-
-        @Override
-        public List<String> getMatches(Optional<List<String>> jobs) {
-            if (jobs.isPresent()) {
-                List<String> r = new ArrayList<>(jobs.get().size() / 10);
-                for (String job : jobs.get()) {
-                    if (getRegex().matcher(job).matches()) {
-                        r.add(job);
-                    }
-                }
-                return r;
-            } else {
-                //and now what ::D
-                return new ArrayList<>(0);
-            }
-        }
+    public static JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder getJenkinsViewTemplateBuilderFolder(String tab) throws IOException {
+        return new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder(tab, new NestedViewTemplateProvider().loadTemplate());
     }
 
-    public static class VersionlessPlatform implements CharSequence, Comparable<VersionlessPlatform> {
-        private final String os;
-        private final String arch;
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            VersionlessPlatform that = (VersionlessPlatform) o;
-            return Objects.equals(os, that.os) &&
-                    Objects.equals(arch, that.arch);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(os, arch);
-        }
-
-        public VersionlessPlatform(String os, String arch) {
-            this.os = os;
-            this.arch = arch;
-        }
-
-        public String getOs() {
-            return os;
-        }
-
-        public String getArch() {
-            return arch;
-        }
-
-        public String getId() {
-            return os + getMinorDelimiter() + arch;
-        }
-
-        @Override
-        public int length() {
-            return getId().length();
-        }
-
-        @Override
-        public char charAt(int index) {
-            return getId().charAt(index);
-        }
-
-        @Override
-        public CharSequence subSequence(int start, int end) {
-            return getId().subSequence(start, end);
-        }
-
-        @Override
-        public int compareTo(@NotNull VersionlessPlatform o) {
-            return getId().compareTo(o.getId());
-        }
-    }
-
-    static final String VIEW_NAME = "%{VIEW_NAME}";
-    static final String COLUMNS = "%{COLUMNS}";
-    static final String VIEW_REGEX = "%{VIEW_REGEX}";
-
-    private final String name;
-    private final String columns;
-    private final Pattern regex;
-    private final String template;
-
-    public String getName() {
-        return name;
-    }
-
-    public Pattern getRegex() {
-        return regex;
-    }
-
-    private static String getMajorDelimiter() {
+    static String getMajorDelimiter() {
         return Job.DELIMITER;
     }
 
-    private static String getMinorDelimiter() {
+    static String getMinorDelimiter() {
         return Job.VARIANTS_DELIMITER;
     }
 
-    private static String getEscapedMajorDelimiter() {
+    static String getEscapedMajorDelimiter() {
         return escape(getMajorDelimiter());
     }
 
-    private static String getEscapedMinorDelimiter() {
+    static String getEscapedMinorDelimiter() {
         return escape(getMinorDelimiter());
     }
 
@@ -208,18 +49,9 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         }
     }
 
-    public JenkinsViewTemplateBuilder(String name, String columns, String regex, String template) {
-        this.name = name;
-        this.columns = columns;
-        if (regex == null) {
-            this.regex = null;
-        } else {
-            this.regex = Pattern.compile(regex);
-        }
-        this.template = template;
-    }
 
     public static class NestedViewTemplateProvider extends ViewTemplateProvider {
+
         protected JenkinsJobTemplateBuilder.JenkinsTemplate getTemplate() {
             return JenkinsJobTemplateBuilder.JenkinsTemplate.NESTED_VIEW;
         }
@@ -284,7 +116,7 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         if (isForBuild) {
             prefix = "";
         }
-        return prefix + platform.os + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.arch + getPlatformSuffixRegexString(isBuild) + ".*";
+        return prefix + platform.getOs() + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.getArch() + getPlatformSuffixRegexString(isBuild) + ".*";
     }
 
     public static JenkinsViewTemplateBuilder getPlatformTemplate(String platform, List<Platform> platforms) throws IOException {
@@ -440,93 +272,4 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         }
     }
 
-    public String expand() {
-        return JenkinsJobTemplateBuilder.prettyPrint(template
-                .replace(VIEW_NAME, name)
-                .replace(COLUMNS, columns == null ? "not_used_columns" : columns)
-                .replace(VIEW_REGEX, regex == null ? "not_used_regex" : regex.toString()));
-    }
-
-    public InputStream expandToStream() {
-        return new ByteArrayInputStream(expand().getBytes(StandardCharsets.UTF_8));
-    }
-
-    @Override
-    public int length() {
-        return name.length();
-    }
-
-    @Override
-    public char charAt(int index) {
-        return name.charAt(index);
-    }
-
-    @Override
-    public CharSequence subSequence(int start, int end) {
-        return name.subSequence(start, end);
-    }
-
-    @Override
-    public String toString() {
-        return name;
-    }
-
-    public String toExtendedPrint(Optional<List<String>> jobs, boolean details, boolean matches) {
-        if (jobs.isPresent()) {
-            StringBuilder sb;
-            List<String> matchingJobs = getMatches(jobs);
-            if (details) {
-                sb = new StringBuilder(name + " (" + matchingJobs.size() + ") " + getRegex() + "\n");
-            } else {
-                sb = new StringBuilder(name + "\n");
-            }
-            if (matches) {
-                for (String job : matchingJobs) {
-                    sb.append(job).append("\n");
-                }
-            }
-            return sb.toString();
-        } else {
-            return name + "\n";
-        }
-    }
-
-    protected String toExtendedPrint(Optional<List<String>> jobs, boolean details, boolean matches, int depth) {
-        return spaces(depth) + toExtendedPrint(jobs, details, matches);
-    }
-
-    /**
-     * @param jobs
-     * @return true, if there is no match, and so should be dropped
-     */
-    public boolean clearOutMatches(Optional<List<String>> jobs) {
-        if (jobs.isPresent()) {
-            return getMatches(jobs).isEmpty();
-        } else {
-            return false;
-        }
-    }
-
-    public List<String> getMatches(Optional<List<String>> jobs) {
-        if (jobs.isPresent()) {
-            List<String> r = new ArrayList<>(jobs.get().size() / 10);
-            for (String job : jobs.get()) {
-                if (getRegex().matcher(job).matches()) {
-                    r.add(job);
-                }
-            }
-            return r;
-        } else {
-            //and now what ::D
-            return new ArrayList<>(0);
-        }
-    }
-
-    private static String spaces(int depth) {
-        StringBuilder sb = new StringBuilder();
-        while (sb.length() < depth) {
-            sb.append(" ");
-        }
-        return sb.toString();
-    }
 }

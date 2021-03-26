@@ -15,7 +15,7 @@ import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFillingFormatter;
 import org.fakekoji.core.utils.matrix.formatter.HtmlSpanningFormatter;
 import org.fakekoji.core.utils.matrix.formatter.PlainTextFormatter;
 import org.fakekoji.jobmanager.JenkinsUpdateVmTemplateBuilder;
-import org.fakekoji.jobmanager.JenkinsViewTemplateBuilder;
+import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.ManagementResult;

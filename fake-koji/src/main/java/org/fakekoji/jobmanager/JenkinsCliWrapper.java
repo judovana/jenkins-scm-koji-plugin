@@ -18,6 +18,7 @@ import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.future.CloseFuture;
 import org.apache.sshd.common.util.io.NoCloseInputStream;
+import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilder;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 public class JenkinsCliWrapper {
