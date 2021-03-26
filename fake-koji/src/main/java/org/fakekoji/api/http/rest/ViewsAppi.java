@@ -101,6 +101,11 @@ public class ViewsAppi {
                 jvt.add(current);
                 if (tab.equals("projects")) {
                     current.getViews().addAll(addAllProjects(allPlatforms, projects, Optional.empty()));
+                    for (Platform p : allPlatforms) {
+                        JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder projectAndPlatform = new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder(p.getId());
+                        current.getViews().add(projectAndPlatform);
+                        projectAndPlatform.getViews().addAll(addAllProjects(allPlatforms, projects, Optional.of(p.getId())));
+                    }
                 }
                 if (tab.equals("jdkVersions")) {
                     current.getViews().addAll(getAllJdkVersions(jdkVersions));
@@ -175,46 +180,31 @@ public class ViewsAppi {
         return jvt;
     }
 
-    private String getMatches(List<String> jobs, JenkinsViewTemplateBuilder j) {
-        StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-        Pattern pattern = j.getRegex();
-        for (String job : jobs) {
-            if (((Pattern) pattern).matcher(job).matches()) {
-                viewsAndMatchesToPrint.append("  " + job + "\n");
-            }
-        }
-        return viewsAndMatchesToPrint.toString();
-    }
-
     boolean isSkipEmpty() {
         return skipEmpty;
     }
 
     public String printMatches(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
         StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-        for (JenkinsViewTemplateBuilder j : jvt) {
-            String name = j.getName() + "\n";
-            String matches = this.getMatches(jobs, j);
-            if (this.isSkipEmpty()) {
-                if (!matches.isEmpty()) {
-                    viewsAndMatchesToPrint.append(name + matches);
-                }
-            } else {
-                viewsAndMatchesToPrint.append(name + matches);
-            }
-        }
-       return viewsAndMatchesToPrint.toString();
+        jvt = filterEmptyIfSelected(jvt, Optional.of(jobs));
+        return list(jvt, Optional.of(jobs), true, false);
     }
 
-    public String getNonEmptyXmls(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs ) {
+    private List<JenkinsViewTemplateBuilder> filterEmptyIfSelected(List<JenkinsViewTemplateBuilder> jvt, Optional<List<String>> jobs) {
+        if (this.isSkipEmpty()) {
+            return jvt.stream().filter(j -> !j.clearOutMatches(jobs)).collect(Collectors.toList());
+        }
+        return jvt;
+    }
+
+
+    public String getNonEmptyXmls(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
         StringBuilder xmlsToPrint = new StringBuilder();
+        jvt = filterEmptyIfSelected(jvt, Optional.of(jobs));
         for (JenkinsViewTemplateBuilder j : jvt) {
             String name = "  ***  " + j.getName() + "  ***  \n";
-            String matches = this.getMatches(jobs, j);
-            if (!matches.isEmpty()) {
-                xmlsToPrint.append(name);
-                xmlsToPrint.append(j.expand() + "\n");
-            }
+            xmlsToPrint.append(name);
+            xmlsToPrint.append(j.expand() + "\n");
         }
         return xmlsToPrint.toString();
     }
@@ -228,58 +218,25 @@ public class ViewsAppi {
         return xmlsToPrint.toString();
     }
 
-    public  String getDetails(List<JenkinsViewTemplateBuilder> jvt, List<String> allJenkinsJobs, List<String> jobs) {
-        StringBuilder detailsToPrint = new StringBuilder();
-        for (JenkinsViewTemplateBuilder j : jvt) {
-            Pattern pattern = j.getRegex();
-            int jobCounter = 0;
-            for (String job : jobs) {
-                if (pattern.matcher(job).matches()) {
-                    jobCounter++;
-                }
-            }
-            int jenkinsJobCounter = 0;
-            for (String jjob : allJenkinsJobs) {
-                if (pattern.matcher(jjob).matches()) {
-                    jenkinsJobCounter++;
-                }
-            }
-            if (this.isSkipEmpty()) {
-                if (jobCounter > 0 && jenkinsJobCounter >= 0) {
-                    detailsToPrint.append(j.getName() + " (" + jobCounter + ") (" + jenkinsJobCounter + ") " + j.getRegex() + "\n");
-                }
-            } else {
-                detailsToPrint.append(j.getName() + " (" + jobCounter + ") (" + jenkinsJobCounter + ") " + j.getRegex() + "\n");
-            }
-        }
-        return detailsToPrint.toString();
+    public String getDetails(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
+        StringBuilder viewsAndMatchesToPrint = new StringBuilder();
+        jvt = filterEmptyIfSelected(jvt, Optional.of(jobs));
+        return list(jvt, Optional.of(jobs), false, true);
     }
 
     @NotNull
     public String listNonEmpty(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs) {
-        StringBuilder viewsAndMatchesToPrint = new StringBuilder();
-        for (JenkinsViewTemplateBuilder j : jvt) {
-            if (j instanceof JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder) {
-                viewsAndMatchesToPrint.append(j.toExtendedPrint());
-            } else if (j instanceof JenkinsViewTemplateBuilder) {
-                String matches = this.getMatches(jobs, j);
-                if (!matches.isEmpty()) {
-                    viewsAndMatchesToPrint.append(j.toExtendedPrint());
-                }
-            } else {
-                //FIXME also valid for details and xmls (again, xmls must be handled in JenkinsViewTemplateBuilder
-                throw new RuntimeException("TODO. this must be delgated to JenkinsViewTemplateBuilder as nested views do very diferently here ");
-            }
-        }
-        return viewsAndMatchesToPrint.toString();
+        jvt = filterEmptyIfSelected(jvt, Optional.of(jobs));
+        return list(jvt, Optional.of(jobs), false, false);
     }
 
-    public String list(List<JenkinsViewTemplateBuilder> jvt) {
-        return jvt.stream().map( j ->  j.toExtendedPrint()).collect(Collectors.joining());
+    public String list(List<JenkinsViewTemplateBuilder> jvt, Optional<List<String>> jobs, boolean matches, boolean details) {
+        return jvt.stream().map(j -> j.toExtendedPrint(jobs, details, matches)).collect(Collectors.joining());
     }
 
-    private interface WorkingFunction{
+    private interface WorkingFunction {
         JenkinsCliWrapper.ClientResponse work(JenkinsViewTemplateBuilder j);
+
         String getOp();
     }
 
@@ -323,15 +280,9 @@ public class ViewsAppi {
 
     private String jenkinsWork(List<JenkinsViewTemplateBuilder> jvt, List<String> jobs, WorkingFunction operation) {
         StringBuilder viewsAndMatchesToPrint = new StringBuilder();
+        jvt = filterEmptyIfSelected(jvt, Optional.of(jobs));
         for (JenkinsViewTemplateBuilder j : jvt) {
-            String matches = this.getMatches(jobs, j);
-            if (this.isSkipEmpty()) {
-                if (!matches.isEmpty()) {
                     actOnHit(operation, viewsAndMatchesToPrint, j);
-                }
-            } else {
-                actOnHit(operation, viewsAndMatchesToPrint, j);
-            }
         }
         return viewsAndMatchesToPrint.toString();
     }

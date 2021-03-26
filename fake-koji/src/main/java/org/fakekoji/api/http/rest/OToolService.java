@@ -244,7 +244,7 @@ public class OToolService {
                                     String viewsAndMatchesToPrint = va.listNonEmpty(jvt, jobs);
                                     context.status(OK).result(viewsAndMatchesToPrint);
                                 } else {
-                                    String viewsAndMatchesToPrint = va.list(jvt);
+                                    String viewsAndMatchesToPrint = va.list(jvt, Optional.empty(), false, false);
                                     context.status(OK).result(viewsAndMatchesToPrint);
                                 }
                             }
@@ -252,10 +252,8 @@ public class OToolService {
                     get(VIEWS_DETAILS, wrapper.wrap(context -> {
                                 ViewsAppi va = new ViewsAppi(context);
                                 List<JenkinsViewTemplateBuilder> jvt = va.getJenkinsViewTemplateBuilders(jdkTestProjectManager, jdkProjectManager, platformManager, taskManager, taskVariantManager, jdkVersionManager);
-                                List<String> allJenkinsJobs = GetterAPI.getAllJenkinsJobs();
-                                Collections.sort(allJenkinsJobs);
-                                List<String> jobs = getterApi.getAllOtoolJobs();
-                                String details = va.getDetails(jvt, allJenkinsJobs, jobs);
+                        List<String> jobs = getterApi.getAllOtoolJobs();
+                        String details = va.getDetails(jvt, jobs);
                                 context.status(OK).result(details);
                             }
                     ));
