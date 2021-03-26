@@ -51,19 +51,14 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
 
         @Override
         public String toString() {
-            return toString(0);
+            return toExtendedPrint(0);
+        }
+        public String toExtendedPrint() {
+            return toExtendedPrint(0);
         }
 
-        public String toString(int depth) {
-            return spaces(depth) + super.toString() + " (" + views.size() + ")" + endConditionally() + innersToString(depth);
-        }
-
-        private String endConditionally() {
-            if (views.isEmpty()) {
-                return "";
-            } else {
-                return "\n";
-            }
+        public String toExtendedPrint(int depth) {
+            return spaces(depth) + getName() + " (" + views.size() + ")\n" + innersToString(depth);
         }
 
         private String innersToString(int depth) {
@@ -71,10 +66,10 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < views.size(); i++) {
                 JenkinsViewTemplateBuilder jvtb = views.get(i);
-                sb.append(spaces(depth)).append(jvtb.toString(depth));
-                if (i < views.size() - 1) {
-                    sb.append("\n");
-                }
+                sb.append(spaces(depth)).append(jvtb.toExtendedPrint(depth));
+            }
+            if (sb.length()>1) {
+                sb = sb.delete(sb.length() - 2, sb.length() - 1);
             }
             return sb.toString();
         }
@@ -437,8 +432,12 @@ public class JenkinsViewTemplateBuilder implements CharSequence {
         return name;
     }
 
-    public String toString(int depth) {
-        return spaces(depth) + toString();
+    public String toExtendedPrint() {
+        return name + "\n";
+    }
+
+    public String toExtendedPrint(int depth) {
+        return spaces(depth) + toExtendedPrint();
     }
 
     private static String spaces(int depth) {

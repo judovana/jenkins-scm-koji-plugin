@@ -260,11 +260,11 @@ public class ViewsAppi {
         StringBuilder viewsAndMatchesToPrint = new StringBuilder();
         for (JenkinsViewTemplateBuilder j : jvt) {
             if (j instanceof JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder) {
-                viewsAndMatchesToPrint.append(j.toString()).append("\n");
+                viewsAndMatchesToPrint.append(j.toExtendedPrint());
             } else if (j instanceof JenkinsViewTemplateBuilder) {
                 String matches = this.getMatches(jobs, j);
                 if (!matches.isEmpty()) {
-                    viewsAndMatchesToPrint.append(j.toString()).append("\n");
+                    viewsAndMatchesToPrint.append(j.toExtendedPrint());
                 }
             } else {
                 //FIXME also valid for details and xmls (again, xmls must be handled in JenkinsViewTemplateBuilder
@@ -275,7 +275,7 @@ public class ViewsAppi {
     }
 
     public String list(List<JenkinsViewTemplateBuilder> jvt) {
-        return String.join("\n", jvt) + "\n";
+        return jvt.stream().map( j ->  j.toExtendedPrint()).collect(Collectors.joining());
     }
 
     private interface WorkingFunction{
