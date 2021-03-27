@@ -73,6 +73,10 @@ public class Platform implements  Comparable<Platform> {
         return os;
     }
 
+    public String getOsVersion() {
+        return os+version;
+    }
+
     public String getVersion() {
         return version;
     }

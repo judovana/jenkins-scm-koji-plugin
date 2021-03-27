@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -33,8 +34,12 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
             super(name, null, null, template);
         }
 
-        public List<JenkinsViewTemplateBuilder> getViews() {
-            return views;
+        public void addView(JenkinsViewTemplateBuilder jvtb) {
+            views.add(jvtb);
+        }
+
+        public void addAll(Collection<? extends JenkinsViewTemplateBuilder> jvtbs) {
+            views.addAll(jvtbs);
         }
 
         @Override
@@ -73,7 +78,7 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
                 sb.append(spaces(depth)).append(jvtb.toExtendedPrint(jobs, details, matches, depth));
             }
             if (sb.length() > 1) {
-                sb = sb.delete(sb.length() - 2, sb.length() - 1);
+                sb = sb.delete(sb.length() - 1, sb.length() - 1);
             }
             return sb.toString();
         }
