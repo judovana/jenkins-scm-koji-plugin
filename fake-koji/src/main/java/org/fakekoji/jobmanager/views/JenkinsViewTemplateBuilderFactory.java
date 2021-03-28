@@ -152,7 +152,7 @@ public class JenkinsViewTemplateBuilderFactory {
             } else if (orig.getArchitecture().equals(platformPart)) {
                 //ignoring prefix, we are behind os anyway
                 return ".*" + getEscapedMinorDelimiter() + platformPart + suffix + ".*";
-            } else if ((orig.getOs() + orig.getVersion()).equals(platformPart)) {
+            } else if ((orig.getOsVersion()).equals(platformPart)) {
                 return prefix + platformPart + getEscapedMinorDelimiter() + "[0-9a-zA-Z_]{2,8}"/*arch*/ + suffix + ".*";
             } else if (orig.getOs().equals(platformPart)) {
                 //this may be naive, but afaik ncessary, otherwise el, f, w  would match everything

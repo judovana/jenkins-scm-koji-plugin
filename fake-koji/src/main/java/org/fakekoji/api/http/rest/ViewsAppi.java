@@ -199,6 +199,54 @@ public class ViewsAppi {
                     }
                 }
             }
+            if (tab.equals("platforms")) {
+                for (String os : osses) {
+                    projectFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(os, allPlatforms));
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os);
+                    projectFolder.addView(osFolder);
+                    for (String osVersioned : ossesVersioned) {
+                        if (osVersioned.startsWith(os)) {
+                            osFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(osVersioned, allPlatforms));
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned);
+                            osFolder.addView(osVersionedFolder);
+                            for (Platform fullPlatform : allPlatforms) {
+                                if (fullPlatform.getOsVersion().equals(osVersioned)) {
+                                    osVersionedFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(fullPlatform.getId(), allPlatforms));
+                                }
+                            }
+                        }
+                    }
+                    for (VersionlessPlatform vp : versionlessPlatforms) {
+                        if (vp.getOs().equals(os)) {
+                            osFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(vp));
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            osFolder.addView(osArchedFolder);
+                            for (Platform fullPlatform : allPlatforms) {
+                                if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().equals(os)) {
+                                    osArchedFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(fullPlatform.getId(), allPlatforms));
+                                }
+                            }
+                        }
+                    }
+                }
+                for (String arch : arches) {
+                    projectFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(arch, allPlatforms));
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch);
+                    projectFolder.addView(archFolder);
+                    for (VersionlessPlatform vp : versionlessPlatforms) {
+                        if (vp.getArch().equals(arch)) {
+                            archFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(vp));
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            archFolder.addView(osArchedFolder);
+                            for (Platform fullPlatform : allPlatforms) {
+                                if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().startsWith(vp.getOs())) {
+                                    osArchedFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(fullPlatform.getId(), allPlatforms));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             if (tab.equals("variants")) {
                 projectFolder.addAll(getAllVariants(taskVariants));
             }
