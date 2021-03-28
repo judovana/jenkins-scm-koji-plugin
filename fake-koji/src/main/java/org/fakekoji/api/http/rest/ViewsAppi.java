@@ -2,6 +2,7 @@ package org.fakekoji.api.http.rest;
 
 import io.javalin.http.Context;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
+import org.fakekoji.jobmanager.model.TaskJob;
 import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilderFactory;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
@@ -251,7 +252,53 @@ public class ViewsAppi {
                 projectFolder.addAll(getAllVariants(taskVariants));
             }
             if (tab.equals("jdkVersions")) {
-                projectFolder.addAll(getAllJdkVersions(jdkVersions));
+                projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.empty()));
+                for (String os : osses) {
+                    projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(os)));
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os);
+                    projectFolder.addView(osFolder);
+                    for (String osVersioned : ossesVersioned) {
+                        if (osVersioned.startsWith(os)) {
+                            osFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(osVersioned)));
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned);
+                            osFolder.addView(osVersionedFolder);
+                            for (Platform fullPlatform : allPlatforms) {
+                                if (fullPlatform.getOsVersion().equals(osVersioned)) {
+                                    osVersionedFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(fullPlatform.getId())));
+                                }
+                            }
+                        }
+                    }
+                    for (VersionlessPlatform vp : versionlessPlatforms) {
+                        if (vp.getOs().equals(os)) {
+                            osFolder.addAll(getAllJdkVersions(jdkVersions, vp));
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            osFolder.addView(osArchedFolder);
+                            for (Platform fullPlatform : allPlatforms) {
+                                if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().equals(os)) {
+                                    osArchedFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(fullPlatform.getId())));
+                                }
+                            }
+                        }
+                    }
+                }
+                for (String arch : arches) {
+                    projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(arch)));
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch);
+                    projectFolder.addView(archFolder);
+                    for (VersionlessPlatform vp : versionlessPlatforms) {
+                        if (vp.getArch().equals(arch)) {
+                            archFolder.addAll(getAllJdkVersions(jdkVersions, vp));
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            archFolder.addView(osArchedFolder);
+                            for (Platform fullPlatform : allPlatforms) {
+                                if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().startsWith(vp.getOs())) {
+                                    osArchedFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(fullPlatform.getId())));
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         jvt.add(createPullView(allPlatforms));
@@ -263,10 +310,18 @@ public class ViewsAppi {
         return JenkinsViewTemplateBuilderFactory.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms));
     }
 
-    private List<JenkinsViewTemplateBuilder> getAllJdkVersions(List<JDKVersion> jdkVersions) throws IOException {
+    private List<JenkinsViewTemplateBuilder> getAllJdkVersions(List<Platform> allPlatforms, List<JDKVersion> jdkVersions, Optional<String> platform) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         for (JDKVersion jp : jdkVersions) {
-            jvt.add(JenkinsViewTemplateBuilderFactory.getJavaPlatformTemplate(jp));
+            jvt.add(JenkinsViewTemplateBuilderFactory.getJavaPlatformTemplate(jp, platform, Optional.of(allPlatforms)));
+        }
+        return jvt;
+    }
+
+    private List<JenkinsViewTemplateBuilder> getAllJdkVersions(List<JDKVersion> jdkVersions, VersionlessPlatform vp) throws IOException {
+        List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
+        for (JDKVersion jp : jdkVersions) {
+            jvt.add(JenkinsViewTemplateBuilderFactory.getJavaPlatformTemplate(jp, vp));
         }
         return jvt;
     }
@@ -276,7 +331,7 @@ public class ViewsAppi {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         jvt.add(createPullView(allPlatforms));
         jvt.addAll(getAllTasks(allPlatforms, allTasks, Optional.empty()));
-        jvt.addAll(getAllJdkVersions(jdkVersions));
+        jvt.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.empty()));
         jvt.addAll(addAllProjects(allPlatforms, projects, Optional.empty()));
         for (Platform p : allPlatforms) {
             jvt.add(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(p.getId(), allPlatforms));

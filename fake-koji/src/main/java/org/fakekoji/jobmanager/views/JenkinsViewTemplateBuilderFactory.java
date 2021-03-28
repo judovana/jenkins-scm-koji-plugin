@@ -128,13 +128,11 @@ public class JenkinsViewTemplateBuilderFactory {
                 vtp.loadTemplate());
     }
 
-    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp) throws IOException {
-        ViewTemplateProvider vtp = new ViewTemplateProvider();
-        return new JenkinsViewTemplateBuilder(
-                jp.getId(),
-                vtp.loadColumnsTemplate(),
-                ".*" + getMajorDelimiter() + jp.getId() + getMajorDelimiter() + ".*",
-                vtp.loadTemplate());
+    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+        return getProjectTemplate(jp.getId(), platform, platforms);
+    }
+    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp, VersionlessPlatform vp) throws IOException {
+        return getProjectTemplate(jp.getId(), vp);
     }
 
 
