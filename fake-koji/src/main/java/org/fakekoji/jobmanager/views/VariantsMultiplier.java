@@ -6,8 +6,12 @@ import org.fakekoji.model.TaskVariantValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class VariantsMultiplier {
@@ -72,7 +76,101 @@ public class VariantsMultiplier {
         return jvt;
     }
 
+    private static boolean haveMatch(JenkinsViewTemplateBuilder view, List<String> jobs){
+        for (String job : jobs) {
+            if (view.getRegex().matcher(job).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static List<NestedVariantHelper> combinedVariantsToTree(List<String> views, List<TaskVariant> maxVariants, Optional<List<String>> jobs) throws IOException {
+        List<NestedVariantHelper>[] futureTree = new List[maxVariants.size()+1];
+        for (int i = 0; i < futureTree.length; i++) {
+            futureTree[i] = new ArrayList<>(views.size() / maxVariants.size());
+        }
+        for (String view : views) {
+            NestedVariantHelper v = new NestedVariantHelper(view);
+            if (jobs.isPresent()) {
+                if (haveMatch(v.view, jobs.get())) {
+                    futureTree[v.getSegments()].add(v);
+                }
+            } else {
+                futureTree[v.getSegments()].add(v);
+            }
+        }
+        for (int i = futureTree.length - 1; i > 1/*really,must NOT fold into [0]*/; i--) {
+            for (NestedVariantHelper viewToFold : futureTree[i]) {
+                for (NestedVariantHelper viewToMatch : futureTree[i - 1]) {
+                    if (viewToFold.belongsBelow(viewToMatch)) {
+                        viewToMatch.add(viewToFold);
+                    }
+                }
+            }
+        }
+        return futureTree[1];
+    }
+
+    public static Collection<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsTree(List<NestedVariantHelper> tree) throws IOException {
+        List<JenkinsViewTemplateBuilder> r = new ArrayList<>(tree.size()*2);//folders+views=>*2
+        for(NestedVariantHelper leaf: tree){
+            r.add(leaf.view);
+            if (leaf.children.size()>0) {
+                JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder folder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(leaf.name);
+                folder.addAll(getAllCombinedVariantsAsTree(leaf.children));
+                r.add(folder);
+            }
+        }
+        return r;
+    }
+
+
+    /**
+     * This class is serving to change to view or nested view later
+     * Reason we are using it as middle man is that duing creation some classes would otherwise change from nested to direct or oposite
+     */
     private static class NestedVariantHelper {
         private final List<NestedVariantHelper> children = new ArrayList<>(0);
+        private final String name;
+        private final List<String> split;
+        private final JenkinsViewTemplateBuilder view;
+
+        public NestedVariantHelper(String name) throws IOException {
+            this.name = name;
+            split = Arrays.stream(name.split("[\\.\\|]+")).sequential().filter(s -> !s.isEmpty()).collect(Collectors.toList());
+            //this is surprsingly memory optimisation - each view is hundrd times copied,
+            //and in 30k x 30k variants it already is necessary.
+            //So better to send refferences, then to create to much of them
+            //of coourse the folders, have to be created uniq
+            //and tbh, also compilation of pattern is pretty expenisve under those numbers
+            view = JenkinsViewTemplateBuilderFactory.getVariantTempalte(name);
+        }
+
+        @Override
+        public String toString() {
+            return name + " - " + children.size();
+
+        }
+
+        public int getSegments() {
+            return split.size();
+        }
+
+        public void add(NestedVariantHelper viewToFold) {
+            children.add(viewToFold);
+        }
+
+        public boolean belongsBelow(NestedVariantHelper viewToMatch) {
+            int matches = 0;
+            for (String thatKeys : viewToMatch.split) {
+                for (String thisKeys : this.split) {
+                    if (thisKeys.equals(thatKeys)) {
+                        matches++;
+                        break;
+                    }
+                }
+            }
+            return matches == viewToMatch.getSegments();
+        }
     }
 }

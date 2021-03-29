@@ -33,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -443,8 +444,14 @@ public class JenkinsJobTemplateBuilder {
         }
     }
 
+    private static  Map<JenkinsTemplate,String> viewCache = new HashMap<>();
     public static String loadTemplate(JenkinsTemplate jenkinsTemplate) throws IOException {
-        return Utils.readResource(jenkinsTemplate.getValue());
+        String o = viewCache.get(jenkinsTemplate);
+        if (o == null){
+         o =  Utils.readResource(jenkinsTemplate.getValue());
+         viewCache.put(jenkinsTemplate, o);
+        }
+        return o;
     }
 
     public enum JenkinsTemplate {

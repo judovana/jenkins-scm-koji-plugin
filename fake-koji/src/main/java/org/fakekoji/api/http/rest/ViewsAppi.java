@@ -40,7 +40,7 @@ public class ViewsAppi {
     }
 
     @NotNull
-    List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager, TaskVariantManager variantManager,  JDKVersionManager jdkVersionManager) throws StorageException, IOException {
+    List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager, TaskVariantManager variantManager,  JDKVersionManager jdkVersionManager, Optional<List<String>> filterOutViewsAsap) throws StorageException, IOException {
         List<TaskVariant> taskVariants = variantManager.readAll();
         List<JDKTestProject> jdkTestProjecs = jdkTestProjectManager.readAll();
         List<JDKVersion> jdkVersions = jdkVersionManager.readAll();
@@ -89,7 +89,7 @@ public class ViewsAppi {
         List<List<String>> subArches = Arrays.asList(osses, ossesVersioned, arches);
         List<JenkinsViewTemplateBuilder> jvt;
         if (nested) {
-            jvt = getNestedViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, jdkVersions, osses, ossesVersioned, arches);
+            jvt = getNestedViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, jdkVersions, osses, ossesVersioned, arches, isSkipEmpty()?filterOutViewsAsap:Optional.empty());
         } else {
             jvt = getDirectViews(taskVariants, allPlatforms, allTasks, projects, versionlessPlatforms, subArches, jdkVersions);
         }
@@ -97,7 +97,7 @@ public class ViewsAppi {
     }
 
 
-    private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects, List<VersionlessPlatform> versionlessPlatforms, List<JDKVersion> jdkVersions, List<String> osses, List<String> ossesVersioned, List<String> arches) throws IOException {
+    private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects, List<VersionlessPlatform> versionlessPlatforms, List<JDKVersion> jdkVersions, List<String> osses, List<String> ossesVersioned, List<String> arches, Optional<List<String>> filterOutViewsAsap) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         for (String tab : new String[]{"projects", "tasks", "platforms", "jdkVersions", "variants"}) {
             JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder projectFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(tab);
@@ -249,8 +249,12 @@ public class ViewsAppi {
                 }
             }
             if (tab.equals("variants")) {
-                List<String> combinations = combine(VariantsMultiplier.splitAndExpand(taskVariants));
-                projectFolder.addAll(VariantsMultiplier.getAllCombinedVariantsAsFlatView(combinations));
+                if (filterOutViewsAsap.isPresent()) {
+                    List<String> combinations = combine(VariantsMultiplier.splitAndExpand(taskVariants));
+                    projectFolder.addAll(VariantsMultiplier.getAllCombinedVariantsAsTree(VariantsMultiplier.combinedVariantsToTree(combinations, taskVariants, filterOutViewsAsap)));
+                } else {
+                    jvt.addAll(getAllVariants(taskVariants));
+                }
             }
             if (tab.equals("jdkVersions")) {
                 projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.empty()));

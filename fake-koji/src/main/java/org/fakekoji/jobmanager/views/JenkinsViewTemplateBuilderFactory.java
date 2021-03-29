@@ -199,7 +199,7 @@ public class JenkinsViewTemplateBuilderFactory {
     public static JenkinsViewTemplateBuilder getVariantTempalte(String id) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
-                id,
+                vtp.getPlatformmViewName(id),
                 vtp.loadColumnsTemplate(),
                 (".*"+id.replaceAll("\\.{2,}","MANYDOTS").replace(".","\\.").replace("|",".*").replace("MANYDOTS",".*")+".*").replaceAll("(\\.\\*)+",".*"),/*The last replace is VERY important time savior*/
                 /*note, .*.*.*.* takes HOURS, wher eif you compres sit to .* it is seconds*/
