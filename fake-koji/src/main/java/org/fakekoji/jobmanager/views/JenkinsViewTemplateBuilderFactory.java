@@ -201,7 +201,8 @@ public class JenkinsViewTemplateBuilderFactory {
         return new JenkinsViewTemplateBuilder(
                 id,
                 vtp.loadColumnsTemplate(),
-                "^" + id + "[_\\.-].*" + "|" + ".*[_\\.-]" + id + "[_\\.-].*" + "|" + ".*[_\\.-]" + id + "$",
+                (".*"+id.replaceAll("\\.{2,}","MANYDOTS").replace(".","\\.").replace("|",".*").replace("MANYDOTS",".*")+".*").replaceAll("(\\.\\*)+",".*"),/*The last replace is VERY important time savior*/
+                /*note, .*.*.*.* takes HOURS, wher eif you compres sit to .* it is seconds*/
                 vtp.loadTemplate());
     }
 

@@ -2,7 +2,6 @@ package org.fakekoji.api.http.rest;
 
 import io.javalin.http.Context;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
-import org.fakekoji.jobmanager.model.TaskJob;
 import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilder;
 import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilderFactory;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
@@ -249,7 +248,9 @@ public class ViewsAppi {
                 }
             }
             if (tab.equals("variants")) {
-                projectFolder.addAll(getAllVariants(taskVariants));
+                List<List<List<String>>> expandedValues = splitAndExpand(taskVariants);
+                List<String> combinations = combine(expandedValues);
+                projectFolder.addAll(getAllCombinedVariants(combinations));
             }
             if (tab.equals("jdkVersions")) {
                 projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.empty()));
@@ -305,6 +306,69 @@ public class ViewsAppi {
         return jvt;
     }
 
+    private List<String> combine(List<List<List<String>>> lists) {
+        if (lists.size() == 0) {
+            return new ArrayList<>(0);
+        } else if (lists.size() == 1) {
+            return combineAndAppend(lists.get(0));
+        } else {
+            List<String> r = new ArrayList<>();
+            for (String l : combineAndAppend(lists.get(0))) {
+                List<String> ss = combine(lists.subList(1, lists.size()));
+                for (String rr : ss) {
+                    r.add(l + "|" + rr);
+                }
+            }
+            return r;
+        }
+    }
+
+    private List<String> combineAndAppend(List<List<String>> lists) {
+        if (lists.size() == 0) {
+            return new ArrayList<>(0);
+        } else if (lists.size() == 1) {
+            return lists.get(0);
+        } else {
+            List<String> r = new ArrayList<>();
+            for (String l : lists.get(0)) {
+                List<String> ss = combineAndAppend(lists.subList(1, lists.size()));
+                for (String rr : ss) {
+                    r.add(l + "." + rr);
+                }
+            }
+            return r;
+        }
+    }
+
+    private List<List<List<String>>> splitAndExpand(List<TaskVariant> taskVariants) {
+        List<TaskVariant> builds = new ArrayList<>(taskVariants.size());
+        List<TaskVariant> tests = new ArrayList<>(taskVariants.size());
+        for (TaskVariant taskvariant : taskVariants) {
+            if (taskvariant.getType() == Task.Type.BUILD) {
+                builds.add(taskvariant);
+            } else if (taskvariant.getType() == Task.Type.TEST) {
+                tests.add(taskvariant);
+            } else {
+                throw new RuntimeException("New variant added - " + taskvariant);
+            }
+        }
+        Collections.sort(builds);
+        Collections.sort(taskVariants);
+        List<List<List<String>>> result = new ArrayList<>();
+        result.add(expand(builds));
+        result.add(expand(tests));
+        return result;
+    }
+
+    private List<List<String>> expand(List<TaskVariant> builds) {
+        List<List<String>> r = new ArrayList();
+        for (TaskVariant taskvariant : builds) {
+            r.add(taskvariant.getVariants().values().stream().map(t -> t.getId()).collect(Collectors.toList()));
+            r.get(r.size() - 1).add(0, ""); //adding nothing to each set, to allow subsets of not all variants
+        }
+        return r;
+    }
+
     @NotNull
     private JenkinsViewTemplateBuilder createPullView(List<Platform> allPlatforms) throws IOException {
         return JenkinsViewTemplateBuilderFactory.getTaskTemplate("pull", Optional.empty(), Optional.empty(), Optional.of(allPlatforms));
@@ -327,7 +391,7 @@ public class ViewsAppi {
     }
 
     private List<JenkinsViewTemplateBuilder> getDirectViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects,
-            List<VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches, List<JDKVersion> jdkVersions) throws IOException {
+                                                            List<VersionlessPlatform> versionlessPlatforms, List<List<String>> subArches, List<JDKVersion> jdkVersions) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         jvt.add(createPullView(allPlatforms));
         jvt.addAll(getAllTasks(allPlatforms, allTasks, Optional.empty()));
@@ -367,6 +431,35 @@ public class ViewsAppi {
         for (TaskVariant taskVariant : taskVariants) {
             for (TaskVariantValue taskVariantValue : taskVariant.getVariants().values()) {
                 jvt.add(JenkinsViewTemplateBuilderFactory.getVariantTempalte(taskVariantValue.getId()));
+            }
+        }
+        return jvt;
+    }
+
+    private List<JenkinsViewTemplateBuilder> getAllCombinedVariants(List<String> taskVariants) throws IOException {
+        List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
+        for (String taskVariant : taskVariants) {
+            // this serves for include only tohse views, which had skipped many parts
+            //it is disabled now, see tbal ebelow
+            int c = 0;
+            String unifiedTaskVariant=taskVariant.replace("|", ".");//its metter of taste
+            for (int i = 0; i < unifiedTaskVariant.length()-1; i++) {
+                if (unifiedTaskVariant.substring(i,i+2).equals("..") ) {
+                    c++;
+                }
+            }
+            /** when run above test generator's variants
+             *           | and .  just .      .*.*.*.*    with squeezed .*
+             * c>-1 (all) 36000   36000       uncounted   seconds
+             * c>0        26000   31000       uncounted   seconds
+             * c>1        10000   18000       uncounted   seconds
+             * c>2        2333    7000        hours       seconds
+             * c>3        200     1600        hours       seconds
+             * c>4        0       200         minutes     seconds
+             * c>5        0       10          seconds     seconds
+             */
+            if (c > -1) {
+                jvt.add(JenkinsViewTemplateBuilderFactory.getVariantTempalte(taskVariant));
             }
         }
         return jvt;
