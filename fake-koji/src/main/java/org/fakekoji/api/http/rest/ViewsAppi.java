@@ -32,11 +32,21 @@ public class ViewsAppi {
     private final boolean skipEmpty;
     private final Pattern filter;
     private final boolean nested;
+    private final JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle nestedColumnsStyle;
 
     ViewsAppi(Context context) {
         this.filter = Pattern.compile(context.queryParam(OToolService.FILTER) == null ? ".*" : context.queryParam(OToolService.FILTER));
         this.skipEmpty = OToolService.notNullBoolean(context, OToolService.SKIP_EMPTY, false);
         this.nested = OToolService.notNullBoolean(context, OToolService.NESTED, false);
+        String nestedColumnsValue = context.queryParam(OToolService.NESTED_COLUMNS);
+        if (nestedColumnsValue == null || nestedColumnsValue.trim().isEmpty() || nestedColumnsValue.equals("false")){
+            nestedColumnsStyle=new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle(JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.NONE,0);
+        } else if (nestedColumnsValue.equals("true")) {
+            nestedColumnsStyle=new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle(JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.ALL,0);
+        } else {
+            nestedColumnsStyle=new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle(JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.AUTO,Integer.parseInt(nestedColumnsValue));
+        }
+
     }
 
     @NotNull
@@ -100,18 +110,18 @@ public class ViewsAppi {
     private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects, List<VersionlessPlatform> versionlessPlatforms, List<JDKVersion> jdkVersions, List<String> osses, List<String> ossesVersioned, List<String> arches, Optional<List<String>> filterOutViewsAsap) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         for (String tab : new String[]{"projects", "tasks", "platforms", "jdkVersions", "variants"}) {
-            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder projectFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(tab);
+            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder projectFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(tab, nestedColumnsStyle);
             jvt.add(projectFolder);
             if (tab.equals("projects")) {
                 projectFolder.addAll(addAllProjects(allPlatforms, projects, Optional.empty()));
                 for (String os : osses) {
                     projectFolder.addAll(addAllProjects(allPlatforms, projects, Optional.of(os)));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os, nestedColumnsStyle);
                     projectFolder.addView(osFolder);
                     for (String osVersioned : ossesVersioned) {
                         if (osVersioned.startsWith(os)) {
                             osFolder.addAll(addAllProjects(allPlatforms, projects, Optional.of(osVersioned)));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned);
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned, nestedColumnsStyle), nestedColumnsStyle;
                             osFolder.addView(osVersionedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getOsVersion().equals(osVersioned)) {
@@ -123,7 +133,7 @@ public class ViewsAppi {
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getOs().equals(os)) {
                             osFolder.addAll(addAllProjects(projects, vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             osFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().equals(os)) {
@@ -135,12 +145,12 @@ public class ViewsAppi {
                 }
                 for (String arch : arches) {
                     projectFolder.addAll(addAllProjects(allPlatforms, projects, Optional.of(arch)));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch, nestedColumnsStyle);
                     projectFolder.addView(archFolder);
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getArch().equals(arch)) {
                             archFolder.addAll(addAllProjects(projects, vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             archFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().startsWith(vp.getOs())) {
@@ -155,12 +165,12 @@ public class ViewsAppi {
                 projectFolder.addAll(getAllTasks(allPlatforms, allTasks, Optional.empty()));
                 for (String os : osses) {
                     projectFolder.addAll(getAllTasks(allPlatforms, allTasks, Optional.of(os)));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os, nestedColumnsStyle);
                     projectFolder.addView(osFolder);
                     for (String osVersioned : ossesVersioned) {
                         if (osVersioned.startsWith(os)) {
                             osFolder.addAll(getAllTasks(allPlatforms, allTasks, Optional.of(osVersioned)));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned);
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned, nestedColumnsStyle);
                             osFolder.addView(osVersionedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getOsVersion().equals(osVersioned)) {
@@ -172,7 +182,7 @@ public class ViewsAppi {
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getOs().equals(os)) {
                             osFolder.addAll(getAllTasks(allTasks, vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             osFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().equals(os)) {
@@ -184,12 +194,12 @@ public class ViewsAppi {
                 }
                 for (String arch : arches) {
                     projectFolder.addAll(getAllTasks(allPlatforms, allTasks, Optional.of(arch)));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch, nestedColumnsStyle);
                     projectFolder.addView(archFolder);
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getArch().equals(arch)) {
                             archFolder.addAll(getAllTasks(allTasks, vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             archFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().startsWith(vp.getOs())) {
@@ -203,12 +213,12 @@ public class ViewsAppi {
             if (tab.equals("platforms")) {
                 for (String os : osses) {
                     projectFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(os, allPlatforms));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os, nestedColumnsStyle);
                     projectFolder.addView(osFolder);
                     for (String osVersioned : ossesVersioned) {
                         if (osVersioned.startsWith(os)) {
                             osFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(osVersioned, allPlatforms));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned);
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned, nestedColumnsStyle);
                             osFolder.addView(osVersionedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getOsVersion().equals(osVersioned)) {
@@ -220,7 +230,7 @@ public class ViewsAppi {
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getOs().equals(os)) {
                             osFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             osFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().equals(os)) {
@@ -232,12 +242,12 @@ public class ViewsAppi {
                 }
                 for (String arch : arches) {
                     projectFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(arch, allPlatforms));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch, nestedColumnsStyle);
                     projectFolder.addView(archFolder);
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getArch().equals(arch)) {
                             archFolder.addView(JenkinsViewTemplateBuilderFactory.getPlatformTemplate(vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             archFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().startsWith(vp.getOs())) {
@@ -251,7 +261,7 @@ public class ViewsAppi {
             if (tab.equals("variants")) {
                 if (filterOutViewsAsap.isPresent()) {
                     List<String> combinations = combine(VariantsMultiplier.splitAndExpand(taskVariants));
-                    projectFolder.addAll(VariantsMultiplier.getAllCombinedVariantsAsTree(VariantsMultiplier.combinedVariantsToTree(combinations, taskVariants, filterOutViewsAsap)));
+                    projectFolder.addAll(VariantsMultiplier.getAllCombinedVariantsAsTree(VariantsMultiplier.combinedVariantsToTree(combinations, taskVariants, filterOutViewsAsap), nestedColumnsStyle));
                 } else {
                     jvt.addAll(getAllVariants(taskVariants));
                 }
@@ -260,12 +270,12 @@ public class ViewsAppi {
                 projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.empty()));
                 for (String os : osses) {
                     projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(os)));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(os, nestedColumnsStyle);
                     projectFolder.addView(osFolder);
                     for (String osVersioned : ossesVersioned) {
                         if (osVersioned.startsWith(os)) {
                             osFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(osVersioned)));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned);
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osVersionedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(osVersioned, nestedColumnsStyle);
                             osFolder.addView(osVersionedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getOsVersion().equals(osVersioned)) {
@@ -277,7 +287,7 @@ public class ViewsAppi {
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getOs().equals(os)) {
                             osFolder.addAll(getAllJdkVersions(jdkVersions, vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             osFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().equals(os)) {
@@ -289,12 +299,12 @@ public class ViewsAppi {
                 }
                 for (String arch : arches) {
                     projectFolder.addAll(getAllJdkVersions(allPlatforms, jdkVersions, Optional.of(arch)));
-                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch);
+                    JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder archFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(arch, nestedColumnsStyle);
                     projectFolder.addView(archFolder);
                     for (VersionlessPlatform vp : versionlessPlatforms) {
                         if (vp.getArch().equals(arch)) {
                             archFolder.addAll(getAllJdkVersions(jdkVersions, vp));
-                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId());
+                            JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder osArchedFolder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(vp.getId(), nestedColumnsStyle);
                             archFolder.addView(osArchedFolder);
                             for (Platform fullPlatform : allPlatforms) {
                                 if (fullPlatform.getArchitecture().equals(vp.getArch()) && fullPlatform.getOs().startsWith(vp.getOs())) {

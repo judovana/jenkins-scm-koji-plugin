@@ -470,6 +470,7 @@ public class JenkinsJobTemplateBuilder {
         VIEW("view"),
         NESTED_VIEW("nested-view"),
         VIEW_DEFAULT_COLUMNS("view-columns"),
+        NESTEDVIEW_DEFAULT_COLUMNS("nested-view-columns"),
         UPDATE_VM_JOB("update-vm-job");
 
         private final String value;

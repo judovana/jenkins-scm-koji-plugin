@@ -19,8 +19,8 @@ import java.util.Optional;
  */
 public class JenkinsViewTemplateBuilderFactory {
 
-    public static JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder getJenkinsViewTemplateBuilderFolder(String tab) throws IOException {
-        return new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder(tab, new NestedViewTemplateProvider().loadTemplate());
+    public static JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder getJenkinsViewTemplateBuilderFolder(String tab, JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle columnsStyle) throws IOException {
+        return new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder(tab, new NestedViewTemplateProvider().loadTemplate(), columnsStyle);
     }
 
 

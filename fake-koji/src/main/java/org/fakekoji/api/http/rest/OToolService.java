@@ -78,6 +78,7 @@ public class OToolService {
     static final String FILTER = "filter";
     static final String SKIP_EMPTY = "skipEmpty";
     static final String NESTED = "nested";
+    static final String NESTED_COLUMNS = "nestedColumns";
     static final String ONLY_HW = "onlyHW";
     static final String ONLY_VM = "onlyVM";
     private static final String UPDATE_JOBS = "updateJobs";
@@ -119,7 +120,8 @@ public class OToolService {
                 + "\n"
                 + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL + "," + VIEWS_DETAILS + "," + VIEWS_XMLS + "," + VIEWS_CREATE + "," + VIEWS_REMOVE + "," + VIEWS_UPDATE + "," + VIEWS_MATCHES + "," + VIEWS_MATCHES_JENKINS + "}\n"
                 + "                will affect jenkins views\n"
-                + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false " + NESTED + "=true/false\n"
+                + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false " + NESTED + "=true/false "+NESTED_COLUMNS+"=true/false/number  if number is put, then the default columns(true) are generated for views withh less then number of matches\n"
+                + "                Note, nested=true requires jenkins nested-view-plugin\n"
                 + "\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"

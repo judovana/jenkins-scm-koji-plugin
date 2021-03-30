@@ -2,14 +2,12 @@ package org.fakekoji.jobmanager.views;
 
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
-import org.fakekoji.model.TaskVariantValue;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -119,15 +117,15 @@ public class VariantsMultiplier {
         return futureTree[1];
     }
 
-    public static Collection<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsTree(List<NestedVariantHelper> tree) throws IOException {
+    public static Collection<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsTree(List<NestedVariantHelper> tree, JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle columnsStyle) throws IOException {
         Set<JenkinsViewTemplateBuilder> r = new HashSet<>(tree.size()*2);//folders+views=>*2
         for(NestedVariantHelper leaf: tree){
             r.add(leaf.view);
             if (leaf.children.size()==1) {//do not create folder for view with one child (whch is actually after removal of empty most...)
-                r.addAll(getAllCombinedVariantsAsTree(leaf.children));
+                r.addAll(getAllCombinedVariantsAsTree(leaf.children, columnsStyle));
             } else if (leaf.children.size()>1) {
-                JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder folder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(leaf.name);
-                folder.addAll(getAllCombinedVariantsAsTree(leaf.children));
+                JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder folder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(leaf.name, columnsStyle);
+                folder.addAll(getAllCombinedVariantsAsTree(leaf.children, columnsStyle));
                 r.add(folder);
             }
         }

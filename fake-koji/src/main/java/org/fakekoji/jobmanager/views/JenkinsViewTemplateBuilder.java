@@ -6,6 +6,7 @@ import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.border.Border;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,11 +40,27 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
     }
 
     public static class JenkinsViewTemplateBuilderFolder extends JenkinsViewTemplateBuilder {
-        static final String SUBVIEWS = "%{SUBVIEWS}";
-        private final List<JenkinsViewTemplateBuilder> views = new ArrayList<>();
+        public static class ColumnsStyle{
+            public enum ColumnsType {
+                ALL,NONE,AUTO
+            }
+            private final ColumnsType type;
+            private final int limit;
 
-        public JenkinsViewTemplateBuilderFolder(String name, String template) throws IOException {
+            public ColumnsStyle(ColumnsType type, int limit) {
+                this.type = type;
+                this.limit = limit;
+            }
+        }
+
+        static final String SUBVIEWS = "%{SUBVIEWS}";
+        static final String NESTED_DEFAULT_COLUMNS = " %{NESTEDVIEW_COLUMNS}";
+        private final List<JenkinsViewTemplateBuilder> views = new ArrayList<>();
+        private final ColumnsStyle  columnsStyle;
+
+        public JenkinsViewTemplateBuilderFolder(String name, String template, ColumnsStyle columnsStyle) throws IOException {
             super(name, null, null, template);
+            this.columnsStyle=columnsStyle;
         }
 
         public void addView(JenkinsViewTemplateBuilder jvtb) {
@@ -56,7 +73,25 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
 
         @Override
         public String expand() {
-            return super.expand().replace(SUBVIEWS, expandInners());
+            return super.expand().replace(NESTED_DEFAULT_COLUMNS, getNestedColumnsStyle()).replace(SUBVIEWS, expandInners());
+        }
+
+        private CharSequence getNestedColumnsStyle() {
+            try {
+                if (columnsStyle.type == ColumnsStyle.ColumnsType.ALL) {
+                    return loadDefaultColumns();
+                } else if (columnsStyle.type == ColumnsStyle.ColumnsType.NONE){
+                    return "";
+                } else {
+                    throw new RuntimeException("No more nested view column styles supported right now");
+                }
+            }catch(IOException ex){
+                throw new RuntimeException(ex);
+            }
+        }
+
+        private String loadDefaultColumns() throws IOException {
+            return JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.NESTEDVIEW_DEFAULT_COLUMNS);
         }
 
         private CharSequence expandInners() {

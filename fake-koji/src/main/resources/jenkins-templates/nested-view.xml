@@ -8,8 +8,7 @@
     </views>
     <columns>
         <columns>
-            <hudson.views.WeatherColumn/>
-            <hudson.views.StatusColumn/>
+            %{NESTEDVIEW_COLUMNS}
         </columns>
     </columns>
 </hudson.plugins.nested__view.NestedView>
