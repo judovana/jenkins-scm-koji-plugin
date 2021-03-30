@@ -1,12 +1,7 @@
 package org.fakekoji.jobmanager.views;
 
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
-import org.fakekoji.jobmanager.model.Job;
-import org.fakekoji.model.JDKVersion;
-import org.fakekoji.model.Platform;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.border.Border;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,14 +37,20 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
     public static class JenkinsViewTemplateBuilderFolder extends JenkinsViewTemplateBuilder {
         public static class ColumnsStyle{
             public enum ColumnsType {
-                ALL,NONE,AUTO
+                ALL, NONE, AUTO
             }
+
             private final ColumnsType type;
             private final int limit;
+            private Optional<List<String>> jobs;
 
             public ColumnsStyle(ColumnsType type, int limit) {
                 this.type = type;
                 this.limit = limit;
+            }
+
+            public void setJobs(Optional<List<String>> jobs) {
+                this.jobs = jobs;
             }
         }
 
@@ -76,12 +77,30 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
             return super.expand().replace(NESTED_DEFAULT_COLUMNS, getNestedColumnsStyle()).replace(SUBVIEWS, expandInners());
         }
 
+        public List<String> getMatches(Optional<List<String>> jobs) {
+            List<String> r = new ArrayList<>(jobs.get().size() / 10);
+            for(JenkinsViewTemplateBuilder jvb: views){
+                r.addAll(jvb.getMatches(jobs));
+            }
+            return r;
+        }
+
         private CharSequence getNestedColumnsStyle() {
             try {
                 if (columnsStyle.type == ColumnsStyle.ColumnsType.ALL) {
                     return loadDefaultColumns();
-                } else if (columnsStyle.type == ColumnsStyle.ColumnsType.NONE){
+                } else if (columnsStyle.type == ColumnsStyle.ColumnsType.NONE) {
                     return "";
+                } else if (columnsStyle.type == ColumnsStyle.ColumnsType.AUTO) {
+                    List<String> matches = getMatches(columnsStyle.jobs);
+                    System.err.println("NV: "+this.getName() + " matches " + matches.size());
+                    if (matches.size() > columnsStyle.limit) {
+                        System.err.println(" => nothing");
+                        return "";
+                    } else {
+                        System.err.println(" => something");
+                        return loadDefaultColumns();
+                    }
                 } else {
                     throw new RuntimeException("No more nested view column styles supported right now");
                 }
@@ -146,21 +165,6 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
             }
         }
 
-        @Override
-        public List<String> getMatches(Optional<List<String>> jobs) {
-            if (jobs.isPresent()) {
-                List<String> r = new ArrayList<>(jobs.get().size() / 10);
-                for (String job : jobs.get()) {
-                    if (getRegex().matcher(job).matches()) {
-                        r.add(job);
-                    }
-                }
-                return r;
-            } else {
-                //and now what ::D
-                return new ArrayList<>(0);
-            }
-        }
     }
 
     static final String VIEW_NAME = "%{VIEW_NAME}";
@@ -271,6 +275,7 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
             return new ArrayList<>(0);
         }
     }
+
 
     private static String spaces(int depth) {
         StringBuilder sb = new StringBuilder();

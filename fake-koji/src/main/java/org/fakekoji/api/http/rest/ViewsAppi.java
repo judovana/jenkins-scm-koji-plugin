@@ -51,6 +51,7 @@ public class ViewsAppi {
 
     @NotNull
     List<JenkinsViewTemplateBuilder> getJenkinsViewTemplateBuilders(JDKTestProjectManager jdkTestProjectManager, JDKProjectManager jdkProjectManager, PlatformManager platformManager, TaskManager taskManager, TaskVariantManager variantManager,  JDKVersionManager jdkVersionManager, Optional<List<String>> filterOutViewsAsap) throws StorageException, IOException {
+        nestedColumnsStyle.setJobs(filterOutViewsAsap);
         List<TaskVariant> taskVariants = variantManager.readAll();
         List<JDKTestProject> jdkTestProjecs = jdkTestProjectManager.readAll();
         List<JDKVersion> jdkVersions = jdkVersionManager.readAll();
