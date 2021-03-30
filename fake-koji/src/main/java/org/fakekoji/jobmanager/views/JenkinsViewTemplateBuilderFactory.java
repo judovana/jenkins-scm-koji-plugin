@@ -19,8 +19,16 @@ import java.util.Optional;
  */
 public class JenkinsViewTemplateBuilderFactory {
 
-    public static JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder getJenkinsViewTemplateBuilderFolder(String tab, JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle columnsStyle) throws IOException {
-        return new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder(tab, new NestedViewTemplateProvider().loadTemplate(), columnsStyle);
+    private final JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle nestedColumnsStyle;
+    private final JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle listColumnsStyle;
+
+    public JenkinsViewTemplateBuilderFactory(JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle nestedColumnsStyle, JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle listColumnsStyle) {
+        this.nestedColumnsStyle = nestedColumnsStyle;
+        this.listColumnsStyle = listColumnsStyle;
+    }
+
+    public JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder getJenkinsViewTemplateBuilderFolder(String tab) throws IOException {
+        return new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder(tab, new NestedViewTemplateProvider().loadTemplate(), nestedColumnsStyle, listColumnsStyle);
     }
 
 
@@ -102,13 +110,14 @@ public class JenkinsViewTemplateBuilderFactory {
         }
     }
 
-    public static JenkinsViewTemplateBuilder getPlatformTemplate(VersionlessPlatform platform) throws IOException {
+    public JenkinsViewTemplateBuilder getPlatformTemplate(VersionlessPlatform platform) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getPlatformmViewName(platform.getId()),
                 vtp.loadColumnsTemplate(),
                 getPlatformViewRegex(false, platform, false),
-                vtp.loadTemplate());
+                vtp.loadTemplate(),
+                listColumnsStyle);
     }
 
     private static String getPlatformViewRegex(boolean isBuild, VersionlessPlatform platform, boolean isForBuild) {
@@ -119,19 +128,20 @@ public class JenkinsViewTemplateBuilderFactory {
         return prefix + platform.getOs() + "[0-9a-zA-Z]{1,6}" + getEscapedMinorDelimiter() + platform.getArch() + getPlatformSuffixRegexString(isBuild) + ".*";
     }
 
-    public static JenkinsViewTemplateBuilder getPlatformTemplate(String platform, List<Platform> platforms) throws IOException {
+    public JenkinsViewTemplateBuilder getPlatformTemplate(String platform, List<Platform> platforms) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getPlatformmViewName(platform),
                 vtp.loadColumnsTemplate(),
                 getPlatformViewRegex(false, platform, platforms, false),
-                vtp.loadTemplate());
+                vtp.loadTemplate(),
+                listColumnsStyle);
     }
 
-    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+    public JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
         return getProjectTemplate(jp.getId(), platform, platforms);
     }
-    public static JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp, VersionlessPlatform vp) throws IOException {
+    public JenkinsViewTemplateBuilder getJavaPlatformTemplate(JDKVersion jp, VersionlessPlatform vp) throws IOException {
         return getProjectTemplate(jp.getId(), vp);
     }
 
@@ -172,13 +182,14 @@ public class JenkinsViewTemplateBuilderFactory {
         //(major|minor)
     }
 
-    public static JenkinsViewTemplateBuilder getProjectTemplate(String project, VersionlessPlatform platform) throws IOException {
+    public JenkinsViewTemplateBuilder getProjectTemplate(String project, VersionlessPlatform platform) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getProjectViewName(project, Optional.of(platform.getId())),
                 vtp.loadColumnsTemplate(),
                 getProjectViewRegex(project, platform),
-                vtp.loadTemplate());
+                vtp.loadTemplate(),
+                listColumnsStyle);
     }
 
     private static String getProjectViewRegex(String project, VersionlessPlatform platform) {
@@ -187,23 +198,25 @@ public class JenkinsViewTemplateBuilderFactory {
                 + pull(project);
     }
 
-    public static JenkinsViewTemplateBuilder getProjectTemplate(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+    public JenkinsViewTemplateBuilder getProjectTemplate(String viewName, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getProjectViewName(viewName, platform),
                 vtp.loadColumnsTemplate(),
                 getProjectViewRegex(viewName, platform, platforms),
-                vtp.loadTemplate());
+                vtp.loadTemplate(),
+                listColumnsStyle);
     }
 
-    public static JenkinsViewTemplateBuilder getVariantTempalte(String id) throws IOException {
+    public JenkinsViewTemplateBuilder getVariantTempalte(String id) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 vtp.getPlatformmViewName(id),
                 vtp.loadColumnsTemplate(),
                 (".*"+id.replaceAll("\\.{2,}","MANYDOTS").replace(".","\\.").replace("|",".*").replace("MANYDOTS",".*")+".*").replaceAll("(\\.\\*)+",".*"),/*The last replace is VERY important time savior*/
                 /*note, .*.*.*.* takes HOURS, wher eif you compres sit to .* it is seconds*/
-                vtp.loadTemplate());
+                vtp.loadTemplate(),
+                listColumnsStyle);
     }
 
     private static String getProjectViewRegex(String project, Optional<String> platform, Optional<List<Platform>> platforms) {
@@ -229,26 +242,28 @@ public class JenkinsViewTemplateBuilderFactory {
         return "pull" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project;
     }
 
-    public static JenkinsViewTemplateBuilder getTaskTemplate(String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
+    public JenkinsViewTemplateBuilder getTaskTemplate(String task, Optional<String> columns, VersionlessPlatform platform) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 getTaskViewName(task, Optional.of(platform.getId())),
                 columns.orElse(vtp.loadColumnsTemplate()),
                 getTaskViewRegex(task, platform),
-                vtp.loadTemplate());
+                vtp.loadTemplate(),
+                listColumnsStyle);
     }
 
     private static String getTaskViewRegex(String task, VersionlessPlatform platform) {
         return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform, false);
     }
 
-    public static JenkinsViewTemplateBuilder getTaskTemplate(String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
+    public JenkinsViewTemplateBuilder getTaskTemplate(String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
         ViewTemplateProvider vtp = new ViewTemplateProvider();
         return new JenkinsViewTemplateBuilder(
                 getTaskViewName(viewName, platform),
                 columns.orElse(vtp.loadColumnsTemplate()),
                 getTaskViewRegex(viewName, platform, platforms),
-                vtp.loadTemplate());
+                vtp.loadTemplate(),
+                listColumnsStyle);
     }
 
     private static String getTaskViewName(String viewName, Optional<String> platform) {

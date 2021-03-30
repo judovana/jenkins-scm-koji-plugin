@@ -16,6 +16,11 @@ import java.util.stream.Collectors;
 
 public class VariantsMultiplier {
 
+    private final  JenkinsViewTemplateBuilderFactory jvtbFactory;
+
+    public VariantsMultiplier(JenkinsViewTemplateBuilderFactory jvtbFactory) {
+        this.jvtbFactory = jvtbFactory;
+    }
 
     public static List<List<List<String>>> splitAndExpand(List<TaskVariant> taskVariants) {
         List<TaskVariant> builds = new ArrayList<>(taskVariants.size());
@@ -47,7 +52,7 @@ public class VariantsMultiplier {
     }
 
 
-    public static List<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsFlatView(List<String> taskVariants) throws IOException {
+    public List<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsFlatView(List<String> taskVariants) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         for (String taskVariant : taskVariants) {
             // this serves for include only tohse views, which had skipped many parts
@@ -70,7 +75,7 @@ public class VariantsMultiplier {
              * c>5        0       10          seconds     seconds
              */
             if (c > -1) {
-                jvt.add(JenkinsViewTemplateBuilderFactory.getVariantTempalte(taskVariant));
+                jvt.add(jvtbFactory.getVariantTempalte(taskVariant));
             }
         }
         return jvt;
@@ -84,7 +89,7 @@ public class VariantsMultiplier {
         }
         return false;
     }
-    public static List<NestedVariantHelper> combinedVariantsToTree(List<String> views, List<TaskVariant> maxVariants, Optional<List<String>> jobs) throws IOException {
+    public  List<NestedVariantHelper> combinedVariantsToTree(List<String> views, List<TaskVariant> maxVariants, Optional<List<String>> jobs) throws IOException {
         List<NestedVariantHelper>[] futureTree = new List[maxVariants.size()+1];
         for (int i = 0; i < futureTree.length; i++) {
             futureTree[i] = new ArrayList<>(views.size() / maxVariants.size());
@@ -117,15 +122,15 @@ public class VariantsMultiplier {
         return futureTree[1];
     }
 
-    public static Collection<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsTree(List<NestedVariantHelper> tree, JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle columnsStyle) throws IOException {
+    public Collection<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsTree(List<NestedVariantHelper> tree) throws IOException {
         Set<JenkinsViewTemplateBuilder> r = new HashSet<>(tree.size()*2);//folders+views=>*2
         for(NestedVariantHelper leaf: tree){
             r.add(leaf.view);
             if (leaf.children.size()==1) {//do not create folder for view with one child (whch is actually after removal of empty most...)
-                r.addAll(getAllCombinedVariantsAsTree(leaf.children, columnsStyle));
+                r.addAll(getAllCombinedVariantsAsTree(leaf.children));
             } else if (leaf.children.size()>1) {
-                JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder folder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(leaf.name, columnsStyle);
-                folder.addAll(getAllCombinedVariantsAsTree(leaf.children, columnsStyle));
+                JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder folder = jvtbFactory.getJenkinsViewTemplateBuilderFolder(leaf.name);
+                folder.addAll(getAllCombinedVariantsAsTree(leaf.children));
                 r.add(folder);
             }
         }
@@ -139,7 +144,7 @@ public class VariantsMultiplier {
      * This class is serving to change to view or nested view later
      * Reason we are using it as middle man is that duing creation some classes would otherwise change from nested to direct or oposite
      */
-    private static class NestedVariantHelper {
+    private class NestedVariantHelper {
         private final List<NestedVariantHelper> children = new ArrayList<>(0);
         private final String name;
         private final List<String> split;
@@ -153,7 +158,7 @@ public class VariantsMultiplier {
             //So better to send refferences, then to create to much of them
             //of coourse the folders, have to be created uniq
             //and tbh, also compilation of pattern is pretty expenisve under those numbers
-            view = JenkinsViewTemplateBuilderFactory.getVariantTempalte(name);
+            view = jvtbFactory.getVariantTempalte(name);
         }
 
         @Override

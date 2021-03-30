@@ -57,11 +57,11 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
         static final String SUBVIEWS = "%{SUBVIEWS}";
         static final String NESTED_DEFAULT_COLUMNS = " %{NESTEDVIEW_COLUMNS}";
         private final List<JenkinsViewTemplateBuilder> views = new ArrayList<>();
-        private final ColumnsStyle  columnsStyle;
+        private final ColumnsStyle columnsStyle;
 
-        public JenkinsViewTemplateBuilderFolder(String name, String template, ColumnsStyle columnsStyle) throws IOException {
-            super(name, null, null, template);
-            this.columnsStyle=columnsStyle;
+        public JenkinsViewTemplateBuilderFolder(String name, String template, ColumnsStyle nestedVieColumnsStyle, ColumnsStyle listViewColumnStyle) throws IOException {
+            super(name, null, null, template, listViewColumnStyle);
+            this.columnsStyle = nestedVieColumnsStyle;
         }
 
         public void addView(JenkinsViewTemplateBuilder jvtb) {
@@ -73,12 +73,12 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
         }
 
         @Override
-        public String expand() {
+        public String expand() throws IOException {
             return super.expand().replace(NESTED_DEFAULT_COLUMNS, getNestedColumnsStyle()).replace(SUBVIEWS, expandInners());
         }
 
         public List<String> getMatches(Optional<List<String>> jobs) {
-            List<String> r = new ArrayList<>(jobs.get().size() / 10);
+            List<String> r = new ArrayList<>(jobs.get().size() / 10); //intentionally not set, jenkins is walking all branches anyway
             for(JenkinsViewTemplateBuilder jvb: views){
                 r.addAll(jvb.getMatches(jobs));
             }
@@ -93,13 +93,14 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
                     return "";
                 } else if (columnsStyle.type == ColumnsStyle.ColumnsType.AUTO) {
                     List<String> matches = getMatches(columnsStyle.jobs);
-                    System.err.println("NV: "+this.getName() + " matches " + matches.size());
                     if (matches.size() > columnsStyle.limit) {
-                        System.err.println(" => nothing");
-                        return "";
+                        String cm="<!-- NW skipped as " + matches.size() + ">" + columnsStyle.limit + " in " + getName() + " -->\n";
+                        System.err.print(cm);
+                        return cm;
                     } else {
-                        System.err.println(" => something");
-                        return loadDefaultColumns();
+                        String cm = "<!-- NW included as " + matches.size() + "<=" + columnsStyle.limit + " in " + getName() + "-->\n";
+                        System.err.print(cm);
+                        return cm + loadDefaultColumns();
                     }
                 } else {
                     throw new RuntimeException("No more nested view column styles supported right now");
@@ -113,7 +114,7 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
             return JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.NESTEDVIEW_DEFAULT_COLUMNS);
         }
 
-        private CharSequence expandInners() {
+        private CharSequence expandInners() throws IOException {
             StringBuilder sb = new StringBuilder();
             for (JenkinsViewTemplateBuilder jvtb : views) {
                 sb.append(jvtb.expand());
@@ -175,6 +176,7 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
     private final String columns;
     private final Pattern regex;
     private final String template;
+    private final JenkinsViewTemplateBuilderFolder.ColumnsStyle columnStyle;
 
     public String getName() {
         return name;
@@ -184,7 +186,7 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
         return regex;
     }
 
-    public JenkinsViewTemplateBuilder(String name, String columns, String regex, String template) {
+    public JenkinsViewTemplateBuilder(String name, String columns, String regex, String template, JenkinsViewTemplateBuilderFolder.ColumnsStyle listViewColumnsStyle) {
         this.name = name;
         this.columns = columns;
         if (regex == null) {
@@ -193,15 +195,38 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
             this.regex = Pattern.compile(regex);
         }
         this.template = template;
+        this.columnStyle = listViewColumnsStyle;
     }
-    public String expand() {
+
+    public String expand() throws IOException {
         return JenkinsJobTemplateBuilder.prettyPrint(template
                 .replace(VIEW_NAME, name)
-                .replace(COLUMNS, columns == null ? "not_used_columns" : columns)
+                .replace(COLUMNS, getColumnsByCount())
                 .replace(VIEW_REGEX, regex == null ? "not_used_regex" : regex.toString()));
     }
 
-    public InputStream expandToStream() {
+    private CharSequence getColumnsByCount() throws IOException {
+        if (columnStyle.type == JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.NONE) {
+            return "";
+        } else if (columnStyle.type == JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.ALL) {
+            return columns == null ? "not_used_columns" : columns;
+        } else if (columnStyle.type == JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.AUTO) {
+            List<String> matches = getMatches(columnStyle.jobs);
+            if (matches.size() <= columnStyle.limit) {
+                String cm = "<!-- LV included as " + matches.size() + "<=" + columnStyle.limit + " in " + getName() + " -->\n";
+                System.err.print(cm);
+                return columns == null ? "not_used_columns" : cm + columns;
+            } else {
+                String cm = "<!-- LW skipped as " + matches.size() + ">" + columnStyle.limit + " in " + getName() + "-->\n";
+                System.err.print(cm);
+                return cm + JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS);
+            }
+        } else {
+            throw new RuntimeException("No more list view column styles supported right now");
+        }
+    }
+
+    public InputStream expandToStream() throws IOException {
         return new ByteArrayInputStream(expand().getBytes(StandardCharsets.UTF_8));
     }
 
@@ -263,7 +288,7 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
 
     public List<String> getMatches(Optional<List<String>> jobs) {
         if (jobs.isPresent()) {
-            List<String> r = new ArrayList<>(jobs.get().size() / 10);
+            List<String> r = new ArrayList<>(jobs.get().size() / 10); //intentionally not set, jenkins is walking all branhces anyway
             for (String job : jobs.get()) {
                 if (getRegex().matcher(job).matches()) {
                     r.add(job);
