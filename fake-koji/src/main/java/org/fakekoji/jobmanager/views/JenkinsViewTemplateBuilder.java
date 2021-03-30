@@ -26,6 +26,18 @@ import java.util.regex.Pattern;
  */
 public class JenkinsViewTemplateBuilder implements  CharSequence{
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        JenkinsViewTemplateBuilder that = (JenkinsViewTemplateBuilder) o;
+        return Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
     public static class JenkinsViewTemplateBuilderFolder extends JenkinsViewTemplateBuilder {
         static final String SUBVIEWS = "%{SUBVIEWS}";
         private final List<JenkinsViewTemplateBuilder> views = new ArrayList<>();

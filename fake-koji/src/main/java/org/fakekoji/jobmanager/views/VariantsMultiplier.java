@@ -10,8 +10,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class VariantsMultiplier {
@@ -112,16 +114,20 @@ public class VariantsMultiplier {
     }
 
     public static Collection<JenkinsViewTemplateBuilder> getAllCombinedVariantsAsTree(List<NestedVariantHelper> tree) throws IOException {
-        List<JenkinsViewTemplateBuilder> r = new ArrayList<>(tree.size()*2);//folders+views=>*2
+        Set<JenkinsViewTemplateBuilder> r = new HashSet<>(tree.size()*2);//folders+views=>*2
         for(NestedVariantHelper leaf: tree){
             r.add(leaf.view);
-            if (leaf.children.size()>0) {
+            if (leaf.children.size()==1) {//do not create folder for view with one child (whch is actually after removal of empty most...)
+                r.addAll(getAllCombinedVariantsAsTree(leaf.children));
+            } else if (leaf.children.size()>1) {
                 JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder folder = JenkinsViewTemplateBuilderFactory.getJenkinsViewTemplateBuilderFolder(leaf.name);
                 folder.addAll(getAllCombinedVariantsAsTree(leaf.children));
                 r.add(folder);
             }
         }
-        return r;
+        List<JenkinsViewTemplateBuilder> lr = new ArrayList<>(r);
+        Collections.sort(lr, (j1, j2) -> j1.getName().compareTo(j2.getName()));
+        return lr;
     }
 
 
