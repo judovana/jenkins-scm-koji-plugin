@@ -101,7 +101,13 @@ public class VariantsMultiplier {
                 futureTree[v.getSegments()].add(v);
             }
         }
-        for (int i = futureTree.length - 1; i > 1/*really,must NOT fold into [0]*/; i--) {
+        /**
+         * We go from longest and are puting them to theirs predecessors
+         * However, it was found that since some depth of 5 it have no sense
+         * so insted of going from futureTree.length - 1
+         * we go from half
+         */
+        for (int i = futureTree.length/2; i > 1/*really,must NOT fold into [0]*/; i--) {
             for (NestedVariantHelper viewToFold : futureTree[i]) {
                 for (NestedVariantHelper viewToMatch : futureTree[i - 1]) {
                     if (viewToFold.belongsBelow(viewToMatch)) {
