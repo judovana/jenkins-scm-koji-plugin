@@ -108,10 +108,10 @@ public class OToolService {
 
     private String getMiscHelp() {
         return ""
-                + MISC + "/" + REGENERATE_ALL + "/" + JDK_TEST_PROJECTS + "\n"
-                + MISC + "/" + REGENERATE_ALL + "/" + JDK_PROJECTS + "\n"
-                + "                optional argument project=    to regenerate only single project     \n"
-                + "                and whitelist=regec to lmit the search even more  \n"
+                + MISC + "/" + REGENERATE_ALL +  JDK_TEST_PROJECTS + "\n"
+                + MISC + "/" + REGENERATE_ALL + JDK_PROJECTS + "\n"
+                + "                mandatory arguments project=    to regenerate only single project     \n"
+                + "                and whitelist=regex to limit the search even more  \n"
                 + "\n"
                 + MISC + "/" + UPDATE_JOBS + "/{" + UPDATE_JOBS_LIST + "," + UPDATE_JOBS_XMLS + "," + UPDATE_JOBS_CREATE + "," + UPDATE_JOBS_REMOVE + "," + UPDATE_JOBS_UPDATE + "}\n"
                 + "                will affect update machines jobs\n"
@@ -288,15 +288,28 @@ public class OToolService {
                     get(JDK_TEST_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
                         String whitelist = context.queryParam("whitelist");
-                        JobUpdateResults r1 = jenkinsJobUpdater.regenerateAll(project, jdkTestProjectManager, whitelist);
-                        context.status(OK).json(r1);
+                        if (whitelist == null || project == null){
+                            context.status(BAD).result("project and whitelist are mandatory. use ?whitelist=.*&project=ALL if yo are reall sure\n");
+                        } else {
+                            if (project.equals("ALL")){
+                                project = null;
+                            }
+                            JobUpdateResults r1 = jenkinsJobUpdater.regenerateAll(project, jdkTestProjectManager, whitelist);
+                            context.status(OK).json(r1);
+                        }
                     }));
                     get(JDK_PROJECTS, wrapper.wrap(context -> {
                         String project = context.queryParam("project");
                         String whitelist = context.queryParam("whitelist");
-                        JobUpdateResults r2 = jenkinsJobUpdater.regenerateAll(project, jdkProjectManager, whitelist);
-                        context.status(OK).json(r2);
-
+                        if (whitelist == null || project == null){
+                            context.status(BAD).result("project and whitelist are mandatory. use ?whitelist=.*&project=ALL if yo are reall sure\n");
+                        } else {
+                            if (project.equals("ALL")) {
+                                project = null;
+                            }
+                            JobUpdateResults r2 = jenkinsJobUpdater.regenerateAll(project, jdkProjectManager, whitelist);
+                            context.status(OK).json(r2);
+                        }
                     }));
                 });
                 get(MATRIX, wrapper.wrap(context -> {
