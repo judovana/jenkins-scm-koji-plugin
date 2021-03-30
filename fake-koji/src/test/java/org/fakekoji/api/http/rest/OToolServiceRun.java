@@ -20,7 +20,7 @@ import java.util.Set;
 public class OToolServiceRun {
 
     public static void main(String[] args) throws IOException {
-        //JenkinsCliWrapper.killCli();
+        JenkinsCliWrapper.killCli();
         final File oTool = Files.createTempDirectory("oTool").toFile();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
 
