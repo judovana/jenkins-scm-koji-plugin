@@ -122,6 +122,10 @@ public class ViewsAppi {
     private List<JenkinsViewTemplateBuilder> getNestedViews(List<TaskVariant> taskVariants, List<Platform> allPlatforms, List<Task> allTasks, List<String> projects, List<VersionlessPlatform> versionlessPlatforms, List<JDKVersion> jdkVersions, List<String> osses, List<String> ossesVersioned, List<String> arches, Optional<List<String>> filterOutViewsAsap) throws IOException {
         List<JenkinsViewTemplateBuilder> jvt = new ArrayList<>();
         for (String tab : new String[]{"projects", "tasks", "platforms", "jdkVersions", "variants"}) {
+            //the filter will throw top level views even later, so why to generate them at all
+            if (!filter.matcher(tab).matches()){
+                continue;
+            }
             JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder projectFolder = jvtbFactory.getJenkinsViewTemplateBuilderFolder(tab);
             jvt.add(projectFolder);
             if (tab.equals("projects")) {
