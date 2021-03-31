@@ -253,7 +253,8 @@ public class JenkinsViewTemplateBuilderFactory {
     }
 
     private static String getTaskViewRegex(String task, VersionlessPlatform platform) {
-        return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform, false);
+        return task +
+                (task.contains(getMajorDelimiter())?"":getEscapedMajorDelimiter()) + getPlatformViewRegex(false, platform, false);
     }
 
     public JenkinsViewTemplateBuilder getTaskTemplate(String viewName, Optional<String> columns, Optional<String> platform, Optional<List<Platform>> platforms) throws IOException {
@@ -279,9 +280,11 @@ public class JenkinsViewTemplateBuilderFactory {
             return task + getEscapedMajorDelimiter() + ".*";
         } else {
             if (platforms.isPresent()) {
-                return task + getEscapedMajorDelimiter() + getPlatformViewRegex(false, platform.get(), platforms.get(), false);
+                return task +
+                        (task.contains(getMajorDelimiter())?"":getEscapedMajorDelimiter()) + getPlatformViewRegex(false, platform.get(), platforms.get(), false);
             } else {
-                return task + getEscapedMajorDelimiter() + ".*" + platform.get() + ".*";
+                return task +
+                        (task.contains(getMajorDelimiter())?"":getEscapedMajorDelimiter()) + ".*" + platform.get() + ".*";
             }
         }
     }

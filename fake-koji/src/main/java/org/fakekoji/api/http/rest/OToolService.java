@@ -123,7 +123,7 @@ public class OToolService {
                 + "                will affect jenkins views\n"
                 + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false " + NESTED + "=true/false "+NESTED_COLUMNS+"=true/false/number  if number is put, then the default columns(true) are generated for views withh less then number of matches\n"
                 + "                similar param is e "+CUSTOM_COLUMNS+"=true/false/number  if number is put, then the CUSTOM columns(true) are generated for list-views with less then number of jobs\n"
-                + "                Note, nested=true requires jenkins nested-view-plugin\n"
+                + "                Note, nested=true requires jenkins nested-view-plugin. Warning, in nested-views, filter matches only top level component (tasks, paltforms..)\n"
                 + "\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
