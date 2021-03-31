@@ -188,8 +188,13 @@ public class ViewsAppi {
                         throw  new RuntimeException("unknown subtask " + subTask);
                     }
                     for (String jp : jps) {
-                        JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder taskJpFolder = jvtbFactory.getJenkinsViewTemplateBuilderFolder(jp);
-                        subTasksFolder.addView(taskJpFolder);
+                        JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder taskJpFolder;
+                        if (jps.size() == 1) {
+                            taskJpFolder = subTasksFolder;
+                        } else {
+                            taskJpFolder = jvtbFactory.getJenkinsViewTemplateBuilderFolder(jp);
+                            subTasksFolder.addView(taskJpFolder);
+                        }
                         taskJpFolder.addAll(getAllTasks(allPlatforms, allTasks, Optional.empty(), jp));
                         for (String os : osses) {
                             taskJpFolder.addAll(getAllTasks(allPlatforms, allTasks, Optional.of(os), jp));
