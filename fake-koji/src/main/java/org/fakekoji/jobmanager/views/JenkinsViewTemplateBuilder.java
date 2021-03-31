@@ -207,7 +207,7 @@ public class JenkinsViewTemplateBuilder implements  CharSequence{
 
     private CharSequence getColumnsByCount() throws IOException {
         if (columnStyle.type == JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.NONE) {
-            return "";
+            return JenkinsJobTemplateBuilder.loadTemplate(JenkinsJobTemplateBuilder.JenkinsTemplate.VIEW_DEFAULT_COLUMNS);
         } else if (columnStyle.type == JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.ALL) {
             return columns == null ? "not_used_columns" : columns;
         } else if (columnStyle.type == JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.AUTO) {
