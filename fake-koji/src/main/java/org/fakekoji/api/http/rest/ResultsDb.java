@@ -10,12 +10,16 @@ import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -39,16 +43,30 @@ public class ResultsDb implements EndpointGroup {
 
         final int score;
         final long timestamp;
+        final Optional<String> message;
 
-        public ScoreWithTimeStamp(int score, long timestamp) {
+        public ScoreWithTimeStamp(int score, long timestamp, Optional<String> message) {
             this.score = score;
             this.timestamp = timestamp;
+            this.message = message;
+            if (message.isPresent()) {
+                if (message.get().contains(SECONDARY_DELIMITER) ||
+                        message.get().contains(SCORE_DELIMITER) ||
+                        message.get().contains(MAIN_DELIMITER)) {
+                    throw new RuntimeException("Forbidden chars of '" + SECONDARY_DELIMITER + "', '" + SCORE_DELIMITER + "', '" + MAIN_DELIMITER + "' present in " + message.get());
+                }
+            }
         }
 
         public ScoreWithTimeStamp(String from) {
             String[] srcs = from.trim().split(SCORE_DELIMITER);
             this.score = Integer.valueOf(srcs[0]);
             this.timestamp = Long.valueOf(srcs[1]);
+            if (srcs.length > 2) {
+                message = Optional.of(srcs[2].replace(SCORE_DELIMITER, "%3B").replace(MAIN_DELIMITER, "%3A").replace(SECONDARY_DELIMITER, "%20"));
+            } else {
+                message = Optional.empty();
+            }
         }
 
         @Override
@@ -66,7 +84,7 @@ public class ResultsDb implements EndpointGroup {
 
         @Override
         public String toString() {
-            return score + SCORE_DELIMITER + timestamp;
+            return score + SCORE_DELIMITER + timestamp + SCORE_DELIMITER + message.orElse("");
 
         }
     }
@@ -122,9 +140,9 @@ public class ResultsDb implements EndpointGroup {
             scores.add(result);
         }
 
-        private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score) {
+        private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score, Optional<String> messgae) {
             List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, true);
-            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
+            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime(), messgae);
             for (ScoreWithTimeStamp oldOne : scores) {
                 if (oldOne.equals(newOne)) {
                     //we do not overwrite
@@ -138,7 +156,7 @@ public class ResultsDb implements EndpointGroup {
 
         private synchronized ScoreWithTimeStamp del(String nvr, String job, Integer buildId, Integer score) {
             List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, false);
-            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime());
+            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime(), Optional.empty());
             for (ScoreWithTimeStamp oldOne : scores) {
                 if (oldOne.equals(newOne)) {
                     int deleteions = delChain(nvr, job, buildId, oldOne);
@@ -295,29 +313,32 @@ public class ResultsDb implements EndpointGroup {
     }
 
 
-    String getSet(String job, String nvr, String buildId, String score){
-        return setHelper(job, nvr, buildId, score);
+    String getSet(String job, String nvr, String buildId, String score, Optional<String> message) {
+        return setHelper(job, nvr, buildId, score, message);
     }
 
-    String getDel(String job, String nvr, String buildId, String score){
+    String getDel(String job, String nvr, String buildId, String score) {
         return delHelper(job, nvr, buildId, score);
     }
 
-    synchronized  String getNvrs() {
+    synchronized String getNvrs() {
         List l = new ArrayList<>(db.get().keySet());
-        return l.stream().sorted().collect(Collectors.joining("\n"))+"\n";
+        return l.stream().sorted().collect(Collectors.joining("\n")) + "\n";
     }
 
-    private String addDelScore(final Context context, final String finalAction) {
-        String job = context.queryParam("job");
-        String nvr = context.queryParam("nvr");
-        String buildId = context.queryParam("buildId");
-        String score = context.queryParam("score");
+    private String addDelScore(final Context context, final String finalAction) throws UnsupportedEncodingException {
+        final String job = context.queryParam("job");
+        final String nvr = context.queryParam("nvr");
+        final String buildId = context.queryParam("buildId");
+        final String score = context.queryParam("score");
+        //unluckily for us, javalin decodes soemthing what it should not - parameter
+        final String messagevalue = context.queryParam("message");
+        final Optional<String> message = messagevalue == null || messagevalue.trim() == "" ? Optional.empty() : Optional.of(URLEncoder.encode(messagevalue, StandardCharsets.UTF_8.toString()));
         if (job == null || nvr == null || buildId == null || score == null) {
             throw new RuntimeException("SET job, nvr buildId, and score are mandatory");
         }
         if (finalAction.equals(SET)) {
-            return setHelper(job, nvr, buildId, score);
+            return setHelper(job, nvr, buildId, score, message);
         } else if (finalAction.equals(DEL)) {
             return delHelper(job, nvr, buildId, score);
         } else {
@@ -328,8 +349,8 @@ public class ResultsDb implements EndpointGroup {
     }
 
     @NotNull
-    synchronized  private String setHelper(String job, String nvr, String buildId, String score) {
-        ScoreWithTimeStamp original = db.set(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
+    synchronized private String setHelper(String job, String nvr, String buildId, String score, Optional<String> message) {
+        ScoreWithTimeStamp original = db.set(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score), message);
         if (original == null) {
             return "inserted";
         } else {

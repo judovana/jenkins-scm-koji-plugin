@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -70,7 +71,7 @@ public class ResultsDbTest {
                     } else {
                         for(String sscore: scores) {
                             String[] scoreAndTimeStamp = sscore.split(";");
-                            if (scoreAndTimeStamp.length != 2) {
+                            if (scoreAndTimeStamp.length < 2 || scoreAndTimeStamp.length > 3) {
                                 System.out.println("bad record3: " + line + " (" + sscore + ")");
                                 failures.incrementAndGet();
                             }
@@ -84,7 +85,7 @@ public class ResultsDbTest {
         private void set() {
             try {
                 String s = "" + getNext();
-                String a = db.getSet(s, s, s, ""+getNextScore());
+                String a = db.getSet(s, s, s, "" + getNextScore(), getMessage());
                 String check = db.getScore(null, null, null);
                 checkCheck(check);
             }catch (ResultsDb.ItemNotFoundException e){
@@ -125,7 +126,7 @@ public class ResultsDbTest {
         private void del() {
             try {
                 String s = "" + getNext();
-                String a = db.getSet(s, s, s, ""+getThisScore());
+                String a = db.getSet(s, s, s, "" + getThisScore(), getMessage());
                 String check = db.getScore(null, null, null);
                 checkCheck(check);
             }catch (ResultsDb.ItemNotFoundException e){
@@ -219,30 +220,30 @@ public class ResultsDbTest {
         DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
         db = new ResultsDb(DataGenerator.getSettings(folderHolder));
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("aa","bb","1", "100000000");
+            String a = db.getSet("aa", "bb", "1", "100000000", getMessage());
         }
         //x rewrites of same item, no save
         long l1 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("1)"+l1);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a","b","1", ""+i);
+            String a = db.getSet("a", "b", "1", "" + i, getMessage());
         }
         //now updating item
         long l2 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("2)"+l2);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a","b",""+i, "0");
+            String a = db.getSet("a", "b", "" + i, "0", getMessage());
         }
         //now adding items
         long l3 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("3)"+l3);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a","b"+i,"1", "0");
+            String a = db.getSet("a", "b" + i, "1", "0", getMessage());
         }
         long l4 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("4)"+l4);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a"+i,"b","1", "100000000");
+            String a = db.getSet("a" + i, "b", "1", "100000000", getMessage());
         }
         long l5 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("5)"+l5);
@@ -254,7 +255,7 @@ public class ResultsDbTest {
         System.out.println("6)"+l6);
         //removal of same item;
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a","b","1", ""+i);
+            String a = db.getSet("a", "b", "1", "" + i, getMessage());
         }
         long l7 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("7)"+l7);
@@ -275,17 +276,52 @@ public class ResultsDbTest {
         long l0 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("0)"+l0);
         //878 is minimal growth of file
-        Assert.assertTrue(l1+ MIN_SIZE <l2);
-        Assert.assertTrue(l2+MIN_SIZE<l3);
-        Assert.assertTrue(l3+MIN_SIZE<l4);
-        Assert.assertTrue(l4+MIN_SIZE<l5);
-        Assert.assertTrue(l5==l6);
-        Assert.assertTrue(l6==l7);
-        Assert.assertTrue(l7>l8+MIN_SIZE);
-        Assert.assertTrue(l8>l9+MIN_SIZE);
-        Assert.assertTrue(l9>l0+MIN_SIZE);
+        Assert.assertTrue(l1 + MIN_SIZE < l2);
+        Assert.assertTrue(l2 + MIN_SIZE < l3);
+        Assert.assertTrue(l3 + MIN_SIZE < l4);
+        Assert.assertTrue(l4 + MIN_SIZE < l5);
+        Assert.assertTrue(l5 == l6);
+        Assert.assertTrue(l6 == l7);
+        Assert.assertTrue(l7 > l8 + MIN_SIZE);
+        Assert.assertTrue(l8 > l9 + MIN_SIZE);
+        Assert.assertTrue(l9 > l0 + MIN_SIZE);
+    }
 
+    @Test
+    public void checkSaveLoad() throws IOException {
+        JenkinsCliWrapper.killCli();
+        final File oTool = Files.createTempDirectory("oTool").toFile();
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
+        db = new ResultsDb(DataGenerator.getSettings(folderHolder));
+        String a = db.getSet("job", "nvr", "1", "1", Optional.empty());
+        String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello"));
+        String c = db.getSet("job", "nvr", "1", "2", Optional.of("hello"));
+        Assert.assertEquals("inserted", a);
+        Assert.assertTrue(b.startsWith("Not replacing 1 from "));
+        Assert.assertEquals("inserted", c);
+        String d = db.getScore("nvr", "job", "1");
+        Assert.assertTrue(d.split(" ").length == 2);
+    }
 
+    @Test(expected = RuntimeException.class)
+    public void checkSaveLoadBadChars() throws IOException {
+        JenkinsCliWrapper.killCli();
+        final File oTool = Files.createTempDirectory("oTool").toFile();
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
+        db = new ResultsDb(DataGenerator.getSettings(folderHolder));
+        String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello ; :"));
+    }
+
+    private static final Random messages = new Random();
+
+    public static Optional<String> getMessage() {
+        if (messages.nextBoolean()) {
+            return Optional.of("some%20message%20-%20" + messages.nextInt(100));
+        } else {
+            return Optional.empty();
+        }
     }
 
 }
