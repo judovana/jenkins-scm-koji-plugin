@@ -10,6 +10,7 @@ import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.TaskJob;
+import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
@@ -78,8 +79,11 @@ public class JenkinsJobUpdater implements JobUpdater {
     @Override
     public JobUpdateResults update(Platform platform) throws StorageException {
         wakeUpJenkins();
-        final Predicate<Job> platformJobPredicate = job ->
-                job instanceof TaskJob && ((TaskJob) job).getPlatform().getId().equals(platform.getId());
+        final Predicate<Job> platformJobPredicate = job -> (
+                ((job instanceof TaskJob) && ((TaskJob) job).getPlatform().getId().equals(platform.getId()))
+                        ||
+                        ((job instanceof TestJob) && ((TestJob) job).getBuildPlatform().getId().equals(platform.getId()))
+        );
         final List<JobUpdateResult> jobsRewritten = update(platformJobPredicate, jobUpdateFunctionWrapper(getRewriteFunction()));
         return new JobUpdateResults(
                 Collections.emptyList(),
