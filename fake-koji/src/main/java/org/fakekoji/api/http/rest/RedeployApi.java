@@ -76,6 +76,9 @@ public class RedeployApi implements EndpointGroup {
     private static final String ARCHES_EXPECTED = "archesExpected";
     private static final String ARCHES_EXPECTED_SET = "set";
 
+    private static final String LATEST = "latest";
+    private static final String LATEST_count = "count";
+
     private static final String PROCESSED = "processed";
     private static final String PROCESSED_job = "job";
     private static final String PROCESSED_cmments = "comments";
@@ -124,6 +127,9 @@ public class RedeployApi implements EndpointGroup {
                 + "  Will print out all nvrs in processed.txt of builds.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_TEST + "\n"
                 + "  Will print out all nvrs in processed.txt of tests.\n"
+                + MISC + '/' + REDEPLOY + "/" + LATEST + "\n"
+                + "  Will print out latest value(s) in  processed.txt of based on filter (se below). `do` have no effect.\n"
+                + "  Use " + LATEST_count + "=number to get ore then one latest. " + PROCESSED_cmments + " applicable and " + PROCESSED_job + "=true can make sense\n"
                 + "Shared by most:\n"
                 + "  once you set " + REDEPLOY_NVR + "=nvr the jobs affected by this nvr will be printed.\n"
                 + RedeployApiWorkerBase.getHelp()
@@ -144,6 +150,24 @@ public class RedeployApi implements EndpointGroup {
 
     @Override
     public void addEndpoints() {
+        get(LATEST, context -> {
+            String countValue = context.queryParam(LATEST_count);
+            String commentsValue = context.queryParam(PROCESSED_cmments);
+            String jobsNamesValue = context.queryParam(PROCESSED_job);
+            List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
+            Set<String> nvrs = new HashSet<>(jobs.size());
+            for (String job : jobs) {
+                File processed = new File(new File(settings.getJenkinsJobsRoot(), job), Constants.PROCESSED_BUILDS_HISTORY);
+                List<String> raw = new ArrayList<>(0);
+                if (processed.exists()) {
+                 raw = Utils.readFileToLines(processed, null);
+                }
+                if (raw.size() > 0) {
+                    nvrs.add(raw.get(raw.size() - 1).replaceAll("\\s*#.*", ""));
+                }
+            }
+            context.status(OToolService.OK).result(String.join("\n", nvrs) + "\n");
+        });
         get(PROCESSED, context -> {
             String job = context.queryParam(PROCESSED_job);
             if (job != null) {
