@@ -22,6 +22,7 @@ public class RemoteRequestCacheConfigKeys {
     public static final File DEFAULT_CONFIG_LOCATION = new File(System.getProperty("user.home"), "kojiscmplugin-xmlrpc.caching");
     /**
      * Time in minutes after which config is reloaded
+     * put to 0 to disable cahce
      */
     public static final String CONFIG_REFRESH_RATE_MINUTES = "configRefreshRateMinutes";
     /**
@@ -65,6 +66,7 @@ public class RemoteRequestCacheConfigKeys {
         try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, "utf-8"))) {
             bw.write("# " + DEFAULT_CONFIG_LOCATION.getAbsolutePath() + "\n"
                     + "# copypasted defaults 10 minutes and 6 hours\n"
+                    + "# "+CONFIG_REFRESH_RATE_MINUTES+"=0 will disable caching\n"
                     + CONFIG_REFRESH_RATE_MINUTES + "=10\n"
                     + CACHE_REFRESH_RATE_MINUTES + "cacheRefreshRateMinutes=0\n"
                     + "# hopefully there is a lot of ram on hydra\n"
@@ -104,8 +106,9 @@ public class RemoteRequestCacheConfigKeys {
                     + Constants.getBuildList + "=20\n"
                     + Constants.getBuildDetail + "=1440\n"
                     + "\n"
-                    + "# "+CACHE_CLEAN_COMMAND+"=false\n"
-                    + "# "+DUMP_COMMAND+"=false\n"
+                    + "3 runtime controls\n"
+                    + "#"+CACHE_CLEAN_COMMAND+"=false\n"
+                    + "#"+DUMP_COMMAND+"=false\n"
                     + "");
         }
     }
