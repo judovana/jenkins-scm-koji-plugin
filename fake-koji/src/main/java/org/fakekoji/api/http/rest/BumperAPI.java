@@ -26,6 +26,7 @@ import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.JDKVersion;
+import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
@@ -33,8 +34,10 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -57,6 +60,7 @@ public class BumperAPI implements EndpointGroup {
     public static final String JOB_COLLISION_ACTION = "jobCollisionAction";
     public static final String PLATFORM_BUMP_VARIANT = "taskType";
     public static final String PROJECTS = "projects";
+    public static final String PROVIDERS = "/providers";
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
@@ -69,6 +73,52 @@ public class BumperAPI implements EndpointGroup {
     BumperAPI(final AccessibleSettings settings) {
         this.settings = settings;
         jdkVersionConfigReader = new ConfigReader<>(settings.getConfigManager().jdkVersionManager);
+    }
+
+    private Result<JobUpdateResults, OToolError> bumpProvider(Map<String, List<String>> paramsMap) {
+        if (paramsMap.get(FILTER) == null || paramsMap.get(FILTER).isEmpty() ||
+                paramsMap.get(FILTER).contains("")) {
+            return Result.err(new OToolError(
+                    "Filter is mandatory. is empty or missing",
+                    400
+            ));
+        }
+        try {
+            checkProvider(paramsMap.get(BUMP_FROM), settings.getConfigManager().platformManager.readAll());
+            checkProvider(paramsMap.get(BUMP_TO), settings.getConfigManager().platformManager.readAll());
+        } catch (RuntimeException | StorageException ex) {
+            return Result.err(new OToolError(
+                    ex.getMessage(),
+                    400
+            ));
+        }
+        //we already knows that each list is exactly one item long, and that one is full
+        if (paramsMap.get(BUMP_FROM).get(0).equals(paramsMap.get(BUMP_TO).get(0))) {
+            return Result.err(new OToolError(
+                    BUMP_FROM + "/" + BUMP_TO + " must be different",
+                    400
+            ));
+        }
+
+        return Result.ok(new JobUpdateResults());
+    }
+
+    private static void checkProvider(List<String> provider, List<Platform> platforms) {
+        if (provider == null || provider.size() != 1 ||
+                provider.get(0).trim().equals("")) {
+            throw new RuntimeException(BUMP_FROM + "/" + BUMP_TO + " must have exactly one value");
+        }
+        Set<String> providers = new HashSet<>();
+        for (Platform platform : platforms) {
+            for (Platform.Provider pp : platform.getProviders()) {
+                if (provider.get(0).equals(pp.getId())) {
+                    return;
+                }
+                providers.add(pp.getId());
+            }
+        }
+
+        throw new RuntimeException(BUMP_FROM + "/" + BUMP_TO + " must be known provider: " + String.join(",", providers));
     }
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
@@ -120,7 +170,8 @@ public class BumperAPI implements EndpointGroup {
         final String projectsHelp = PROJECTS + "[projectsId1,projectId2,..projectIdN]";
         return "\n"
                 + prefix + PRODUCTS + "?" + BUMP_FROM + "=[jdkVersionId,packageName]&" + BUMP_TO + "=[jdkVersionId,packageName]&" + projectsHelp + "\n"
-                + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&"+FILTER+"=[regex]\n"
+                + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&" + FILTER + "=[regex]\n"
+                + prefix + PROVIDERS + "?" + BUMP_FROM + "=[provider]&" + BUMP_TO + "=[provider]&" + projectsHelp + "&" + FILTER + "=[regex] - be sure to go job by job\n"
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
                 + "  for all bumps you can specify " + jobCollisionActionsHelp + ", default=stop and " + EXECUTE + "=[true|false], default=false" + "\n"
@@ -221,6 +272,7 @@ public class BumperAPI implements EndpointGroup {
         get(REMOVE_VARIANT, context -> handleBumpResult(context, removeTaskVariant(context.queryParamMap())));
         get(PLATFORMS, context -> handleBumpResult(context, bumpPlatform(context.queryParamMap())));
         get(PRODUCTS, context -> handleBumpResult(context, bumpProduct(context.queryParamMap())));
+        get(PROVIDERS, context -> handleBumpResult(context, bumpProvider(context.queryParamMap())));
     }
 
     static class ConfigReader<T> {
