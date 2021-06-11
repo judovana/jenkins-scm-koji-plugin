@@ -1,10 +1,12 @@
-package org.fakekoji.jobmanager;
+package org.fakekoji.jobmanager.bumpers;
 
 import org.fakekoji.api.http.rest.OToolError;
 import org.fakekoji.api.http.rest.args.BumpArgs;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
+import org.fakekoji.jobmanager.JenkinsJobUpdater;
+import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;

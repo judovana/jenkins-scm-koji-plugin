@@ -1,4 +1,4 @@
-package org.fakekoji.jobmanager;
+package org.fakekoji.jobmanager.bumpers;
 
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;

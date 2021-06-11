@@ -1,6 +1,7 @@
-package org.fakekoji.jobmanager;
+package org.fakekoji.jobmanager.bumpers;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.BuildDirUpdater;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.OToolArchive;

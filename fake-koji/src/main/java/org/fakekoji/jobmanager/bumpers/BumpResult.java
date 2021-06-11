@@ -1,5 +1,6 @@
-package org.fakekoji.jobmanager;
+package org.fakekoji.jobmanager.bumpers;
 
+import org.fakekoji.jobmanager.BuildDirUpdater;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 
 import java.util.Optional;
