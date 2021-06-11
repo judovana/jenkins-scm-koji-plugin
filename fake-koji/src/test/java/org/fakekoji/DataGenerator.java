@@ -481,7 +481,7 @@ public class DataGenerator {
 
     public static Platform.Provider getVMOnlyProvider() {
         return new Platform.Provider(
-                "vagrant",
+                VAGRANT,
                 Collections.emptyList(),
                 Arrays.asList("Hydra", "Norn")
         );
@@ -489,7 +489,7 @@ public class DataGenerator {
 
     public static Platform.Provider getHWOnlyProvider() {
         return new Platform.Provider(
-                "vagrant",
+                VAGRANT,
                 Arrays.asList("Hydra", "Norn"),
                 Collections.emptyList()
         );
@@ -497,7 +497,7 @@ public class DataGenerator {
 
     public static Platform.Provider getProvider() {
         return new Platform.Provider(
-                "vagrant",
+                VAGRANT,
                 Arrays.asList("Hydra", "Norn"),
                 Arrays.asList("Odin", "Tyr", "os-%{OTOOL_OS_NAME}")
         );
@@ -505,7 +505,7 @@ public class DataGenerator {
 
     public static Platform.Provider getBeakerProvider() {
         return new Platform.Provider(
-                "beaker",
+                BEAKER,
                 Arrays.asList("a", "b"),
                 Arrays.asList("c", "d")
         );

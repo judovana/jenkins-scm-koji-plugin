@@ -10,4 +10,17 @@ public class JobBump {
         this.to = to;
         this.isCollision = isCollision;
     }
+
+    @Override
+    public String toString() {
+        return "JobBump{" +
+                "from=" + from +
+                ", to=" + to +
+                ", isCollision=" + isCollision +
+                '}';
+    }
+
+    public String toNiceString() {
+        return to + " (from:" + to + "/" + isCollision + ")";
+    }
 }

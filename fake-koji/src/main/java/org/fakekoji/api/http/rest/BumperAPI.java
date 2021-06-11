@@ -7,6 +7,7 @@ import io.javalin.http.Context;
 
 import org.fakekoji.api.http.rest.args.AddTaskVariantArgs;
 import org.fakekoji.api.http.rest.args.BumpPlatformArgs;
+import org.fakekoji.api.http.rest.args.ProviderBumpArgs;
 import org.fakekoji.api.http.rest.args.RemoveTaskVariantArgs;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
@@ -20,13 +21,13 @@ import org.fakekoji.jobmanager.bumpers.impl.PlatformBumper;
 import org.fakekoji.jobmanager.bumpers.impl.ProductBumper;
 import org.fakekoji.jobmanager.bumpers.impl.TaskVariantAdder;
 import org.fakekoji.jobmanager.bumpers.impl.TaskVariantRemover;
+import org.fakekoji.jobmanager.bumpers.impl.VariantBumper;
 import org.fakekoji.jobmanager.model.JobCollisionAction;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.Product;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.JDKVersion;
-import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
@@ -34,10 +35,8 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -75,50 +74,17 @@ public class BumperAPI implements EndpointGroup {
         jdkVersionConfigReader = new ConfigReader<>(settings.getConfigManager().jdkVersionManager);
     }
 
-    private Result<JobUpdateResults, OToolError> bumpProvider(Map<String, List<String>> paramsMap) {
-        if (paramsMap.get(FILTER) == null || paramsMap.get(FILTER).isEmpty() ||
-                paramsMap.get(FILTER).contains("")) {
-            return Result.err(new OToolError(
-                    "Filter is mandatory. is empty or missing",
-                    400
-            ));
-        }
-        try {
-            checkProvider(paramsMap.get(BUMP_FROM), settings.getConfigManager().platformManager.readAll());
-            checkProvider(paramsMap.get(BUMP_TO), settings.getConfigManager().platformManager.readAll());
-        } catch (RuntimeException | StorageException ex) {
+    private Result<JobUpdateResults, OToolError> bumpProvider(Map<String, List<String>> paramsMap) throws StorageException {
+        ProviderBumpArgs args;
+        try{
+            args =  new ProviderBumpArgs(paramsMap, settings);
+        } catch (Exception ex) {
             return Result.err(new OToolError(
                     ex.getMessage(),
                     400
             ));
         }
-        //we already knows that each list is exactly one item long, and that one is full
-        if (paramsMap.get(BUMP_FROM).get(0).equals(paramsMap.get(BUMP_TO).get(0))) {
-            return Result.err(new OToolError(
-                    BUMP_FROM + "/" + BUMP_TO + " must be different",
-                    400
-            ));
-        }
-
-        return Result.ok(new JobUpdateResults());
-    }
-
-    private static void checkProvider(List<String> provider, List<Platform> platforms) {
-        if (provider == null || provider.size() != 1 ||
-                provider.get(0).trim().equals("")) {
-            throw new RuntimeException(BUMP_FROM + "/" + BUMP_TO + " must have exactly one value");
-        }
-        Set<String> providers = new HashSet<>();
-        for (Platform platform : platforms) {
-            for (Platform.Provider pp : platform.getProviders()) {
-                if (provider.get(0).equals(pp.getId())) {
-                    return;
-                }
-                providers.add(pp.getId());
-            }
-        }
-
-        throw new RuntimeException(BUMP_FROM + "/" + BUMP_TO + " must be known provider: " + String.join(",", providers));
+        return new VariantBumper(settings, args.originalProvider, args.targetProvider, args.filter).modifyJobs(args.projects, args);
     }
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
