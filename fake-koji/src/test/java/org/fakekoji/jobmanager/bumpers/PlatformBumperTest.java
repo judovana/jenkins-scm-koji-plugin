@@ -3,7 +3,7 @@ package org.fakekoji.jobmanager.bumpers;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
-import org.fakekoji.jobmanager.bumpers.PlatformBumper;
+import org.fakekoji.jobmanager.bumpers.impl.PlatformBumper;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.PlatformBumpVariant;

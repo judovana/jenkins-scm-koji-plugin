@@ -1,6 +1,7 @@
-package org.fakekoji.jobmanager.bumpers;
+package org.fakekoji.jobmanager.bumpers.impl;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.bumpers.JobModifier;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.jobmanager.model.Product;
@@ -33,22 +34,22 @@ public class ProductBumper extends JobModifier {
     }
 
     @Override
-    boolean shouldPass(PullJob job) {
+    protected boolean shouldPass(PullJob job) {
         return this.shouldJobPass(job);
     }
 
     @Override
-    boolean shouldPass(BuildJob job) {
+    protected boolean shouldPass(BuildJob job) {
         return this.shouldJobPass(job);
     }
 
     @Override
-    boolean shouldPass(TestJob job) {
+    protected boolean shouldPass(TestJob job) {
         return this.shouldJobPass(job);
     }
 
     @Override
-    PullJob transform(PullJob job) {
+    protected PullJob transform(PullJob job) {
         return new PullJob(
                 job.getProjectName(),
                 job.getRepoUrl(),
@@ -64,7 +65,7 @@ public class ProductBumper extends JobModifier {
     }
 
     @Override
-    BuildJob transform(BuildJob job) {
+    protected BuildJob transform(BuildJob job) {
         return new BuildJob(
                 job.getPlatformProvider(),
                 job.getProjectName(),
@@ -83,7 +84,7 @@ public class ProductBumper extends JobModifier {
     }
 
     @Override
-    TestJob transform(TestJob job) {
+    protected TestJob transform(TestJob job) {
         return new TestJob(
                 job.getPlatformProvider(),
                 job.getProjectName(),

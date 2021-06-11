@@ -3,7 +3,7 @@ package org.fakekoji.jobmanager.bumpers;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
-import org.fakekoji.jobmanager.bumpers.ProductBumper;
+import org.fakekoji.jobmanager.bumpers.impl.ProductBumper;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.model.JDKVersion;
 import org.junit.Assert;

@@ -138,7 +138,7 @@ public abstract class JobModifier {
         }
     }
 
-    Function<Job, Tuple<Job, Optional<Job>>> getTransformFunction() {
+    protected Function<Job, Tuple<Job, Optional<Job>>> getTransformFunction() {
         return job -> {
             final Optional<Job> transformed;
             if (job instanceof PullJob) {
@@ -169,27 +169,21 @@ public abstract class JobModifier {
         };
     }
 
-    boolean shouldPass(PullJob job) {
+    protected boolean shouldPass(PullJob job) {
+        //only one known implementation on pull job
         return false;
     }
 
-    boolean shouldPass(BuildJob job) {
-        return false;
-    }
+    protected abstract boolean shouldPass(BuildJob job);
 
-    boolean shouldPass(TestJob job) {
-        return false;
-    }
+    protected abstract  boolean shouldPass(TestJob job);
 
-    PullJob transform(PullJob job) {
+    protected PullJob transform(PullJob job) {
+        //only one known implementation on pull job
         return job;
     }
 
-    BuildJob transform(BuildJob job) {
-        return job;
-    }
+    protected  abstract BuildJob transform(BuildJob job);
 
-    TestJob transform(TestJob job) {
-        return job;
-    }
+    protected abstract TestJob transform(TestJob job);
 }
