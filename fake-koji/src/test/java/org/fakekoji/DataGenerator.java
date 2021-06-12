@@ -63,6 +63,8 @@ public class DataGenerator {
     public static final String NEW_PROJECT_NAME = "new_project_name";
     public static final String PROJECT_NAME = "projectName";
     public static final String PROJECT_NAME_U = "uName";
+    public static final String PROJECT_VBC_JP = "vagrantBeakerConflictsProjectJdkProject";
+    public static final String PROJECT_VBC_JTP = "vagrantBeakerConflictsProjectJdkTestProject";
     public static final String PROJECT_URL = "https://gitlab.com/fake_jdk/fake_jdk_repo";
     public static final String PROJECT_URL_U = "https://gitlab.com/fake_jdk_u/fake_jdk_repo_u";
     public static final String INVALID_PROJECT_URL = "shttp://gitlab.com/fake_jdk/fake_jdk_repo";
@@ -1103,13 +1105,15 @@ public class DataGenerator {
     public static Set<JDKProject> getJDKProjects() {
         return new HashSet<>(Arrays.asList(
                 getJDKProject(),
-                getJDKProjectU()
+                getJDKProjectU(),
+                getJDKProjectCVB()
         ));
     }
 
     public static Set<JDKTestProject> getJDKTestProjects() {
         return new HashSet<>(Arrays.asList(
-                getJDKTestProject()
+                getJDKTestProject(),
+                getJDKTestProjectCVB()
         ));
     }
 
@@ -1185,7 +1189,7 @@ public class DataGenerator {
     }
 
     public static JDKProject getJDKProjectU() {
-        final Set<VariantsConfig> testVariants = new HashSet<>(Arrays.asList(
+        final  Set<VariantsConfig> testVariants = new HashSet<>(Arrays.asList(
                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY, JFR_ON)),
                 new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, FUTURE, JFR_ON)),
                 new VariantsConfig(getTestVariantsMap(DEFAULT_GC, WAYLAND, LINUX_AGENT, LEGACY, JFR_ON)),
@@ -2054,5 +2058,105 @@ public class DataGenerator {
                 Collections.unmodifiableList(new ArrayList<>()),
                 Collections.unmodifiableList(new ArrayList<>())
         );
+    }
+
+    /**
+     * To test beaker bump, we have to:
+     *  build platform with no conflicts bumps, following tests are unchanged
+     *  test platform with no conflicts bumps
+     *
+     *  build platform with conflicts do not bumps
+     *  test platform with conflicts do not bumps
+     *
+     *  just for fun: build platform with no conflicts bumps, causing test conflicts do what?
+     *
+     * notes:
+     *   two build jobs , each with different build platform provider are valid
+     *   each can have its tree of tests
+     *   two build jobs , each with  same build platform provider are valid
+     *   each can have its tree of tests, however the belonging is not deterministic
+     *   three of above four cases may lead to job naming conflict, as tests do not contain build platform provider, and this is not in otool's hands. no teven in verification steps
+     *
+     * impotant cornercase is to bump project, with platfrom, without given provider. This should lead to validation error (both build and run)
+     * @return
+     */
+    public static JDKProject getJDKProjectCVB() {
+        final  Set<VariantsConfig> testVariants = new HashSet<>(Arrays.asList(
+                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+        ));
+        return new JDKProject(
+                PROJECT_VBC_JP,
+                new Product(JDK_8, JDK_8_PACKAGE_NAME),
+                JDKProject.RepoState.CLONED,
+                PROJECT_URL_U,
+                DataGenerator.getBuildProvidersIds(),
+                new JobConfiguration(new HashSet<>(Arrays.asList(
+                        new PlatformConfig(
+                                RHEL_7_X64,
+                                new HashSet<>(Arrays.asList(
+                                        new TaskConfig(BUILD, new HashSet<>(Arrays.asList(
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                        new HashSet<>(Arrays.asList(
+                                                                new PlatformConfig(
+                                                                        RHEL_7_X64,
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        testVariants
+                                                                                )
+                                                                        )), VAGRANT
+                                                                )
+                                                        ))
+                                                ),
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, FASTDEBUG, SDK),
+                                                        new HashSet<>(Arrays.asList(
+                                                                new PlatformConfig(
+                                                                        RHEL_7_X64,
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        testVariants
+                                                                                )
+                                                                        )), VAGRANT
+                                                                )
+                                                        ))
+                                                ),
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, SLOWDEBUG, SDK),
+                                                        new HashSet<>(Arrays.asList(
+                                                                new PlatformConfig(
+                                                                        RHEL_7_X64,
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        testVariants
+                                                                                )
+                                                                        )), VAGRANT
+                                                                )
+                                                        )))
+                                        )))
+                                )), VAGRANT
+
+                        )
+                ))),
+                Collections.emptyList()
+        );
+    }
+
+    /**
+     * With testproject, the issue described at getJDKProjectCVB should not happen
+     */
+    public static JDKTestProject getJDKTestProjectCVB() {
+            return new JDKTestProject(
+                    PROJECT_VBC_JTP,
+                    new Product(JDK_8, JDK_8_PACKAGE_NAME),
+                    getBuildProvidersIds(),
+                    getSubpackageBlacklist(),
+                    getSubpackageWhitelist(),
+                    new TestJobConfiguration(new HashSet<>()),
+                    Collections.emptyList());
+
     }
 }
