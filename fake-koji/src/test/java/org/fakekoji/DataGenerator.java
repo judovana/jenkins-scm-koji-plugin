@@ -481,7 +481,7 @@ public class DataGenerator {
         ));
     }
 
-    public static Platform.Provider getVMOnlyProvider() {
+    private static Platform.Provider getVMOnlyProvider() {
         return new Platform.Provider(
                 VAGRANT,
                 Collections.emptyList(),
@@ -489,7 +489,7 @@ public class DataGenerator {
         );
     }
 
-    public static Platform.Provider getHWOnlyProvider() {
+    private static Platform.Provider getHWOnlyProvider() {
         return new Platform.Provider(
                 VAGRANT,
                 Arrays.asList("Hydra", "Norn"),
@@ -497,7 +497,7 @@ public class DataGenerator {
         );
     }
 
-    public static Platform.Provider getProvider() {
+    private static Platform.Provider getVagrantProvider() {
         return new Platform.Provider(
                 VAGRANT,
                 Arrays.asList("Hydra", "Norn"),
@@ -505,7 +505,7 @@ public class DataGenerator {
         );
     }
 
-    public static Platform.Provider getBeakerProvider() {
+    private static Platform.Provider getBeakerProvider() {
         return new Platform.Provider(
                 BEAKER,
                 Arrays.asList("a", "b"),
@@ -513,7 +513,7 @@ public class DataGenerator {
         );
     }
 
-    public static Platform getRHEL6i686() {
+    private static Platform getRHEL6i686() {
         return Platform.create(new Platform(
                 null,
                 "el",
@@ -521,7 +521,7 @@ public class DataGenerator {
                 "6",
                 "i686",
                 null,
-                Arrays.asList(getProvider(), getBeakerProvider()),
+                Arrays.asList(getVagrantProvider(), getBeakerProvider()),
                 "rhel-i686",
                 Platform.TestStableYZupdates.NaN,
                 Platform.TestStableYZupdates.NaN,
@@ -530,7 +530,7 @@ public class DataGenerator {
         ));
     }
 
-    public static Platform getRHEL6x64() {
+    private static Platform getRHEL6x64() {
         return Platform.create(new Platform(
                 null,
                 "el",
@@ -538,7 +538,7 @@ public class DataGenerator {
                 "6",
                 "x86_64",
                 null,
-                Arrays.asList(getProvider(), getBeakerProvider()),
+                Arrays.asList(getVagrantProvider(), getBeakerProvider()),
                 "rhel-x64",
                 Platform.TestStableYZupdates.NaN,
                 Platform.TestStableYZupdates.NaN,
@@ -555,7 +555,7 @@ public class DataGenerator {
                 "7",
                 "x86_64",
                 null,
-                Arrays.asList(getProvider(), getBeakerProvider()),
+                Arrays.asList(getVagrantProvider(), getBeakerProvider()),
                 "rhel-x64",
                 Platform.TestStableYZupdates.NaN,
                 Platform.TestStableYZupdates.NaN,
@@ -572,7 +572,7 @@ public class DataGenerator {
                 "7",
                 "x86_64",
                 null,
-                Arrays.asList(getProvider()),
+                Arrays.asList(getVagrantProvider()),
                 "rhel-x64",
                 Platform.TestStableYZupdates.True,
                 Platform.TestStableYZupdates.False,
@@ -600,7 +600,7 @@ public class DataGenerator {
         ));
     }
 
-    public static Platform getF30x64() {
+    private static Platform getF30x64() {
         return Platform.create(new Platform(
                 null,
                 "f",
@@ -617,7 +617,7 @@ public class DataGenerator {
         ));
     }
 
-    public static Platform getF31x64() {
+    private static Platform getF31x64() {
         return Platform.create(new Platform(
                 null,
                 "f",
@@ -634,7 +634,7 @@ public class DataGenerator {
         ));
     }
 
-    public static Platform getRHEL8X64() {
+    private static Platform getRHEL8X64() {
         return Platform.create(new Platform(
                 null,
                 "el",
@@ -651,7 +651,7 @@ public class DataGenerator {
         ));
     }
 
-    public static Platform getRHEL8i686() {
+    private static Platform getRHEL8i686() {
         return Platform.create(new Platform(
                 null,
                 "el",
@@ -693,7 +693,7 @@ public class DataGenerator {
                 "2019",
                 "x86_64",
                 "win",
-                Arrays.asList(getProvider()),
+                Arrays.asList(getVagrantProvider()),
                 "win-2019",
                 Platform.TestStableYZupdates.NaN,
                 Platform.TestStableYZupdates.NaN,
