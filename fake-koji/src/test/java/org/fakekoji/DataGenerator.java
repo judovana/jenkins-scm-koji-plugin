@@ -59,12 +59,19 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JOB_NAME_SHORTEN
 
 public class DataGenerator {
 
+    //the CVB projects were added very late in development cycle, and many asserts works with total numbers, so enabling them only on demand
+    public static boolean withCvbJobs = false;
+    // there are few  (CVB) configs, which have conflicts. Those conflicts may be causing issues randomly, so they are enabled only on sueprdemand
+    //note, that only one of those can be enabled, as they all provide same PROJECT_VBC_JP_SUPER, just with different setup of conflicts
+    public static boolean withConflictingCvbJobsConflict_Total = false;
+
     public static final String TEST_PROJECT_NAME = "testProject";
     public static final String NEW_PROJECT_NAME = "new_project_name";
     public static final String PROJECT_NAME = "projectName";
     public static final String PROJECT_NAME_U = "uName";
     public static final String PROJECT_VBC_JP = "vagrantBeakerConflictsProjectJdkProject";
     public static final String PROJECT_VBC_JTP = "vagrantBeakerConflictsProjectJdkTestProject";
+    public static final String PROJECT_VBC_JP_SUPER = "vagrantBeakerSuperConflictsProjectJdkProject";
     public static final String PROJECT_URL = "https://gitlab.com/fake_jdk/fake_jdk_repo";
     public static final String PROJECT_URL_U = "https://gitlab.com/fake_jdk_u/fake_jdk_repo_u";
     public static final String INVALID_PROJECT_URL = "shttp://gitlab.com/fake_jdk/fake_jdk_repo";
@@ -1103,18 +1110,28 @@ public class DataGenerator {
                     "        </hudson.plugins.report.genericchart.GenericChartPublisher>\n";
 
     public static Set<JDKProject> getJDKProjects() {
-        return new HashSet<>(Arrays.asList(
+        HashSet<JDKProject> r = new HashSet<>(Arrays.asList(
                 getJDKProject(),
-                getJDKProjectU(),
-                getJDKProjectCVB()
+                getJDKProjectU()
         ));
+        if (withCvbJobs){
+            r.add(getJDKProjectCVB());
+            if (withConflictingCvbJobsConflict_Total){
+                r.add(getJDKProjectCVB_total());
+            }
+        }
+            return r;
+
     }
 
     public static Set<JDKTestProject> getJDKTestProjects() {
-        return new HashSet<>(Arrays.asList(
-                getJDKTestProject(),
-                getJDKTestProjectCVB()
+        HashSet<JDKTestProject> r = new HashSet<>(Arrays.asList(
+                getJDKTestProject()
         ));
+        if (withCvbJobs){
+            r.add(getJDKTestProjectCVB());
+        }
+        return r;
     }
 
     public static Set<Project> getProjects() {
@@ -2080,19 +2097,17 @@ public class DataGenerator {
      * impotant cornercase is to bump project, with platfrom, without given provider. This should lead to validation error (both build and run)
      * @return
      */
-    public static JDKProject getJDKProjectCVB() {
-        final  Set<VariantsConfig> testVariants = new HashSet<>(Arrays.asList(
-                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
-        ));
+
+    public static JDKProject getJDKProjectCVB_total() {
         return new JDKProject(
-                PROJECT_VBC_JP,
+                PROJECT_VBC_JP_SUPER,
                 new Product(JDK_8, JDK_8_PACKAGE_NAME),
                 JDKProject.RepoState.CLONED,
                 PROJECT_URL_U,
                 DataGenerator.getBuildProvidersIds(),
                 new JobConfiguration(new HashSet<>(Arrays.asList(
                         new PlatformConfig(
-                                RHEL_7_X64,
+                                RHEL_7_X64, //beaker, vagrant, conflict on build level, thus conflicting on all 3 jobs during generation
                                 new HashSet<>(Arrays.asList(
                                         new TaskConfig(BUILD, new HashSet<>(Arrays.asList(
                                                 getBuildVariantConfig(
@@ -2103,7 +2118,10 @@ public class DataGenerator {
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        testVariants
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)), //conflicting already on generation level, will super conflict  after generation
+                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
@@ -2117,28 +2135,171 @@ public class DataGenerator {
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        testVariants
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)),
+                                                                                                new VariantsConfig(getTestVariantsMap(ZGC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
                                                                                 )
-                                                                        )), VAGRANT
+                                                                        )), BEAKER
                                                                 )
                                                         ))
-                                                ),
+                                                )
+                                        )))
+                                )), VAGRANT
+
+                        ),
+                        new PlatformConfig(
+                                RHEL_7_X64, //beaker, vagrant, conflicting on build level
+                                new HashSet<>(Arrays.asList(
+                                        new TaskConfig(BUILD, new HashSet<>(Arrays.asList(
                                                 getBuildVariantConfig(
-                                                        getBuildVariantsMap(HOTSPOT, SLOWDEBUG, SDK),
+                                                        getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
                                                         new HashSet<>(Arrays.asList(
                                                                 new PlatformConfig(
                                                                         RHEL_7_X64,
                                                                         new HashSet<>(Arrays.asList(
                                                                                 new TaskConfig(
                                                                                         TCK,
-                                                                                        testVariants
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)),
+                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
                                                                                 )
                                                                         )), VAGRANT
                                                                 )
-                                                        )))
+                                                        ))
+                                                ),
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, FASTDEBUG, SDK),
+                                                        new HashSet<>(Arrays.asList(
+                                                                new PlatformConfig(
+                                                                        RHEL_7_X64,
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)),
+                                                                                                new VariantsConfig(getTestVariantsMap(ZGC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
+                                                                                )
+                                                                        )), BEAKER
+                                                                )
+                                                        ))
+                                                )
+                                        )))
+                                )), BEAKER
+                        )))),
+                Collections.emptyList());
+    }
+
+    public static JDKProject getJDKProjectCVB() {
+        return new JDKProject(
+                PROJECT_VBC_JP,
+                new Product(JDK_8, JDK_8_PACKAGE_NAME),
+                JDKProject.RepoState.CLONED,
+                PROJECT_URL_U,
+                DataGenerator.getBuildProvidersIds(),
+                new JobConfiguration(new HashSet<>(Arrays.asList(
+                        new PlatformConfig(
+                                RHEL_7_X64, //beaker, vagrant, conflict on build level
+                                new HashSet<>(Arrays.asList(
+                                        new TaskConfig(BUILD, new HashSet<>(Arrays.asList(
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                        new HashSet<>()
+                                                ),
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, FASTDEBUG, SDK),
+                                                        new HashSet<>()
+                                                )
                                         )))
                                 )), VAGRANT
 
+                        ),
+                        new PlatformConfig(
+                                RHEL_7_X64,
+                                new HashSet<>(Arrays.asList(
+                                        new TaskConfig(BUILD, new HashSet<>(Arrays.asList(
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                        new HashSet<>()
+                                                ),
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, SLOWDEBUG, SDK),
+                                                        new HashSet<>()
+                                                )
+                                        )))
+                                )), BEAKER
+                        ),
+                        new PlatformConfig(
+                                getRHEL6x64().getId(), // //for testing conflict on test level (not triggering build conflict ) [but that is possibel too)
+                                new HashSet<>(Arrays.asList(
+                                        new TaskConfig(BUILD, new HashSet<>(Arrays.asList(
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                        new HashSet<>(Arrays.asList(
+                                                                new PlatformConfig(
+                                                                        getRHEL6x64().getId(),
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)), //will conflict on job level
+                                                                                                new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
+                                                                                )
+                                                                        )), VAGRANT
+                                                                )
+                                                        ))
+                                                ),
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                        new HashSet<>(Arrays.asList(
+                                                                new PlatformConfig(
+                                                                        getRHEL6x64().getId(),
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)),//conflciting on job level
+                                                                                                new VariantsConfig(getTestVariantsMap(ZGC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
+                                                                                )
+                                                                        )), BEAKER
+                                                                )
+                                                        ))
+                                                )
+                                        )))
+                                )), VAGRANT
+                        ),
+                        new PlatformConfig(
+                                getWin2019x64().getId(), //no beaker
+                                new HashSet<>(Arrays.asList(
+                                        new TaskConfig(BUILD, new HashSet<>(Arrays.asList(
+                                                getBuildVariantConfig(
+                                                        getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                        new HashSet<>(Arrays.asList(
+                                                                new PlatformConfig(
+                                                                        getWin2019x64().getId(), //o beaker
+                                                                        new HashSet<>(Arrays.asList(
+                                                                                new TaskConfig(
+                                                                                        DACAPO,
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
+                                                                                ),
+                                                                                new TaskConfig(
+                                                                                        TCK,
+                                                                                        new HashSet<>(Arrays.asList(
+                                                                                                new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                        ))
+                                                                                )
+                                                                        )), VAGRANT
+                                                                )
+                                                        ))
+                                                )
+                                        )))
+                                )), VAGRANT
                         )
                 ))),
                 Collections.emptyList()
@@ -2149,14 +2310,81 @@ public class DataGenerator {
      * With testproject, the issue described at getJDKProjectCVB should not happen
      */
     public static JDKTestProject getJDKTestProjectCVB() {
-            return new JDKTestProject(
-                    PROJECT_VBC_JTP,
-                    new Product(JDK_8, JDK_8_PACKAGE_NAME),
-                    getBuildProvidersIds(),
-                    getSubpackageBlacklist(),
-                    getSubpackageWhitelist(),
-                    new TestJobConfiguration(new HashSet<>()),
-                    Collections.emptyList());
+        return new JDKTestProject(
+                PROJECT_VBC_JTP,
+                new Product(JDK_8, JDK_8_PACKAGE_NAME),
+                getBuildProvidersIds(),
+                getSubpackageBlacklist(),
+                getSubpackageWhitelist(),
+                new TestJobConfiguration(new HashSet<>(Arrays.asList(
+                          new BuildPlatformConfig(
+                                getRHEL6x64().getId(), //beaker+vagrant, no conflict on build level
+                                new HashSet<>(Arrays.asList(
+                                        getBuildVariantConfig(
+                                                getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                new HashSet<>(Arrays.asList(
+                                                        new PlatformConfig(
+                                                                getRHEL6x64().getId(),
+                                                                new HashSet<>(Arrays.asList(
+                                                                        new TaskConfig(
+                                                                                TCK,
+                                                                                new HashSet<>(Arrays.asList(
+                                                                                        new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)), //will conflict on job level
+                                                                                        new VariantsConfig(getTestVariantsMap(SHENANDOAH, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                ))
+                                                                        )
+                                                                )), VAGRANT
+                                                        )
+                                                ))
+                                        ),
+                                        getBuildVariantConfig(
+                                                getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                new HashSet<>(Arrays.asList(
+                                                        new PlatformConfig(
+                                                                getRHEL6x64().getId(),
+                                                                new HashSet<>(Arrays.asList(
+                                                                        new TaskConfig(
+                                                                                TCK,
+                                                                                new HashSet<>(Arrays.asList(
+                                                                                        new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF)),//conflciting on job level
+                                                                                        new VariantsConfig(getTestVariantsMap(ZGC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                ))
+                                                                        )
+                                                                )), BEAKER
+                                                        )
+                                                ))
+                                        )
+                                ))
+                        ),
+                        new BuildPlatformConfig(
+                                getWin2019x64().getId(), //no beaker
+                                new HashSet<>(Arrays.asList(
+                                        getBuildVariantConfig(
+                                                getBuildVariantsMap(HOTSPOT, RELEASE, SDK),
+                                                new HashSet<>(Arrays.asList(
+                                                        new PlatformConfig(
+                                                                getWin2019x64().getId(), //o beaker
+                                                                new HashSet<>(Arrays.asList(
+                                                                        new TaskConfig(
+                                                                                TCK,
+                                                                                new HashSet<>(Arrays.asList(
+                                                                                        new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                ))
+                                                                        ),
+                                                                        new TaskConfig(
+                                                                                DACAPO,
+                                                                                new HashSet<>(Arrays.asList(
+                                                                                        new VariantsConfig(getTestVariantsMap(DEFAULT_GC, X_SERVER, LINUX_AGENT, LEGACY, JFR_OFF))
+                                                                                ))
+                                                                        )
+                                                                )), VAGRANT
+                                                        )
+                                                ))
+                                        )
+                                ))
+                        )
+                ))),
+                Collections.emptyList());
 
     }
 }
