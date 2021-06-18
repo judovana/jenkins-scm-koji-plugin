@@ -59,6 +59,7 @@ public class JenkinsSshCliTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
+        JenkinsCliWrapper.reinitCli(); //this one expects correct - non dummy instance provided by killCli
         try {
             JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().help();
             haveJenkinsWithSsh = (r.remoteCommandreturnValue == 0 && r.sshEngineExeption == null);

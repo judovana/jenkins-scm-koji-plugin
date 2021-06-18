@@ -1,6 +1,7 @@
-package org.fakekoji.jobmanager;
+package org.fakekoji.jobmanager.bumpers.impl;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.bumpers.JobModifier;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.TestJob;
@@ -31,7 +32,7 @@ public class PlatformBumper extends JobModifier {
     }
 
     @Override
-    boolean shouldPass(BuildJob job) {
+    protected boolean shouldPass(BuildJob job) {
         switch (variant) {
             case BOTH:
             case BUILD_ONLY:
@@ -43,7 +44,7 @@ public class PlatformBumper extends JobModifier {
     }
 
     @Override
-    boolean shouldPass(TestJob job) {
+    protected boolean shouldPass(TestJob job) {
         switch (variant) {
             case BOTH:
                 return (isFromPlatform(job.getPlatform()) || isFromBuildPlatform(job.getBuildPlatform())) && matches(job.getName());
@@ -65,7 +66,7 @@ public class PlatformBumper extends JobModifier {
     }
 
     @Override
-    BuildJob transform(BuildJob job) {
+    protected BuildJob transform(BuildJob job) {
         return new BuildJob(
                 job.getPlatformProvider(),
                 job.getProjectName(),
@@ -81,7 +82,7 @@ public class PlatformBumper extends JobModifier {
     }
 
     @Override
-    TestJob transform(TestJob job) {
+    protected  TestJob transform(TestJob job) {
         final Platform platform;
         final Platform buildPlatform;
         switch (variant) {

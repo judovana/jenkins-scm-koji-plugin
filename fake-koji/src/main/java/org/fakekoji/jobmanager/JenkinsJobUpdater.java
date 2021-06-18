@@ -291,9 +291,19 @@ public class JenkinsJobUpdater implements JobUpdater {
                 return updateFunction.apply(job);
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e.getMessage(), e);
-                return new JobUpdateResult(job.toString(), false, e.getMessage());
+                return new JobUpdateResult(jobToString(job), false, e.getMessage());
             }
         };
+    }
+
+    private <T> String jobToString(T job) {
+        if (job instanceof Job) {
+            return ((Job) job).getName();
+        } else if (job instanceof JobBump) {
+            return ((JobBump) job).toNiceString();
+        } else {
+            return job.toString();
+        }
     }
 
     private JobUpdateFunction<Job> getCreateFunction() {

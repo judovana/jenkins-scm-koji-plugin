@@ -7,19 +7,21 @@ import io.javalin.http.Context;
 
 import org.fakekoji.api.http.rest.args.AddTaskVariantArgs;
 import org.fakekoji.api.http.rest.args.BumpPlatformArgs;
+import org.fakekoji.api.http.rest.args.ProviderBumpArgs;
 import org.fakekoji.api.http.rest.args.RemoveTaskVariantArgs;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
 import org.fakekoji.jobmanager.BuildDirUpdater;
-import org.fakekoji.jobmanager.BumpResult;
+import org.fakekoji.jobmanager.bumpers.BumpResult;
 import org.fakekoji.jobmanager.ConfigCache;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.Manager;
-import org.fakekoji.jobmanager.PlatformBumper;
-import org.fakekoji.jobmanager.ProductBumper;
-import org.fakekoji.jobmanager.TaskVariantAdder;
-import org.fakekoji.jobmanager.TaskVariantRemover;
+import org.fakekoji.jobmanager.bumpers.impl.PlatformBumper;
+import org.fakekoji.jobmanager.bumpers.impl.ProductBumper;
+import org.fakekoji.jobmanager.bumpers.impl.TaskVariantAdder;
+import org.fakekoji.jobmanager.bumpers.impl.TaskVariantRemover;
+import org.fakekoji.jobmanager.bumpers.impl.VariantBumper;
 import org.fakekoji.jobmanager.model.JobCollisionAction;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.model.PlatformBumpVariant;
@@ -57,6 +59,7 @@ public class BumperAPI implements EndpointGroup {
     public static final String JOB_COLLISION_ACTION = "jobCollisionAction";
     public static final String PLATFORM_BUMP_VARIANT = "taskType";
     public static final String PROJECTS = "projects";
+    public static final String PROVIDERS = "/providers";
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
@@ -69,6 +72,19 @@ public class BumperAPI implements EndpointGroup {
     BumperAPI(final AccessibleSettings settings) {
         this.settings = settings;
         jdkVersionConfigReader = new ConfigReader<>(settings.getConfigManager().jdkVersionManager);
+    }
+
+    private Result<JobUpdateResults, OToolError> bumpProvider(Map<String, List<String>> paramsMap) throws StorageException {
+        ProviderBumpArgs args;
+        try{
+            args =  new ProviderBumpArgs(paramsMap, settings);
+        } catch (Exception ex) {
+            return Result.err(new OToolError(
+                    ex.getMessage(),
+                    400
+            ));
+        }
+        return new VariantBumper(settings, args.originalProvider, args.targetProvider, args.filter).modifyJobs(args.projects, args);
     }
 
     private Result<JobUpdateResults, OToolError> bumpPlatform(Map<String, List<String>> paramsMap) {
@@ -120,7 +136,8 @@ public class BumperAPI implements EndpointGroup {
         final String projectsHelp = PROJECTS + "[projectsId1,projectId2,..projectIdN]";
         return "\n"
                 + prefix + PRODUCTS + "?" + BUMP_FROM + "=[jdkVersionId,packageName]&" + BUMP_TO + "=[jdkVersionId,packageName]&" + projectsHelp + "\n"
-                + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&"+FILTER+"=[regex]\n"
+                + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&" + FILTER + "=[regex]\n"
+                + prefix + PROVIDERS + "?" + BUMP_FROM + "=[provider]&" + BUMP_TO + "=[provider]&" + projectsHelp + "&" + FILTER + "=[regex] - be sure to go job by job\n"
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
                 + "  for all bumps you can specify " + jobCollisionActionsHelp + ", default=stop and " + EXECUTE + "=[true|false], default=false" + "\n"
@@ -221,6 +238,7 @@ public class BumperAPI implements EndpointGroup {
         get(REMOVE_VARIANT, context -> handleBumpResult(context, removeTaskVariant(context.queryParamMap())));
         get(PLATFORMS, context -> handleBumpResult(context, bumpPlatform(context.queryParamMap())));
         get(PRODUCTS, context -> handleBumpResult(context, bumpProduct(context.queryParamMap())));
+        get(PROVIDERS, context -> handleBumpResult(context, bumpProvider(context.queryParamMap())));
     }
 
     static class ConfigReader<T> {

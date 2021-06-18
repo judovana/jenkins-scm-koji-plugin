@@ -15,7 +15,7 @@ public class BumpArgs {
     public final JobCollisionAction action;
     public boolean execute;
 
-    BumpArgs(final JobCollisionAction action, final boolean execute) {
+    public BumpArgs(final JobCollisionAction action, final boolean execute) {
         this.action = action;
         this.execute = execute;
     }

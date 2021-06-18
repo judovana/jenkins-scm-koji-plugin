@@ -1,6 +1,8 @@
-package org.fakekoji.jobmanager;
+package org.fakekoji.jobmanager.bumpers.impl;
 
 import org.fakekoji.core.AccessibleSettings;
+import org.fakekoji.jobmanager.BuildDirUpdater;
+import org.fakekoji.jobmanager.bumpers.JobModifier;
 import org.fakekoji.jobmanager.model.BuildJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.OToolArchive;
@@ -23,12 +25,12 @@ public class TaskVariantAdder extends JobModifier implements BuildDirUpdater.Arc
     }
     
     @Override
-    boolean shouldPass(BuildJob job) {
+    protected boolean shouldPass(BuildJob job) {
         return taskVariant.getType().equals(Task.Type.BUILD);
     }
 
     @Override
-    boolean shouldPass(TestJob job) {
+    protected boolean shouldPass(TestJob job) {
         return true;
     }
     
@@ -53,7 +55,7 @@ public class TaskVariantAdder extends JobModifier implements BuildDirUpdater.Arc
     }
 
     @Override
-    BuildJob transform(BuildJob job) {
+    protected BuildJob transform(BuildJob job) {
         return new BuildJob(
                 job.getPlatformProvider(),
                 job.getProjectName(),
@@ -69,7 +71,7 @@ public class TaskVariantAdder extends JobModifier implements BuildDirUpdater.Arc
     }
 
     @Override
-    TestJob transform(TestJob job) {
+    protected TestJob transform(TestJob job) {
         return new TestJob(
                 job.getPlatformProvider(),
                 job.getProjectName(),
