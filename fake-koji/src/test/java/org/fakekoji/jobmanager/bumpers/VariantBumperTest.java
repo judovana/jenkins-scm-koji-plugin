@@ -387,7 +387,50 @@ public class VariantBumperTest {
         r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.KEEP_BUMPED, true));
         Assert.assertNotNull(r);
         Assert.assertTrue(r.isError());
+    }
+
+    /**
+     * FIXME bump of build paltform and its kids is not suported now
+     * Todo this, you have to bump all tests to new provider, and once the build is empty, you can bump it
+     * @throws ManagementException
+     * @throws StorageException
+     * @throws IOException
+     */
+
+    @Test
+    public void okBumpJdkBuildJobWithKidsWithBumpingKids() throws ManagementException, StorageException, IOException {
+        CurrentSetup cs = setup(true, false);
+        List<Project> a = getProjects(DataGenerator.PROJECT_VBC_JP);
+        JobUpdateResults r1 = cs.settings.getJobUpdater().regenerateAll(null, cs.settings.getConfigManager().jdkProjectManager, null);//create all
+        JobUpdateResults r2 = cs.settings.getJobUpdater().regenerateAll(null, cs.settings.getConfigManager().jdkTestProjectManager, null);//create all
+        String[] nJobsO0 = cs.settings.getJenkinsJobsRoot().list();
+        Arrays.sort(nJobsO0);
+
+        String[] bumpedBuilds = new String[]{
+                "build-jdk8-vagrantBeakerConflictsProjectJdkProject-el6.x86_64.beaker-release.hotspot.sdk",
+                "tck-jdk8-vagrantBeakerConflictsProjectJdkProject-el6.x86_64-release.hotspot.sdk-el6.x86_64.vagrant-defaultgc.x11.legacy.lnxagent.jfroff",
+                "tck-jdk8-vagrantBeakerConflictsProjectJdkProject-el6.x86_64-release.hotspot.sdk-el6.x86_64.vagrant-zgc.x11.legacy.lnxagent.jfroff"
+        };
+        String po1 = Utils.readFile(new File(cs.settings.getConfigRoot(), "jdkProjects/" + DataGenerator.PROJECT_VBC_JP + ".json"));
+        String so1 = Utils.readFile(cfgFile(cs.settings, bumpedBuilds[0], ".beaker-", ".vagrant-"));
+        Assert.assertTrue(so1.contains("OTOOL_PLATFORM_PROVIDER=vagrant"));
+        Assert.assertTrue(so1.contains("<assignedNode>Odin||Tyr||os-el</assignedNode>"));
+
+        VariantBumper bumper = new VariantBumper(cs.settings, "vagrant", "beaker", Pattern.compile(".*el6.*"));
+        Result<JobUpdateResults, OToolError> r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
+        Assert.assertNotNull(r);
+        Assert.assertTrue(r.isOk());
+        String[] nJobsO2 = cs.settings.getJenkinsJobsRoot().list();
+        Arrays.sort(nJobsO2);
+        Assert.assertArrayEquals(nJobsO0, nJobsO2);
+
+        String po2 = Utils.readFile(new File(cs.settings.getConfigRoot(), "jdkProjects/" + DataGenerator.PROJECT_VBC_JP + ".json"));
+        Assert.assertEquals(po1, po2);
 
 
+        bumper = new VariantBumper(cs.settings, "vagrant", "beaker", Pattern.compile(".*el6.*"));
+        r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.KEEP_BUMPED, true));
+        Assert.assertNotNull(r);
+        Assert.assertTrue(r.isError());
     }
 }
