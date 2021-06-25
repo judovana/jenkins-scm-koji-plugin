@@ -138,6 +138,7 @@ public class BumperAPI implements EndpointGroup {
                 + prefix + PRODUCTS + "?" + BUMP_FROM + "=[jdkVersionId,packageName]&" + BUMP_TO + "=[jdkVersionId,packageName]&" + projectsHelp + "\n"
                 + prefix + PLATFORMS + "?" + BUMP_FROM + "=[platformId]&" + BUMP_TO + "=[platformId]&" + projectsHelp + "&" + platformBumpVariantsHelp + "]&" + FILTER + "=[regex]\n"
                 + prefix + PROVIDERS + "?" + BUMP_FROM + "=[provider]&" + BUMP_TO + "=[provider]&" + projectsHelp + "&" + FILTER + "=[regex] - be sure to go job by job\n"
+                + prefix + "             "  + "Warning! You cannot bump build job, while it have some test jobs. Sorry. Similarly you can not bump the build and its tests together \n"
                 + MISC + ADD_VARIANT + "?name=[variantName]&type=[BUILD|TEST]&defaultValue=[defualtvalue]&values=[value1,value2,...,valueN]\n"
                 + MISC + REMOVE_VARIANT + "?name=[variantName]\n"
                 + "  for all bumps you can specify " + jobCollisionActionsHelp + ", default=stop and " + EXECUTE + "=[true|false], default=false" + "\n"
