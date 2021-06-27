@@ -251,10 +251,11 @@ public class RedeployApi implements EndpointGroup {
                 if (!providers.contains(nwProvider)) {
                     throw new RuntimeException(nwProvider + ": is not valid provider. Use one of: " + String.join(",", providers) + "\n");
                 }
+                StringBuilder sb = new StringBuilder();
                 if ("true".equals(doAndHow)) {
 
                 } else {
-                    StringBuilder sb = new StringBuilder();
+                    int totalIssues=0;
                     for (String job : jobs) {
                         sb.append(job).append("\n");
                         File jobDir = new File(settings.getJenkinsJobsRoot(), job);
@@ -269,22 +270,28 @@ public class RedeployApi implements EndpointGroup {
                                     sb.append(" - ").append(line.trim()).append("\n");
                                     nodesCount++;
                                 }
-                                if (line.contains("OTOOL_PLATFORM_PROVIDER")) {
+                                if (line.contains("OTOOL_PLATFORM_PROVIDER=")) {
                                     sb.append(" - ").append(line.trim()).append("\n");
                                     providersCount++;
                                 }
                             }
                         }
-                        if (nodesCount>1){
-                            sb.append(" - ").append("warning! found more then one assignedNode!").append("\n");
+                        if (nodesCount != 1){
+                            totalIssues++;
+                            sb.append(" - ").append("!WARNING! found none or more then one assignedNode!").append("\n");
                         }
-                        if (providersCount>1){
-                            sb.append(" - ").append("warning! found more then one OTOOL_PLATFORM_PROVIDER!").append("\n");
+                        if (providersCount != 1){
+                            totalIssues++;
+                            sb.append(" - ").append("!WARNING! found none or more then one OTOOL_PLATFORM_PROVIDER!").append("\n");
                         }
                     }
-                    context.status(OToolService.OK).result(sb.toString() + "\n");
-
+                    if (totalIssues > 0){
+                        sb.append("Warning! " + totalIssues + " issue found! Do not proceed!\n");
+                    } else {
+                        sb.append("no issues found, but be careful anyway!\n");
+                    }
                 }
+                context.status(OToolService.OK).result(sb.toString() + "\n");
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
@@ -298,10 +305,33 @@ public class RedeployApi implements EndpointGroup {
                 if (nwSlaves == null || nwSlaves.trim().isEmpty()){
                     throw new RuntimeException(RESLAVES+" is mandatory\n");
                 }
+                StringBuilder sb = new StringBuilder();
                 if ("true".equals(doAndHow)) {
-
+                    int totalCountReplacements = 0 ;
+                    int totalCountFiles = 0 ;
+                    for (String job : jobs) {
+                        sb.append(job).append("\n");
+                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
+                        File config = new File(jobDir, "config.xml");
+                        List<String> lines = Utils.readFileToLines(config, null);
+                        for (int i = 0; i < lines.size(); i++) {
+                            String line = lines.get(i);
+                            if (line.contains("<assignedNode>")) {
+                                String orig=line.trim();
+                                String nw="<assignedNode>"+nwSlaves+"</assignedNode>";
+                                sb.append(" - "+orig+" -> "+nw+ "\n");
+                                lines.set(i,nw);
+                                totalCountReplacements++;
+                            }
+                        }
+                        Utils.writeToFile(config, String.join("\n", lines));
+                        sb.append(" - written");
+                        totalCountFiles++;
+                    }
+                    sb.append("Written "+totalCountFiles+" of "+jobs.size()+"\n");
+                    sb.append("Replaced "+totalCountReplacements+" of "+jobs.size()+"\n");
                 } else {
-                    StringBuilder sb = new StringBuilder();
+                    int totalIssues = 0;
                     for (String job : jobs) {
                         sb.append(job).append("\n");
                         File jobDir = new File(settings.getJenkinsJobsRoot(), job);
@@ -314,13 +344,18 @@ public class RedeployApi implements EndpointGroup {
                                     nodesCount++;
                                 }
                         }
-                        if (nodesCount>1){
-                            sb.append(" - ").append("warning! found more then one assignedNode!").append("\n");
+                        if (nodesCount != 1){
+                            totalIssues ++ ;
+                            sb.append(" - ").append("!WARNING! found none or more then one assignedNode!").append("\n");
                         }
                     }
-                    context.status(OToolService.OK).result(sb.toString() + "\n");
-
+                    if (totalIssues > 0){
+                        sb.append("Warning! " + totalIssues + " issue found! Do not proceed!\n");
+                    } else {
+                        sb.append("no issues found, but be careful anyway!\n");
+                    }
                 }
+                context.status(OToolService.OK).result(sb.toString() + "\n");
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
