@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,7 @@ public class RedeployApi implements EndpointGroup {
 
     public static final String REDEPLOY = "re";
     private static final String REPROVIDER = "provider";
+    private static final String REPROVIDERARG = "nwprovider";
     private static final String SKIP_SLAVES = "skipSlaves";
     private static final String RESLAVES = "slaves";
     //without list/do just list list waht can be done?
@@ -116,7 +118,7 @@ public class RedeployApi implements EndpointGroup {
         return "\n"
                 + MISC + '/' + REDEPLOY + "/" + REPROVIDER + "\n"
                 + "  requires the shred filterig below. Will temporarily (until next regeneration) change run provider of selected jobs (including slaves, excluding job name).\n"
-                + "  Except filter, the mandatory parameter is provider=<provider-id>. You can exclude slaves via "+SKIP_SLAVES+"=true\n"
+                + "  Except filter, the mandatory parameter is "+REPROVIDERARG+"=<provider-id>. You can exclude slaves via "+SKIP_SLAVES+"=true\n"
                 + MISC + '/' + REDEPLOY + "/" + RESLAVES + "\n"
                 + "  requires the shred filterig below. Will temporarily (until next regeneration) change slaves/labesl of selected jobs .\n"
                 + "  Except filter, the mandatory parameter is salves=<jenkins slaves stringd>. This method hdd no constraints! Use with care!\n"
@@ -246,10 +248,10 @@ public class RedeployApi implements EndpointGroup {
                 String OTOOL_PLATFORM_PROVIDER = JenkinsJobTemplateBuilder.OTOOL_BASH_VAR_PREFIX + JenkinsJobTemplateBuilder.PLATFORM_PROVIDER_VAR;
                 List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
                 String doAndHow = context.queryParam(REDEPLOY_DO);
-                String nwProvider = context.queryParam(REPROVIDER);
+                String nwProvider = context.queryParam(REPROVIDERARG);
                 String skipSlaves = context.queryParam(SKIP_SLAVES);
                 if (nwProvider == null || nwProvider.trim().isEmpty()){
-                    throw new RuntimeException(REPROVIDER+" is mandatory\n");
+                    throw new RuntimeException(REPROVIDERARG+" is mandatory\n");
                 }
                 Set<String> providers = GetterAPI.getProviders(settings.getConfigManager().platformManager);
                 if (!providers.contains(nwProvider)) {
@@ -257,7 +259,40 @@ public class RedeployApi implements EndpointGroup {
                 }
                 StringBuilder sb = new StringBuilder();
                 if ("true".equals(doAndHow)) {
-
+                    int totalFiles = 0;
+                    int totalReplacements = 0;
+                    for (String job : jobs) {
+                        sb.append(job).append("\n");
+                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
+                        File config = new File(jobDir, "config.xml");
+                        List<String> lines = Utils.readFileToLines(config, null);
+                        for (int i = 0; i < lines.size(); i++) {
+                            String mainline = lines.get(i);
+                            String[] xmlLines = mainline.split("&#13;");
+                            for (String line : xmlLines) {
+                                if (!"true".equals(skipSlaves)) {
+                                    if (line.contains("<assignedNode>")) {
+                                        mainline = mainline.replace(line.trim(), "<assignedNode>TODO_NODES</assignedNode>");
+                                        totalReplacements++;
+                                    }
+                                }
+                                if (line.contains(OTOOL_PLATFORM_PROVIDER + "=")) {
+                                    mainline = mainline.replace(line.trim(), "export " + OTOOL_PLATFORM_PROVIDER + "=" + nwProvider + " # " + new Date().toString() + " " + line.trim());
+                                    totalReplacements++;
+                                }
+                            }
+                            lines.set(i, mainline);
+                        }
+                        Utils.writeToFile(config, String.join("\n", lines));
+                        sb.append(" - written\n");
+                        totalFiles++;
+                    }
+                    sb.append("Written " + totalFiles + " of " + jobs.size() + "\n");
+                    if ("true".equals(skipSlaves)) {
+                        sb.append("Replaced " + totalReplacements + " of " + jobs.size() + "\n");
+                    } else {
+                        sb.append("Replaced " + totalReplacements + " of " + (jobs.size() * 2) + "\n");
+                    }
                 } else {
                     int totalIssues=0;
                     for (String job : jobs) {
@@ -334,7 +369,7 @@ public class RedeployApi implements EndpointGroup {
                             }
                         }
                         Utils.writeToFile(config, String.join("\n", lines));
-                        sb.append(" - written");
+                        sb.append(" - written\n");
                         totalCountFiles++;
                     }
                     sb.append("Written "+totalCountFiles+" of "+jobs.size()+"\n");
