@@ -12,6 +12,7 @@ import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
+import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
@@ -241,6 +242,7 @@ public class RedeployApi implements EndpointGroup {
         });
         get(REPROVIDER, context -> {
             try {
+                String OTOOL_PLATFORM_PROVIDER = JenkinsJobTemplateBuilder.OTOOL_BASH_VAR_PREFIX + JenkinsJobTemplateBuilder.PLATFORM_PROVIDER_VAR;
                 List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
                 String doAndHow = context.queryParam(REDEPLOY_DO);
                 String nwProvider = context.queryParam(REPROVIDER);
@@ -270,7 +272,7 @@ public class RedeployApi implements EndpointGroup {
                                     sb.append(" - ").append(line.trim()).append("\n");
                                     nodesCount++;
                                 }
-                                if (line.contains("OTOOL_PLATFORM_PROVIDER=")) {
+                                if (line.contains(OTOOL_PLATFORM_PROVIDER + "=")) {
                                     sb.append(" - ").append(line.trim()).append("\n");
                                     providersCount++;
                                 }
@@ -282,7 +284,7 @@ public class RedeployApi implements EndpointGroup {
                         }
                         if (providersCount != 1){
                             totalIssues++;
-                            sb.append(" - ").append("!WARNING! found none or more then one OTOOL_PLATFORM_PROVIDER!").append("\n");
+                            sb.append(" - ").append("!WARNING! found none or more then one " + OTOOL_PLATFORM_PROVIDER + "!").append("\n");
                         }
                     }
                     if (totalIssues > 0){

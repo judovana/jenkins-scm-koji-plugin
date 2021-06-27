@@ -99,7 +99,7 @@ public class JenkinsJobTemplateBuilder {
     static final String ARCH_VAR = "ARCH";
     public static final String JDK_VERSION_VAR = "JDK_VERSION";
     public static final String OJDK_VAR = "OJDK";
-    static final String PLATFORM_PROVIDER_VAR = "PLATFORM_PROVIDER";
+    public static final String PLATFORM_PROVIDER_VAR = "PLATFORM_PROVIDER";
     public static final String RELEASE_SUFFIX_VAR = "RELEASE_SUFFIX";
     public static final String PROJECT_NAME_VAR = "PROJECT_NAME";
     public static final String PACKAGE_NAME_VAR = "PACKAGE_NAME";
