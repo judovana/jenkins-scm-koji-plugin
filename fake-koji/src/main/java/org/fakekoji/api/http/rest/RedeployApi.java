@@ -18,15 +18,23 @@ import org.fakekoji.jobmanager.manager.JDKVersionManager;
 import org.fakekoji.jobmanager.manager.PlatformManager;
 import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.model.BuildJob;
+import org.fakekoji.jobmanager.model.BuildPlatformConfig;
+import org.fakekoji.jobmanager.model.JDKProject;
+import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
+import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.jobmanager.model.TestJob;
+import org.fakekoji.jobmanager.model.TestJobConfiguration;
+import org.fakekoji.jobmanager.model.VariantsConfig;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
 import org.fakekoji.model.OToolBuild;
+import org.fakekoji.model.OToolVariable;
 import org.fakekoji.model.Platform;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -250,34 +258,64 @@ public class RedeployApi implements EndpointGroup {
                 String doAndHow = context.queryParam(REDEPLOY_DO);
                 String nwProvider = context.queryParam(REPROVIDERARG);
                 String skipSlaves = context.queryParam(SKIP_SLAVES);
-                if (nwProvider == null || nwProvider.trim().isEmpty()){
-                    throw new RuntimeException(REPROVIDERARG+" is mandatory\n");
+                if (nwProvider == null || nwProvider.trim().isEmpty()) {
+                    throw new RuntimeException(REPROVIDERARG + " is mandatory\n");
                 }
                 Set<String> providers = GetterAPI.getProviders(settings.getConfigManager().platformManager);
                 if (!providers.contains(nwProvider)) {
                     throw new RuntimeException(nwProvider + ": is not valid provider. Use one of: " + String.join(",", providers) + "\n");
+                }
+                /*
+                 * To be able to compute nodes, we need to load nearly everything
+                 */
+                List<Job> allJobs = new ArrayList<>();
+                List<Project> allProjects = new ArrayList<>();
+                allProjects.addAll(settings.getConfigManager().jdkProjectManager.readAll());
+                allProjects.addAll(settings.getConfigManager().jdkTestProjectManager.readAll());
+                for (Project project : allProjects) {
+                    allJobs.addAll(parser.parse(project));
                 }
                 StringBuilder sb = new StringBuilder();
                 if ("true".equals(doAndHow)) {
                     int totalFiles = 0;
                     int totalReplacements = 0;
                     for (String job : jobs) {
+                        Job foundJob = findJob(allJobs, job);
                         sb.append(job).append("\n");
                         File jobDir = new File(settings.getJenkinsJobsRoot(), job);
                         File config = new File(jobDir, "config.xml");
                         List<String> lines = Utils.readFileToLines(config, null);
                         for (int i = 0; i < lines.size(); i++) {
                             String mainline = lines.get(i);
-                            String[] xmlLines = mainline.split("&#13;");
+                            String[] xmlLines = mainline.split(JenkinsJobTemplateBuilder.XML_NEW_LINE);
                             for (String line : xmlLines) {
                                 if (!"true".equals(skipSlaves)) {
                                     if (line.contains("<assignedNode>")) {
-                                        mainline = mainline.replace(line.trim(), "<assignedNode>TODO_NODES</assignedNode>");
+                                        List<OToolVariable> fakeList = new ArrayList<>();
+                                        JenkinsJobTemplateBuilder.VmWithNodes mWithNodes = null;
+                                        try {
+                                            if (foundJob instanceof TestJob) {
+                                                fakeList = Arrays.asList(new OToolVariable("OS_NAME", ((TestJob) foundJob).getPlatform().getOs()));
+                                                mWithNodes = JenkinsJobTemplateBuilder.getVmWithNodes(((TestJob) foundJob).getTask(), ((TestJob) foundJob).getPlatform(), new ArrayList<OToolVariable>(/*expanded labels not yet supported*/), nwProvider);
+                                            } else if (foundJob instanceof BuildJob) {
+                                                fakeList = Arrays.asList(new OToolVariable("OS_NAME", ((TestJob) foundJob).getPlatform().getOs()));
+                                                mWithNodes = JenkinsJobTemplateBuilder.getVmWithNodes(((BuildJob) foundJob).getTask(), ((BuildJob) foundJob).getPlatform(), new ArrayList<OToolVariable>(/*expanded labels not yet supported*/), nwProvider);
+                                            }
+                                        } catch (Exception ex) {
+                                            mWithNodes = new JenkinsJobTemplateBuilder.VmWithNodes("NoNodesForThisCombination", Arrays.asList("NoneFound"));
+                                        }
+                                        String nwVal = "<assignedNode>" + String.join("||", mWithNodes.nodes) + "</assignedNode>";
+                                        List<String> nvWalToExpand = Arrays.asList(nwVal);
+                                        String nwValExpanded = JenkinsJobTemplateBuilder.expand(nvWalToExpand, fakeList).get(0);
+                                        mainline = mainline.replace(line.trim(), nwValExpanded);
+                                        sb.append(" - " + line.trim() + " -> " + nwValExpanded + "\n");
                                         totalReplacements++;
                                     }
                                 }
                                 if (line.contains(OTOOL_PLATFORM_PROVIDER + "=")) {
-                                    mainline = mainline.replace(line.trim(), "export " + OTOOL_PLATFORM_PROVIDER + "=" + nwProvider + " # " + new Date().toString() + " " + line.trim());
+                                    String nwVal = "export " + OTOOL_PLATFORM_PROVIDER + "=" + nwProvider + " # hacked at " + new Date().toString();
+                                    mainline = mainline.replace(line.trim(), nwVal);
+                                    sb.append(" - " + line.trim() + " -> " + nwVal + "\n");
                                     totalReplacements++;
                                 }
                             }
@@ -285,6 +323,12 @@ public class RedeployApi implements EndpointGroup {
                         }
                         Utils.writeToFile(config, String.join("\n", lines));
                         sb.append(" - written\n");
+                        try {
+                            JenkinsCliWrapper.getCli().reloadJob(job).throwIfNecessary();
+                            sb.append(" - reloaded\n");
+                        } catch (Exception ex) {
+                            sb.append(" - reload failed, reload on your own\n");
+                        }
                         totalFiles++;
                     }
                     sb.append("Written " + totalFiles + " of " + jobs.size() + "\n");
@@ -296,6 +340,7 @@ public class RedeployApi implements EndpointGroup {
                 } else {
                     int totalIssues=0;
                     for (String job : jobs) {
+                        Job foundJob = findJob(allJobs, job);
                         sb.append(job).append("\n");
                         File jobDir = new File(settings.getJenkinsJobsRoot(), job);
                         File config = new File(jobDir, "config.xml");
@@ -306,7 +351,7 @@ public class RedeployApi implements EndpointGroup {
                         }
                         int providersCount = 0;
                         for (String mainline : lines) {
-                            String[] xmlLines = mainline.split("&#13;");
+                            String[] xmlLines = mainline.split(JenkinsJobTemplateBuilder.XML_NEW_LINE);
                             for (String line: xmlLines) {
                                 if (!"true".equals(skipSlaves)) {
                                     if (line.contains("<assignedNode>")) {
@@ -361,15 +406,21 @@ public class RedeployApi implements EndpointGroup {
                         for (int i = 0; i < lines.size(); i++) {
                             String line = lines.get(i);
                             if (line.contains("<assignedNode>")) {
-                                String orig=line.trim();
-                                String nw="<assignedNode>"+nwSlaves+"</assignedNode>";
-                                sb.append(" - "+orig+" -> "+nw+ "\n");
-                                lines.set(i,nw);
+                                String orig = line.trim();
+                                String nw = "<assignedNode>" + nwSlaves + "</assignedNode>";
+                                sb.append(" - " + orig + " -> " + nw + "\n");
+                                lines.set(i, nw);
                                 totalCountReplacements++;
                             }
                         }
                         Utils.writeToFile(config, String.join("\n", lines));
                         sb.append(" - written\n");
+                        try {
+                            JenkinsCliWrapper.getCli().reloadJob(job).throwIfNecessary();
+                            sb.append(" - reloaded\n");
+                        } catch (Exception ex) {
+                            sb.append(" - reload failed, reload on your own\n");
+                        }
                         totalCountFiles++;
                     }
                     sb.append("Written "+totalCountFiles+" of "+jobs.size()+"\n");
@@ -578,6 +629,24 @@ public class RedeployApi implements EndpointGroup {
                 context.status(500).result(e.getMessage());
             }
         });
+    }
+
+    @NotNull
+    private Job findJob(List<Job> allJobs, String job) {
+        Job foundJob = null;
+        for (Job jobImpl : allJobs) {
+            if (jobImpl.getName().equals(job)) {
+                if (!(jobImpl instanceof TestJob || jobImpl instanceof BuildJob)) {
+                    throw new RuntimeException(job + " found as " + jobImpl.getClass().getName() + ". Only build and test allowed.");
+                }
+                foundJob = jobImpl;
+                break;
+            }
+        }
+        if (foundJob == null) {
+            throw new RuntimeException(job + " not found in " + allJobs.size());
+        }
+        return foundJob;
     }
 
     private File deleteBuildXml(String job, StringBuilder sb) throws IOException {

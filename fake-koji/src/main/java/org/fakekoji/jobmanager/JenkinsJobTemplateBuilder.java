@@ -79,7 +79,7 @@ public class JenkinsJobTemplateBuilder {
     static final String SCM_POLL_SCHEDULE = "%{SCM_POLL_SCHEDULE}";
     static final String TRIGGER = "%{TRIGGER}";
 
-    static final String XML_NEW_LINE = "&#13;";
+    public static final String XML_NEW_LINE = "&#13;";
     static final String XML_APOS = "&apos;";
     static final String LOCAL = "local";
     static final String O_TOOL = "otool";
@@ -233,15 +233,17 @@ public class JenkinsJobTemplateBuilder {
         );
         return this;
     }
-    private static class VmWithNodes {
-        final String vmName;
-        final List<String> nodes;
+
+    public static class VmWithNodes {
+        public final String vmName;
+        public final List<String> nodes;
 
         public VmWithNodes(String vmName, List<String> nodes) {
             this.vmName = vmName;
             this.nodes = nodes;
         }
     }
+
     public JenkinsJobTemplateBuilder buildScriptTemplate(
             Task task,
             String provider,
@@ -249,11 +251,7 @@ public class JenkinsJobTemplateBuilder {
             File scriptsRoot,
             List<OToolVariable> exportedVariables
     ) throws IOException {
-        final Platform.Provider platformProvider = platform.getProviders()
-                .stream()
-                .filter(p -> p.getId().equals(provider))
-                .findFirst()
-                .get(); // TODO: should throw an exception (ManagementException I guess)
+        final Platform.Provider platformProvider = findProvider(provider, platform);
         exportedVariables.add(new OToolVariable(PLATFORM_PROVIDER_VAR, platformProvider.getId()));
         if (job != null) {
             if (job.getName() != null) {
@@ -305,7 +303,21 @@ public class JenkinsJobTemplateBuilder {
     }
 
     @NotNull
-    private static VmWithNodes getVmWithNodes(Task task, Platform platform, List<OToolVariable> exportedVariables, Platform.Provider platformProvider) {
+    public static Platform.Provider findProvider(String provider, Platform platform) {
+        final Platform.Provider platformProvider = platform.getProviders()
+                .stream()
+                .filter(p -> p.getId().equals(provider))
+                .findFirst()
+                .get(); // TODO: should throw an exception (ManagementException I guess)
+        return platformProvider;
+    }
+
+    @NotNull
+    public static VmWithNodes getVmWithNodes(Task task, Platform platform, List<OToolVariable> exportedVariables, String platformProvider) {
+        return getVmWithNodes(task, platform, exportedVariables, findProvider(platformProvider, platform));
+    }
+
+    public static VmWithNodes getVmWithNodes(Task task, Platform platform, List<OToolVariable> exportedVariables, Platform.Provider platformProvider) {
         final VmWithNodes mWithNodes;
         switch (task.getMachinePreference()) {
             case HW:
