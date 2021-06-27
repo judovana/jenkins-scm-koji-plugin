@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -76,6 +77,8 @@ public class GetterAPI implements EndpointGroup {
     private static final String FILENAME_PARSER = "filenameParser";
     private static final String LEGACY_PARSER = "legacyParser";
     private static final String PLATFORMS = "platforms";
+    private static final String PROVIDERS = "providers";
+    private static final String SLAVES = "slaves";
     private static final String PLATFORMS_DETAILS = "platformDetails";
     private static final String PLATFORM_ID = "id";
     private static final String KOJI_ARCHES = "kojiArches";
@@ -321,7 +324,7 @@ public class GetterAPI implements EndpointGroup {
             }
         };
     }
-    
+
     private QueryHandler getJenkinsUrlHandler() {
         return new QueryHandler() {
             @Override
@@ -345,7 +348,7 @@ public class GetterAPI implements EndpointGroup {
 
             @Override
             public String about() {
-                return "/"+SERVICE+" Will report health of otool process";
+                return "/" + SERVICE + " Will report health of otool process";
             }
         };
     }
@@ -845,6 +848,62 @@ public class GetterAPI implements EndpointGroup {
         };
     }
 
+    private QueryHandler getSlavesHandler() {
+        final PlatformManager platformManager = settings.getConfigManager().platformManager;
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                Set<String> nodes = new HashSet<>();
+                for (Platform platform : platformManager.readAll()) {
+                    for (Platform.Provider pp : platform.getProviders()) {
+                        for (String node : pp.getHwNodes()) {
+                            nodes.add(node + " (HW/" + pp.getId() + ")");
+                        }
+                        for (String node : pp.getVmNodes()) {
+                            nodes.add(node + " (VM/" + pp.getId() + ")");
+                        }
+                    }
+                }
+                return Result.ok(String.join("\n", nodes) + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/providers";
+            }
+        };
+    }
+
+    private QueryHandler getProvidersHandler() {
+        final PlatformManager platformManager = settings.getConfigManager().platformManager;
+        return new QueryHandler() {
+            @Override
+            public Result<String, String> handle(Map<String, List<String>> queryParams) throws StorageException {
+                Collection<String> providers = getProviders(platformManager);
+                return Result.ok(String.join(",", providers) + "\n");
+            }
+
+            @Override
+            public String about() {
+                return "/providers";
+            }
+        };
+    }
+
+    public static Set<String> getProviders(PlatformManager platformManager) throws StorageException {
+        return getProviders(platformManager.readAll());
+    }
+
+    public static Set<String> getProviders(List<Platform> platforms) {
+        Set<String> providers = new HashSet<>();
+        for (Platform platform : platforms) {
+            for (Platform.Provider pp : platform.getProviders()) {
+                providers.add(pp.getId());
+            }
+        }
+        return providers;
+    }
+
     private QueryHandler getKojiArchesHandler() {
         final PlatformManager platformManager = settings.getConfigManager().platformManager;
         return new QueryHandler() {
@@ -1115,6 +1174,8 @@ public class GetterAPI implements EndpointGroup {
             put(PATH, getPathHandler());
             put(PLATFORMS_DETAILS, getPlatformDetailsHandler());
             put(PLATFORMS, getPlatformsHandler());
+            put(PROVIDERS, getProvidersHandler());
+            put(SLAVES, getSlavesHandler());
             put(KOJI_ARCHES, getKojiArchesHandler());
             put(BUILDS, getBuildsHandler());
             put(FILENAME_PARSER, getFileNameParserHandler());

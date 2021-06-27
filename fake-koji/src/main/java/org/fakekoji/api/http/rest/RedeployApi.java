@@ -58,6 +58,8 @@ public class RedeployApi implements EndpointGroup {
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     public static final String REDEPLOY = "re";
+    private static final String REPROVIDER = "provider";
+    private static final String RESLAVES = "slaves";
     //without list/do just list list waht can be done?
     //eg list of nvras in processed.txt for test
     //eg list new api content of fake koji for build?
@@ -110,6 +112,12 @@ public class RedeployApi implements EndpointGroup {
 
     public static String getHelp() {
         return "\n"
+                + MISC + '/' + REDEPLOY + "/" + REPROVIDER + "\n"
+                + "  requires the shred filterig below. Will temporarily (until next regeneration) change run provider of selected jobs (including slaves, excluding job name).\n"
+                + "  Except filter, the mandatory parameter is provider=<provider-id>.\n"
+                + MISC + '/' + REDEPLOY + "/" + RESLAVES + "\n"
+                + "  requires the shred filterig below. Will temporarily (until next regeneration) change slaves/labesl of selected jobs .\n"
+                + "  Except filter, the mandatory parameter is salves=<jenkins slaves stringd>. This method hdd no constraints! Use with care!\n"
                 + MISC + '/' + REDEPLOY + "/" + RELOAD + "\n"
                 + "  requires job=name. Will simply reload this job from disk.\n"
                 + MISC + '/' + REDEPLOY + "/" + REDEPLOY_RUN + "\n"
@@ -160,7 +168,7 @@ public class RedeployApi implements EndpointGroup {
                 File processed = new File(new File(settings.getJenkinsJobsRoot(), job), Constants.PROCESSED_BUILDS_HISTORY);
                 List<String> raw = new ArrayList<>(0);
                 if (processed.exists()) {
-                 raw = Utils.readFileToLines(processed, null);
+                    raw = Utils.readFileToLines(processed, null);
                 }
                 if (raw.size() > 0) {
                     nvrs.add(raw.get(raw.size() - 1).replaceAll("\\s*#.*", ""));
@@ -230,6 +238,93 @@ public class RedeployApi implements EndpointGroup {
                 context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
             }
 
+        });
+        get(REPROVIDER, context -> {
+            try {
+                List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
+                String doAndHow = context.queryParam(REDEPLOY_DO);
+                String nwProvider = context.queryParam(REPROVIDER);
+                if (nwProvider == null || nwProvider.trim().isEmpty()){
+                    throw new RuntimeException(REPROVIDER+" is mandatory\n");
+                }
+                Set<String> providers = GetterAPI.getProviders(settings.getConfigManager().platformManager);
+                if (!providers.contains(nwProvider)) {
+                    throw new RuntimeException(nwProvider + ": is not valid provider. Use one of: " + String.join(",", providers) + "\n");
+                }
+                if ("true".equals(doAndHow)) {
+
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    for (String job : jobs) {
+                        sb.append(job).append("\n");
+                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
+                        File config = new File(jobDir, "config.xml");
+                        List<String> lines = Utils.readFileToLines(config, null);
+                        int nodesCount = 0;
+                        int providersCount = 0;
+                        for (String mainline : lines) {
+                            String[] xmlLines = mainline.split("&#13;");
+                            for (String line: xmlLines) {
+                                if (line.contains("<assignedNode>")) {
+                                    sb.append(" - ").append(line.trim()).append("\n");
+                                    nodesCount++;
+                                }
+                                if (line.contains("OTOOL_PLATFORM_PROVIDER")) {
+                                    sb.append(" - ").append(line.trim()).append("\n");
+                                    providersCount++;
+                                }
+                            }
+                        }
+                        if (nodesCount>1){
+                            sb.append(" - ").append("warning! found more then one assignedNode!").append("\n");
+                        }
+                        if (providersCount>1){
+                            sb.append(" - ").append("warning! found more then one OTOOL_PLATFORM_PROVIDER!").append("\n");
+                        }
+                    }
+                    context.status(OToolService.OK).result(sb.toString() + "\n");
+
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+        });
+        get(RESLAVES, context -> {
+            try {
+                List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
+                String doAndHow = context.queryParam(REDEPLOY_DO);
+                String nwSlaves = context.queryParam(RESLAVES);
+                if (nwSlaves == null || nwSlaves.trim().isEmpty()){
+                    throw new RuntimeException(RESLAVES+" is mandatory\n");
+                }
+                if ("true".equals(doAndHow)) {
+
+                } else {
+                    StringBuilder sb = new StringBuilder();
+                    for (String job : jobs) {
+                        sb.append(job).append("\n");
+                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
+                        File config = new File(jobDir, "config.xml");
+                        List<String> lines = Utils.readFileToLines(config, null);
+                        int nodesCount = 0;
+                        for (String line : lines) {
+                                if (line.contains("<assignedNode>")) {
+                                    sb.append(" - ").append(line.trim()).append("\n");
+                                    nodesCount++;
+                                }
+                        }
+                        if (nodesCount>1){
+                            sb.append(" - ").append("warning! found more then one assignedNode!").append("\n");
+                        }
+                    }
+                    context.status(OToolService.OK).result(sb.toString() + "\n");
+
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
         });
         get(REDEPLOY_CHECKOUT_ALL, context -> {
             try {
