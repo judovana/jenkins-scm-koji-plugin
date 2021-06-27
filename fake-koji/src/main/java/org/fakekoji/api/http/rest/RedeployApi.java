@@ -60,6 +60,7 @@ public class RedeployApi implements EndpointGroup {
 
     public static final String REDEPLOY = "re";
     private static final String REPROVIDER = "provider";
+    private static final String SKIP_SLAVES = "skipSlaves";
     private static final String RESLAVES = "slaves";
     //without list/do just list list waht can be done?
     //eg list of nvras in processed.txt for test
@@ -115,7 +116,7 @@ public class RedeployApi implements EndpointGroup {
         return "\n"
                 + MISC + '/' + REDEPLOY + "/" + REPROVIDER + "\n"
                 + "  requires the shred filterig below. Will temporarily (until next regeneration) change run provider of selected jobs (including slaves, excluding job name).\n"
-                + "  Except filter, the mandatory parameter is provider=<provider-id>.\n"
+                + "  Except filter, the mandatory parameter is provider=<provider-id>. You can exclude slaves via "+SKIP_SLAVES+"=true\n"
                 + MISC + '/' + REDEPLOY + "/" + RESLAVES + "\n"
                 + "  requires the shred filterig below. Will temporarily (until next regeneration) change slaves/labesl of selected jobs .\n"
                 + "  Except filter, the mandatory parameter is salves=<jenkins slaves stringd>. This method hdd no constraints! Use with care!\n"
@@ -246,6 +247,7 @@ public class RedeployApi implements EndpointGroup {
                 List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
                 String doAndHow = context.queryParam(REDEPLOY_DO);
                 String nwProvider = context.queryParam(REPROVIDER);
+                String skipSlaves = context.queryParam(SKIP_SLAVES);
                 if (nwProvider == null || nwProvider.trim().isEmpty()){
                     throw new RuntimeException(REPROVIDER+" is mandatory\n");
                 }
@@ -264,13 +266,18 @@ public class RedeployApi implements EndpointGroup {
                         File config = new File(jobDir, "config.xml");
                         List<String> lines = Utils.readFileToLines(config, null);
                         int nodesCount = 0;
+                        if ("true".equals(skipSlaves)) {
+                            nodesCount = 1;
+                        }
                         int providersCount = 0;
                         for (String mainline : lines) {
                             String[] xmlLines = mainline.split("&#13;");
                             for (String line: xmlLines) {
-                                if (line.contains("<assignedNode>")) {
-                                    sb.append(" - ").append(line.trim()).append("\n");
-                                    nodesCount++;
+                                if (!"true".equals(skipSlaves)) {
+                                    if (line.contains("<assignedNode>")) {
+                                        sb.append(" - ").append(line.trim()).append("\n");
+                                        nodesCount++;
+                                    }
                                 }
                                 if (line.contains(OTOOL_PLATFORM_PROVIDER + "=")) {
                                     sb.append(" - ").append(line.trim()).append("\n");
