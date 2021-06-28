@@ -126,7 +126,7 @@ public class RedeployApi implements EndpointGroup {
         return "\n"
                 + MISC + '/' + REDEPLOY + "/" + REPROVIDER + "\n"
                 + "  requires the shred filterig below. Will temporarily (until next regeneration) change run provider of selected jobs (including slaves, excluding job name).\n"
-                + "  Except filter, the mandatory parameter is "+REPROVIDERARG+"=<provider-id>. You can exclude slaves via "+SKIP_SLAVES+"=true\n"
+                + "  Except filter, the mandatory parameter is " + REPROVIDERARG + "=<provider-id>. You can exclude slaves via " + SKIP_SLAVES + "=true\n"
                 + MISC + '/' + REDEPLOY + "/" + RESLAVES + "\n"
                 + "  requires the shred filterig below. Will temporarily (until next regeneration) change slaves/labesl of selected jobs .\n"
                 + "  Except filter, the mandatory parameter is salves=<jenkins slaves stringd>. This method hdd no constraints! Use with care!\n"
@@ -276,51 +276,55 @@ public class RedeployApi implements EndpointGroup {
                     allJobs.addAll(parser.parse(project));
                 }
                 StringBuilder sb = new StringBuilder();
-                if ("true".equals(doAndHow)) {
-                    int totalFiles = 0;
-                    int totalReplacements = 0;
-                    for (String job : jobs) {
-                        Job foundJob = findJob(allJobs, job);
-                        sb.append(job).append("\n");
-                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
-                        File config = new File(jobDir, "config.xml");
-                        List<String> lines = Utils.readFileToLines(config, null);
-                        for (int i = 0; i < lines.size(); i++) {
-                            String mainline = lines.get(i);
-                            String[] xmlLines = mainline.split(JenkinsJobTemplateBuilder.XML_NEW_LINE);
-                            for (String line : xmlLines) {
-                                if (!"true".equals(skipSlaves)) {
-                                    if (line.contains("<assignedNode>")) {
-                                        List<OToolVariable> fakeList = new ArrayList<>();
-                                        JenkinsJobTemplateBuilder.VmWithNodes mWithNodes = null;
-                                        try {
-                                            if (foundJob instanceof TestJob) {
-                                                fakeList = Arrays.asList(new OToolVariable("OS_NAME", ((TestJob) foundJob).getPlatform().getOs()));
-                                                mWithNodes = JenkinsJobTemplateBuilder.getVmWithNodes(((TestJob) foundJob).getTask(), ((TestJob) foundJob).getPlatform(), new ArrayList<OToolVariable>(/*expanded labels not yet supported*/), nwProvider);
-                                            } else if (foundJob instanceof BuildJob) {
-                                                fakeList = Arrays.asList(new OToolVariable("OS_NAME", ((TestJob) foundJob).getPlatform().getOs()));
-                                                mWithNodes = JenkinsJobTemplateBuilder.getVmWithNodes(((BuildJob) foundJob).getTask(), ((BuildJob) foundJob).getPlatform(), new ArrayList<OToolVariable>(/*expanded labels not yet supported*/), nwProvider);
-                                            }
-                                        } catch (Exception ex) {
-                                            mWithNodes = new JenkinsJobTemplateBuilder.VmWithNodes("NoNodesForThisCombination", Arrays.asList("NoneFound"));
+
+                int totalFiles = 0;
+                int totalReplacements = 0;
+                int invalidNodes = 0;
+                final String noneNode = "NoneNodeFound";
+                for (String job : jobs) {
+                    Job foundJob = findJob(allJobs, job);
+                    sb.append(job).append("\n");
+                    File jobDir = new File(settings.getJenkinsJobsRoot(), job);
+                    File config = new File(jobDir, "config.xml");
+                    List<String> lines = Utils.readFileToLines(config, null);
+                    for (int i = 0; i < lines.size(); i++) {
+                        String mainline = lines.get(i);
+                        String[] xmlLines = mainline.split(JenkinsJobTemplateBuilder.XML_NEW_LINE);
+                        for (String line : xmlLines) {
+                            if (!"true".equals(skipSlaves)) {
+                                if (line.contains("<assignedNode>")) {
+                                    List<OToolVariable> fakeList = new ArrayList<>();
+                                    JenkinsJobTemplateBuilder.VmWithNodes mWithNodes = null;
+                                    try {
+                                        if (foundJob instanceof TestJob) {
+                                            fakeList = Arrays.asList(new OToolVariable("OS_NAME", ((TestJob) foundJob).getPlatform().getOs()));
+                                            mWithNodes = JenkinsJobTemplateBuilder.getVmWithNodes(((TestJob) foundJob).getTask(), ((TestJob) foundJob).getPlatform(), new ArrayList<OToolVariable>(/*expanded labels not yet supported*/), nwProvider);
+                                        } else if (foundJob instanceof BuildJob) {
+                                            fakeList = Arrays.asList(new OToolVariable("OS_NAME", ((TestJob) foundJob).getPlatform().getOs()));
+                                            mWithNodes = JenkinsJobTemplateBuilder.getVmWithNodes(((BuildJob) foundJob).getTask(), ((BuildJob) foundJob).getPlatform(), new ArrayList<OToolVariable>(/*expanded labels not yet supported*/), nwProvider);
                                         }
-                                        String nwVal = "<assignedNode>" + String.join("||", mWithNodes.nodes) + "</assignedNode>";
-                                        List<String> nvWalToExpand = Arrays.asList(nwVal);
-                                        String nwValExpanded = JenkinsJobTemplateBuilder.expand(nvWalToExpand, fakeList).get(0);
-                                        mainline = mainline.replace(line.trim(), nwValExpanded);
-                                        sb.append(" - " + line.trim() + " -> " + nwValExpanded + "\n");
-                                        totalReplacements++;
+                                    } catch (Exception ex) {
+                                        mWithNodes = new JenkinsJobTemplateBuilder.VmWithNodes("NoNodesForThisCombination", Arrays.asList(noneNode));
+                                        invalidNodes++;
                                     }
-                                }
-                                if (line.contains(OTOOL_PLATFORM_PROVIDER + "=")) {
-                                    String nwVal = "export " + OTOOL_PLATFORM_PROVIDER + "=" + nwProvider + " # hacked at " + new Date().toString();
-                                    mainline = mainline.replace(line.trim(), nwVal);
-                                    sb.append(" - " + line.trim() + " -> " + nwVal + "\n");
+                                    String nwVal = "<assignedNode>" + String.join("||", mWithNodes.nodes) + "</assignedNode>";
+                                    List<String> nvWalToExpand = Arrays.asList(nwVal);
+                                    String nwValExpanded = JenkinsJobTemplateBuilder.expand(nvWalToExpand, fakeList).get(0);
+                                    mainline = mainline.replace(line.trim(), nwValExpanded);
+                                    sb.append(" - " + line.trim() + " -> " + nwValExpanded + "\n");
                                     totalReplacements++;
                                 }
                             }
-                            lines.set(i, mainline);
+                            if (line.contains(OTOOL_PLATFORM_PROVIDER + "=")) {
+                                String nwVal = "export " + OTOOL_PLATFORM_PROVIDER + "=" + nwProvider + " # hacked at " + new Date().toString();
+                                mainline = mainline.replace(line.trim(), nwVal);
+                                sb.append(" - " + line.trim() + " -> " + nwVal + "\n");
+                                totalReplacements++;
+                            }
                         }
+                        lines.set(i, mainline);
+                    }
+                    if ("true".equals(doAndHow)) {
                         Utils.writeToFile(config, String.join("\n", lines));
                         sb.append(" - written\n");
                         try {
@@ -329,57 +333,16 @@ public class RedeployApi implements EndpointGroup {
                         } catch (Exception ex) {
                             sb.append(" - reload failed, reload on your own\n");
                         }
-                        totalFiles++;
                     }
-                    sb.append("Written " + totalFiles + " of " + jobs.size() + "\n");
-                    if ("true".equals(skipSlaves)) {
-                        sb.append("Replaced " + totalReplacements + " of " + jobs.size() + "\n");
-                    } else {
-                        sb.append("Replaced " + totalReplacements + " of " + (jobs.size() * 2) + "\n");
-                    }
-                } else {
-                    int totalIssues=0;
-                    for (String job : jobs) {
-                        Job foundJob = findJob(allJobs, job);
-                        sb.append(job).append("\n");
-                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
-                        File config = new File(jobDir, "config.xml");
-                        List<String> lines = Utils.readFileToLines(config, null);
-                        int nodesCount = 0;
-                        if ("true".equals(skipSlaves)) {
-                            nodesCount = 1;
-                        }
-                        int providersCount = 0;
-                        for (String mainline : lines) {
-                            String[] xmlLines = mainline.split(JenkinsJobTemplateBuilder.XML_NEW_LINE);
-                            for (String line: xmlLines) {
-                                if (!"true".equals(skipSlaves)) {
-                                    if (line.contains("<assignedNode>")) {
-                                        sb.append(" - ").append(line.trim()).append("\n");
-                                        nodesCount++;
-                                    }
-                                }
-                                if (line.contains(OTOOL_PLATFORM_PROVIDER + "=")) {
-                                    sb.append(" - ").append(line.trim()).append("\n");
-                                    providersCount++;
-                                }
-                            }
-                        }
-                        if (nodesCount != 1){
-                            totalIssues++;
-                            sb.append(" - ").append("!WARNING! found none or more then one assignedNode!").append("\n");
-                        }
-                        if (providersCount != 1){
-                            totalIssues++;
-                            sb.append(" - ").append("!WARNING! found none or more then one " + OTOOL_PLATFORM_PROVIDER + "!").append("\n");
-                        }
-                    }
-                    if (totalIssues > 0){
-                        sb.append("Warning! " + totalIssues + " issue found! Do not proceed!\n");
-                    } else {
-                        sb.append("no issues found, but be careful anyway!\n");
-                    }
+                    totalFiles++;
                 }
+                sb.append("true".equals(doAndHow) ? "Written " : "Would be written: " + totalFiles + " of " + jobs.size() + "\n");
+                if ("true".equals(skipSlaves)) {
+                    sb.append("Replaced " + totalReplacements + " of " + jobs.size() + "\n");
+                } else {
+                    sb.append("Replaced " + totalReplacements + " of " + (jobs.size() * 2) + "\n");
+                }
+                sb.append("Invlaid nodes: " + invalidNodes + "; search for " + noneNode + "\n");
                 context.status(OToolService.OK).result(sb.toString() + "\n");
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
@@ -391,28 +354,28 @@ public class RedeployApi implements EndpointGroup {
                 List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
                 String doAndHow = context.queryParam(REDEPLOY_DO);
                 String nwSlaves = context.queryParam(RESLAVES);
-                if (nwSlaves == null || nwSlaves.trim().isEmpty()){
-                    throw new RuntimeException(RESLAVES+" is mandatory\n");
+                if (nwSlaves == null || nwSlaves.trim().isEmpty()) {
+                    throw new RuntimeException(RESLAVES + " is mandatory\n");
                 }
                 StringBuilder sb = new StringBuilder();
-                if ("true".equals(doAndHow)) {
-                    int totalCountReplacements = 0 ;
-                    int totalCountFiles = 0 ;
-                    for (String job : jobs) {
-                        sb.append(job).append("\n");
-                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
-                        File config = new File(jobDir, "config.xml");
-                        List<String> lines = Utils.readFileToLines(config, null);
-                        for (int i = 0; i < lines.size(); i++) {
-                            String line = lines.get(i);
-                            if (line.contains("<assignedNode>")) {
-                                String orig = line.trim();
-                                String nw = "<assignedNode>" + nwSlaves + "</assignedNode>";
-                                sb.append(" - " + orig + " -> " + nw + "\n");
-                                lines.set(i, nw);
-                                totalCountReplacements++;
-                            }
+                int totalCountReplacements = 0;
+                int totalCountFiles = 0;
+                for (String job : jobs) {
+                    sb.append(job).append("\n");
+                    File jobDir = new File(settings.getJenkinsJobsRoot(), job);
+                    File config = new File(jobDir, "config.xml");
+                    List<String> lines = Utils.readFileToLines(config, null);
+                    for (int i = 0; i < lines.size(); i++) {
+                        String line = lines.get(i);
+                        if (line.contains("<assignedNode>")) {
+                            String orig = line.trim();
+                            String nw = "<assignedNode>" + nwSlaves + "</assignedNode>";
+                            sb.append(" - " + orig + " -> " + nw + "\n");
+                            lines.set(i, nw);
+                            totalCountReplacements++;
                         }
+                    }
+                    if ("true".equals(doAndHow)) {
                         Utils.writeToFile(config, String.join("\n", lines));
                         sb.append(" - written\n");
                         try {
@@ -421,35 +384,11 @@ public class RedeployApi implements EndpointGroup {
                         } catch (Exception ex) {
                             sb.append(" - reload failed, reload on your own\n");
                         }
-                        totalCountFiles++;
                     }
-                    sb.append("Written "+totalCountFiles+" of "+jobs.size()+"\n");
-                    sb.append("Replaced "+totalCountReplacements+" of "+jobs.size()+"\n");
-                } else {
-                    int totalIssues = 0;
-                    for (String job : jobs) {
-                        sb.append(job).append("\n");
-                        File jobDir = new File(settings.getJenkinsJobsRoot(), job);
-                        File config = new File(jobDir, "config.xml");
-                        List<String> lines = Utils.readFileToLines(config, null);
-                        int nodesCount = 0;
-                        for (String line : lines) {
-                                if (line.contains("<assignedNode>")) {
-                                    sb.append(" - ").append(line.trim()).append("\n");
-                                    nodesCount++;
-                                }
-                        }
-                        if (nodesCount != 1){
-                            totalIssues ++ ;
-                            sb.append(" - ").append("!WARNING! found none or more then one assignedNode!").append("\n");
-                        }
-                    }
-                    if (totalIssues > 0){
-                        sb.append("Warning! " + totalIssues + " issue found! Do not proceed!\n");
-                    } else {
-                        sb.append("no issues found, but be careful anyway!\n");
-                    }
+                    totalCountFiles++;
                 }
+                sb.append("true".equals(doAndHow) ? "Written " : "Would be written: " + totalCountFiles + " of " + jobs.size() + "\n");
+                sb.append("Replaced " + totalCountReplacements + " of " + jobs.size() + "\n");
                 context.status(OToolService.OK).result(sb.toString() + "\n");
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
