@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import io.javalin.apibuilder.EndpointGroup;
@@ -249,6 +250,7 @@ public class ResultsDb implements EndpointGroup {
 
     public static final String SET = "set";
     public static final String GET = "get";
+    public static final String REPORT = "report";
     public static final String DEL = "del";
     public static final String NVRS = "nvrs";
     private final AccessibleSettings settings;
@@ -263,10 +265,11 @@ public class ResultsDb implements EndpointGroup {
 
     public static String getHelp() {
         return "\n"
-                + MISC + '/' + RESULTS_DB + "/nvrs will return set of nvrs in results db" + "\n"
-                + MISC + '/' + RESULTS_DB + "/get will return the score of job of nvr of buildId" + "\n"
-                + MISC + '/' + RESULTS_DB + "/del will removethe result for job,nvr,buildId,score, ba careful" + "\n"
-                + MISC + '/' + RESULTS_DB + "/set will set the result for job,nvr,buildId,score" + "\n"
+                + MISC + '/' + RESULTS_DB + "/" + NVRS + " will return set of nvrs in results db" + "\n"
+                + MISC + '/' + RESULTS_DB + "/" + GET + " will return the score of job of nvr of buildId" + "\n"
+                + MISC + '/' + RESULTS_DB + "/" + DEL + " will removethe result for job,nvr,buildId,score, ba careful" + "\n"
+                + MISC + '/' + RESULTS_DB + "/" + SET + " will set the result for job,nvr,buildId,score" + "\n"
+                + MISC + '/' + RESULTS_DB + "/" + REPORT + " will generate post-mortem texts (nvr and job may be regexes here)" + "\n"
                 + " Negative jobId is manual touch, time is automated\n"
                 + " for set nvr, job, buildId and score are mandatory, For get not, but you will get all matching results\n";
     }
@@ -308,6 +311,17 @@ public class ResultsDb implements EndpointGroup {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
             }
+
+        });
+        get(REPORT, context -> {
+            try {
+                String s = getReport(context);
+                context.status(OToolService.OK).result(s);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, e.getMessage(), e);
+                context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
+            }
+
         });
 
     }
@@ -380,7 +394,94 @@ public class ResultsDb implements EndpointGroup {
         }
     }
 
-    private synchronized  String getScore(Context context) {
+    private synchronized String getReport(Context context) {
+        String nvr = context.queryParam("nvr", ".*");
+        String job = context.queryParam("job", ".*");
+        return getReport(Pattern.compile(nvr), Pattern.compile(job));
+    }
+
+    synchronized String getReport(Pattern nvrEx, Pattern jobEx) {
+        StringBuilder r = new StringBuilder();
+        List<String> nvrs = new ArrayList<>(db.get().keySet());
+        Collections.sort(nvrs);
+        for (String nvr : nvrs) {
+            if (nvrEx.matcher(nvr).matches()) {
+                r.append(nvr).append("\n");
+                r.append(getReportForNvr(db.get().get(nvr), jobEx));
+            }
+        }
+        return r.toString();
+    }
+
+    synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx) {
+        StringBuilder r = new StringBuilder();
+        List<String> jobs = new ArrayList<>(nvr.keySet());
+        Collections.sort(jobs);
+        for (String job : jobs) {
+            if (jobEx.matcher(job).matches()) {
+                r.append("  " + job).append("\n");
+                r.append(getReportForJob(nvr.get(job), job));
+            }
+        }
+        return r.toString();
+    }
+
+    private static final class JobBuildScoreStamp implements Comparable<JobBuildScoreStamp> {
+        //job is here only for link generation
+        final String job;
+        final int id;
+        final int score;
+        final long timestamp;
+        final Optional<String> message;
+
+        public JobBuildScoreStamp(String job, int id, int score, long timestamp, Optional<String> message) {
+            this.job = job;
+            this.id = id;
+            this.score = score;
+            this.timestamp = timestamp;
+            this.message = message;
+        }
+
+        @Override
+        public int compareTo(@NotNull JobBuildScoreStamp o) {
+            if (o.timestamp == this.timestamp) {
+                return 0;
+            } else if (this.timestamp > o.timestamp) {
+                return -1;
+            } else {
+                return 1;
+            }
+        }
+
+        public String toPlain() {
+            return new Date(timestamp).toString() + "/" + id + "/" + score + ": " + message.orElse("");
+        }
+    }
+
+    private String getReportForJob(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job) {
+        StringBuilder sb = new StringBuilder();
+        List<JobBuildScoreStamp> all = new ArrayList<>();
+        Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> builds = buildsWithScoreAndStamp.entrySet();
+        for (Map.Entry<Integer, List<ScoreWithTimeStamp>> build : builds) {
+            for (ScoreWithTimeStamp inBuild : build.getValue()) {
+                all.add(new JobBuildScoreStamp(
+                        job,
+                        build.getKey(),
+                        inBuild.score,
+                        inBuild.timestamp,
+                        inBuild.message
+                ));
+            }
+        }
+        Collections.sort(all);
+        for (JobBuildScoreStamp item : all) {
+            sb.append("    " + item.toPlain()+"\n");
+        }
+        return sb.toString();
+    }
+
+
+    private synchronized String getScore(Context context) {
         String nvr = context.queryParam("nvr");
         String job = context.queryParam("job");
         String buildId = context.queryParam("buildId");
@@ -388,7 +489,6 @@ public class ResultsDb implements EndpointGroup {
     }
 
     synchronized String getScore(String nvr, String job, String buildId) {
-
         StringBuilder r = new StringBuilder();
         if (nvr != null) {
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> foundNvr = db.get().get(nvr);
