@@ -901,6 +901,9 @@
     }
 
     function moveDetails(direction) {
+      if (document.activeElement.id == "waiveMessage") {
+        return
+      }
       if (modal.style.display == "block" && lastJobDetailsClicked != null) {
         console.log("moving " + lastJobDetailsClicked + " " + direction);
         //find coords of our cell
