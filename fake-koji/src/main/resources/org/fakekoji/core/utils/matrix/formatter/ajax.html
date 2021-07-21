@@ -73,6 +73,56 @@
 
   </div>
   <script>
+
+   var cookieName = "blameName"
+
+   function setNameCookie(cvalue) {
+     document.cookie = cookieName + "=" + cvalue + "; SameSite=Strict";
+   }
+
+   function getNameCookie() {
+    let name =  cookieName+"=";
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(name) == 0) {
+        return c.substring(name.length, c.length);
+      }
+    }
+    return "";
+  }
+
+  function checkCookie() {
+    let user = getNameCookie();
+    if (user != "") {
+      document.getElementById("myName").value = user;
+    } else {
+      user = prompt("put here your nick, will be saved", "");
+      if (user != "" && user != null) {
+        setNameCookie(user);
+        document.getElementById("myName").value = user;
+      }
+    }
+  }
+
+  function saveNewName() {
+     var user = document.getElementById("myName").value;
+     if (user != "" && user != null) {
+        setNameCookie(user);
+     }
+  }
+
+  function putName() {
+    var waiveMessage = document.getElementById("waiveMessage");
+    if ( waiveMessage.value=="") {
+      waiveMessage.value= document.getElementById("myName").value + ", "
+    }
+  }
+
     var otool = "{OTOOL_BASE_URL}"      //eg: "http://hydra.brq.redhat.com:8888"
     var historyUrl = "{HISTORY_URL}"  //eg: "http://hydra.brq.redhat.com:88/history/nvrs"
     var jenkins = "{JENKINS_BASE_URL}"//eg: "http://hydra.brq.redhat.com:8080"
@@ -425,6 +475,7 @@
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
       if (firstCall) {
+        checkCookie()
         const readOnlyParam = urlParams.get('readOnly')
         const automanFilterParam = urlParams.get('automanFilter')
         const sortParam = urlParams.get('sort')
@@ -744,7 +795,7 @@
         "  <button onClick='waiveIncorrect(\"" + NVR + "\",\"" + job + "\")'       style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 101 }) + ";\" type='button'>waive - incorrect</button>" +
         "  <button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'          style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100001 }) + ";\" type='button'>waive - failed</button>"
       s = s + "</div>"
-      s = s + "<div style='width:100%' \">Waive Comment <input style='width:75%' type=\"text\" id=\"waiveMessage\" value=\"\" /></div>"
+      s = s + "<div style='width:100%' \">Waive Comment <input style='width:75%' type=\"text\" id=\"waiveMessage\" value=\"\" onFocus=\"putName()\" /></div>"
       s += "<br/><p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
       s += "<pre style='overflow: scroll'> (CACHED=true) EXPLICIT_COMPARSION=true  sh TckScripts/jenkins/summary_report/customSearch.sh --jobfilter " + job + " --nvrfilter " + NVR + " --time [daysToPast] ; #no params for help; to save result to db prefix by: SAVE_DB=true  to rerun if necessary prefix by: ALLOW_REDEPLOY=2 </pre>";
       document.getElementById("modalContent").innerHTML = s;
@@ -906,7 +957,9 @@
         </div>
         <div>
           <input type="checkbox" id="hideOnWaive" name="hideOnWaive" value="hideOnWaive" checked="true">
-          <label for="hideOnWaive">hide on waive</label><br>
+          <label for="hideOnWaive">hide on waive</label>
+          <input type="text" id="myName" value="put nick here!" size="10" onKeyUp="return saveNewName()"><br>
+          <br>
         </div>
       </div>
       <div style="float:left">
@@ -920,6 +973,7 @@
         </select><br />
         <button type="button" onClick="showHideButtons('waiverButton')">show/hide waive buttons</button><br />
         <button type="button" onClick="showHideButtons('reloadButton')">show/hide reload buttons</button><br />
+        <b><label id="stats">stats</label></b><br />
       </div>
       <div style="float:left">
         <select id="timeRestriction1" name="timeRestriction1" onChange="getAllData(NVR)">
