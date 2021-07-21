@@ -244,6 +244,7 @@
       resortAllData()
       var tables = document.getElementsByClassName("resultsTable");
       var table = tables[0];
+      counter = createCounter()
       for (var i = 0, row; row = table.rows[i]; i++) {
         for (var j = 0, col; col = row.cells[j]; j++) {
           if (i == 0 || j == 0 || i == table.rows.length - 1 || j == table.rows[i].cells.length - 1) {
@@ -254,7 +255,7 @@
             } else {
               result = getIded(col, true)
               if (result != null) {
-                result.style.backgroundColor = jobToColor(result.getAttribute("id"))
+                result.style.backgroundColor = jobToColor(result.getAttribute("id"), counter)
               } else {
                 col.style.backgroundColor = "lightgray"
               }
@@ -262,52 +263,99 @@
           }
         }
       }
+      document.getElementById("stats").innerHTML="jobs: "+counter.total +
+                                                 " run: "+counter.run +
+                                                 " <br>passed: "+counter.passed +
+                                                 " failed: "+counter.failed +
+                                                 " <br>verified: "+counter.verified_ok +
+                                                 " bad: "+counter.verified_bad; 
     }
 
-    function jobToColor(job) {
+    function jobToColor(job, counter) {
       if (data.has(job)) {
-        return buildInfosToColor(data.get(job))
+        return buildInfosToColor(data.get(job), counter)
       } else {
+        counter.total++
         return "gray"
       }
     }
 
-    function buildInfosToColor(infos) {
+    function buildInfosToColor(infos, counter) {
       if (infos.length > 0) {
-        return buildToColor(infos[0]);
+        return buildToColorWithCounter(infos[0], counter);
       } else {
+        counter.total++
         return "gray"
       }
     }
 
     function buildToColor(info) {
+      return buildToColorWithCounter(info, createCounter())
+    }
+
+    function buildToColorWithCounter(info, counter) {
       if (info.build >= 0) {
         // warning, thid method is duplicated code from: HydraDailyReport.getSeriousness*
         // is necessary to kept in sync
         if (info.score < 0) {
+          counter.total++
           return "gray"
         } else if (info.score == 0) {
+          counter.total++
+          counter.passed++
+          counter.run++
           return "green"
         } else if (info.score > 0 && info.score <= 40) {
+          counter.total++
+          counter.passed++
+          counter.run++
           return "lightgreen"
         } else if (info.score > 40 && info.score <= 100) {
+          counter.total++
+          counter.run++
           return "yellow"
         } else {
+          counter.total++
+          counter.failed++
+          counter.run++
           return "red"
         }
       } else {
         if (info.score == 0) {
+          counter.total++
+          counter.passed++
+          counter.verified_ok++
           return "darkgreen"
         } else if (info.score > 0 && info.score <= 40) {
+          counter.total++
+          counter.passed++
           return "purple"
         } else if (info.score > 40 && info.score <= 100) {
+          counter.total++
           return "magenta"
         } else if (info.score > 100 && info.score <= 100000) {
+          counter.total++
+          counter.failed++
           return "black"
         } else {
+          counter.total++
+          counter.failed++
+          counter.verified_bad++
           return "orange"
         }
       }
+    }
+
+     function createCounter() {
+     var counter = {
+        total: 0,
+        run:0,
+        passed:0,
+        failed:0,
+        verified_ok: 0,
+        verified_bad: 0
+      };
+      return counter
     }
 
     function buildToText(info) {
