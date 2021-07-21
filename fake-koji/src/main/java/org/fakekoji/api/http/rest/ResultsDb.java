@@ -11,6 +11,8 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
 import org.jetbrains.annotations.NotNull;
@@ -454,7 +457,101 @@ public class ResultsDb implements EndpointGroup {
         }
 
         public String toPlain() {
-            return new Date(timestamp).toString() + "/" + id + "/" + score + ": " + message.orElse("");
+            return getSeriousnessToColorFromHealth(getSeriousnessFromScore(score),isManual()) + " " +getDate()+" (" + getDaysAgo()+" days ago): " + message.orElse("");
+        }
+
+        String getDaysAgo() {
+            double diff = new Date().getTime() - timestamp;
+            double toDay=24 * 60 * 60 * 1000;
+            double days=diff/toDay;
+            BigDecimal toString = BigDecimal.valueOf(days);
+            return toString.setScale(2, RoundingMode.HALF_EVEN).toString();
+        }
+
+        String getDate(){
+            return new Date(timestamp).toString();
+        }
+
+
+
+        /**
+         * WARNING!!!!
+         * Following is copypasted from HydraDailyReport.java
+         * and also is duplicated in the JS table (ajax.html)!!!
+         * (from which are the manual runs collors)
+         *
+         * If the score distribution ever changes, this must be fixed everywhere!!
+         *
+         */
+
+        public boolean isManual(){
+            return id < 0;
+        }
+
+        private static final int GREEN = 0;
+        private static final int WHITE = 40;
+        private static final int YELLOW = 100;
+        private static final int MANUAL_FAIL=100000;
+
+        private static final int VERIFIED_GOOD=0;
+        private static final int GOOD=1;
+        private static final int NEEDS_INSPECTION=2;
+        private static final int FAILED=3;
+        private static final int VERIFIED_FAILED=4;
+
+        private static String getSeriousnessToStyleFromHealth(int health, boolean manual) {
+            return "style=\" background-color: "+getSeriousnessToColorFromHealth(health, manual)+" \"";
+        }
+        private static String getSeriousnessToColorFromHealth(int health, boolean manual) {
+            if (manual){
+                switch (health) {
+                    case (VERIFIED_GOOD):
+                        return "darkgreen";
+                    case (GOOD):
+                        return "purple";
+                    case (NEEDS_INSPECTION):
+                        return "magenta";
+                    case (FAILED):
+                        return "black";
+                    case (VERIFIED_FAILED):
+                        return "orange";
+                    default:
+                        throw new RuntimeException("Invalid wight resolution: " + health);
+                }
+            } else {
+                switch (health) {
+                    case (VERIFIED_GOOD):
+                        return "green";
+                    case (GOOD):
+                        return "lightgreen";
+                    case (NEEDS_INSPECTION):
+                        return "yellow";
+                    case (FAILED):
+                        return "red";
+                    case (VERIFIED_FAILED):
+                        return "red";
+                    default:
+                        throw new RuntimeException("Invalid auto-wight resolution: " + health);
+                }
+            }
+        }
+
+        @SuppressWarnings("ConstantConditions")
+        @SuppressFBWarnings(value = "UC_USELESS_CONDITION", justification = "The redundant 'greater than' conditions improve human readability of the code.")
+        private static int getSeriousnessFromScore(int weight) {
+            if (weight <= GREEN) {
+                return VERIFIED_GOOD;
+                /*>green && <= white, no op:)*/
+            } else if (weight > GREEN && weight <= WHITE) {
+                return GOOD;
+            } else if (weight > WHITE && weight < YELLOW) {
+                return NEEDS_INSPECTION;
+            } else if (weight >= YELLOW  && weight < MANUAL_FAIL) {
+                return FAILED;
+            } else if (weight >= MANUAL_FAIL) {
+                return VERIFIED_FAILED;
+            }
+            throw new RuntimeException("Unresolved weight: " + weight);
         }
     }
 
