@@ -13,6 +13,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -420,13 +421,36 @@ public class ResultsDb implements EndpointGroup {
         StringBuilder r = new StringBuilder();
         List<String> jobs = new ArrayList<>(nvr.keySet());
         Collections.sort(jobs);
-        for (String job : jobs) {
-            if (jobEx.matcher(job).matches()) {
-                r.append("  " + job).append("\n");
-                r.append(getReportForJob(nvr.get(job), job));
+        for (int mark = 4; mark >= 0; mark--) {
+            r.append("  ** " + markToNiceString(mark)).append(" **\n");
+            for (String job : jobs) {
+                if (jobEx.matcher(job).matches()) {
+                    String content = getReportForJob(nvr.get(job), job, mark);
+                    if (!content.trim().isEmpty()) {
+                        r.append("    " + job).append("\n");
+                        r.append(content);
+                    }
+                }
             }
         }
         return r.toString();
+    }
+
+    private String markToNiceString(int mark) {
+        switch (mark) {
+            case (JobBuildScoreStamp.VERIFIED_GOOD):
+                return "waived - ok";
+            case (JobBuildScoreStamp.GOOD):
+                return "ignored";
+            case (JobBuildScoreStamp.NEEDS_INSPECTION):
+                return "reruned";
+            case (JobBuildScoreStamp.FAILED):
+                return "incorrect";
+            case (JobBuildScoreStamp.VERIFIED_FAILED):
+                return "failed";
+            default:
+                throw new RuntimeException("Invalid wight resolution: " + mark);
+        }
     }
 
     private static final class JobBuildScoreStamp implements Comparable<JobBuildScoreStamp> {
@@ -445,6 +469,15 @@ public class ResultsDb implements EndpointGroup {
             this.message = message;
         }
 
+        boolean haveMessage(){
+            if (message.isPresent()){
+                return !message.get().trim().isEmpty();
+            } else {
+                return false;
+            }
+        }
+
+
         @Override
         public int compareTo(@NotNull JobBuildScoreStamp o) {
             if (o.timestamp == this.timestamp) {
@@ -457,21 +490,29 @@ public class ResultsDb implements EndpointGroup {
         }
 
         public String toPlain() {
-            return getSeriousnessToColorFromHealth(getSeriousnessFromScore(score),isManual()) + " " +getDate()+" (" + getDaysAgo()+" days ago): " + message.orElse("");
+            try {
+                return getSeriousnessToColorFromHealth(getMark(), isManual()) + " " + getDate() + " (" + getDaysAgo() + " days ago): " + URLDecoder.decode(message.orElse(""), "utf-8");
+            }catch(UnsupportedEncodingException ex){
+                LOGGER.log(Level.INFO, ex, null);
+                return ex.toString();
+            }
         }
 
         String getDaysAgo() {
             double diff = new Date().getTime() - timestamp;
-            double toDay=24 * 60 * 60 * 1000;
-            double days=diff/toDay;
+            double toDay = 24 * 60 * 60 * 1000;
+            double days = diff / toDay;
             BigDecimal toString = BigDecimal.valueOf(days);
             return toString.setScale(2, RoundingMode.HALF_EVEN).toString();
         }
 
-        String getDate(){
+        String getDate() {
             return new Date(timestamp).toString();
         }
 
+        int getMark() {
+            return getSeriousnessFromScore(score);
+        }
 
 
         /**
@@ -555,8 +596,30 @@ public class ResultsDb implements EndpointGroup {
         }
     }
 
-    private String getReportForJob(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job) {
+    private String getReportForJob(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job, int mark) {
         StringBuilder sb = new StringBuilder();
+        List<JobBuildScoreStamp> all = unpackJobsResults(buildsWithScoreAndStamp, job);
+        boolean okToInclude = false;
+        for (JobBuildScoreStamp result : all) {
+            if (result.getMark() == mark && result.haveMessage()) {
+                okToInclude = true;
+                break;
+            }
+        }
+        if (okToInclude) {
+            for (JobBuildScoreStamp item : all) {
+                if (item.getMark() == mark && item.haveMessage()) {
+                    sb.append("----->" + item.toPlain() + "\n");
+                } else {
+                    sb.append("      " + item.toPlain() + "\n");
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    @NotNull
+    private List<JobBuildScoreStamp> unpackJobsResults(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job) {
         List<JobBuildScoreStamp> all = new ArrayList<>();
         Set<Map.Entry<Integer, List<ScoreWithTimeStamp>>> builds = buildsWithScoreAndStamp.entrySet();
         for (Map.Entry<Integer, List<ScoreWithTimeStamp>> build : builds) {
@@ -571,10 +634,7 @@ public class ResultsDb implements EndpointGroup {
             }
         }
         Collections.sort(all);
-        for (JobBuildScoreStamp item : all) {
-            sb.append("    " + item.toPlain()+"\n");
-        }
-        return sb.toString();
+        return all;
     }
 
 
