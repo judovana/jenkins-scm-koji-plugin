@@ -265,6 +265,7 @@
       }
       document.getElementById("stats").innerHTML="jobs: "+counter.total +
                                                  " run: "+counter.run +
+                                                 " seen: "+counter.run_or_seen +
                                                  " <br>passed: "+counter.passed +
                                                  " failed: "+counter.failed +
                                                  " <br>verified: "+counter.verified_ok +
@@ -304,20 +305,24 @@
           counter.total++
           counter.passed++
           counter.run++
+          counter.run_or_seen++
           return "green"
         } else if (info.score > 0 && info.score <= 40) {
           counter.total++
           counter.passed++
           counter.run++
+          counter.run_or_seen++
           return "lightgreen"
         } else if (info.score > 40 && info.score <= 100) {
           counter.total++
           counter.run++
+          counter.run_or_seen++
           return "yellow"
         } else {
           counter.total++
           counter.failed++
           counter.run++
+          counter.run_or_seen++
           return "red"
         }
       } else {
@@ -325,22 +330,27 @@
           counter.total++
           counter.passed++
           counter.verified_ok++
+          counter.run_or_seen++
           return "darkgreen"
         } else if (info.score > 0 && info.score <= 40) {
           counter.total++
           counter.passed++
+          counter.run_or_seen++
           return "purple"
         } else if (info.score > 40 && info.score <= 100) {
           counter.total++
+          counter.run_or_seen++
           return "magenta"
         } else if (info.score > 100 && info.score <= 100000) {
           counter.total++
           counter.failed++
+          counter.run_or_seen++
           return "black"
         } else {
           counter.total++
           counter.failed++
           counter.verified_bad++
+          counter.run_or_seen++
           return "orange"
         }
       }
@@ -350,6 +360,7 @@
      var counter = {
         total: 0,
         run:0,
+        run_or_seen:0,
         passed:0,
         failed:0,
         verified_ok: 0,
