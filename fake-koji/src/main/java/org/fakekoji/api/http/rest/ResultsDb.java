@@ -273,6 +273,8 @@ public class ResultsDb implements EndpointGroup {
     public static final String SET = "set";
     public static final String GET = "get";
     public static final String REPORT = "report";
+    public static final String REPORT_html = "html";
+    public static final String REPORT_empty = "empty";
     public static final String DEL = "del";
     public static final String NVRS = "nvrs";
     private final AccessibleSettings settings;
@@ -338,7 +340,10 @@ public class ResultsDb implements EndpointGroup {
         get(REPORT, context -> {
             try {
                 String s = getReport(context);
-                context.status(OToolService.OK).result(s);
+                if (isReportHtml(context)) {
+                    context.header("Content-Type", "text/html; charset=UTF-8");
+                }
+                context.status(OToolService.OK).contentType("").result(s);
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, e.getMessage(), e);
                 context.status(500).result(e.getClass().getName() + ": " + e.getMessage());
@@ -418,36 +423,58 @@ public class ResultsDb implements EndpointGroup {
         }
     }
 
+    private String getJenkinsJob() {
+        return settings.getJenkinsUrl() + "/job";
+    }
+
     private synchronized String getReport(Context context) {
         String nvr = context.queryParam("nvr", ".*");
         String job = context.queryParam("job", ".*");
-        return getReport(Pattern.compile(nvr), Pattern.compile(job));
+        boolean html = isReportHtml(context);
+        boolean empty = Boolean.valueOf(context.queryParam(REPORT_empty, "false"));
+        return getReport(Pattern.compile(nvr), Pattern.compile(job), html, empty);
     }
 
-    synchronized String getReport(Pattern nvrEx, Pattern jobEx) {
+    @NotNull
+    private static boolean isReportHtml(Context context) {
+        return Boolean.valueOf(context.queryParam(REPORT_html, "true"));
+    }
+
+    synchronized String getReport(Pattern nvrEx, Pattern jobEx, boolean html, boolean empty) {
+        ReportFormatter formatter = html ? new ReportFormatter.ReportFormatterHtml() : new ReportFormatter.ReportFormatterPlain();
         StringBuilder r = new StringBuilder();
+        if (html){
+            r.append("<head></head><body>"+
+                            "<script>\n" +
+                    "   function showHide() {\n" +
+                            "    var all = document.getElementsByClassName('none');\n" +
+                            "for (var i = 0; i < all.length; i ++) {\n" +
+                            "    if (all[i].style.display=='none') {all[i].style.display = 'block'} else { all[i].style.display = 'none'};\n" +
+                            "} }" +
+                            "</script>");
+        }
         List<String> nvrs = new ArrayList<>(db.get().keySet());
         Collections.sort(nvrs);
         for (String nvr : nvrs) {
             if (nvrEx.matcher(nvr).matches()) {
-                r.append(nvr).append("\n");
-                r.append(getReportForNvr(db.get().get(nvr), jobEx));
+                r.append(formatter.nvr(nvr)).append("\n");
+                r.append(getReportForNvr(db.get().get(nvr), jobEx, empty, formatter));
             }
         }
         return r.toString();
     }
 
-    synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx) {
+    synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx, boolean empty, ReportFormatter formatter) {
         StringBuilder r = new StringBuilder();
         List<String> jobs = new ArrayList<>(nvr.keySet());
         Collections.sort(jobs);
         for (int mark = 4; mark >= 0; mark--) {
-            r.append("  ** " + markToNiceString(mark)).append(" **\n");
+            r.append(formatter.status(markToNiceString(mark))).append("\n");
             for (String job : jobs) {
                 if (jobEx.matcher(job).matches()) {
-                    String content = getReportForJob(nvr.get(job), job, mark);
+                    String content = getReportForJob(nvr.get(job), job, mark, empty, formatter);
                     if (!content.trim().isEmpty()) {
-                        r.append("    " + job).append("\n");
+                        r.append(formatter.job(job)).append("\n");
                         r.append(content);
                     }
                 }
@@ -458,22 +485,22 @@ public class ResultsDb implements EndpointGroup {
 
     private String markToNiceString(int mark) {
         switch (mark) {
-            case (JobBuildScoreStamp.VERIFIED_GOOD):
+            case (CopypastedStuffFromDailyreportAndAjaxHtml.VERIFIED_GOOD):
                 return "waived - ok";
-            case (JobBuildScoreStamp.GOOD):
+            case (CopypastedStuffFromDailyreportAndAjaxHtml.GOOD):
                 return "ignored";
-            case (JobBuildScoreStamp.NEEDS_INSPECTION):
+            case (CopypastedStuffFromDailyreportAndAjaxHtml.NEEDS_INSPECTION):
                 return "reruned";
-            case (JobBuildScoreStamp.FAILED):
+            case (CopypastedStuffFromDailyreportAndAjaxHtml.FAILED):
                 return "incorrect";
-            case (JobBuildScoreStamp.VERIFIED_FAILED):
+            case (CopypastedStuffFromDailyreportAndAjaxHtml.VERIFIED_FAILED):
                 return "failed";
             default:
                 throw new RuntimeException("Invalid wight resolution: " + mark);
         }
     }
 
-    private static final class JobBuildScoreStamp implements Comparable<JobBuildScoreStamp> {
+    private final class JobBuildScoreStamp implements Comparable<JobBuildScoreStamp> {
         //job is here only for link generation
         final String job;
         final int id;
@@ -504,14 +531,58 @@ public class ResultsDb implements EndpointGroup {
 
         public String toPlain() {
             try {
-                return getSeriousnessToColorFromHealth(getMark(), isManual()) + " " + getDate() + " (" + getDaysAgo() + " days ago" + authorString() + "): " + URLDecoder.decode(message.orElse(""), "utf-8");
+                return getSeriousnessToColorFromHealth() + " " + getDate() + " (" + getDaysAgo() + " days ago" + getAuthorString() + "): " + URLDecoder.decode(message.orElse(""), "utf-8");
             } catch (UnsupportedEncodingException ex) {
                 LOGGER.log(Level.INFO, ex, null);
                 return ex.toString();
             }
         }
 
-        private String authorString() {
+        private String getSeriousnessToColorFromHealth() {
+            return CopypastedStuffFromDailyreportAndAjaxHtml.getSeriousnessToColorFromHealth(getMark(), isManual());
+        }
+
+        public String toHtml(String border) {
+            return "<div class=\""+border+"\" " + getSeriousnessToStyleFromHealth(border) + ">" + getMainLink() + " <a href='javascript:void(0)' style='text-decoration: none;' >(days " + getDaysAgo() + " ago" + getAuthorString() + ")</a> " + getAnalyseHtmlHref() + "</div>";
+        }
+
+        private String getSeriousnessToStyleFromHealth(String border) {
+            return CopypastedStuffFromDailyreportAndAjaxHtml.getSeriousnessToStyleFromHealth(getMark(), isManual(), border);
+        }
+
+        public String getMainLink() {
+            if (!isManual()) {
+                return "<a href='" + getJenkinsJob() + "/" + job + "/" + id + "' target='_blank' >" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(timestamp).toString() + "</a>";
+            } else {
+                return "<a  href='javascript:void(0)' style='text-decoration: none;'  onclick='alert(\"" + "MANUAL:" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(timestamp).toString() + " - days " + getDaysAgo() + " ago" + getAuthorString() + "\");'>" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(timestamp).toString() + "</a>";
+            }
+        }
+
+        private String buildToText() {
+            return CopypastedStuffFromDailyreportAndAjaxHtml.buildToText(getMark(), isManual());
+        }
+
+        public String getAnalyseHtmlHref() {
+            try {
+                return getAnalyseHtmlHrefImpl();
+            } catch (UnsupportedEncodingException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        public String getAnalyseHtmlHrefImpl() throws UnsupportedEncodingException {
+            String result = "";
+            if (message.isPresent()) {
+                result = "<b><a  href='javascript:void(0)'> Comment: " + URLDecoder.decode(message.get(), "utf-8") + " </a></b>";
+            }
+            if (!isManual()) {
+                return "<a href='" + getJenkinsJob() + "/" + job + "/" + id + "/artifact/analyse.html' target='_blank'>Why " + score + " score + regressions?</a> " + result;
+            } else {
+                return " " + result;
+            }
+        }
+
+        private String getAuthorString() {
             if (author.isPresent()) {
                 return " by " + author.get();
             } else {
@@ -532,92 +603,16 @@ public class ResultsDb implements EndpointGroup {
         }
 
         int getMark() {
-            return getSeriousnessFromScore(score);
+            return CopypastedStuffFromDailyreportAndAjaxHtml.getSeriousnessFromScore(score);
         }
 
-
-        /**
-         * WARNING!!!!
-         * Following is copypasted from HydraDailyReport.java
-         * and also is duplicated in the JS table (ajax.html)!!!
-         * (from which are the manual runs collors)
-         * <p>
-         * If the score distribution ever changes, this must be fixed everywhere!!
-         */
 
         public boolean isManual() {
             return id < 0;
         }
-
-        private static final int GREEN = 0;
-        private static final int WHITE = 40;
-        private static final int YELLOW = 100;
-        private static final int MANUAL_FAIL = 100000;
-
-        private static final int VERIFIED_GOOD = 0;
-        private static final int GOOD = 1;
-        private static final int NEEDS_INSPECTION = 2;
-        private static final int FAILED = 3;
-        private static final int VERIFIED_FAILED = 4;
-
-        private static String getSeriousnessToStyleFromHealth(int health, boolean manual) {
-            return "style=\" background-color: " + getSeriousnessToColorFromHealth(health, manual) + " \"";
-        }
-
-        private static String getSeriousnessToColorFromHealth(int health, boolean manual) {
-            if (manual) {
-                switch (health) {
-                    case (VERIFIED_GOOD):
-                        return "darkgreen";
-                    case (GOOD):
-                        return "purple";
-                    case (NEEDS_INSPECTION):
-                        return "magenta";
-                    case (FAILED):
-                        return "black";
-                    case (VERIFIED_FAILED):
-                        return "orange";
-                    default:
-                        throw new RuntimeException("Invalid wight resolution: " + health);
-                }
-            } else {
-                switch (health) {
-                    case (VERIFIED_GOOD):
-                        return "green";
-                    case (GOOD):
-                        return "lightgreen";
-                    case (NEEDS_INSPECTION):
-                        return "yellow";
-                    case (FAILED):
-                        return "red";
-                    case (VERIFIED_FAILED):
-                        return "red";
-                    default:
-                        throw new RuntimeException("Invalid auto-wight resolution: " + health);
-                }
-            }
-        }
-
-        @SuppressWarnings("ConstantConditions")
-        @SuppressFBWarnings(value = "UC_USELESS_CONDITION", justification = "The redundant 'greater than' conditions improve human readability of the code.")
-        private static int getSeriousnessFromScore(int weight) {
-            if (weight <= GREEN) {
-                return VERIFIED_GOOD;
-                /*>green && <= white, no op:)*/
-            } else if (weight > GREEN && weight <= WHITE) {
-                return GOOD;
-            } else if (weight > WHITE && weight < YELLOW) {
-                return NEEDS_INSPECTION;
-            } else if (weight >= YELLOW && weight < MANUAL_FAIL) {
-                return FAILED;
-            } else if (weight >= MANUAL_FAIL) {
-                return VERIFIED_FAILED;
-            }
-            throw new RuntimeException("Unresolved weight: " + weight);
-        }
     }
 
-    private String getReportForJob(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job, int mark) {
+    private String getReportForJob(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job, int mark, boolean empty, ReportFormatter formatter) {
         StringBuilder sb = new StringBuilder();
         List<JobBuildScoreStamp> all = unpackJobsResults(buildsWithScoreAndStamp, job);
         boolean okToInclude = false;
@@ -627,12 +622,12 @@ public class ResultsDb implements EndpointGroup {
                 break;
             }
         }
-        if (okToInclude) {
+        if (okToInclude || empty) {
             for (JobBuildScoreStamp item : all) {
                 if (item.getMark() == mark && item.message.isPresent()) {
-                    sb.append("----->" + item.toPlain() + "\n");
+                    sb.append(formatter.mainItem(item) + "\n");
                 } else {
-                    sb.append("      " + item.toPlain() + "\n");
+                    sb.append(formatter.otherItem(item) + "\n");
                 }
             }
         }
@@ -734,6 +729,186 @@ public class ResultsDb implements EndpointGroup {
     class ItemNotFoundException extends RuntimeException {
         public ItemNotFoundException(String s) {
             super(s);
+        }
+    }
+
+    private interface ReportFormatter {
+
+        String status(String s);
+
+        String job(String job);
+
+        String nvr(String nvr);
+
+        String mainItem(JobBuildScoreStamp item);
+
+        String otherItem(JobBuildScoreStamp item);
+
+        class ReportFormatterPlain implements ReportFormatter {
+            @Override
+            public String status(String s) {
+                return "  ** " + s + " **";
+            }
+
+            @Override
+            public String job(String job) {
+                return "    " + job;
+            }
+
+            @Override
+            public String nvr(String nvr) {
+                return nvr;
+            }
+
+            @Override
+            public String mainItem(JobBuildScoreStamp item) {
+                return "----->" + item.toPlain();
+            }
+
+            @Override
+            public String otherItem(JobBuildScoreStamp item) {
+                return "      " + item.toPlain();
+            }
+        }
+
+        class ReportFormatterHtml implements ReportFormatter {
+            @Override
+            public String status(String s) {
+                return "  <u><h2> " + s + " </h2></u>";
+            }
+
+            @Override
+            public String job(String job) {
+                return "    <h3>" + job + "</h3><button onclick='showHide()'>show/hide irrelevant</button>";
+            }
+
+            @Override
+            public String nvr(String nvr) {
+                return "<h1> " + nvr + " </h1>";
+            }
+
+            @Override
+            public String mainItem(JobBuildScoreStamp item) {
+                return "      " + item.toHtml("double") + "";
+            }
+
+            @Override
+            public String otherItem(JobBuildScoreStamp item) {
+                return "      " + item.toHtml("none") + "";
+            }
+        }
+    }
+
+
+    private static class CopypastedStuffFromDailyreportAndAjaxHtml {
+        /**
+         * WARNING!!!!
+         * Following is copypasted from HydraDailyReport.java
+         * and also is duplicated in the JS table (ajax.html)!!!
+         * (from which are the manual runs collors)
+         * <p>
+         * If the score distribution ever changes, this must be fixed everywhere!!
+         */
+
+        private static final int GREEN = 0;
+        private static final int WHITE = 40;
+        private static final int YELLOW = 100;
+        private static final int MANUAL_FAIL = 100000;
+
+        private static final int VERIFIED_GOOD = 0;
+        private static final int GOOD = 1;
+        private static final int NEEDS_INSPECTION = 2;
+        private static final int FAILED = 3;
+        private static final int VERIFIED_FAILED = 4;
+
+        private static String getSeriousnessToStyleFromHealth(int health, boolean manual, String border) {
+            return "style=\" background-color: " + getSeriousnessToColorFromHealth(health, manual) + " ; border-style: " + border + ";\"";
+        }
+
+        private static String getSeriousnessToColorFromHealth(int health, boolean manual) {
+            if (manual) {
+                switch (health) {
+                    case (VERIFIED_GOOD):
+                        return "darkgreen";
+                    case (GOOD):
+                        return "purple";
+                    case (NEEDS_INSPECTION):
+                        return "magenta";
+                    case (FAILED):
+                        return "black";
+                    case (VERIFIED_FAILED):
+                        return "orange";
+                    default:
+                        throw new RuntimeException("Invalid wight resolution: " + health);
+                }
+            } else {
+                switch (health) {
+                    case (VERIFIED_GOOD):
+                        return "green";
+                    case (GOOD):
+                        return "lightgreen";
+                    case (NEEDS_INSPECTION):
+                        return "yellow";
+                    case (FAILED):
+                        return "red";
+                    case (VERIFIED_FAILED):
+                        return "red";
+                    default:
+                        throw new RuntimeException("Invalid auto-wight resolution: " + health);
+                }
+            }
+        }
+
+        @SuppressWarnings("ConstantConditions")
+        @SuppressFBWarnings(value = "UC_USELESS_CONDITION", justification = "The redundant 'greater than' conditions improve human readability of the code.")
+        private static int getSeriousnessFromScore(int weight) {
+            if (weight <= GREEN) {
+                return VERIFIED_GOOD;
+                /*>green && <= white, no op:)*/
+            } else if (weight > GREEN && weight <= WHITE) {
+                return GOOD;
+            } else if (weight > WHITE && weight < YELLOW) {
+                return NEEDS_INSPECTION;
+            } else if (weight >= YELLOW && weight < MANUAL_FAIL) {
+                return FAILED;
+            } else if (weight >= MANUAL_FAIL) {
+                return VERIFIED_FAILED;
+            }
+            throw new RuntimeException("Unresolved weight: " + weight);
+        }
+
+        public static String buildToText(int health, boolean manual) {
+            if (manual) {
+                switch (health) {
+                    case (VERIFIED_GOOD):
+                        return "pass (manual)";
+                    case (GOOD):
+                        return "ignored (manual)";
+                    case (NEEDS_INSPECTION):
+                        return "rescheduled (manual)";
+                    case (FAILED):
+                        return "incorrect run (manual)";
+                    case (VERIFIED_FAILED):
+                        return "failed (manual)";
+                    default:
+                        throw new RuntimeException("Invalid wight resolution: " + health);
+                }
+            } else {
+                switch (health) {
+                    case (VERIFIED_GOOD):
+                        return "ok (automated)";
+                    case (GOOD):
+                        return "ok (automated)";
+                    case (NEEDS_INSPECTION):
+                        return "needs inspection (automated)";
+                    case (FAILED):
+                        return "failed/regressed (automated)";
+                    case (VERIFIED_FAILED):
+                        return "failed/regressed (automated)";
+                    default:
+                        throw new RuntimeException("Invalid auto-wight resolution: " + health);
+                }
+            }
         }
     }
 }
