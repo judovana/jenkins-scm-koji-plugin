@@ -468,6 +468,10 @@
                     //there is bug. Java encodes sapce as + js as %20
                     buildScoreAndTime = [parts[2], zz[0], zz[1], decodeURIComponent(zz[2]).replaceAll("+"," ")]
                     addData(ljob, buildScoreAndTime)
+                  } else if (zz.length == 4) {
+                    //there is bug. Java encodes sapce as + js as %20
+                    buildScoreAndTime = [parts[2], zz[0], zz[1], decodeURIComponent(zz[2]).replaceAll("+"," "), decodeURIComponent(zz[3]).replaceAll("+"," ")]
+                    addData(ljob, buildScoreAndTime)
                   } else {
                     console.log("bad db record in " + lines[i]);
                     console.log("of " + buildScoreAndTime);
@@ -488,11 +492,13 @@
 
     function infoFromArray(value) {
       if (value.length == 3) {
-        return { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]), message: null }
+        return { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]), message: null, author: null }
       } else if (value.length == 4) {
-        return { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]), message: value[3] }
+        return { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]), message: value[3], author: null }
+      } else if (value.length == 5) {
+        return { build: parseInt(value[0]), score: parseInt(value[1]), time: parseInt(value[2]), message: value[3], author: value[4] }
       } else {
-        console.log("expected array of 3 or 5, got " + value.length);
+        console.log("expected array of 3,4 or 5, got " + value.length);
       }
     }
 
@@ -695,6 +701,10 @@
         var lmessage = encodeURIComponent(info.message);
         lurl = lurl + "&message=" + lmessage
       }
+      if (info.author != null && info.author.trim() != ""){
+        var lauthor = encodeURIComponent(info.author);
+        lurl = lurl + "&author=" + lauthor
+      }
       dbReadOnly = document.getElementById("dbReadOnly").checked
       if (dbReadOnly) {
         addInfo(ljob, info);
@@ -744,7 +754,8 @@
 
     function putNewRecord(lnvr, ljob, lscore) {
       var message = document.getElementById("waiveMessage").value;
-      var info = infoFromArray([getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime(), message])
+      var author = document.getElementById("myName").value;
+      var info = infoFromArray([getNextManualBuildId(lnvr, ljob), lscore, new Date().getTime(), message, author])
       var sent = sendToServer(lnvr, ljob, info);
       if (sent) {
         getAllData(NVR, false)
@@ -815,12 +826,20 @@
       if (result.build > 0) {
         return "<a href='" + jenkinsJob + "/" + job + "/" + result.build + "' target='_blank' >" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toISOString() + "</a>"
       } else {
-        return "<a  href='javascript:void(0)' style='text-decoration: none;'  onclick='alert(\"" + "MANUAL:" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toISOString() + " - days " + getDaysAgo(result.time) + " ago\");'>" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toISOString() + "</a>"
+        return "<a  href='javascript:void(0)' style='text-decoration: none;'  onclick='alert(\"" + "MANUAL:" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toISOString() + " - days " + getDaysAgo(result.time) + " ago" + getAuthorString(result.author) + "\");'>" + buildToText(result) + " buildId: " + result.build + " score: " + result.score + " at: " + new Date(result.time).toISOString() + "</a>"
       }
     }
 
     function getDaysAgo(timex) {
       return (Number.parseFloat(new Date().getTime() - timex) / Number.parseFloat(24 * 60 * 60 * 1000)).toFixed(2)
+    }
+
+    function getAuthorString(authorex) {
+      if (authorex != null && authorex.trim() != "") {
+        return " by " + authorex
+      } else {
+        return ""
+      }
     }
 
     function showAll(job) {
@@ -843,7 +862,7 @@
       s += "<a href='" + jenkinsJob + "/" + job + "' target='_blank' >" + job + "</a></h3>";
       for (var i = 0; i < results.length; i++) {
         result = results[i];
-        s = s + "<div style='background-color:" + buildToColor(result) + "'>" + getMainLink(jenkinsJob, job, result) + " <a href='javascript:void(0)' style='text-decoration: none;' >(days " + getDaysAgo(result.time) + " ago)</a> " + getAnalyseHtmlHref(result, jenkinsJob, job) + "</div>"
+        s = s + "<div style='background-color:" + buildToColor(result) + "'>" + getMainLink(jenkinsJob, job, result) + " <a href='javascript:void(0)' style='text-decoration: none;' >(days " + getDaysAgo(result.time) + " ago" + getAuthorString(result.author) + ")</a> " + getAnalyseHtmlHref(result, jenkinsJob, job) + "</div>"
       }
       s = s + "<div  style=\"border-style: solid; border-color: black; text-align: center; \">" +
         "  <button onClick='waiveOk(\"" + NVR + "\",\"" + job + "\")'              style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 0 }) + ";\"   type='button'>waive - ok</button>" +

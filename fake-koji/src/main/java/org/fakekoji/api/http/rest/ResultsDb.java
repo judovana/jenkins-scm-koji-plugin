@@ -49,17 +49,26 @@ public class ResultsDb implements EndpointGroup {
         final int score;
         final long timestamp;
         final Optional<String> message;
+        final Optional<String> author;
 
-        public ScoreWithTimeStamp(int score, long timestamp, Optional<String> message) {
+        public ScoreWithTimeStamp(int score, long timestamp, Optional<String> message, Optional<String> author) {
             this.score = score;
             this.timestamp = timestamp;
             this.message = message;
+            this.author = author;
             if (message.isPresent()) {
-                if (message.get().contains(SECONDARY_DELIMITER) ||
-                        message.get().contains(SCORE_DELIMITER) ||
-                        message.get().contains(MAIN_DELIMITER)) {
-                    throw new RuntimeException("Forbidden chars of '" + SECONDARY_DELIMITER + "', '" + SCORE_DELIMITER + "', '" + MAIN_DELIMITER + "' present in " + message.get());
-                }
+                checkStoredString(message.get());
+            }
+            if (author.isPresent()) {
+                checkStoredString(author.get());
+            }
+        }
+
+        private static void checkStoredString(String s) {
+            if (s.contains(SECONDARY_DELIMITER) ||
+                    s.contains(SCORE_DELIMITER) ||
+                    s.contains(MAIN_DELIMITER)) {
+                throw new RuntimeException("Forbidden chars of '" + SECONDARY_DELIMITER + "', '" + SCORE_DELIMITER + "', '" + MAIN_DELIMITER + "' present in " + s);
             }
         }
 
@@ -67,11 +76,20 @@ public class ResultsDb implements EndpointGroup {
             String[] srcs = from.trim().split(SCORE_DELIMITER);
             this.score = Integer.valueOf(srcs[0]);
             this.timestamp = Long.valueOf(srcs[1]);
-            if (srcs.length > 2) {
-                message = Optional.of(srcs[2].replace(SCORE_DELIMITER, "%3B").replace(MAIN_DELIMITER, "%3A").replace(SECONDARY_DELIMITER, "%20"));
+            if (srcs.length > 2 && !srcs[2].trim().isEmpty()) {
+                message = Optional.of(cleanUrlBetrayers(srcs[2]));
             } else {
                 message = Optional.empty();
             }
+            if (srcs.length > 3 && !srcs[3].trim().isEmpty()) {
+                author = Optional.of(cleanUrlBetrayers(srcs[3]));
+            } else {
+                author = Optional.empty();
+            }
+        }
+
+        public static String cleanUrlBetrayers(String s) {
+            return s.replace(SCORE_DELIMITER, "%3B").replace(MAIN_DELIMITER, "%3A").replace(SECONDARY_DELIMITER, "%20");
         }
 
         @Override
@@ -89,7 +107,7 @@ public class ResultsDb implements EndpointGroup {
 
         @Override
         public String toString() {
-            return score + SCORE_DELIMITER + timestamp + SCORE_DELIMITER + message.orElse("");
+            return score + SCORE_DELIMITER + timestamp + SCORE_DELIMITER + message.orElse("") + SCORE_DELIMITER + author.orElse("");
 
         }
     }
@@ -121,7 +139,7 @@ public class ResultsDb implements EndpointGroup {
                 try {
                     String[] main = line.split(MAIN_DELIMITER);
                     String[] second = main[3].split(SECONDARY_DELIMITER);
-                    for(String result: second) {
+                    for (String result : second) {
                         set(main[0], main[1], Integer.valueOf(main[2]), new ScoreWithTimeStamp(result));
                     }
                 } catch (Exception ex) {
@@ -145,9 +163,9 @@ public class ResultsDb implements EndpointGroup {
             scores.add(result);
         }
 
-        private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score, Optional<String> messgae) {
+        private synchronized ScoreWithTimeStamp set(String nvr, String job, Integer buildId, Integer score, Optional<String> messgae, Optional<String> author) {
             List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, true);
-            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime(), messgae);
+            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime(), messgae, author);
             for (ScoreWithTimeStamp oldOne : scores) {
                 if (oldOne.equals(newOne)) {
                     //we do not overwrite
@@ -161,12 +179,12 @@ public class ResultsDb implements EndpointGroup {
 
         private synchronized ScoreWithTimeStamp del(String nvr, String job, Integer buildId, Integer score) {
             List<ScoreWithTimeStamp> scores = getChain(nvr, job, buildId, false);
-            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime(), Optional.empty());
+            ScoreWithTimeStamp newOne = new ScoreWithTimeStamp(score, new Date().getTime(), Optional.empty(), Optional.empty());
             for (ScoreWithTimeStamp oldOne : scores) {
                 if (oldOne.equals(newOne)) {
                     int deleteions = delChain(nvr, job, buildId, oldOne);
-                    if (deleteions == 0){
-                        LOGGER.log(Level.WARNING, "deletion of " + nvr +", "+job+", "+buildId+", "+score+" is bad, deleted: "+deleteions);
+                    if (deleteions == 0) {
+                        LOGGER.log(Level.WARNING, "deletion of " + nvr + ", " + job + ", " + buildId + ", " + score + " is bad, deleted: " + deleteions);
                     }
                     saveOnCount();
                     return oldOne;
@@ -188,9 +206,9 @@ public class ResultsDb implements EndpointGroup {
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
             if (jobs == null) {
                 jobs = Collections.synchronizedMap(new HashMap<>());
-                 if (putIfNeeded) {
-                     nvras.put(nvr, jobs);
-                 }
+                if (putIfNeeded) {
+                    nvras.put(nvr, jobs);
+                }
             }
             Map<Integer, List<ScoreWithTimeStamp>> jobIds = jobs.get(job);
             if (jobIds == null) {
@@ -213,33 +231,33 @@ public class ResultsDb implements EndpointGroup {
         private int delChain(String nvr, String job, Integer buildId, ScoreWithTimeStamp oldOne) {
             int deletions = 0;
             Map<String, Map<Integer, List<ScoreWithTimeStamp>>> jobs = nvras.get(nvr);
-            if (jobs == null){
+            if (jobs == null) {
                 return -1;
             }
             Map<Integer, List<ScoreWithTimeStamp>> jobIds = jobs.get(job);
-            if (jobIds == null){
+            if (jobIds == null) {
                 return -1;
             }
             List<ScoreWithTimeStamp> scores = jobIds.get(buildId);
-            if (scores == null){
+            if (scores == null) {
                 return -1;
             }
-            if(scores.remove(oldOne)){
+            if (scores.remove(oldOne)) {
                 deletions++;
             }
-            if (scores.isEmpty()){
-                if (jobIds.remove(buildId, scores)){
+            if (scores.isEmpty()) {
+                if (jobIds.remove(buildId, scores)) {
                     deletions++;
                 }
             }
-            if (jobIds.isEmpty()){
-                if (jobs.remove(job, jobIds)){
-                    deletions ++;
+            if (jobIds.isEmpty()) {
+                if (jobs.remove(job, jobIds)) {
+                    deletions++;
                 }
             }
-            if (jobs.isEmpty()){
-                if (nvras.remove(nvr, jobs)){
-                    deletions ++;
+            if (jobs.isEmpty()) {
+                if (nvras.remove(nvr, jobs)) {
+                    deletions++;
                 }
             }
             return deletions;
@@ -272,8 +290,8 @@ public class ResultsDb implements EndpointGroup {
                 + MISC + '/' + RESULTS_DB + "/" + NVRS + " will return set of nvrs in results db" + "\n"
                 + MISC + '/' + RESULTS_DB + "/" + GET + " will return the score of job of nvr of buildId" + "\n"
                 + MISC + '/' + RESULTS_DB + "/" + DEL + " will removethe result for job,nvr,buildId,score, ba careful" + "\n"
-                + MISC + '/' + RESULTS_DB + "/" + SET + " will set the result for job,nvr,buildId,score" + "\n"
-                + MISC + '/' + RESULTS_DB + "/" + REPORT + " will generate post-mortem texts (nvr and job may be regexes here)" + "\n"
+                + MISC + '/' + RESULTS_DB + "/" + SET + " will set the result for job,nvr,buildId,score+optional message and author" + "\n"
+                + MISC + '/' + RESULTS_DB + "/" + REPORT + " will generate post-mortem texts (nvr and job may be regexes here). Optional is html=true empty=false" + "\n"
                 + " Negative jobId is manual touch, time is automated\n"
                 + " for set nvr, job, buildId and score are mandatory, For get not, but you will get all matching results\n";
     }
@@ -331,8 +349,8 @@ public class ResultsDb implements EndpointGroup {
     }
 
 
-    String getSet(String job, String nvr, String buildId, String score, Optional<String> message) {
-        return setHelper(job, nvr, buildId, score, message);
+    String getSet(String job, String nvr, String buildId, String score, Optional<String> message, Optional<String> author) {
+        return setHelper(job, nvr, buildId, score, message, author);
     }
 
     String getDel(String job, String nvr, String buildId, String score) {
@@ -349,14 +367,16 @@ public class ResultsDb implements EndpointGroup {
         final String nvr = context.queryParam("nvr");
         final String buildId = context.queryParam("buildId");
         final String score = context.queryParam("score");
-        //unluckily for us, javalin decodes soemthing what it should not - parameter
-        final String messagevalue = context.queryParam("message");
-        final Optional<String> message = messagevalue == null || messagevalue.trim() == "" ? Optional.empty() : Optional.of(URLEncoder.encode(messagevalue, StandardCharsets.UTF_8.toString()));
         if (job == null || nvr == null || buildId == null || score == null) {
             throw new RuntimeException("SET job, nvr buildId, and score are mandatory");
         }
+        //unluckily for us, javalin decodes soemthing what it should not - parameter
+        final String messagevalue = context.queryParam("message");
+        final Optional<String> message = messagevalue == null || messagevalue.trim() == "" ? Optional.empty() : Optional.of(URLEncoder.encode(messagevalue, StandardCharsets.UTF_8.toString()));
+        final String authorvalue = context.queryParam("author");
+        final Optional<String> author = authorvalue == null || authorvalue.trim() == "" ? Optional.empty() : Optional.of(URLEncoder.encode(authorvalue, StandardCharsets.UTF_8.toString()));
         if (finalAction.equals(SET)) {
-            return setHelper(job, nvr, buildId, score, message);
+            return setHelper(job, nvr, buildId, score, message, author);
         } else if (finalAction.equals(DEL)) {
             return delHelper(job, nvr, buildId, score);
         } else {
@@ -367,8 +387,8 @@ public class ResultsDb implements EndpointGroup {
     }
 
     @NotNull
-    synchronized private String setHelper(String job, String nvr, String buildId, String score, Optional<String> message) {
-        ScoreWithTimeStamp original = db.set(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score), message);
+    synchronized private String setHelper(String job, String nvr, String buildId, String score, Optional<String> message, Optional<String> author) {
+        ScoreWithTimeStamp original = db.set(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score), message, author);
         if (original == null) {
             return "inserted";
         } else {
@@ -378,10 +398,10 @@ public class ResultsDb implements EndpointGroup {
         }
     }
 
-    private synchronized  String delHelper(String job, String nvr, String buildId, String score) {
+    private synchronized String delHelper(String job, String nvr, String buildId, String score) {
         ScoreWithTimeStamp original = db.del(nvr, job, Integer.valueOf(buildId), Integer.valueOf(score));
         if (original == null) {
-            String s = "Not deleted " + nvr +", "+job+", "+buildId+", "+score;
+            String s = "Not deleted " + nvr + ", " + job + ", " + buildId + ", " + score;
             //throw  new RuntimeException(s);
             return s;
         } else {
@@ -460,23 +480,16 @@ public class ResultsDb implements EndpointGroup {
         final int score;
         final long timestamp;
         final Optional<String> message;
+        final Optional<String> author;
 
-        public JobBuildScoreStamp(String job, int id, int score, long timestamp, Optional<String> message) {
+        public JobBuildScoreStamp(String job, int id, int score, long timestamp, Optional<String> message, Optional<String> author) {
             this.job = job;
             this.id = id;
             this.score = score;
             this.timestamp = timestamp;
             this.message = message;
+            this.author = author;
         }
-
-        boolean haveMessage(){
-            if (message.isPresent()){
-                return !message.get().trim().isEmpty();
-            } else {
-                return false;
-            }
-        }
-
 
         @Override
         public int compareTo(@NotNull JobBuildScoreStamp o) {
@@ -491,10 +504,18 @@ public class ResultsDb implements EndpointGroup {
 
         public String toPlain() {
             try {
-                return getSeriousnessToColorFromHealth(getMark(), isManual()) + " " + getDate() + " (" + getDaysAgo() + " days ago): " + URLDecoder.decode(message.orElse(""), "utf-8");
-            }catch(UnsupportedEncodingException ex){
+                return getSeriousnessToColorFromHealth(getMark(), isManual()) + " " + getDate() + " (" + getDaysAgo() + " days ago" + authorString() + "): " + URLDecoder.decode(message.orElse(""), "utf-8");
+            } catch (UnsupportedEncodingException ex) {
                 LOGGER.log(Level.INFO, ex, null);
                 return ex.toString();
+            }
+        }
+
+        private String authorString() {
+            if (author.isPresent()) {
+                return " by " + author.get();
+            } else {
+                return "";
             }
         }
 
@@ -520,31 +541,31 @@ public class ResultsDb implements EndpointGroup {
          * Following is copypasted from HydraDailyReport.java
          * and also is duplicated in the JS table (ajax.html)!!!
          * (from which are the manual runs collors)
-         *
+         * <p>
          * If the score distribution ever changes, this must be fixed everywhere!!
-         *
          */
 
-        public boolean isManual(){
+        public boolean isManual() {
             return id < 0;
         }
 
         private static final int GREEN = 0;
         private static final int WHITE = 40;
         private static final int YELLOW = 100;
-        private static final int MANUAL_FAIL=100000;
+        private static final int MANUAL_FAIL = 100000;
 
-        private static final int VERIFIED_GOOD=0;
-        private static final int GOOD=1;
-        private static final int NEEDS_INSPECTION=2;
-        private static final int FAILED=3;
-        private static final int VERIFIED_FAILED=4;
+        private static final int VERIFIED_GOOD = 0;
+        private static final int GOOD = 1;
+        private static final int NEEDS_INSPECTION = 2;
+        private static final int FAILED = 3;
+        private static final int VERIFIED_FAILED = 4;
 
         private static String getSeriousnessToStyleFromHealth(int health, boolean manual) {
-            return "style=\" background-color: "+getSeriousnessToColorFromHealth(health, manual)+" \"";
+            return "style=\" background-color: " + getSeriousnessToColorFromHealth(health, manual) + " \"";
         }
+
         private static String getSeriousnessToColorFromHealth(int health, boolean manual) {
-            if (manual){
+            if (manual) {
                 switch (health) {
                     case (VERIFIED_GOOD):
                         return "darkgreen";
@@ -587,7 +608,7 @@ public class ResultsDb implements EndpointGroup {
                 return GOOD;
             } else if (weight > WHITE && weight < YELLOW) {
                 return NEEDS_INSPECTION;
-            } else if (weight >= YELLOW  && weight < MANUAL_FAIL) {
+            } else if (weight >= YELLOW && weight < MANUAL_FAIL) {
                 return FAILED;
             } else if (weight >= MANUAL_FAIL) {
                 return VERIFIED_FAILED;
@@ -601,14 +622,14 @@ public class ResultsDb implements EndpointGroup {
         List<JobBuildScoreStamp> all = unpackJobsResults(buildsWithScoreAndStamp, job);
         boolean okToInclude = false;
         for (JobBuildScoreStamp result : all) {
-            if (result.getMark() == mark && result.haveMessage()) {
+            if (result.getMark() == mark && result.message.isPresent()) {
                 okToInclude = true;
                 break;
             }
         }
         if (okToInclude) {
             for (JobBuildScoreStamp item : all) {
-                if (item.getMark() == mark && item.haveMessage()) {
+                if (item.getMark() == mark && item.message.isPresent()) {
                     sb.append("----->" + item.toPlain() + "\n");
                 } else {
                     sb.append("      " + item.toPlain() + "\n");
@@ -629,7 +650,8 @@ public class ResultsDb implements EndpointGroup {
                         build.getKey(),
                         inBuild.score,
                         inBuild.timestamp,
-                        inBuild.message
+                        inBuild.message,
+                        inBuild.author
                 ));
             }
         }

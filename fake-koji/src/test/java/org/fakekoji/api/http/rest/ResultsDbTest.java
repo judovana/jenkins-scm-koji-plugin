@@ -85,7 +85,7 @@ public class ResultsDbTest {
         private void set() {
             try {
                 String s = "" + getNext();
-                String a = db.getSet(s, s, s, "" + getNextScore(), getMessage());
+                String a = db.getSet(s, s, s, "" + getNextScore(), getMessage(), getAuthor());
                 String check = db.getScore(null, null, null);
                 checkCheck(check);
             }catch (ResultsDb.ItemNotFoundException e){
@@ -126,7 +126,7 @@ public class ResultsDbTest {
         private void del() {
             try {
                 String s = "" + getNext();
-                String a = db.getSet(s, s, s, "" + getThisScore(), getMessage());
+                String a = db.getSet(s, s, s, "" + getThisScore(), getMessage(), getAuthor());
                 String check = db.getScore(null, null, null);
                 checkCheck(check);
             }catch (ResultsDb.ItemNotFoundException e){
@@ -220,30 +220,30 @@ public class ResultsDbTest {
         DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
         db = new ResultsDb(DataGenerator.getSettings(folderHolder));
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("aa", "bb", "1", "100000000", getMessage());
+            String a = db.getSet("aa", "bb", "1", "100000000", getMessage(), getAuthor());
         }
         //x rewrites of same item, no save
         long l1 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("1)"+l1);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a", "b", "1", "" + i, getMessage());
+            String a = db.getSet("a", "b", "1", "" + i, getMessage(), getAuthor());
         }
         //now updating item
         long l2 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("2)"+l2);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a", "b", "" + i, "0", getMessage());
+            String a = db.getSet("a", "b", "" + i, "0", getMessage(), getAuthor());
         }
         //now adding items
         long l3 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("3)"+l3);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a", "b" + i, "1", "0", getMessage());
+            String a = db.getSet("a", "b" + i, "1", "0", getMessage(), getAuthor());
         }
         long l4 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("4)"+l4);
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a" + i, "b", "1", "100000000", getMessage());
+            String a = db.getSet("a" + i, "b", "1", "100000000", getMessage(), getAuthor());
         }
         long l5 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("5)"+l5);
@@ -255,7 +255,7 @@ public class ResultsDbTest {
         System.out.println("6)"+l6);
         //removal of same item;
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
-            String a = db.getSet("a", "b", "1", "" + i, getMessage());
+            String a = db.getSet("a", "b", "1", "" + i, getMessage(), getAuthor());
         }
         long l7 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("7)"+l7);
@@ -294,10 +294,12 @@ public class ResultsDbTest {
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
         DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
         db = new ResultsDb(DataGenerator.getSettings(folderHolder));
-        String a = db.getSet("job", "nvr", "1", "1", Optional.empty());
-        String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello"));
-        String c = db.getSet("job", "nvr", "1", "2", Optional.of("hello"));
+        String a = db.getSet("job", "nvr", "1", "1", Optional.empty(),Optional.empty());
+        String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello"), Optional.empty());
+        String c = db.getSet("job", "nvr", "1", "2", Optional.empty(), Optional.of("hello"));
+        String e = db.getSet("job", "nvr", "2", "3", Optional.of("hello"), Optional.of("hello"));
         Assert.assertEquals("inserted", a);
+        Assert.assertEquals("inserted", e);
         Assert.assertTrue(b.startsWith("Not replacing 1 from "));
         Assert.assertEquals("inserted", c);
         String d = db.getScore("nvr", "job", "1");
@@ -305,20 +307,38 @@ public class ResultsDbTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void checkSaveLoadBadChars() throws IOException {
+    public void checkSaveLoadBadCharsMessage() throws IOException {
         JenkinsCliWrapper.killCli();
         final File oTool = Files.createTempDirectory("oTool").toFile();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
         DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
         db = new ResultsDb(DataGenerator.getSettings(folderHolder));
-        String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello ; :"));
+        String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello ; :"), Optional.empty());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void checkSaveLoadBadCharsAuthir() throws IOException {
+        JenkinsCliWrapper.killCli();
+        final File oTool = Files.createTempDirectory("oTool").toFile();
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
+        db = new ResultsDb(DataGenerator.getSettings(folderHolder));
+        String b = db.getSet("job", "nvr", "1", "1", Optional.empty(), Optional.of("hello ; :"));
     }
 
     private static final Random messages = new Random();
+    private static final Random authors = new Random();
 
     public static Optional<String> getMessage() {
         if (messages.nextBoolean()) {
             return Optional.of("some%20message%20-%20" + messages.nextInt(100));
+        } else {
+            return Optional.empty();
+        }
+    }
+    public static Optional<String> getAuthor() {
+        if (authors.nextBoolean()) {
+            return Optional.of("some%3BAuthor%3A" + messages.nextInt(100));
         } else {
             return Optional.empty();
         }

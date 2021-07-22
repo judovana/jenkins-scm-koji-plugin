@@ -44,13 +44,11 @@ public class AccessibleSettings {
 
     public static class Master {
         //todo, put this to config
-        public final String label = "Hydra";
-        public final String machine = "hydra";
-        public final String domain = "brq.redhat.com";
-        public final String fullName = machine + "." + domain;
-        public final String protocol = "http";
+        public final String label = System.getProperty("otool.master.label","Hydra");
+        public final String fullName = System.getProperty("otool.master.fqn", "hydra.brq.redhat.com");
+        public final String protocol = System.getProperty("otool.master.protocol","http");
         public final String baseUrl = protocol + "://" + fullName;
-        public final String history = protocol + "://" + fullName+":88/history/nvrs";
+        public final String history = System.getProperty("otool.master.history",protocol + "://" + fullName+":88/history/nvrs");
     }
 
     public static final Master master = new Master();
