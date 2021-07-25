@@ -431,6 +431,9 @@ public class ResultsDb implements EndpointGroup {
         String nvr = context.queryParam("nvr", ".*");
         String job = context.queryParam("job", ".*");
         boolean html = isReportHtml(context);
+        if (html && nvr.equals(".*")){
+            throw new RuntimeException("In html mode, do the effort, and set some nvr regex");
+        }
         boolean empty = Boolean.valueOf(context.queryParam(REPORT_empty, "false"));
         return getReport(Pattern.compile(nvr), Pattern.compile(job), html, empty);
     }
@@ -443,42 +446,47 @@ public class ResultsDb implements EndpointGroup {
     synchronized String getReport(Pattern nvrEx, Pattern jobEx, boolean html, boolean empty) {
         ReportFormatter formatter = html ? new ReportFormatter.ReportFormatterHtml() : new ReportFormatter.ReportFormatterPlain();
         StringBuilder r = new StringBuilder();
-        if (html){
-            r.append("<head></head><body>"+
-                            "<script>\n" +
-                    "   function showHide() {\n" +
-                            "    var all = document.getElementsByClassName('none');\n" +
-                            "for (var i = 0; i < all.length; i ++) {\n" +
-                            "    if (all[i].style.display=='none') {all[i].style.display = 'block'} else { all[i].style.display = 'none'};\n" +
-                            "} }" +
-                            "</script>");
+        if (html) {
+            r.append("<head><title>Postmortem report of "+nvrEx.toString()+"/"+jobEx.toString()+"/"+empty+"</title></head><body>" +
+                    "<script>\n" +
+                    "   function showHide(clazz) {\n" +
+                    "    var all = document.getElementsByClassName(clazz);\n" +
+                    "for (var i = 0; i < all.length; i ++) {\n" +
+                    "    if (all[i].style.display=='none') {all[i].style.display = 'block'} else { all[i].style.display = 'none'};\n" +
+                    "} }" +
+                    "</script>");
         }
         List<String> nvrs = new ArrayList<>(db.get().keySet());
         Collections.sort(nvrs);
         for (String nvr : nvrs) {
             if (nvrEx.matcher(nvr).matches()) {
                 r.append(formatter.nvr(nvr)).append("\n");
-                r.append(getReportForNvr(db.get().get(nvr), jobEx, empty, formatter));
+                r.append(formatter.openNvr(nvr));
+                r.append(getReportForNvr(db.get().get(nvr), jobEx, empty, formatter, nvr));
+                r.append(formatter.closeNvr(nvr));
             }
         }
         return r.toString();
     }
 
-    synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx, boolean empty, ReportFormatter formatter) {
+    synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx, boolean empty, ReportFormatter formatter, String id) {
         StringBuilder r = new StringBuilder();
         List<String> jobs = new ArrayList<>(nvr.keySet());
         Collections.sort(jobs);
         for (int mark = 4; mark >= 0; mark--) {
-            r.append(formatter.status(markToNiceString(mark))).append("\n");
+            r.append(formatter.status(markToNiceString(mark), markToNiceString(mark) + "-" + id)).append("\n");
+            r.append(formatter.openSection(markToNiceString(mark) + "-" + id));
             for (String job : jobs) {
                 if (jobEx.matcher(job).matches()) {
                     String content = getReportForJob(nvr.get(job), job, mark, empty, formatter);
                     if (!content.trim().isEmpty()) {
                         r.append(formatter.job(job)).append("\n");
+
                         r.append(content);
                     }
                 }
             }
+            r.append(formatter.closeSection(markToNiceString(mark) + "-" + id));
         }
         return r.toString();
     }
@@ -543,7 +551,7 @@ public class ResultsDb implements EndpointGroup {
         }
 
         public String toHtml(String border) {
-            return "<div class=\""+border+"\" " + getSeriousnessToStyleFromHealth(border) + ">" + getMainLink() + " <a href='javascript:void(0)' style='text-decoration: none;' >(days " + getDaysAgo() + " ago" + getAuthorString() + ")</a> " + getAnalyseHtmlHref() + "</div>";
+            return "<div class=\"" + border + "\" " + getSeriousnessToStyleFromHealth(border) + ">" + getMainLink() + " <a href='javascript:void(0)' style='text-decoration: none;' >(days " + getDaysAgo() + " ago" + getAuthorString() + ")</a> " + getAnalyseHtmlHref() + "</div>";
         }
 
         private String getSeriousnessToStyleFromHealth(String border) {
@@ -573,7 +581,7 @@ public class ResultsDb implements EndpointGroup {
         public String getAnalyseHtmlHrefImpl() throws UnsupportedEncodingException {
             String result = "";
             if (message.isPresent()) {
-                result = "<b><a  href='javascript:void(0)'> Comment: " + URLDecoder.decode(message.get(), "utf-8") + " </a></b>";
+                result = "<b><a style=\"background-color: white\" href='javascript:void(0)'> Comment: " + URLDecoder.decode(message.get(), "utf-8") + " </a></b>";
             }
             if (!isManual()) {
                 return "<a href='" + getJenkinsJob() + "/" + job + "/" + id + "/artifact/analyse.html' target='_blank'>Why " + score + " score + regressions?</a> " + result;
@@ -734,20 +742,28 @@ public class ResultsDb implements EndpointGroup {
 
     private interface ReportFormatter {
 
-        String status(String s);
+        String status(String text, String clazz);
 
         String job(String job);
 
         String nvr(String nvr);
 
+        String openNvr(String nvr);
+
+        String closeNvr(String nvr);
+
         String mainItem(JobBuildScoreStamp item);
 
         String otherItem(JobBuildScoreStamp item);
 
+        String openSection(String clazz);
+
+        String closeSection(String clazz);
+
         class ReportFormatterPlain implements ReportFormatter {
             @Override
-            public String status(String s) {
-                return "  ** " + s + " **";
+            public String status(String text, String clazz) {
+                return "  ** " + text + " **";
             }
 
             @Override
@@ -761,6 +777,16 @@ public class ResultsDb implements EndpointGroup {
             }
 
             @Override
+            public String openNvr(String nvr) {
+                return "";
+            }
+
+            @Override
+            public String closeNvr(String nvr) {
+                return "";
+            }
+
+            @Override
             public String mainItem(JobBuildScoreStamp item) {
                 return "----->" + item.toPlain();
             }
@@ -769,22 +795,42 @@ public class ResultsDb implements EndpointGroup {
             public String otherItem(JobBuildScoreStamp item) {
                 return "      " + item.toPlain();
             }
+
+            @Override
+            public String openSection(String clazz) {
+                return "";
+            }
+
+            @Override
+            public String closeSection(String clazz) {
+                return "";
+            }
         }
 
         class ReportFormatterHtml implements ReportFormatter {
             @Override
-            public String status(String s) {
-                return "  <u><h2> " + s + " </h2></u>";
+            public String status(String text, String clazz) {
+                return "  <u><h2 onclick='showHide(\"" + clazz + "\")' > " + text + " </h2></u>";
             }
 
             @Override
             public String job(String job) {
-                return "    <h3>" + job + "</h3><button onclick='showHide()'>show/hide irrelevant</button>";
+                return "    <h3>" + job + "</h3><button onclick='showHide(\"none\")'>show/hide irrelevant</button>";
             }
 
             @Override
             public String nvr(String nvr) {
-                return "<h1> " + nvr + " </h1>";
+                return "<h1 onclick='showHide(\""+nvr+"\")'>" + nvr + " </h1>";
+            }
+
+            @Override
+            public String openNvr(String nvr) {
+                return "<div class='" + nvr + "'>";
+            }
+
+            @Override
+            public String closeNvr(String nvr) {
+                return "</div>";
             }
 
             @Override
@@ -795,6 +841,16 @@ public class ResultsDb implements EndpointGroup {
             @Override
             public String otherItem(JobBuildScoreStamp item) {
                 return "      " + item.toHtml("none") + "";
+            }
+
+            @Override
+            public String openSection(String clazz) {
+                return "<div class='" + clazz + "'>";
+            }
+
+            @Override
+            public String closeSection(String clazz) {
+                return "</div>";
             }
         }
     }
