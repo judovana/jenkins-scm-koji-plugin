@@ -23,7 +23,9 @@ public class OToolServiceRun {
         JenkinsCliWrapper.killCli();
         final File oTool = Files.createTempDirectory("oTool").toFile();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
-        Files.copy(new File(System.getProperty("otool.testdb.dir") + "/results.db").toPath(), new File(folderHolder.configsRoot, "results.db").toPath());
+        if (System.getProperty("otool.testdb.dir") != null) {
+            Files.copy(new File(System.getProperty("otool.testdb.dir") + "/results.db").toPath(), new File(folderHolder.configsRoot, "results.db").toPath());
+        }
         new OToolService(DataGenerator.getSettings(folderHolder)).start();
     }
 
