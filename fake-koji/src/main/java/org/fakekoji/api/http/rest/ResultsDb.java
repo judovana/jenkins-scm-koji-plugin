@@ -480,7 +480,7 @@ public class ResultsDb implements EndpointGroup {
                 if (jobEx.matcher(job).matches()) {
                     String content = getReportForJob(nvr.get(job), job, mark, empty, formatter);
                     if (!content.trim().isEmpty()) {
-                        r.append(formatter.job(job, id)).append("\n");
+                        r.append(formatter.job(job, id, settings.getJenkinsUrl() + "/job")).append("\n");
 
                         r.append(content);
                     }
@@ -744,7 +744,7 @@ public class ResultsDb implements EndpointGroup {
 
         String status(String text, String clazz);
 
-        String job(String job, String ofNvr);
+        String job(String job, String ofNvr, String jenkinsJob);
 
         String nvr(String nvr);
 
@@ -767,7 +767,7 @@ public class ResultsDb implements EndpointGroup {
             }
 
             @Override
-            public String job(String job, String ofNvr) {
+            public String job(String job, String ofNvr, String jenkinsJob) {
                 return "    " + job;
             }
 
@@ -814,8 +814,8 @@ public class ResultsDb implements EndpointGroup {
             }
 
             @Override
-            public String job(String job, String ofNvr) {
-                return "    <h3><a target='_blank' href='../matrix?format=baseajax&names=false&nvr="+ofNvr+"#"+job+"' >" + job + "</a></h3><button onclick='showHide(\"none\")'>show/hide irrelevant</button>";
+            public String job(String job, String ofNvr, String jenkinsJob) {
+                return "    <h3><a href='#" + ofNvr + "-" + job + "' name='" + ofNvr + "-" + job + "'>$</a> " + job + " (<a target='_blank' href='" + jenkinsJob + "/" + job + "' >job</a>) (<a target='_blank' href='../matrix?format=baseajax&names=false&nvr=" + ofNvr + "#" + job + "' >table</a>)</h3><button onclick='showHide(\"none\")'>show/hide irrelevant</button>";
             }
 
             @Override
