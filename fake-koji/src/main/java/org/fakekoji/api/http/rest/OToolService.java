@@ -356,9 +356,9 @@ public class OToolService {
                     if ("baseajax".equals(format)) {
                         context.header("Content-Type", "text/html; charset=UTF-8").status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlAjaxFormatter(names, projects, settings)));
                     } else if ("htmlspan".equals(format)) {
-                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlSpanningFormatter(names, projects)));
+                        context.header("Content-Type", "text/html; charset=UTF-8").status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlSpanningFormatter(names, projects)));
                     } else if ("html".equals(format)) {
-                        context.status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlFormatter(names, projects)));
+                        context.header("Content-Type", "text/html; charset=UTF-8").status(OK).result(m.printMatrix(orieantaion, dropRows, dropColumns, new HtmlFormatter(names, projects)));
                     } else if ("fill".equals(format)) {
                         String vr = context.queryParam("vr");
                         String time = context.queryParam("time");
@@ -369,7 +369,7 @@ public class OToolService {
                             context.status(400).result("nvr=<nvr> necessary");
                         } else {
                             final SummaryReportRunner summaryReportRunner = new SummaryReportRunner(settings, vr, time, chartDir, Optional.ofNullable(explicitComparsions), projects);
-                            context.status(OK).result(m.printMatrix(
+                            context.header("Content-Type", "text/html; charset=UTF-8").status(OK).result(m.printMatrix(
                                     orieantaion, dropRows, dropColumns,
                                     new HtmlSpanningFillingFormatter(projects, names, vr, alsoReport, summaryReportRunner)));
                         }
