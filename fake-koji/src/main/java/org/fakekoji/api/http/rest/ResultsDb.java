@@ -869,7 +869,8 @@ public class ResultsDb implements EndpointGroup {
         private static final int GREEN = 0;
         private static final int WHITE = 40;
         private static final int YELLOW = 100;
-        private static final int MANUAL_FAIL = 100000;
+        private static final int MANUAL_INCORRECT = 100000;
+        private static final int MANUAL_FAIL = 10000000;
 
         private static final int VERIFIED_GOOD = 0;
         private static final int GOOD = 1;
@@ -925,7 +926,9 @@ public class ResultsDb implements EndpointGroup {
                 return GOOD;
             } else if (weight > WHITE && weight < YELLOW) {
                 return NEEDS_INSPECTION;
-            } else if (weight >= YELLOW && weight < MANUAL_FAIL) {
+            } else if (weight >= YELLOW && weight < MANUAL_INCORRECT) {
+                return FAILED;
+            } else if (weight >= MANUAL_INCORRECT && weight < MANUAL_FAIL) {
                 return FAILED;
             } else if (weight >= MANUAL_FAIL) {
                 return VERIFIED_FAILED;
