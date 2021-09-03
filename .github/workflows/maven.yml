@@ -19,6 +19,12 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: Cache Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
       - name: Build with Maven
         run: mvn install -Dmaven.test.failure.ignore=true
 
