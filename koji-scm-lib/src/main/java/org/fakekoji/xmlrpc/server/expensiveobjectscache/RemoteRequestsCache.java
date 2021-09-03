@@ -47,8 +47,13 @@ public class RemoteRequestsCache {
     private boolean loaded = false;
 
     public Object obtain(String url, XmlRpcRequestParams params) {
+        URL u = null;
         try {
-            final URL u = new URL(url);
+            u = new URL(url);
+        } catch (MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
+        try {
             final Object cached = this.get(u, params);
             if (cached != null) {
                 return cached;
@@ -57,7 +62,9 @@ public class RemoteRequestsCache {
                 this.put(answer, u, params);
                 return answer;
             }
-        } catch (MalformedURLException ex) {
+        } catch (Exception ex) {
+            LOG.error("Cache obtain failed! Removing: " + ex.toString() + "[" + params.getMethodName() + ": " + Arrays.stream(params.toXmlRpcParams()).map(a -> a.toString()).collect(Collectors.joining(", ")) + "]");
+            this.remove(u, params);
             throw new RuntimeException(ex);
         }
     }
@@ -274,6 +281,10 @@ public class RemoteRequestsCache {
 
     public void put(final Object result, final URL u, XmlRpcRequestParams params) {
         ensure(u).put(result, params);
+    }
+
+    public void remove(final URL u, XmlRpcRequestParams params) {
+        ensure(u).remove(params);
     }
 
     private Object get(final URL u, XmlRpcRequestParams params) {
