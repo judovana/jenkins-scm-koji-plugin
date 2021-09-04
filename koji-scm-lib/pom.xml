@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
-            <version>LATEST</version>
+            <version>4.2.3</version>
         </dependency>
         <dependency>
           <groupId>jakarta.xml.bind</groupId>
@@ -65,6 +65,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.2.3</version>
                 <executions>
                     <execution>
                         <id>check</id>
