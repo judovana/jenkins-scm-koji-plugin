@@ -1,5 +1,7 @@
 package hudson.plugins.scm.koji.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.Files;
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
@@ -26,18 +28,24 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.Date;
 
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListArchives;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.ListRPMs;
+import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 import org.jenkinsci.remoting.RoleChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.nio.cs.UTF_8;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -130,6 +138,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         if (kojiXmlRpcApi instanceof RealKojiXmlRpcApi) {
             final RealKojiXmlRpcApi realKojiXmlRpcApi = (RealKojiXmlRpcApi) kojiXmlRpcApi;
             List<String> rpmFiles = downloadRPMs(targetDir, build, realKojiXmlRpcApi);
+            downloadMetadata(new File(targetDir.getAbsolutePath() + "-metadata"), build);
             String srcUrl = "";
             for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
                 srcUrl = composeSrcUrl(build.getProvider().getDownloadUrl(), build, suffix);
@@ -209,13 +218,68 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         }
     }
 
+
+    private void downloadMetadata(File dir, Build build) {
+        log("Saving metadata: " + dir.getAbsolutePath());
+        if (!dir.exists()) {
+            dir.mkdir();
+        }
+        final String METADATA = "metadata";
+        ListRPMs rpmParams = new ListRPMs(build.getId(), null);
+        Object[] rpms = saveMetadata(dir, rpmParams);
+        ListArchives archivesParams = new ListArchives(build.getId(), null);
+        Object[] archives = saveMetadata(dir, archivesParams);
+        metaJsonFile(dir, METADATA).delete();
+        if (rpms == null || rpms.length == 0) {
+            if (archives != null && archives.length > 0) {
+                saveMetadata(dir, archives, METADATA);
+            }
+        } else if (archives == null || archives.length == 0) {
+            if (rpms != null && rpms.length > 0) {
+                saveMetadata(dir, rpms, METADATA);
+            }
+        }
+        try {
+            Files.write(build.getName(), new File(dir, "pkgname.txt"), StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            log("Exception while saving pkgname metadata" + ex);
+        }
+        saveMetadata(dir, build, "build");
+        log("Saved metadata: " + Arrays.stream(dir.list()).collect(Collectors.joining(",")));
+    }
+
+    private Object[] saveMetadata(File dir, XmlRpcRequestParams params) {
+        Object allMetadata = null;
+        try {
+            allMetadata = BuildMatcher.execute(build.getProvider().getTopUrl(), params);
+            saveMetadata(dir, allMetadata, params.getMethodName());
+        } catch (Exception ex) {
+            log("Exception while obtaining " + params.getMethodName() + " metadata" + ex);
+        }
+        return (Object[]) allMetadata;
+    }
+
+    private void saveMetadata(File dir, Object allMetadata, String method) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(allMetadata);
+            Files.write(json, metaJsonFile(dir, method), StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            log("Exception while saving " + method + " metadata" + ex);
+        }
+    }
+
+    private File metaJsonFile(File dir, String s) {
+        return new File(dir, s + ".json");
+    }
+
     public List<String> downloadRPMs(File targetDir, Build build, RealKojiXmlRpcApi realKojiXmlRpcApi) {
         Predicate<RPM> nvrPredicate = i -> true;
         final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
         if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
             GlobPredicate glob = new GlobPredicate(subpackageBlacklist);
             nvrPredicate = (RPM rpm) -> {
-                if (rpm.getArch().equals("src")){
+                if (rpm.getArch().equals("src")) {
                     return true;
                 } else {
                     return !glob.test(rpm.getNvr());
