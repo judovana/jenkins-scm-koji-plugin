@@ -45,7 +45,6 @@ import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 import org.jenkinsci.remoting.RoleChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.nio.cs.UTF_8;
 
 import javax.xml.bind.DatatypeConverter;
 
