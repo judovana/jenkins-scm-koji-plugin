@@ -119,7 +119,7 @@ abstract class BuildMatcher {
             RemoteRequestCacheConfigKeys.DEFAULT_CONFIG_LOCATION,
             (url, params) -> new XmlRpcHelper.XmlRpcExecutioner(url).execute(params));
 
-    protected Object execute(String url, XmlRpcRequestParams params) {
+    public static Object execute(String url, XmlRpcRequestParams params) {
             return cache.obtain(url, params);
     }
 
