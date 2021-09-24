@@ -262,12 +262,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 log(InetAddress.getLocalHost().getHostName());
                 log(new Date().toString());
                 if (build.isManual()) {
-                    log("Manual tag provided - skipping download of ", urlString);
+                    log("Manual tag provided - skipping download of " + urlString);
                 } else {
-                    log("Downloading: ", urlString);
+                    log("Downloading: " + urlString);
                 }
                 if (!isUrlReachable(urlString)) {
-                    log("Not accessible, trying another suffix in: ", rpm.getFilename(suffix));
+                    log("Not accessible, trying another suffix in: " + rpm.getFilename(suffix));
                     continue;
                 }
                 rpm.setUrl(urlString);
