@@ -335,7 +335,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 }
                 rpm.setUrl(urlString);
                 File targetFile = new File(targetDir, rpm.getFilename(suffix));
-                log("To: ", targetFile);
+                log("To: " + targetFile);
                 if (!build.isManual()) {
                     try (OutputStream out = new BufferedOutputStream(new FileOutputStream(targetFile));
                          InputStream in = httpDownloadStream(urlString)) {

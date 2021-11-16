@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import org.fakekoji.core.FakeKojiTestUtil;
@@ -762,6 +763,124 @@ public class KojiListBuildsTest {
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
         Assert.assertFalse(build != null);
+    }
+
+    private  final String[] containersUbi8Now = new String[] {
+            //openjdk-11-ubi8-container-1.10-10 intentionally not here
+    "openjdk-11-ubi8-container-1.10-1",
+    "openjdk-11-ubi8-container-1.10-1.1634738701",
+    "openjdk-11-ubi8-container-1.10-2",
+    "openjdk-11-ubi8-container-1.10-3",
+    "openjdk-11-ubi8-container-1.10-4",
+    "openjdk-11-ubi8-container-1.10-5",
+    "openjdk-11-ubi8-container-1.10-6",
+    "openjdk-11-ubi8-container-1.10-7",
+    "openjdk-11-ubi8-container-1.10-8",
+    "openjdk-11-ubi8-container-1.10-9",
+    "openjdk-11-ubi8-container-1.3-1",
+    "openjdk-11-ubi8-container-1.3-10",
+    "openjdk-11-ubi8-container-1.3-10.1618412959",
+    "openjdk-11-ubi8-container-1.3-11",
+    "openjdk-11-ubi8-container-1.3-12",
+    "openjdk-11-ubi8-container-1.3-13",
+    "openjdk-11-ubi8-container-1.3-14",
+    "openjdk-11-ubi8-container-1.3-15",
+    "openjdk-11-ubi8-container-1.3-15.1622639262",
+    "openjdk-11-ubi8-container-1.3-15.1622643823",
+    "openjdk-11-ubi8-container-1.3-16",
+    "openjdk-11-ubi8-container-1.3-16.1626836231",
+    "openjdk-11-ubi8-container-1.3-16.1626857775",
+    "openjdk-11-ubi8-container-1.3-16.1627000335",
+    "openjdk-11-ubi8-container-1.3-16.1627034239",
+    "openjdk-11-ubi8-container-1.3-16.1627035227",
+    "openjdk-11-ubi8-container-1.3-16.1627041171",
+    "openjdk-11-ubi8-container-1.3-17",
+    "openjdk-11-ubi8-container-1.3-18",
+    "openjdk-11-ubi8-container-1.3-18.1634738691",
+    "openjdk-11-ubi8-container-1.3-2",
+    "openjdk-11-ubi8-container-1.3-3",
+    "openjdk-11-ubi8-container-1.3-3.1591609340",
+    "openjdk-11-ubi8-container-1.3-3.1592811766",
+    "openjdk-11-ubi8-container-1.3-3.1593114401",
+    "openjdk-11-ubi8-container-1.3-3.1594890755",
+    "openjdk-11-ubi8-container-1.3-3.1595332543",
+    "openjdk-11-ubi8-container-1.3-3.1599573774",
+    "openjdk-11-ubi8-container-1.3-4",
+    "openjdk-11-ubi8-container-1.3-4.1594890812",
+    "openjdk-11-ubi8-container-1.3-4.1595335747",
+    "openjdk-11-ubi8-container-1.3-4.1599573721",
+    "openjdk-11-ubi8-container-1.3-4.1604569229",
+    "openjdk-11-ubi8-container-1.3-5",
+    "openjdk-11-ubi8-container-1.3-6",
+    "openjdk-11-ubi8-container-1.3-6.1604582405",
+    "openjdk-11-ubi8-container-1.3-7",
+    "openjdk-11-ubi8-container-1.3-8",
+    "openjdk-11-ubi8-container-1.3-8.1608081508",
+    "openjdk-11-ubi8-container-1.3-9",
+    "openjdk-11-ubi8-container-1.3-9.1614713191"};
+
+    @Test
+    public void ubi8jdk11containerRuntime() throws Exception {
+        RealKojiXmlRpcApi description = new RealKojiXmlRpcApi(
+                "openjdk-11-runtime-ubi8-container",
+                "ppc64le",
+                "(supp-|)rhel-8\\.5\\.[0-9]-z-(nocompose-candidate|candidate|gate) openj9-1-rhel-8-candidate rhaos-.*-rhel-8-container-candidate epel8.*",
+                ".*-debuginfo-.* .*-debugsource-.* .*src.zip  .*-jmods-.* .*static-libs.* .*-devel-.* .*-static-libs-.* .*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).* ^((?!jre).)"
+                        + "*$ .*-fastdebug-.* .*-slowdebug-.* .*-debug-.*",
+                ""
+        );
+        KojiListBuilds worker = new KojiListBuilds(
+                Collections.singletonList(createBrewHubKojiBuildProvider()),
+                description,
+                new NotProcessedNvrPredicate(Arrays.asList(containersUbi8Now)),
+                10
+        );
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+        File target = File.createTempFile("fakeKoji", "testDir");
+        target.delete();
+        target.mkdir();
+        KojiBuildDownloader dwldr = new KojiBuildDownloader(
+                Collections.singletonList(createBrewHubKojiBuildProvider()),
+                description, new NotProcessedNvrPredicate(Arrays.asList(containersUbi8Now)),
+                build,target.getAbsolutePath(),
+                10,
+                false,
+                false);
+        List l = dwldr.downloadRPMs(target.getAbsoluteFile(), build, description);
+        Assert.assertTrue(l.size() == 1);
+    }
+
+    @Test
+    public void ubi8jdk11container() throws Exception {
+        assumeTrue(onRhNet);
+        RealKojiXmlRpcApi description = new RealKojiXmlRpcApi(
+                "openjdk-11-ubi8-container",
+                "ppc64le",
+                "(supp-|)rhel-8\\.5\\.[0-9]-z-(nocompose-candidate|candidate|gate) openj9-1-rhel-8-candidate rhaos-.*-rhel-8-container-candidate epel8.*",
+                ".*-debuginfo-.* .*-debugsource-.* .*src.zip  .*-jmods-.* .*static-libs.* .*-jre-.*windows.* .*jre.win.* .*-portable-[b\\d\\.\\-ea]{3,}el.openjdkportable.*",
+                ""
+        );
+        KojiListBuilds worker = new KojiListBuilds(
+                Collections.singletonList(createBrewHubKojiBuildProvider()),
+                description,
+                new NotProcessedNvrPredicate(Arrays.asList(containersUbi8Now)),
+                10
+        );
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+        File target = File.createTempFile("fakeKoji", "testDir");
+        target.delete();
+        target.mkdir();
+        KojiBuildDownloader dwldr = new KojiBuildDownloader(
+                Collections.singletonList(createBrewHubKojiBuildProvider()),
+                description, new NotProcessedNvrPredicate(Arrays.asList(containersUbi8Now)),
+                build,target.getAbsolutePath(),
+                10,
+                false,
+                false);
+        List l = dwldr.downloadRPMs(target.getAbsoluteFile(), build, description);
+        Assert.assertTrue(l.size() == 1);
     }
 }
 
