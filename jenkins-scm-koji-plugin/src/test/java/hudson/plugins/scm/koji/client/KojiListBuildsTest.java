@@ -825,8 +825,7 @@ public class KojiListBuildsTest {
                 "openjdk-11-runtime-ubi8-container",
                 "ppc64le",
                 "(supp-|)rhel-8\\.5\\.[0-9]-z-(nocompose-candidate|candidate|gate) openj9-1-rhel-8-candidate rhaos-.*-rhel-8-container-candidate epel8.*",
-                ".*-debuginfo-.* .*-debugsource-.* .*src.zip  .*-jmods-.* .*static-libs.* .*-devel-.* .*-static-libs-.* .*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).* ^((?!jre).)"
-                        + "*$ .*-fastdebug-.* .*-slowdebug-.* .*-debug-.*",
+                ".*-debuginfo-.* .*-debugsource-.* .*src.zip  .*-jmods-.* .*static-libs.* .*-devel-.* .*-static-libs-.* .*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).* .*-fastdebug-.* .*-slowdebug-.* .*-debug-.*",
                 ""
         );
         KojiListBuilds worker = new KojiListBuilds(
