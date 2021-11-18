@@ -1163,7 +1163,7 @@ public class OToolServiceRun {
             new String[]{".*-jre-.*windows.*", ".*-portable-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"},
             new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*"},
+            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*openjdk-[0-9].*.win.*"},
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
             new String[]{".*windows.*"},
