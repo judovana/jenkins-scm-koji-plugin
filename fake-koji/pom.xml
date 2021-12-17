@@ -15,7 +15,7 @@
     <properties>
         <fake.koji.main.class>org.fakekoji.server.JavaServer</fake.koji.main.class>
         <node.version>v10.16.0</node.version>
-        <yarn.version>v1.17.3</yarn.version>
+        <yarn.version>v1.22.17</yarn.version>
         <headless>false</headless>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version.old>1.8</java.version.old>
@@ -97,7 +97,7 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.4</version>
+                <version>1.12.0</version>
                 <executions>
                     <execution>
                         <id>install node and yarn</id>
@@ -129,7 +129,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <executable>${project.parent.basedir}/webapp/node/yarn/yarn-v1.17.3/bin/yarn</executable>
+                            <executable>${project.parent.basedir}/webapp/node/yarn/dist/bin/yarn</executable>
                             <workingDirectory>${project.parent.basedir}/webapp</workingDirectory>
                             <arguments>
                                 <argument>install</argument>
@@ -145,7 +145,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <executable>${project.parent.basedir}/webapp/node/yarn/yarn-${yarn.version}/bin/yarn</executable>
+                            <executable>${project.parent.basedir}/webapp/node/yarn/dist/bin/yarn</executable>
                             <workingDirectory>${project.parent.basedir}/webapp</workingDirectory>
                             <arguments>
                                 <argument>build</argument>
