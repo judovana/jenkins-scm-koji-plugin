@@ -14,7 +14,7 @@
 
     <properties>
         <fake.koji.main.class>org.fakekoji.server.JavaServer</fake.koji.main.class>
-        <node.version>v10.16.0</node.version>
+        <node.version>v16.13.1</node.version>
         <yarn.version>v1.22.17</yarn.version>
         <headless>false</headless>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
