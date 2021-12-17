@@ -103,7 +103,7 @@ export class ViewStore {
         private readonly history: History,
         private readonly configStore: ConfigStore
     ) {
-        history.listen(location => this.handleURLChange(location.pathname))
+        history.listen(location => this.handleURLChange(location.location.pathname))
         this.handleURLChange(history.location.pathname)
     }
 
