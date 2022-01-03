@@ -1,4 +1,4 @@
-import { action, autorun, observable, runInAction } from "mobx"
+import { action, autorun, observable, runInAction, makeObservable } from "mobx";
 
 import {
     Platform,
@@ -63,6 +63,7 @@ export class ConfigStore {
     private _jenkinsUrl: string | undefined
 
     constructor(private readonly service: ConfigService) {
+        makeObservable(this);
         this._configGroups = [
             {
                 id: "buildProviders",
