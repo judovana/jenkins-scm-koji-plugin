@@ -1,4 +1,4 @@
-import { action, observable, computed } from "mobx"
+import { action, observable, computed, makeObservable } from "mobx";
 import { History } from "history"
 import {
     match,
@@ -103,6 +103,7 @@ export class ViewStore {
         private readonly history: History,
         private readonly configStore: ConfigStore
     ) {
+        makeObservable(this);
         history.listen(location => this.handleURLChange(location.location.pathname))
         this.handleURLChange(history.location.pathname)
     }
