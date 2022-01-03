@@ -40,7 +40,7 @@ const PlatformRow: React.FC<PlatformRowProps> = props => {
             const provider = platform.providers.find(_ => true)
             props.config.provider = provider && provider.id
         }
-    }, [platform, props.config.tasks, props.config.provider])
+    }, [platform, props.config.tasks, props.config.provider, props.config])
 
     return useObserver(() => {
         const {
