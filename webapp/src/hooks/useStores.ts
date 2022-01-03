@@ -1,4 +1,5 @@
 import React from "react"
 import { stores } from "../stores"
 
-export default () => React.useContext(React.createContext<typeof stores>(stores))
+const useStores = () => React.useContext(React.createContext<typeof stores>(stores))
+export default useStores
