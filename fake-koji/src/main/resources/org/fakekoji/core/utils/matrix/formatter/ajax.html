@@ -646,7 +646,7 @@
     }
 
     function selectNvr(counter, count, nvr) {
-      document.getElementById("postMortemLink").href = "resultsDb/report?nvr=" + nvr;
+      document.getElementById("postMortemLink").href = "resultsDb/report?html=true&nvr=" + nvr + "&group=-5";
       for (i = 0; i < count; i++) {
         if (document.getElementById("nvr" + i) == null) {
           break;
@@ -1140,7 +1140,7 @@
         <input type="text" id="nvrFilter" value=".*" /><br />
         <button type="button" onClick="loadNvrs(false)">reload list</button><br />
         <button type="button" onClick="getAllData(NVR)">refresh data</button><br />
-        <a id="postMortemLink" target='_blank' href="resultsDb/report?html=false">report</a>
+        <a id="postMortemLink" target='_blank' href="resultsDb/report?html=false&group=-5">report</a>
       </div>
       <div id="nvrs" style="height:120px; overflow:scroll">
       </div>
