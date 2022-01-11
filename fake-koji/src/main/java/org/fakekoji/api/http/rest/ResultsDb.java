@@ -9,7 +9,6 @@ import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
-
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -275,6 +274,7 @@ public class ResultsDb implements EndpointGroup {
     public static final String REPORT = "report";
     public static final String REPORT_html = "html";
     public static final String REPORT_empty = "empty";
+    public static final String REPORT_group = "group";
     public static final String DEL = "del";
     public static final String NVRS = "nvrs";
     private final AccessibleSettings settings;
@@ -294,6 +294,7 @@ public class ResultsDb implements EndpointGroup {
                 + MISC + '/' + RESULTS_DB + "/" + DEL + " will removethe result for job,nvr,buildId,score, ba careful" + "\n"
                 + MISC + '/' + RESULTS_DB + "/" + SET + " will set the result for job,nvr,buildId,score+optional message and author" + "\n"
                 + MISC + '/' + RESULTS_DB + "/" + REPORT + " will generate post-mortem texts (nvr and job may be regexes here). Optional is html=true empty=false" + "\n"
+                + "group=5 - 0=disable. Will group similar comments togehter, based on levenhstain distnace. Negatives disable super filtering\n"
                 + " Negative jobId is manual touch, time is automated\n"
                 + " for set nvr, job, buildId and score are mandatory, For get not, but you will get all matching results\n";
     }
@@ -431,11 +432,12 @@ public class ResultsDb implements EndpointGroup {
         String nvr = context.queryParam("nvr", ".*");
         String job = context.queryParam("job", ".*");
         boolean html = isReportHtml(context);
-        if (html && nvr.equals(".*")){
+        if (html && nvr.equals(".*")) {
             throw new RuntimeException("In html mode, do the effort, and set some nvr regex");
         }
         boolean empty = Boolean.valueOf(context.queryParam(REPORT_empty, "false"));
-        return getReport(Pattern.compile(nvr), Pattern.compile(job), html, empty);
+        int group = Integer.valueOf(context.queryParam(REPORT_group, "5"));
+        return getReport(Pattern.compile(nvr), Pattern.compile(job), html, empty, group);
     }
 
     @NotNull
@@ -443,11 +445,11 @@ public class ResultsDb implements EndpointGroup {
         return Boolean.valueOf(context.queryParam(REPORT_html, "true"));
     }
 
-    synchronized String getReport(Pattern nvrEx, Pattern jobEx, boolean html, boolean empty) {
+    synchronized String getReport(Pattern nvrEx, Pattern jobEx, boolean html, boolean empty, int group) {
         ReportFormatter formatter = html ? new ReportFormatter.ReportFormatterHtml() : new ReportFormatter.ReportFormatterPlain();
         StringBuilder r = new StringBuilder();
         if (html) {
-            r.append("<head><title>Postmortem report of "+nvrEx.toString()+"/"+jobEx.toString()+"/"+empty+"</title></head><body>" +
+            r.append("<head><title>Postmortem report of " + nvrEx.toString() + "/" + jobEx.toString() + "/" + empty + "</title></head><body>" +
                     "<script>\n" +
                     "   function showHide(clazz) {\n" +
                     "    var all = document.getElementsByClassName(clazz);\n" +
@@ -462,26 +464,26 @@ public class ResultsDb implements EndpointGroup {
             if (nvrEx.matcher(nvr).matches()) {
                 r.append(formatter.nvr(nvr)).append("\n");
                 r.append(formatter.openNvr(nvr));
-                r.append(getReportForNvr(db.get().get(nvr), jobEx, empty, formatter, nvr));
+                r.append(getReportForNvr(db.get().get(nvr), jobEx, empty, formatter, nvr, group));
                 r.append(formatter.closeNvr(nvr));
             }
         }
         return r.toString();
     }
 
-    synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx, boolean empty, ReportFormatter formatter, String id) {
+    synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx, boolean empty, ReportFormatter formatter, String id, int group) {
         StringBuilder r = new StringBuilder();
         List<String> jobs = new ArrayList<>(nvr.keySet());
         Collections.sort(jobs);
         for (int mark = 4; mark >= 0; mark--) {
             r.append(formatter.status(markToNiceString(mark), markToNiceString(mark) + "-" + id)).append("\n");
             r.append(formatter.openSection(markToNiceString(mark) + "-" + id));
-            for (String job : jobs) {
+            for (int i = 0; i < jobs.size(); i++) {//there is removal later in loop
+                String job = jobs.get(i);
                 if (jobEx.matcher(job).matches()) {
-                    String content = getReportForJob(nvr.get(job), job, mark, empty, formatter);
+                    String content = getReportForJob(nvr.get(job), job, mark, empty, formatter, nvr, jobs, group);
                     if (!content.trim().isEmpty()) {
                         r.append(formatter.job(job, id, settings.getJenkinsUrl() + "/job")).append("\n");
-
                         r.append(content);
                     }
                 }
@@ -550,19 +552,36 @@ public class ResultsDb implements EndpointGroup {
             return CopypastedStuffFromDailyreportAndAjaxHtml.getSeriousnessToColorFromHealth(getMark(), isManual());
         }
 
-        public String toHtml(String border) {
-            return "<div class=\"" + border + "\" " + getSeriousnessToStyleFromHealth(border) + ">" + getMainLink() + " <a href='javascript:void(0)' style='text-decoration: none;' >(days " + getDaysAgo() + " ago" + getAuthorString() + ")</a> " + getAnalyseHtmlHref() + "</div>";
+        public String toHtml(boolean job, String border, boolean autohide) {
+            String style = "";
+            if (autohide) {
+                if (border == "none") {
+                    style = "display:none";
+                } else {
+                    style = "display:block";
+                }
+            }
+            String preffix = "";
+            if (job) {
+                preffix = "<a style=\"background-color: white\" href='" + getJenkinsJob() + "/" + this.job + "' target='_blank'>" + this.job + "</a> - ";
+            }
+            return "<div " + style + " class=\"" + border + "\" " + getSeriousnessToStyleFromHealth(border, style) + ">" + preffix + getMainLink()
+                    + " <a href='javascript:void(0)' style='text-decoration: none;' >(days "
+                    + getDaysAgo() + " ago" + getAuthorString() + ")</a> " + getAnalyseHtmlHref() + "</div>";
         }
 
-        private String getSeriousnessToStyleFromHealth(String border) {
-            return CopypastedStuffFromDailyreportAndAjaxHtml.getSeriousnessToStyleFromHealth(getMark(), isManual(), border);
+        private String getSeriousnessToStyleFromHealth(String border, String style) {
+            return CopypastedStuffFromDailyreportAndAjaxHtml.getSeriousnessToStyleFromHealth(getMark(), isManual(), border, style);
         }
 
         public String getMainLink() {
             if (!isManual()) {
-                return "<a href='" + getJenkinsJob() + "/" + job + "/" + id + "' target='_blank' >" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(timestamp).toString() + "</a>";
+                return "<a href='" + getJenkinsJob() + "/" + job + "/" + id + "' target='_blank' >" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(timestamp).toString()
+                        + "</a>";
             } else {
-                return "<a  href='javascript:void(0)' style='text-decoration: none;'  onclick='alert(\"" + "MANUAL:" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(timestamp).toString() + " - days " + getDaysAgo() + " ago" + getAuthorString() + "\");'>" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(timestamp).toString() + "</a>";
+                return "<a  href='javascript:void(0)' style='text-decoration: none;'  onclick='alert(\"" + "MANUAL:" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(
+                        timestamp).toString() + " - days " + getDaysAgo() + " ago" + getAuthorString() + "\");'>" + buildToText() + " buildId: " + id + " score: " + score + " at: " + new Date(
+                        timestamp).toString() + "</a>";
             }
         }
 
@@ -620,7 +639,8 @@ public class ResultsDb implements EndpointGroup {
         }
     }
 
-    private String getReportForJob(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job, int mark, boolean empty, ReportFormatter formatter) {
+    private String getReportForJob(Map<Integer, List<ScoreWithTimeStamp>> buildsWithScoreAndStamp, String job, int mark, boolean empty, ReportFormatter formatter,
+            Map<String, Map<Integer, List<ScoreWithTimeStamp>>> originals, List<String> jobs, int group) {
         StringBuilder sb = new StringBuilder();
         List<JobBuildScoreStamp> all = unpackJobsResults(buildsWithScoreAndStamp, job);
         boolean okToInclude = false;
@@ -634,6 +654,40 @@ public class ResultsDb implements EndpointGroup {
             for (JobBuildScoreStamp item : all) {
                 if (item.getMark() == mark && item.message.isPresent()) {
                     sb.append(formatter.mainItem(item) + "\n");
+                    if (group != 0 && item.message.isPresent()) {
+                        int usedGroup = Math.abs(group);
+                        sb.append(formatter.openSimilarBlock());
+                        for (int i = 0; i < jobs.size(); i++) {
+                            boolean similarFound = false;
+                            String jobCandidate = jobs.get(i);
+                            if (jobCandidate.equals(job)) {
+                                continue; //the removal of itself would kill top level loop
+                            }
+                            for (Map.Entry<Integer, List<ScoreWithTimeStamp>> messageCandidate : originals.get(jobCandidate).entrySet()) {
+                                for (ScoreWithTimeStamp message : messageCandidate.getValue()) {
+                                    if (message.message.isPresent()) {
+                                        if (LevenshteinDistance.calculate(message.message.get(), item.message.get()) < usedGroup) {
+                                            similarFound = true;
+                                            sb.append(formatter.similarItem(new JobBuildScoreStamp(
+                                                    jobCandidate,
+                                                    messageCandidate.getKey(),
+                                                    message.score,
+                                                    message.timestamp,
+                                                    message.message,
+                                                    message.author
+
+                                            )) + "\n");
+                                        }
+                                    }
+                                }
+                            }
+                            if (similarFound && group > 0) {
+                                jobs.remove(i);
+                                i--;
+                            }
+                        }
+                        sb.append(formatter.closeSimilarBlock());
+                    }
                 } else {
                     sb.append(formatter.otherItem(item) + "\n");
                 }
@@ -756,9 +810,15 @@ public class ResultsDb implements EndpointGroup {
 
         String otherItem(JobBuildScoreStamp item);
 
+        String similarItem(JobBuildScoreStamp item);
+
         String openSection(String clazz);
 
         String closeSection(String clazz);
+
+        String openSimilarBlock();
+
+        String closeSimilarBlock();
 
         class ReportFormatterPlain implements ReportFormatter {
             @Override
@@ -797,12 +857,27 @@ public class ResultsDb implements EndpointGroup {
             }
 
             @Override
+            public String similarItem(JobBuildScoreStamp item) {
+                return "            " + item.job + " - " + item.toPlain();
+            }
+
+            @Override
             public String openSection(String clazz) {
                 return "";
             }
 
             @Override
             public String closeSection(String clazz) {
+                return "";
+            }
+
+            @Override
+            public String openSimilarBlock() {
+                return "";
+            }
+
+            @Override
+            public String closeSimilarBlock() {
                 return "";
             }
         }
@@ -815,7 +890,9 @@ public class ResultsDb implements EndpointGroup {
 
             @Override
             public String job(String job, String ofNvr, String jenkinsJob) {
-                return "    <h3><a href='#" + ofNvr + "-" + job + "' name='" + ofNvr + "-" + job + "'>$</a> " + job + " (<a target='_blank' href='" + jenkinsJob + "/" + job + "' >job</a>) (<a target='_blank' href='../matrix?format=baseajax&names=false&nvr=" + ofNvr + "#" + job + "' >table</a>)</h3><button onclick='showHide(\"none\")'>show/hide irrelevant</button>";
+                return "    <h3><a href='#" + ofNvr + "-" + job + "' name='" + ofNvr + "-" + job + "'>$</a> " + job + " (<a target='_blank' href='" + jenkinsJob + "/" + job
+                        + "' >job</a>) (<a target='_blank' href='../matrix?format=baseajax&names=false&nvr=" + ofNvr + "#" + job
+                        + "' >table</a>)</h3><button onclick='showHide(\"none\")'>show/hide irrelevant</button><button onclick='showHide(\"similar\")'>show/hide similar</button>";
             }
 
             @Override
@@ -835,12 +912,17 @@ public class ResultsDb implements EndpointGroup {
 
             @Override
             public String mainItem(JobBuildScoreStamp item) {
-                return "      " + item.toHtml("double") + "";
+                return "      " + item.toHtml(false, "double", true) + "";
             }
 
             @Override
             public String otherItem(JobBuildScoreStamp item) {
-                return "      " + item.toHtml("none") + "";
+                return "      " + item.toHtml(false, "none", true) + "";
+            }
+
+            @Override
+            public String similarItem(JobBuildScoreStamp item) {
+                return "      <small>" + item.toHtml(true, "solid", true) + "</small>";
             }
 
             @Override
@@ -851,6 +933,16 @@ public class ResultsDb implements EndpointGroup {
             @Override
             public String closeSection(String clazz) {
                 return "</div>";
+            }
+
+            @Override
+            public String openSimilarBlock() {
+                return "<blockquote class='similar'>";
+            }
+
+            @Override
+            public String closeSimilarBlock() {
+                return "</blockquote>";
             }
         }
     }
@@ -878,8 +970,8 @@ public class ResultsDb implements EndpointGroup {
         private static final int FAILED = 3;
         private static final int VERIFIED_FAILED = 4;
 
-        private static String getSeriousnessToStyleFromHealth(int health, boolean manual, String border) {
-            return "style=\" background-color: " + getSeriousnessToColorFromHealth(health, manual) + " ; border-style: " + border + ";\"";
+        private static String getSeriousnessToStyleFromHealth(int health, boolean manual, String border, String style) {
+            return "style=\" background-color: " + getSeriousnessToColorFromHealth(health, manual) + " ; border-style: " + border + ";" + style + "\"";
         }
 
         private static String getSeriousnessToColorFromHealth(int health, boolean manual) {
@@ -970,4 +1062,47 @@ public class ResultsDb implements EndpointGroup {
             }
         }
     }
+
+    public static final class LevenshteinDistance {
+        /**
+         * Calculates the Levenshtein distance between two strings.<br/>
+         * Uses a 2D array to represent individual changes, therefore the time complexity is quadratic
+         * (in reference to the strings' length).
+         *
+         * @param str1 the first string
+         * @param str2 the second string
+         * @return an integer representing the amount of atomic changes between {@code str1} and {@code str2}
+         */
+        public static int calculate(String str1, String str2) {
+            int[][] matrix = new int[str1.length() + 1][str2.length() + 1];
+
+            for (int i = 0; i <= str1.length(); i++) {
+                for (int j = 0; j <= str2.length(); j++) {
+                    if (i == 0) { // distance between "" and str2 == how long str2 is
+                        matrix[i][j] = j;
+                    } else if (j == 0) { // distance between str1 and "" == how long str1 is
+                        matrix[i][j] = i;
+                    } else {
+                        int substitution = matrix[i - 1][j - 1] + substitutionCost(str1.charAt(i - 1), str2.charAt(j - 1));
+                        int insertion = matrix[i][j - 1] + 1;
+                        int deletion = matrix[i - 1][j] + 1;
+
+                        matrix[i][j] = min3(substitution, insertion, deletion);
+                    }
+                }
+            }
+
+            return matrix[str1.length()][str2.length()]; // result is in the bottom-right corner
+        }
+
+        private static int substitutionCost(char a, char b) {
+            return (a == b) ? 0 : 1;
+        }
+
+        private static int min3(int a, int b, int c) {
+            return Math.min(a, Math.min(b, c));
+        }
+    }
+
+
 }
