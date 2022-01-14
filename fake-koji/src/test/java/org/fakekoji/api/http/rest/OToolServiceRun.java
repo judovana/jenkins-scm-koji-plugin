@@ -1176,10 +1176,10 @@ public class OToolServiceRun {
             new String[]{},
             new String[]{});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*-fastdebug-.*).*"},
+            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-fastdebug-|-debuginfo-).*).*"},
             new String[]{});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-slowdebug-|-debug-).*).*"},
+            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-slowdebug-|-debug-|-debuginfo-).*).*"},
             new String[]{});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
     BlackWhiteLister portableLists = new BlackWhiteLister("portable", new String[]{"java-[\\d\\.]{2,5}-openjdk-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"}, new String[]{});
