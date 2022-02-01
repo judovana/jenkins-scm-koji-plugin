@@ -276,7 +276,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> nvrPredicate = i -> true;
         final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
         if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageBlacklist);
+            GlobPredicate glob = new GlobPredicate(subpackageBlacklist, new TaskListenerLogTransporter() {
+                @Override
+                public void println(String s) {
+                    currentListener.getLogger().println(s);
+                }
+            });
             nvrPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")) {
                     return true;
@@ -289,7 +294,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> whitelistPredicate = i -> true;
         final String subpackageWhitelist = realKojiXmlRpcApi.getSubpackageWhitelist();
         if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageWhitelist);
+            GlobPredicate glob = new GlobPredicate(subpackageWhitelist, new TaskListenerLogTransporter() {
+                @Override
+                public void println(String s) {
+                    currentListener.getLogger().println(s);
+                }
+            });
             whitelistPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")){
                     return true;
@@ -298,6 +308,8 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                 }
             };
         }
+
+        String allPackages = build.getRpms().stream().map(a->a.toString()).collect(Collectors.joining(","));
 
         List<String> l = build.getRpms()
                 .stream()
@@ -310,9 +322,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         int dwnldedFiles = l.size();
         if (dwnldedFiles == 0) {
             if (rpmsInBuildXml == 0) {
-                log("Warning, nothing downloaded, but looks like  nothing shoudl be.");
+                log("Warning, nothing downloaded, but looks like  nothing should be.");
             } else {
-                log("WARNING, nothing downloaded, but shoudl be (" + rpmsInBuildXml + "). Maybe bad exclude packages?");
+                log("WARNING, nothing downloaded, but should be (" + rpmsInBuildXml + "). Maybe bad exclude packages?");
             }
         }
         return l;
