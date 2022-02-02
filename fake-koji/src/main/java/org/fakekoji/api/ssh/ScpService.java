@@ -27,15 +27,16 @@ import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.KeyUtils;
 import org.apache.sshd.common.config.keys.PublicKeyEntryResolver;
-import org.apache.sshd.common.scp.ScpFileOpener;
-import org.apache.sshd.common.scp.ScpSourceStreamResolver;
-import org.apache.sshd.common.scp.ScpTargetStreamResolver;
-import org.apache.sshd.common.scp.ScpTimestamp;
 import org.apache.sshd.common.session.Session;
+import org.apache.sshd.common.session.SessionContext;
+import org.apache.sshd.scp.common.ScpFileOpener;
+import org.apache.sshd.scp.common.ScpSourceStreamResolver;
+import org.apache.sshd.scp.common.ScpTargetStreamResolver;
+import org.apache.sshd.scp.common.helpers.ScpTimestampCommandDetails;
+import org.apache.sshd.scp.server.ScpCommandFactory;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.server.scp.ScpCommandFactory;
 import org.apache.sshd.server.session.ServerSession;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
@@ -258,8 +259,8 @@ public class ScpService {
         }
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
-        sshd.setPublickeyAuthenticator(new UserKeySetPublickeyAuthenticator(readAuthorizedKeys(keys)));
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(new File(System.getProperty("user.home"), ".fake-koji.hostkey")));
+        sshd.setPublickeyAuthenticator(new UserKeySetPublickeyAuthenticator(readAuthorizedKeys(null, keys)));
+        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(new File(System.getProperty("user.home"), ".fake-koji.hostkey").toPath()));
 
         //this is quite dummy impl, simply  giving stream from correct location to write file to new, our location
         ScpCommandFactory sf = new ScpCommandFactory() {
@@ -268,17 +269,17 @@ public class ScpService {
         sf.setScpFileOpener(new ScpFileOpener() {
 
             @Override
-            public Path resolveIncomingFilePath(Path localPath, String name, boolean preserve, Set<PosixFilePermission> permissions, ScpTimestamp time) throws IOException {
+            public Path resolveIncomingFilePath(Session session, Path localPath, String name, boolean preserve, Set<PosixFilePermission> permissions, ScpTimestampCommandDetails time) throws IOException {
                 return localPath;
             }
 
             @Override
-            public Path resolveIncomingReceiveLocation(Path path, boolean recursive, boolean shouldBeDir, boolean preserve) throws IOException {
+            public Path resolveIncomingReceiveLocation(Session session, Path path, boolean recursive, boolean shouldBeDir, boolean preserve) throws IOException {
                 return path;
             }
 
             @Override
-            public Path resolveOutgoingFilePath(Path localPath, LinkOption... options) throws IOException {
+            public Path resolveOutgoingFilePath(Session session,Path localPath, LinkOption... options) throws IOException {
                 try {
                     return new File(dbRoot, deductPathName(localPath.toString())).toPath();
                 } catch (Exception ex) {
@@ -288,17 +289,17 @@ public class ScpService {
             }
 
             @Override
-            public ScpSourceStreamResolver createScpSourceStreamResolver(Path path) throws IOException {
+            public ScpSourceStreamResolver createScpSourceStreamResolver(Session session, Path path) throws IOException {
                 return new ScpSourceStreamResolverImpl(path);
             }
 
             @Override
-            public ScpTargetStreamResolver createScpTargetStreamResolver(Path path) throws IOException {
+            public ScpTargetStreamResolver createScpTargetStreamResolver(Session session, Path path) throws IOException {
                 return new ScpTargetStreamResolver() {
                     @Override
                     public OutputStream resolveTargetStream(Session sn, String name, long l, Set<PosixFilePermission> set, OpenOption... oos) throws IOException {
                         Path lPath = mergeNameIntoPathOrNot(path, name);
-                        return sf.getScpFileOpener().openWrite(sn, lPath, oos);
+                        return sf.getScpFileOpener().openWrite(sn, lPath, l, set, oos);
                     }
 
                     @Override
@@ -307,7 +308,7 @@ public class ScpService {
                     }
 
                     @Override
-                    public void postProcessReceivedData(String string, boolean bln, Set<PosixFilePermission> set, ScpTimestamp st) throws IOException {
+                    public void postProcessReceivedData(String string, boolean bln, Set<PosixFilePermission> set, ScpTimestampCommandDetails st) throws IOException {
                         //todo something here?
                     }
 
@@ -387,8 +388,8 @@ public class ScpService {
                 }
 
                 @Override
-                public ScpTimestamp getTimestamp() throws IOException {
-                    return new ScpTimestamp(realPath.fullPath.lastModified(), realPath.fullPath.lastModified());
+                public ScpTimestampCommandDetails getTimestamp() throws IOException {
+                    return new ScpTimestampCommandDetails(realPath.fullPath.lastModified(), realPath.fullPath.lastModified());
                 }
 
                 @Override
@@ -397,18 +398,18 @@ public class ScpService {
                 }
 
                 @Override
-                public InputStream resolveSourceStream(Session sn, OpenOption... oos) throws IOException {
+                public InputStream resolveSourceStream(Session sn, long l, Set<PosixFilePermission> set, OpenOption... oos) throws IOException {
                     if (origPath == null) {
                         return new FileInputStream(realPath.fullPath);
                     } else {
                         //there is need to send original path, as the ScpFileOpenr may be called on its own and so reparse the name
-                        return sf.getScpFileOpener().openRead(sn, origPath, oos);
+                        return sf.getScpFileOpener().openRead(sn, origPath, l, set, oos);
                     }
                 }
             }
 
             @Override
-            public InputStream openRead(Session session, Path file, OpenOption... options) throws IOException {
+            public InputStream openRead(Session session, Path file, long l, Set<PosixFilePermission> psx, OpenOption... options) throws IOException {
                 LOGGER.info("Accepting download of " + file);
                 RealPaths paths = createRealPaths(file);
                 if (!paths.fullPath.exists()) {
@@ -423,7 +424,7 @@ public class ScpService {
             }
 
             @Override
-            public OutputStream openWrite(Session session, Path file, OpenOption... options) throws IOException {
+            public OutputStream openWrite(Session session, Path file, long l, Set<PosixFilePermission> pfp, OpenOption... options) throws IOException {
                 LOGGER.info("Accepting upload to " + file);
                 RealPaths paths = createRealPaths(file);
                 if (paths.fullPath.exists()) {
@@ -489,7 +490,7 @@ public class ScpService {
         return sshd;
     }
 
-    private static Map<String, Collection<? extends PublicKey>> readAuthorizedKeys(String... setKeys) throws IOException, GeneralSecurityException {
+    private static Map<String, Collection<? extends PublicKey>> readAuthorizedKeys(SessionContext session, String... setKeys) throws IOException, GeneralSecurityException {
         Map<String, Collection<? extends PublicKey>> userKeysMap = new HashMap<>();
         for (String userKeys : setKeys) {
             String user = userKeys.split("=")[0];
@@ -498,8 +499,8 @@ public class ScpService {
             File f = new File(file);
             if (f.exists() && f.canRead()) {
                 LOGGER.info("For " + user + " adding from " + file);
-                for (AuthorizedKeyEntry ake : AuthorizedKeyEntry.readAuthorizedKeys(f)) {
-                    PublicKey publicKey = ake.resolvePublicKey(PublicKeyEntryResolver.IGNORING);
+                for (AuthorizedKeyEntry ake : AuthorizedKeyEntry.readAuthorizedKeys(f.toPath())) {
+                    PublicKey publicKey = ake.resolvePublicKey(session, PublicKeyEntryResolver.IGNORING);
                     if (publicKey != null) {
                         usersKeys.add(publicKey);
                     }
