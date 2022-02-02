@@ -429,20 +429,20 @@ public class ResultsDb implements EndpointGroup {
     }
 
     private synchronized String getReport(Context context) {
-        String nvr = context.queryParam("nvr", ".*");
-        String job = context.queryParam("job", ".*");
+        String nvr = Utils.queryParamWithDefault(context, "nvr", ".*");
+        String job = Utils.queryParamWithDefault(context, "job", ".*");
         boolean html = isReportHtml(context);
         if (html && nvr.equals(".*")) {
             throw new RuntimeException("In html mode, do the effort, and set some nvr regex");
         }
-        boolean empty = Boolean.valueOf(context.queryParam(REPORT_empty, "false"));
-        int group = Integer.valueOf(context.queryParam(REPORT_group, "5"));
+        boolean empty = Boolean.valueOf(Utils.queryParamWithDefault(context, REPORT_empty, "false"));
+        int group = Integer.valueOf(Utils.queryParamWithDefault(context, REPORT_group, "5"));
         return getReport(Pattern.compile(nvr), Pattern.compile(job), html, empty, group);
     }
 
     @NotNull
     private static boolean isReportHtml(Context context) {
-        return Boolean.valueOf(context.queryParam(REPORT_html, "true"));
+        return Boolean.valueOf(Utils.queryParamWithDefault(context, REPORT_html, "true"));
     }
 
     synchronized String getReport(Pattern nvrEx, Pattern jobEx, boolean html, boolean empty, int group) {
