@@ -35,16 +35,16 @@ public class GlobPredicate implements Predicate<CharSequence>, java.io.Serializa
     @Override
     public boolean test(CharSequence input) {
         if (globPatterns.isEmpty()) {
-            logMessage("[KojiSCM]matched: " + input + " because of globPattern is empty");
+            logMessage("[KojiSCM] matched: " + input + " because of globPattern is empty");
             return true;
         }
         for (Pattern globPattern : globPatterns) {
             if (globPattern.matcher(input).matches()) {
-                logMessage("[KojiSCM]matched: " + input + " because of globPattern: " + globPattern);
+                logMessage("[KojiSCM] matched: " + input + " because of globPattern: " + globPattern);
                 return true;
             }
         }
-        logMessage("[KojiSCM]not matched: " + input + "because this globPattern didn't match anything.");
+        logMessage("[KojiSCM] not matched: " + input + "because this globPattern didn't match anything.");
         return false;
     }
 

@@ -276,16 +276,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> nvrPredicate = i -> true;
         final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
         if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageBlacklist, new TaskListenerLogTransporter() {
-                @Override
-                public void println(String s) {
-                    currentListener.getLogger().println(s);
-                }
-            });
+            GlobPredicate glob = getGlobPredicate(subpackageBlacklist);
             nvrPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")) {
                     return true;
                 } else {
+                    log("[KojiSCM] Matching blacklist ...");
                     return !glob.test(rpm.getNvr());
                 }
             };
@@ -294,16 +290,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> whitelistPredicate = i -> true;
         final String subpackageWhitelist = realKojiXmlRpcApi.getSubpackageWhitelist();
         if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageWhitelist, new TaskListenerLogTransporter() {
-                @Override
-                public void println(String s) {
-                    currentListener.getLogger().println(s);
-                }
-            });
+            GlobPredicate glob = getGlobPredicate(subpackageWhitelist);
             whitelistPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")){
                     return true;
                 } else {
+                    log("[KojiSCM] Matching whitelist ...");
                     return glob.test(rpm.getNvr());
                 }
             };
@@ -328,6 +320,15 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             }
         }
         return l;
+    }
+
+    private GlobPredicate getGlobPredicate(String subpackageBlacklist) {
+        return new GlobPredicate(subpackageBlacklist, new TaskListenerLogTransporter() {
+            @Override
+            public void println(String s) {
+                currentListener.getLogger().println(s);
+            }
+        });
     }
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
