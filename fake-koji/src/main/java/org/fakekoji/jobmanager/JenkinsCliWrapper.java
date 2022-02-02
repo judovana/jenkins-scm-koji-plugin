@@ -17,7 +17,7 @@ import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.future.CloseFuture;
-import org.apache.sshd.common.util.io.NoCloseInputStream;
+import org.apache.sshd.common.util.io.input.NoCloseInputStream;
 import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilder;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
