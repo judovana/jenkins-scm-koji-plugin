@@ -1,9 +1,13 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.Javalin;
+import io.javalin.core.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
+import io.javalin.http.staticfiles.Location;
 import io.javalin.plugin.json.JavalinJackson;
+import io.javalin.plugin.json.JsonMapper;
+
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
@@ -38,6 +42,7 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,7 +59,7 @@ public class OToolService {
     public static final int ERROR = 500;
 
     private static final String ID = "id";
-    private static final String CONFIG_ID = "/:" + ID;
+    private static final String CONFIG_ID = "/{" + ID + "}";
     private static final String BUILD_PROVIDERS = "/buildProviders";
     private static final String BUILD_PROVIDER = BUILD_PROVIDERS + CONFIG_ID;
     private static final String JDK_VERSIONS = "/jdkVersions";
@@ -138,9 +143,10 @@ public class OToolService {
 
     public OToolService(AccessibleSettings settings) {
         this.port = settings.getWebappPort();
-        JavalinJackson.configure(objectMapper);
-        app = Javalin.create(config -> config
-                .addStaticFiles("/webapp")
+        app = Javalin.create( config -> {
+                    config.jsonMapper(new JavalinJackson(objectMapper));
+                    config.addStaticFiles("/webapp", Location.CLASSPATH);
+                }
         );
 
         final JobUpdater jenkinsJobUpdater = settings.getJobUpdater();

@@ -27,7 +27,20 @@ import java.util.regex.Pattern;
 
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
+import io.javalin.http.Context;
+
 public class Utils {
+
+
+    public static String queryParamWithDefault(final Context context, final String param, final String defaultv) {
+        final String value = context.queryParam(param);
+        if (value == null){
+            return  defaultv;
+        } else {
+            return value;
+        }
+    }
+
 
     public static <T> boolean areEqual(Set<T> a, Set<T> b) {
         if (a.size() != b.size()) {
