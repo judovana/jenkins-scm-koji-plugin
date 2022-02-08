@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.xml.bind.DatatypeConverter;
 
-public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp {
+public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp, TaskListenerLogTransporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private static final int MAX_REDIRECTIONS = 10;
@@ -276,7 +276,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> nvrPredicate = i -> true;
         final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
         if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
-            GlobPredicate glob = getGlobPredicate(subpackageBlacklist);
+            GlobPredicate glob = new GlobPredicate(subpackageBlacklist, this);
             nvrPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")) {
                     return true;
@@ -290,7 +290,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> whitelistPredicate = i -> true;
         final String subpackageWhitelist = realKojiXmlRpcApi.getSubpackageWhitelist();
         if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
-            GlobPredicate glob = getGlobPredicate(subpackageWhitelist);
+            GlobPredicate glob = new GlobPredicate(subpackageWhitelist, this);
             whitelistPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")){
                     return true;
@@ -320,15 +320,6 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             }
         }
         return l;
-    }
-
-    private GlobPredicate getGlobPredicate(String subpackageBlacklist) {
-        return new GlobPredicate(subpackageBlacklist, new TaskListenerLogTransporter() {
-            @Override
-            public void println(String s) {
-                currentListener.getLogger().println(s);
-            }
-        });
     }
 
     private File downloadRPM(File targetDir, Build build, RPM rpm) {
@@ -560,5 +551,8 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         }
     }
 
-
+    @Override
+    public void println(String s) {
+        currentListener.getLogger().println(s);
+    }
 }

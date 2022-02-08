@@ -44,7 +44,7 @@ public class GlobPredicate implements Predicate<CharSequence>, java.io.Serializa
                 return true;
             }
         }
-        logMessage("[KojiSCM] not matched: " + input + "because this globPattern didn't match anything.");
+        logMessage("[KojiSCM] not matched: " + input + " because this globPattern didn't match anything.");
         return false;
     }
 
