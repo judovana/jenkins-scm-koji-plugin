@@ -301,8 +301,6 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             };
         }
 
-        String allPackages = build.getRpms().stream().map(a->a.toString()).collect(Collectors.joining(","));
-
         List<String> l = build.getRpms()
                 .stream()
                 .filter(nvrPredicate)

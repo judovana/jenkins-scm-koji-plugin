@@ -1,7 +1,5 @@
 package hudson.plugins.scm.koji.client;
 
-import org.slf4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
