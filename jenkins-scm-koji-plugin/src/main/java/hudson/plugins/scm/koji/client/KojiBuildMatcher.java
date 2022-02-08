@@ -42,7 +42,7 @@ class KojiBuildMatcher extends BuildMatcher {
             RealKojiXmlRpcApi kojiXmlRpcApi
     ) {
         super(kojiBuildProviders, notProcessedNvrPredicate, maxBuilds);
-        this.tagPredicate = new GlobPredicate(kojiXmlRpcApi.getTag());
+        this.tagPredicate = new GlobPredicate(kojiXmlRpcApi.getTag(), null);
         this.pkgName = kojiXmlRpcApi.getPackageName();
         this.archs = composeArchList(kojiXmlRpcApi.getArch());
     }

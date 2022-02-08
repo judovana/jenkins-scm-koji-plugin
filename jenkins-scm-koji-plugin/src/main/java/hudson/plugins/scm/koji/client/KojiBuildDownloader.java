@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import jakarta.xml.bind.DatatypeConverter;
 
-public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp {
+public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp, TaskListenerLogTransporter {
 
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
     private static final int MAX_REDIRECTIONS = 10;
@@ -276,11 +276,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> nvrPredicate = i -> true;
         final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
         if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageBlacklist);
+            GlobPredicate glob = new GlobPredicate(subpackageBlacklist, this);
             nvrPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")) {
                     return true;
                 } else {
+                    log("[KojiSCM] Matching blacklist ...");
                     return !glob.test(rpm.getNvr());
                 }
             };
@@ -289,11 +290,12 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         Predicate<RPM> whitelistPredicate = i -> true;
         final String subpackageWhitelist = realKojiXmlRpcApi.getSubpackageWhitelist();
         if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageWhitelist);
+            GlobPredicate glob = new GlobPredicate(subpackageWhitelist, this);
             whitelistPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")){
                     return true;
                 } else {
+                    log("[KojiSCM] Matching whitelist ...");
                     return glob.test(rpm.getNvr());
                 }
             };
@@ -310,9 +312,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         int dwnldedFiles = l.size();
         if (dwnldedFiles == 0) {
             if (rpmsInBuildXml == 0) {
-                log("Warning, nothing downloaded, but looks like  nothing shoudl be.");
+                log("Warning, nothing downloaded, but looks like  nothing should be.");
             } else {
-                log("WARNING, nothing downloaded, but shoudl be (" + rpmsInBuildXml + "). Maybe bad exclude packages?");
+                log("WARNING, nothing downloaded, but should be (" + rpmsInBuildXml + "). Maybe bad exclude packages?");
             }
         }
         return l;
@@ -547,5 +549,8 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         }
     }
 
-
+    @Override
+    public void println(String s) {
+        currentListener.getLogger().println(s);
+    }
 }

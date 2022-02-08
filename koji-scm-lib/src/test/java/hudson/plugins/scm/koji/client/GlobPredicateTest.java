@@ -35,14 +35,14 @@ public class GlobPredicateTest {
     public void testSimpleAsterics() {
         String glob = "f23-updates.*";
         String input = "f23-updates-candidate";
-        assertTrue(new GlobPredicate(glob).test(input));
+        assertTrue(new GlobPredicate(glob, null).test(input));
     }
     
     @Test
     public void nothingMatchesAll() {
         String glob = "";
         String input = "whatever";
-        assertTrue(new GlobPredicate(glob).test(input));
+        assertTrue(new GlobPredicate(glob, null).test(input));
     }
 
     @Test
@@ -51,9 +51,9 @@ public class GlobPredicateTest {
         String input1 = "no_Build-f23-tag";
         String input2 = "x86_64.Built-f23-tag";
         String input3 = "i686.Built-f23-tag";
-        assertTrue(new GlobPredicate(glob).test(input1));
-        assertTrue(new GlobPredicate(glob).test(input2));
-        assertFalse(new GlobPredicate(glob).test(input3));
+        assertTrue(new GlobPredicate(glob, null).test(input1));
+        assertTrue(new GlobPredicate(glob, null).test(input2));
+        assertFalse(new GlobPredicate(glob, null).test(input3));
     }
 
     private final List<String> inputs = Arrays.asList(
@@ -76,13 +76,13 @@ public class GlobPredicateTest {
     public void testCurlyBrackets() {
         //see difference, debuginfo will be included
         String glob = ".*debug-.*   .*accessibility.*   .*src.*   .*demo.*  ";
-        GlobPredicate predicate = new GlobPredicate(glob);
+        GlobPredicate predicate = new GlobPredicate(glob, null);
         assertEquals(9, inputs.stream().filter(predicate).count());
     }
 
     public void testCurlyBracketsAndNegation() {
         String glob = "   .*debug.*   .*accessibility.*   .*src.*   .*demo.* ";
-        GlobPredicate predicate = new GlobPredicate(glob);
+        GlobPredicate predicate = new GlobPredicate(glob, null);
         assertEquals(3, inputs.stream().filter(predicate.negate()).count());
     }
 
