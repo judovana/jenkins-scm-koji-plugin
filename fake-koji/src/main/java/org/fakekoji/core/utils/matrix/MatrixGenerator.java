@@ -56,7 +56,8 @@ public class MatrixGenerator {
     private final TestEqualityFilter testFilter;
     private final BuildEqualityFilter buildFilter;
     private final Pattern testRegex;
-    private final Pattern buildRgex;
+    private final Pattern buildRegex;
+    private final Pattern cellRegex;
     private final String[] project;
     private final ConfigCache cache;
     private final AccessibleSettings settings;
@@ -65,12 +66,12 @@ public class MatrixGenerator {
 
 
     public MatrixGenerator(final AccessibleSettings settings, String[] project) {
-        this(settings, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
+        this(settings, defaultRegex, defaultRegex, defaultRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
-    public MatrixGenerator(final AccessibleSettings settings, String testRegex, String buildRegex, String[] project) {
-        this(settings, testRegex, buildRegex, defaultTestFilter, defaultBuildFilter, project);
+    public MatrixGenerator(final AccessibleSettings settings, String testRegex, String buildRegex, String cellRegex, String[] project) {
+        this(settings, testRegex, buildRegex, cellRegex, defaultTestFilter, defaultBuildFilter, project);
 
     }
 
@@ -78,6 +79,7 @@ public class MatrixGenerator {
             final AccessibleSettings settings,
             String testRegex,
             String buildRegex,
+            String cellRegex,
             TestEqualityFilter testEqualityFilter,
             BuildEqualityFilter buildEqualityFilter,
             String[] project
@@ -86,7 +88,8 @@ public class MatrixGenerator {
         this.testFilter = testEqualityFilter;
         this.buildFilter = buildEqualityFilter;
         this.testRegex = Pattern.compile(testRegex == null ? defaultRegex : testRegex);
-        this.buildRgex = Pattern.compile(buildRegex == null ? defaultRegex : buildRegex);
+        this.buildRegex = Pattern.compile(buildRegex == null ? defaultRegex : buildRegex);
+        this.cellRegex = Pattern.compile(cellRegex == null ? defaultRegex : cellRegex);
 
         this.project = project;
         if (project != null) {
@@ -213,7 +216,7 @@ public class MatrixGenerator {
                     if (matchProject(project.getId())) {
                         for (List<String> variantProduct : variantsProducts) {
                             BuildSpec b = new BuildSpec(platform, provider, project, variantProduct, buildFilter);
-                            if (buildRgex.matcher(b.toString()).matches()) {
+                            if (buildRegex.matcher(b.toString()).matches()) {
                                 map.put(b.toString(), b); //r.add(b);
                             }
                         }
@@ -441,6 +444,7 @@ public class MatrixGenerator {
                     }
                     final CellGroup filteredCellGroup = new CellGroup(cellGroup.getCells().stream()
                             .distinct()
+                            .filter(a -> cellRegex.matcher(a.toString()).matches())
                             .collect(Collectors.toList()));
                     matrixRow.add(filteredCellGroup);
                 }
@@ -600,7 +604,7 @@ public class MatrixGenerator {
             final TitleCell job,
             final boolean inverted
     ) {
-        if (!testRegex.matcher(testSpec.toString()).matches() || !buildRgex.matcher(buildSpec.toString()).matches()) {
+        if (!testRegex.matcher(testSpec.toString()).matches() || !buildRegex.matcher(buildSpec.toString()).matches()) {
             return;
         }
         final String rowKey;

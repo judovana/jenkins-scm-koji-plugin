@@ -107,6 +107,7 @@ public class OToolService {
     private static final String MATRIX_ORIENTATION = "orientation";
     private static final String MATRIX_BREGEX = "buildRegex";
     private static final String MATRIX_TREGEX = "testRegex";
+    private static final String MATRIX_CREGEX = "cellRegex";
     private static final String MATRIX_FORMAT = "format";
     private static final String PROJECT = "project";
 
@@ -132,7 +133,7 @@ public class OToolService {
                 + "\n"
                 + MISC + "/" + MATRIX + "\n"
                 + "  where parameters for matrix are (with defaults):\n"
-                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_FORMAT + "=baseajax/htmlspan/html/plain/fill (baseajax have optional nvr; fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
+                + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_CREGEX + "=.* " + MATRIX_FORMAT + "=baseajax/htmlspan/html/plain/fill (baseajax have optional nvr; fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n"
                 + "  " + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n"
                 + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n"
                 + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n"
@@ -325,6 +326,7 @@ public class OToolService {
                 get(MATRIX, wrapper.wrap(context -> {
                     String trex = context.queryParam(MATRIX_TREGEX);
                     String brex = context.queryParam(MATRIX_BREGEX);
+                    String crex = context.queryParam(MATRIX_CREGEX);
                     String format = context.queryParam(MATRIX_FORMAT);
                     Boolean namesParam = nullableBooleanObject(context, "names", null);
                     boolean tos = notNullBoolean(context, "tos", true);
@@ -354,7 +356,7 @@ public class OToolService {
                     } else {
                         names = namesParam;
                     }
-                    MatrixGenerator m = new MatrixGenerator(settings, trex, brex, tf, bf, projects);
+                    MatrixGenerator m = new MatrixGenerator(settings, trex, brex, crex, tf, bf, projects);
                     int orieantaion = 1;
                     if (context.queryParam(MATRIX_ORIENTATION) != null) {
                         orieantaion = Integer.valueOf(context.queryParam(MATRIX_ORIENTATION));

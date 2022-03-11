@@ -208,6 +208,7 @@ public class MatrixGeneratorTest {
                 settings,
                 ".*",
                 ".*",
+                ".*",
                 new TestEqualityFilter(true, true, false, true, false),
                 new BuildEqualityFilter(true, true, false, true, true, false),
                 new String[0]
@@ -216,6 +217,26 @@ public class MatrixGeneratorTest {
         List<TestSpec> ts = m.getTests();
         m.printMatrix(printStream, bs, ts, true, true, tf);
         m.printMatrix(printStream, bs, ts, false, false, tf, true);
+        assertContents(expectedContent, outputStream);
+    }
+
+    @Test
+    public void showFilteredSqueezedMatrix() throws ManagementException, StorageException, IOException {
+        final String expectedContent = readResource("filtered_matrix");
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        final PrintStream printStream = new PrintStream(outputStream);
+        MatrixGenerator m = new MatrixGenerator(
+                settings,
+                ".*",
+                ".*",
+                ".*slowdebug.*",
+                new TestEqualityFilter(true, true, false, true, false),
+                new BuildEqualityFilter(true, true, false, true, true, false),
+                new String[0]
+        );
+        List<BuildSpec> bs = m.getBuilds();
+        List<TestSpec> ts = m.getTests();
+        m.printMatrix(printStream, bs, ts, true, true, tf);
         assertContents(expectedContent, outputStream);
     }
 
