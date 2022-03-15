@@ -192,15 +192,24 @@ public class GetterAPI implements EndpointGroup {
                         "URL=<prefix>",
                         "exclude=<regex1>,<regex2>...",
                         "include=<regex1>,<regex2>...",
-                        "project=<projectName>]"
+                        "project=<projectName1,projectName2,...>]"
                 ) + "]";
             }
         };
     }
 
-    private static boolean checkProjectName(String id, Optional<String> projectParam) {
+    private static boolean checkProjectNames(String id, Optional<String> projectParam) {
         if (projectParam.isPresent()) {
-            return id.equals(projectParam.get());
+            if (projectParam.get().contains(",")) {
+                for (String project : projectParam.get().split(",")) {
+                    if (id.equals(project)){
+                        return true;
+                    }
+                }
+                return false;
+            } else {
+                return id.equals(projectParam.get());
+            }
         } else {
             return true;
         }
@@ -210,7 +219,7 @@ public class GetterAPI implements EndpointGroup {
         final JDKTestProjectManager jdkTestProjectManager = settings.getConfigManager().jdkTestProjectManager;
         List<String> testProjects = new ArrayList<>();
         for (final JDKTestProject jdkTestProject : jdkTestProjectManager.readAll()) {
-            if (checkProjectName(jdkTestProject.getId(), projectFilter)) {
+            if (checkProjectNames(jdkTestProject.getId(), projectFilter)) {
                 Set<Job> testJobsSet = settings.getJdkProjectParser().parse(jdkTestProject);
                 for (Job j : testJobsSet) {
                     testProjects.add(j.getName());
@@ -225,7 +234,7 @@ public class GetterAPI implements EndpointGroup {
         final JDKProjectManager jdkProjectManager = settings.getConfigManager().jdkProjectManager;
         List<String> jdkProjects = new ArrayList<>();
         for (final JDKProject jdkProject : jdkProjectManager.readAll()) {
-            if (checkProjectName(jdkProject.getId(), projectFilter)) {
+            if (checkProjectNames(jdkProject.getId(), projectFilter)) {
                 Set<Job> tr = settings.getJdkProjectParser().parse(jdkProject);
                 for (Job j : tr) {
                     jdkProjects.add(j.getName());
