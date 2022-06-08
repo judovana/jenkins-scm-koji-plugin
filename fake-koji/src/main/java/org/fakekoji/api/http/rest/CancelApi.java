@@ -8,9 +8,6 @@ import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.ManagementException;
-import org.fakekoji.jobmanager.manager.JDKVersionManager;
-import org.fakekoji.jobmanager.manager.PlatformManager;
-import org.fakekoji.jobmanager.manager.TaskVariantManager;
 import org.fakekoji.jobmanager.project.JDKProjectManager;
 import org.fakekoji.jobmanager.project.JDKProjectParser;
 import org.fakekoji.jobmanager.project.JDKTestProjectManager;
@@ -50,19 +47,13 @@ public class CancelApi implements EndpointGroup {
     private final JDKProjectManager jdkProjectManager;
     private final JDKTestProjectManager jdkTestProjectManager;
     private final AccessibleSettings settings;
-    private final PlatformManager platformManager;
-    private final JDKVersionManager jdkVersionManager;
-    private final TaskVariantManager taskVariantManager;
 
     CancelApi(final AccessibleSettings settings) {
         this.parser = settings.getJdkProjectParser();
         final ConfigManager configManager = settings.getConfigManager();
         this.jdkProjectManager = configManager.jdkProjectManager;
         this.jdkTestProjectManager = configManager.jdkTestProjectManager;
-        this.platformManager = configManager.platformManager;
-        this.jdkVersionManager = configManager.jdkVersionManager;
-        this.taskVariantManager = configManager.taskVariantManager;
-        this.settings = settings;
+            this.settings = settings;
     }
 
 

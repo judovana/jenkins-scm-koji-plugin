@@ -184,12 +184,14 @@ public class OToolService {
                             + BumperAPI.getHelp()
                             + ResultsDb.getHelp()
                             + RedeployApi.getHelp()
-                            + CancelApi.getHelp());
+                            + CancelApi.getHelp()
+                            + PriorityApi.getHelp());
                 }));
                 path(RESULTS_DB, new ResultsDb(settings));
                 path(BUMP, new BumperAPI(settings));
                 path(RedeployApi.REDEPLOY, new RedeployApi(settings));
                 path(CancelApi.NO, new CancelApi(settings));
+                path(PriorityApi.PRIORITY, new PriorityApi(settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
