@@ -34,6 +34,7 @@ import org.apache.xmlrpc.common.XmlRpcStreamConfig;
 import org.apache.xmlrpc.parser.AtomicParser;
 import org.apache.xmlrpc.parser.TypeParser;
 import org.apache.xmlrpc.serializer.I4Serializer;
+import org.apache.xmlrpc.serializer.I8Serializer;
 import org.apache.xmlrpc.serializer.TypeSerializer;
 import org.apache.xmlrpc.serializer.TypeSerializerImpl;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
@@ -71,6 +72,7 @@ public class XmlRpcHelper {
 
         private XmlRpcClient createClient() throws Exception {
             XmlRpcClientConfigImpl xmlRpcConfig = new XmlRpcClientConfigImpl();
+            xmlRpcConfig.setEnabledForExtensions(true);
             xmlRpcConfig.setServerURL(new URL(currentURL));
             if (timeout != null) {
                 xmlRpcConfig.setConnectionTimeout(timeout);
@@ -96,6 +98,8 @@ public class XmlRpcHelper {
             switch (pLocalName) {
                 case "nil":
                     return new NilParser();
+                case I8Serializer.I8_TAG:
+                    return new I8Parser();
                 default:
                     return super.getParser(pConfig, pContext, pURI, pLocalName);
             }
@@ -105,6 +109,9 @@ public class XmlRpcHelper {
         public TypeSerializer getSerializer(XmlRpcStreamConfig pConfig, Object pObject) throws SAXException {
             if (pObject instanceof Integer) {
                 return new IntSerializer();
+            }
+            if (pObject instanceof Long) {
+                return new LongSerializer();
             }
             return super.getSerializer(pConfig, pObject);
         }
@@ -123,11 +130,29 @@ public class XmlRpcHelper {
 
     }
 
+    private static class I8Parser extends AtomicParser {
+
+        @Override
+        public void setResult(String pResult) throws SAXException {
+            super.setResult(Long.getLong(pResult));
+        }
+
+    }
+
     private static class IntSerializer extends TypeSerializerImpl {
 
         @Override
         public void write(ContentHandler pHandler, Object pObject) throws SAXException {
             write(pHandler, I4Serializer.INT_TAG, pObject.toString());
+        }
+
+    }
+
+    private static class LongSerializer extends TypeSerializerImpl {
+
+        @Override
+        public void write(ContentHandler pHandler, Object pObject) throws SAXException {
+            write(pHandler, I8Serializer.I8_TAG, pObject.toString());
         }
 
     }
