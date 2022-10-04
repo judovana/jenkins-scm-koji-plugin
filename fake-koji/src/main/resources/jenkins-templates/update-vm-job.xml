@@ -16,13 +16,12 @@
         <hudson.tasks.Shell>
             <command>#!/bin/sh&#13;
                 # set EXCLUDE_KERNEL=ture, if you wont to skip kernel update&#13;
-                # set ALLOW_ALPHAREPO=true when you wont to update from alpha-testing openjdkQA internal repo. Such update and testruns must be observed carefully&#13;
-                # it is recomended to run normal update as separate step before update with ALLOW_ALPHAREPO&#13;
-                # ALLOW_ALPHAREPO shold be run for el 6.y.z and 7.y.z only (keep it in mind&#13;
-                # ALLOW_ALPHAREPO=true looks like not working on rhel8&#13;
+                # set ALLOW_ALPHAREPO=false when you dont want to update from alpha-testing openjdkQA internal repo. Such update and testruns must be observed carefully&#13;
+                # it is recommended to run normal update as separate step before update with ALLOW_ALPHAREPO&#13;
+                # ALLOW_ALPHAREPO shold be run for el 8.y.z and 9.y.z only (keep it in mind&#13;
                 export VM_J_ID=%{PLATFORM_NAME}&#13;
                 sh %{SCRIPTS_ROOT}/jenkins/%{PROVIDER}/updateBox.sh $VM_J_ID \&#13;
-                &quot;sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/%{PROVIDER}/update/update-command.sh&quot;&#13;
+                &quot;sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=true  bash /mnt/shared/TckScripts/jenkins/%{PROVIDER}/update/update-command.sh&quot;&#13;
                 #&quot;sudo dnf -y install kernel-modules-extra &amp;&amp; sudo EXCLUDE_KERNEL=false  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/vagrant/update/update-command.sh&quot;&#13;
                 #&quot;sudo dnf -y --enablerepo=rhel-8-buildroot upgrade libstdc++-static giflib-devel &amp;&amp; sudo  EXCLUDE_KERNEL=true  ALLOW_ALPHAREPO=false  bash /mnt/shared/TckScripts/jenkins/vagrant/update/update-command.sh&quot;&#13;
                 #&quot;echo just repack&quot;&#13;
