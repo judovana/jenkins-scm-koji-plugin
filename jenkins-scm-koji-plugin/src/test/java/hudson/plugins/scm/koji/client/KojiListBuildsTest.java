@@ -584,6 +584,26 @@ public class KojiListBuildsTest {
         Assert.assertTrue(build != null);
     }
 
+
+    @Test
+    public void testJmc() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(
+                createBrewOnlyList(),
+                new RealKojiXmlRpcApi(
+                        "jmc",
+                        "x86_64 noarch",
+                        "(supp-|)rhel-9\\.[0-9]\\.[0-9]-(alpha-candidate|nocompose-candidate|candidate|gate|beta-gate) rhaos-.*-rhel-9-container-candidate epel9.* openj9-1-rhel-9-candidate",
+                        ".*src.zip .*test.zip .*openjdksrc.zip$ .*-jre-.*windows.* .*jre.win.* .*-portable-[b\\d\\.\\-ea]{3,}el.openjdkportable.*",
+                        null
+                ),
+                NotProcessedNvrPredicate.createNotProcessedNvrPredicateFromFile(e71, null),
+                10
+        );
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+    }
+
     @Test
     public void testListMatchingBuildsR6() throws Exception {
         assumeTrue(onRhNet);
