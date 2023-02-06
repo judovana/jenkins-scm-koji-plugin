@@ -284,7 +284,8 @@ public class TestSshApi {
         title(3);
         List<String> cmd = new ArrayList<>(params.length + source.length + 9);
         cmd.add("scp");
-        //cmd.add("-v"); //verbose 
+        //cmd.add("-v"); //verbose
+        cmd.add("-O"); //make this pass on el9 and newer - enables legacy SCP (newr scp allows only sftp)
         cmd.add("-o");
         cmd.add("StrictHostKeyChecking=no");
         cmd.add("-i");
