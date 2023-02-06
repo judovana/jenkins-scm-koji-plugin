@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 
 public abstract class JobModifier {
 
-    private final AccessibleSettings settings;
+    protected final AccessibleSettings settings;
 
     public JobModifier(final AccessibleSettings settings) {
         this.settings = settings;
