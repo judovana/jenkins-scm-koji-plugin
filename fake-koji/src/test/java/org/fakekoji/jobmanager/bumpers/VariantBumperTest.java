@@ -258,23 +258,46 @@ public class VariantBumperTest {
         bumper = new VariantBumper(cs.settings, "sdk", "jre", Pattern.compile(".*tck.*el6.*"));
         r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
         Assert.assertNotNull(r);
+        Assert.assertFalse(r.isOk());//the new job, have no builder
+
+        bumper = new VariantBumper(cs.settings, "sdk", "jre", Pattern.compile(".*"));
+        r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
+        Assert.assertNotNull(r);
         Assert.assertTrue(r.isOk());
-        Assert.assertEquals(4, r.getValue().jobsCreated.size());
+        Assert.assertEquals(1, r.getValue().jobsCreated.size());
         Assert.assertEquals(0, r.getValue().jobsArchived.size());
         Assert.assertEquals(0, r.getValue().jobsRevived.size());
         Assert.assertEquals(0, r.getValue().jobsRewritten.size());
-        allAre(r.getValue().jobsCreated, true);
-        sortableJobs = new ArrayList(r.getValue().jobsCreated);
-        Collections.sort(sortableJobs, new Comparator<JobUpdateResult>() {
-            @Override
-            public int compare(JobUpdateResult t1, JobUpdateResult t2) {
-                return t1.jobName.compareTo(t2.jobName);
-            }
-        });
-        Assert.assertEquals(
-                "tck-jdk8-vagrantBeakerConflictsProjectJdkProject-el6.x86_64-release.hotspot.sdk-el6.x86_64.beaker-defaultgc.wayland.legacy.lnxagent.jfroff",
-                sortableJobs.get(0).jobName);
+        allAre(r.getValue().jobsCreated, false); //at least one already existed (created a bit above)
+    }
 
+    @Test
+    public void bumpAll() throws ManagementException, StorageException, IOException {
+        CurrentSetup cs = setup(true, false);
+        List<Project> a = getProjects(DataGenerator.PROJECT_VBC_JP);
+        JobUpdateResults r1 = cs.settings.getJobUpdater().regenerateAll(null, cs.settings.getConfigManager().jdkProjectManager, null);//create all
+        JobUpdateResults r2 = cs.settings.getJobUpdater().regenerateAll(null, cs.settings.getConfigManager().jdkTestProjectManager, null);//create all
+        String[] nJobsO0 = cs.settings.getJenkinsJobsRoot().list();
+        Arrays.sort(nJobsO0);
+
+        Exception ex = null;
+        try {
+            VariantBumper bumper = new VariantBumper(cs.settings, "x11", "fastdebug", Pattern.compile(".*tck.*el6.*beaker.*"));
+        } catch (RuntimeException eex) {
+            ex = eex;
+        }
+        Assert.assertNotNull(ex);
+        Assert.assertTrue(ex.getMessage().contains("Variants must be from same group, are not"));
+        ex = null;
+        VariantBumper bumper = new VariantBumper(cs.settings, "sdk", "jre", Pattern.compile(".*"));
+        Result<JobUpdateResults, OToolError> r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
+        Assert.assertNotNull(r);
+        Assert.assertTrue(r.isOk());
+        Assert.assertEquals(12, r.getValue().jobsCreated.size());
+        Assert.assertEquals(0, r.getValue().jobsArchived.size());
+        Assert.assertEquals(0, r.getValue().jobsRevived.size());
+        Assert.assertEquals(0, r.getValue().jobsRewritten.size());
+        allAre(r.getValue().jobsCreated, true); //collision
     }
 
 
