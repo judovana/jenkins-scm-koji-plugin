@@ -1,13 +1,11 @@
 package org.fakekoji.core.utils.matrix.formatter;
 
 import org.fakekoji.core.AccessibleSettings;
-import org.fakekoji.core.utils.matrix.cell.CellGroup;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 
 public class HtmlAjaxFormatter extends HtmlSpanningFormatter {
 
@@ -48,7 +46,8 @@ public class HtmlAjaxFormatter extends HtmlSpanningFormatter {
                 HEADER = new String(os.toByteArray(), "utf-8").
                         replace("{OTOOL_BASE_URL}", AccessibleSettings.master.baseUrl + ":" + settings.getWebappPort()).
                         replace("{HISTORY_URL}", AccessibleSettings.master.history).
-                        replace("{JENKINS_BASE_URL}", settings.getJenkinsUrl());
+                        replace("{JENKINS_BASE_URL}", settings.getJenkinsUrl()).
+                        replace("{COMPARE_URL}", settings.getCompareUrl());
             }
         }
         return HEADER;

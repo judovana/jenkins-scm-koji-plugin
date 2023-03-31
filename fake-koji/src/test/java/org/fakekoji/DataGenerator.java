@@ -164,6 +164,7 @@ public class DataGenerator {
     public static final String BUILD_PROVIDER_2_PACKAGE_INFO_URL = "brewPackageInfoUrl";
 
     public static final String JENKINS_URL = "http://hydra.brq.redhat.com:8080/";
+    public static final String COMPARE_URL = "http://hydra.brq.redhat.com:9090/comp.html";
 
     private static FolderHolder folderHolder;
 
@@ -2068,6 +2069,7 @@ public class DataGenerator {
                 folderHolder.jenkinsJobArchiveRoot,
                 folderHolder.scriptsRoot,
                 new URL(JENKINS_URL),
+                new URL(COMPARE_URL),
                 JavaServerConstants.DFAULT_RP2C_PORT,
                 JavaServerConstants.DFAULT_DWNLD_PORT,
                 JavaServerConstants.DFAULT_SCP_PORT,

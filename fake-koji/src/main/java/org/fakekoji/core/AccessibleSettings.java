@@ -68,6 +68,7 @@ public class AccessibleSettings {
     private final File scriptsRoot;
 
     private final URL jenkins;
+    private final URL compare;
 
     private final int xmlRpcPort;
     private final int fileDownloadPort;
@@ -90,6 +91,7 @@ public class AccessibleSettings {
             File jenkinsJobArchiveRoot,
             File scriptsRoot,
             final URL jenkins,
+            final URL compare,
             int xmlRpcPort,
             int fileDownloadPort,
             int sshPort,
@@ -105,6 +107,7 @@ public class AccessibleSettings {
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
         this.scriptsRoot = scriptsRoot;
         this.jenkins = jenkins;
+        this.compare = compare;
         this.xmlRpcPort = xmlRpcPort;
         this.fileDownloadPort = fileDownloadPort;
         this.sshPort = sshPort;
@@ -165,8 +168,17 @@ public class AccessibleSettings {
         return jenkins;
     }
 
+    public URL getCompare() {
+        return compare;
+    }
+
+
     public String getJenkinsUrl() {
         return jenkins.toString();
+    }
+
+    public String getCompareUrl() {
+        return compare.toString();
     }
     
     public int getJenkinsPort() {

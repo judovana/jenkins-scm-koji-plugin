@@ -139,6 +139,7 @@
     var otool = "{OTOOL_BASE_URL}"      //eg: "http://hydra.brq.redhat.com:8888"
     var historyUrl = "{HISTORY_URL}"  //eg: "http://hydra.brq.redhat.com:88/history/nvrs"
     var jenkins = "{JENKINS_BASE_URL}"//eg: "http://hydra.brq.redhat.com:8080"
+    var compareUrl = "{COMPARE_URL}"//eg: "http://hydra.brq.redhat.com:9090/comp.html
     var jenkinsJob = jenkins + "/job"
     var dburl = otool + "/misc/resultsDb"
     var get = dburl + "/get?"
@@ -693,10 +694,16 @@
     }
 
     function getSelectedNvr() {
+      getSelectedNvr(true)
+    }
+
+    function getSelectedNvr(laud) {
       var lele = document.getElementById("multiNVR")
       if (lele == undefined || lele == null) {
-        alert("Operation requiring NameVersionRelease was used, but Name is not yet deducted")
-        return "unknown"
+        if(laud) {
+          alert("Operation requiring NameVersionRelease was used, but Name is not yet deducted")
+        }
+        return "unknown";
       }
       return lele.value
     }
@@ -824,6 +831,47 @@
       putNewRecord(lnvr, ljob, 40)
     }
 
+    function getCompareUrl(lnvr, ljob, action) {
+      var betterNvr = getSelectedNvr(false);
+      if (betterNvr == "unknown" || betterNvr == "") {
+        betterNvr=lnvr
+      }
+      //generated-part=&custom-part=--compare+--query++%22tck+jp19+ojdkLatest%7Erpms+*+*+release+sdk+*+aarch64+beaker+x11+defaultgc+ignorecp+lnxagent+*%22+--history+5++--nvr+%22java-latest-openjdk-19.0.2.0.7-1.rolling.el8%22
+      var jobParts = ljob.split(new RegExp('[\.-]', 'g'))
+      //todo, build is otool type, get rid of this hardcoded, and enumerate all build types)
+      if (ljob.startsWith("build")) {
+        jobParts[5] = "*"; //provider
+        if (action == "arches"){
+          jobParts[4] = "*";
+        } else
+        if (action == "oses"){
+          jobParts[3] = "*";
+        } else
+        if (action == "testvars"){
+          for (var i = 7; i < jobParts.length; i++) {
+            jobParts[i] = "*";
+          }
+        }
+      } else {
+        jobParts[10] = "*"; //provider
+        if (action == "arches"){
+          jobParts[4] = "*";
+          jobParts[9] = "*";
+        } else
+        if (action == "oses"){
+          jobParts[3] = "*";
+         jobParts[8] = "*";
+         } else
+        if (action == "testvars"){
+          for (var i = 11; i < jobParts.length; i++) {
+            jobParts[i] = "*";
+          }
+        }
+      }
+      var query = jobParts.join("+");
+      return compareUrl + "?generated-part=&custom-part=--compare+--query+%22" + query + "%22+--history+5++--nvr+%22" + betterNvr + "%22"
+    }
+
     function waiveRe(lnvr, ljob, action) {
       putNewRecord(lnvr, ljob, 100)
       if (action == "re-now") {
@@ -949,7 +997,14 @@
         "  <button onClick='waiveFailed(\"" + NVR + "\",\"" + job + "\")'          style=\"font-size: 125%; border-width: 08px; border-style: solid; border-color:" + buildToColor({ build: -1, score: 100001 }) + ";\" type='button'>waive - failed</button>"
       s = s + "</div>"
       s = s + "<div style='width:100%' \">Waive Comment <input style='width:75%' type=\"text\" id=\"waiveMessage\" value=\"\" onFocus=\"putName('" + job + "')\" /><button class=\"reloadButton\" type=\"button\" onClick=\"offerMessages('" + job + "," + NVR + "')\" style=\"display:inline\">page messages</button></div>"
-      s += "<br/><p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
+      var carurl = getCompareUrl(NVR, job, "arches")
+      var cosurl = getCompareUrl(NVR, job, "oses")
+      var cvarurl = getCompareUrl(NVR, job, "testvars")
+      s += "<br/><p>compare " +
+      "<a href='"+carurl+"' target='_blank'> arches </a> | " +
+      "<a href='"+cosurl+"' target='_blank'> OSes </a> | " +
+      "<a href='"+cvarurl+"' target='_blank'> test variants </a><br/>";
+      s += "<p>to link, <a href='#" + job + "'>" + job + "</a>; to analyze, run follwoing command:</p>";
       s += "<pre style='overflow: scroll'> CACHED=true SAVE_DB=true EXPLICIT_COMPARSION=true  sh TckScripts/jenkins/summary_report/customSearch.sh --jobfilter " + job + " --nvrfilter " + NVR + " --time 1 ; #no params for help; remove CACHED if you need to rebuild;  to rerun if necessary prefix by: ALLOW_REDEPLOY=2 </pre>";
       document.getElementById("modalContent1").innerHTML = s;
       modal.style.display = "block";
