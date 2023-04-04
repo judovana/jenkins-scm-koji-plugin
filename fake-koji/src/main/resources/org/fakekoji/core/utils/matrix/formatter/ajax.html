@@ -846,6 +846,15 @@
       var jobParts = ljob.split(new RegExp('[\.-]', 'g'))
       //todo, build is otool type, get rid of this hardcoded, and enumerate all build types)
       if (ljob.startsWith("build")) {
+// 0 build
+// 1 jp17
+// 2 ojdk17~u~upstream
+// 3 el7
+// 4 aarch64
+// 5 beaker
+// 6 hotspot
+// 7 fastdebug
+// 8 sdk
         jobParts[5] = "*"; //provider
         if (action == "arches"){
           jobParts[4] = "*";
@@ -854,20 +863,40 @@
           jobParts[3] = "*";
         } else
         if (action == "testvars"){
-          for (var i = 7; i < jobParts.length; i++) {
+          for (var i = 6; i < jobParts.length; i++) {
             jobParts[i] = "*";
           }
         }
       } else {
-        jobParts[10] = "*"; //provider
+//0 tck
+//1 jp17
+//2 ojdk17~rpms
+//3 el9z
+//4 aarch64
+//5 hotspot - optional
+//6 5 release
+//7 6 sdk
+//8 7 el9
+//9 8 aarch64
+//10 9 beaker
+//11 10 x11
+//12 11 defaultgc
+//13 12 fips
+//14 13 lnxagent
+//15 14 jfroff
+        var optionalShift1 = 0
+        if (jobParts.length > 15) {
+          optionalShift1 = 1;
+        }
+        jobParts[9+optionalShift1] = "*"; //provider
         if (action == "arches"){
           jobParts[4] = "*";
-          jobParts[9] = "*";
+          jobParts[8+optionalShift1] = "*";
           betterNvr = quoteRegexPartForUri(betterNvr)
         } else
         if (action == "oses"){
           jobParts[3] = "*";
-          jobParts[8] = "*";
+          jobParts[7+optionalShift1] = "*";
           let index = betterNvr.lastIndexOf("-");
           let result = betterNvr.substring(0, index);
           if (result != null && result.length > 5) {
@@ -877,7 +906,7 @@
           }
         } else
         if (action == "testvars"){
-          for (var i = 11; i < jobParts.length; i++) {
+          for (var i = 10+optionalShift1; i < jobParts.length; i++) {
             jobParts[i] = "*";
           }
           betterNvr = quoteRegexPartForUri(betterNvr)
