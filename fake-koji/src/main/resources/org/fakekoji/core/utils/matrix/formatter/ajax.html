@@ -836,9 +836,11 @@
     }
 
     function getCompareUrl(lnvr, ljob, action) {
+      var prefix=""
       var betterNvr = getSelectedNvr(false);
       if (betterNvr == "unknown" || betterNvr == "") {
         betterNvr=lnvr
+        prefix=".*"
       }
       //generated-part=&custom-part=--compare+--query++%22tck+jp19+ojdkLatest%7Erpms+*+*+release+sdk+*+aarch64+beaker+x11+defaultgc+ignorecp+lnxagent+*%22+--history+5++--nvr+%22java-latest-openjdk-19.0.2.0.7-1.rolling.el8%22
       var jobParts = ljob.split(new RegExp('[\.-]', 'g'))
@@ -882,7 +884,7 @@
         }
       }
       var query = jobParts.join("+");
-      return compareUrl + "?generated-part=&custom-part=--compare+--query+%22" + query + "%22+--history+5++--nvr+%22" + betterNvr + "%22"
+      return compareUrl + "?generated-part=&custom-part=--compare+--query+%22" + query + "%22+--history+5++--nvr+%22" + prefix + betterNvr + "%22"
     }
 
     function waiveRe(lnvr, ljob, action) {
