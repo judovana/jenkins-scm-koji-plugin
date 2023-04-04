@@ -831,6 +831,10 @@
       putNewRecord(lnvr, ljob, 40)
     }
 
+    function quoteRegexPart(s) {
+      return "\\Q" + s + "\\E"
+    }
+
     function getCompareUrl(lnvr, ljob, action) {
       var betterNvr = getSelectedNvr(false);
       if (betterNvr == "unknown" || betterNvr == "") {
@@ -857,15 +861,24 @@
         if (action == "arches"){
           jobParts[4] = "*";
           jobParts[9] = "*";
+          betterNvr = quoteRegexPart(betterNvr)
         } else
         if (action == "oses"){
           jobParts[3] = "*";
-         jobParts[8] = "*";
-         } else
+          jobParts[8] = "*";
+          let index = betterNvr.lastIndexOf("-");
+          let result = betterNvr.substring(0, index);
+          if (result != null && result.length > 5) {
+            betterNvr = quoteRegexPart(result)+".*"
+          } else {
+            betterNvr = quoteRegexPart(betterNvr)
+          }
+        } else
         if (action == "testvars"){
           for (var i = 11; i < jobParts.length; i++) {
             jobParts[i] = "*";
           }
+          betterNvr = quoteRegexPart(betterNvr)
         }
       }
       var query = jobParts.join("+");
