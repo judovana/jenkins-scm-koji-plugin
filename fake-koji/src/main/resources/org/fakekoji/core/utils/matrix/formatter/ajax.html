@@ -831,8 +831,8 @@
       putNewRecord(lnvr, ljob, 40)
     }
 
-    function quoteRegexPart(s) {
-      return "\\Q" + s + "\\E"
+    function quoteRegexPartForUri(s) {
+      return "%5CQ" + s + "%5CE" //escaped by \E and \Q just in url syntax
     }
 
     function getCompareUrl(lnvr, ljob, action) {
@@ -861,7 +861,7 @@
         if (action == "arches"){
           jobParts[4] = "*";
           jobParts[9] = "*";
-          betterNvr = quoteRegexPart(betterNvr)
+          betterNvr = quoteRegexPartForUri(betterNvr)
         } else
         if (action == "oses"){
           jobParts[3] = "*";
@@ -869,16 +869,16 @@
           let index = betterNvr.lastIndexOf("-");
           let result = betterNvr.substring(0, index);
           if (result != null && result.length > 5) {
-            betterNvr = quoteRegexPart(result)+".*"
+            betterNvr = quoteRegexPartForUri(result)+".*"
           } else {
-            betterNvr = quoteRegexPart(betterNvr)
+            betterNvr = quoteRegexPartForUri(betterNvr)
           }
         } else
         if (action == "testvars"){
           for (var i = 11; i < jobParts.length; i++) {
             jobParts[i] = "*";
           }
-          betterNvr = quoteRegexPart(betterNvr)
+          betterNvr = quoteRegexPartForUri(betterNvr)
         }
       }
       var query = jobParts.join("+");
