@@ -15,11 +15,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.fakekoji.core.FakeKojiTestUtil;
 import org.fakekoji.server.JavaServer;
@@ -900,6 +902,48 @@ public class KojiListBuildsTest {
                 false);
         List l = dwldr.downloadRPMs(target.getAbsoluteFile(), build, description);
         Assert.assertTrue(l.size() == 1);
+    }
+
+    @Test
+    public void ubi8jdk11containerMetadata() throws Exception {
+        assumeTrue(onRhNet);
+        RealKojiXmlRpcApi description = new RealKojiXmlRpcApi(
+                "openjdk-11-ubi8-container",
+                "ppc64le",
+                "(supp-|)rhel-8\\.5\\.[0-9]-z-(nocompose-candidate|candidate|gate) openj9-1-rhel-8-candidate rhaos-.*-rhel-8-container-candidate epel8.*",
+                ".*-debuginfo-.* .*-debugsource-.* .*src.zip  .*-jmods-.* .*static-libs.* .*-jre-.*windows.* .*jre.win.* .*-portable-[b\\d\\.\\-ea]{3,}el.openjdkportable.*",
+                ""
+        );
+        KojiListBuilds worker = new KojiListBuilds(
+                Collections.singletonList(createBrewHubKojiBuildProvider()),
+                description,
+                new NotProcessedNvrPredicate(Arrays.asList(containersUbi8Now)),
+                2
+        );
+        File ff  =temporaryFolder.newFolder();
+        Build build = worker.invoke(ff, null);
+        Assert.assertTrue(build != null);
+        File target = File.createTempFile("fakeKoji", "testDir");
+        target.delete();
+        target.mkdir();
+        KojiBuildDownloader dwldr = new KojiBuildDownloader(
+                Collections.singletonList(createBrewHubKojiBuildProvider()),
+                description, new NotProcessedNvrPredicate(Arrays.asList(containersUbi8Now)),
+                build,target.getAbsolutePath(),
+                2,
+                false,
+                false);
+        dwldr.invoke(ff, null);
+        final boolean[] found  = new boolean[]{false};
+        try (Stream<Path> stream = Files.walk(ff.toPath())) {
+            stream.filter(Files::isRegularFile)
+                    .forEach(path -> {
+                        if (path.endsWith("metadata.file.1.json")){
+                            found[0] = true;
+                        }
+                    });
+        }
+        Assert.assertTrue(found[0]);
     }
 }
 

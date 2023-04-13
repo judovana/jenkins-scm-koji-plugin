@@ -29,6 +29,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -138,7 +141,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         if (kojiXmlRpcApi instanceof RealKojiXmlRpcApi) {
             final RealKojiXmlRpcApi realKojiXmlRpcApi = (RealKojiXmlRpcApi) kojiXmlRpcApi;
             List<String> rpmFiles = downloadRPMs(targetDir, build, realKojiXmlRpcApi);
-            downloadMetadata(new File(targetDir.getAbsolutePath() + "-metadata"), build);
+            File metadataDownloadDir = new File(targetDir.getAbsolutePath() + "-metadata");
+            downloadMetadata(metadataDownloadDir, build);
+            downloadMetadataFile(metadataDownloadDir, kojiBuildProviders, build);
             String srcUrl = "";
             for (String suffix : RPM.Suffix.INSTANCE.getSuffixes()) {
                 srcUrl = composeSrcUrl(build.getProvider().getDownloadUrl(), build, suffix);
@@ -178,6 +183,26 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             return new KojiBuildDownloadResult(build, target.getAbsolutePath(), rpmPaths);
         }
         return null;
+    }
+
+    private void downloadMetadataFile(File metadataDownloadDir, Iterable<KojiBuildProvider> kojiBuildProviders, Build build) {
+        int i = 0;
+        for (KojiBuildProvider provider : kojiBuildProviders) {
+            String dwnlodStub = provider.getDownloadUrl();
+            String dwnlod = dwnlodStub + "/" + build.getName() + "/" + build.getVersion() + "/" + build.getRelease() + "/metadata.json";
+            try {
+                InputStream in = new URL(dwnlod).openStream();
+                if (in != null) {
+                    ReadableByteChannel readableByteChannel = Channels.newChannel(in);
+                    i++;
+                    FileOutputStream fileOutputStream = new FileOutputStream(metadataDownloadDir.getAbsolutePath() + "/metadata.file." + i + ".json");
+                    FileChannel fileChannel = fileOutputStream.getChannel();
+                    fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
+                }
+            } catch (Exception ex) {
+                LOG.trace("failed to download " + dwnlod + "; " + ex.getMessage(), ex);
+            }
+        }
     }
 
     private Optional<File> downloadArchive(File targetDir, RPM rpm) {
