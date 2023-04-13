@@ -543,9 +543,31 @@ public class KojiListBuildsTest {
                 10
         );
         Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        //KojiBuildDownloader dwldr = new KojiBuildDownloader(createConfigMultipleValidUrls(), new NotProcessedNvrPredicate(new HashSet<>()));
-        //dwldr.downloadRPMs(new File("/tmp"), build);
         Assert.assertTrue(build != null);
+        File ff  =temporaryFolder.newFolder();
+        KojiBuildDownloader dwldr = new KojiBuildDownloader(
+                createKojiBrewList(),
+                createConfigMultipleValidUrls(),  new NotProcessedNvrPredicate(new ArrayList<String>()),
+                build,ff.getAbsolutePath(),
+                2,
+                false,
+                false);
+        dwldr.invoke(ff, null);
+        final boolean[] found  = new boolean[]{false};
+        final List<Path> rpms  = new ArrayList<>();
+        try (Stream<Path> stream = Files.walk(ff.toPath())) {
+            stream.filter(Files::isRegularFile)
+                    .forEach(path -> {
+                        if (path.endsWith("metadata.file.1.json")){
+                            found[0] = true;
+                        }
+                        if (path.toString().endsWith(".rpm")){
+                            rpms.add(path);
+                        }
+                    });
+        }
+        Assert.assertFalse(found[0]);
+        Assert.assertTrue(rpms.size()>10);
     }
 
     @Test
