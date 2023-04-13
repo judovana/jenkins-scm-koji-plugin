@@ -2,6 +2,7 @@ package hudson.plugins.scm.koji.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
+
 import hudson.FilePath;
 import hudson.model.TaskListener;
 import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
@@ -292,7 +293,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
             GlobPredicate glob = new GlobPredicate(subpackageWhitelist, this);
             whitelistPredicate = (RPM rpm) -> {
-                if (rpm.getArch().equals("src")){
+                if (rpm.getArch().equals("src")) {
                     return true;
                 } else {
                     log("[KojiSCM] Matching whitelist ...");
@@ -425,15 +426,15 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
             sb.append('/');
         }
         sb.append(build.getName()).append('/')
-        .append(build.getVersion()).append('/')
-        .append(build.getRelease()).append('/')
-        .append(addArch(rpm)).append('/')
-        .append(rpm.getFilename(suffix));
+                .append(build.getVersion()).append('/')
+                .append(build.getRelease()).append('/')
+                .append(addArch(rpm)).append('/')
+                .append(rpm.getFilename(suffix));
         return sb.toString();
     }
 
     private String composeSrcUrl(String kojiDownloadUrl, Build build, String suffix) {
-        if (kojiDownloadUrl==null || build == null || suffix == null) {
+        if (kojiDownloadUrl == null || build == null || suffix == null) {
             return "http://unknonw.or/not/found.sorry";
         }
         StringBuilder sb = new StringBuilder(255);
@@ -479,7 +480,9 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     void print(String s) {
         try {
-            currentListener.getLogger().println(s);
+            if (currentListener != null) {
+                currentListener.getLogger().println(s);
+            }
         } catch (Exception ex) {
             LOG.error("During printing of log to TaskListener", ex);
         }
@@ -551,6 +554,8 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     @Override
     public void println(String s) {
-        currentListener.getLogger().println(s);
+        if (currentListener != null) {
+            currentListener.getLogger().println(s);
+        }
     }
 }

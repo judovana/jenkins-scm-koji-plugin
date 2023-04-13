@@ -72,7 +72,9 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
 
     void print(String s) {
         try {
-            currentListener.getLogger().println(s);
+            if (currentListener != null) {
+                currentListener.getLogger().println(s);
+            }
         } catch (Exception ex) {
             LOG.error("During printing of log to TaskListener", ex);
         }
