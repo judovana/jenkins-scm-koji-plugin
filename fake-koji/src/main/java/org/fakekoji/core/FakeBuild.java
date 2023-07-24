@@ -269,12 +269,12 @@ public class FakeBuild {
                     }
                 }
             } else {
-                if (file.getName().toLowerCase().contains("static") || release.contains("upstream")) {
+                if (file.getName().toLowerCase().contains("static") || file.getName().toLowerCase().contains("upstream")) {
                     return prefixIfNecessary(connect(TagsProvider.getFedoraTags(), TagsProvider.getRHELtags(), TagsProvider.getRhelTags(), TagsProvider.getWinTags()));
                 }
             }
         }
-        return new String[0];
+        return new String[]{"fakeKojiNoTagFound"};
     }
 
     public Set<String> getTags() {
