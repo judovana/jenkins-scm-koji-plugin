@@ -98,6 +98,15 @@ class KojiBuildMatcher extends BuildMatcher {
     }
 
     private List<Build> listPackageBuilds(String url, String packageName) {
+        String[] packages = packageName.split("\\s+");
+        List<Build> r = new ArrayList<>();
+        for (String pkg: packages){
+            r.addAll(listPackageBuild(url, pkg));
+        }
+        return r;
+    }
+
+    private List<Build> listPackageBuild(String url, String packageName) {
         Integer packageId = getPackageId(url, packageName);
         if (packageId == null) {
             return Collections.emptyList();

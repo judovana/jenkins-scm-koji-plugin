@@ -1,3 +1,7 @@
 <div>
-    Exact package name to watch.
+    Exact package name to watch, or space delimited list of packages to match<br/>
+    Note, that multi-package works only for old api, and may not work as expected.<br/>
+    the builds of all space split packages are obtained and fitlered, and the logic is applied to the merged list.<br/>
+    So for eg "A B"  if package A have 10 very old builds, and package B ten very new builds, only builds of B will be processed.<br/>
+    If you suddenly build A, then it willbe of course pulled.
 </div>

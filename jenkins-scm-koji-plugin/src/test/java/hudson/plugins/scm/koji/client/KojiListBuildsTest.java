@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -98,17 +97,6 @@ public class KojiListBuildsTest {
         return Arrays.asList(
                 createKojiHubKojiBuildProvider(),
                 createBrewHubKojiBuildProvider()
-        );
-    }
-
-    //for some reason, this maps to new api
-     RealKojiXmlRpcApi createConfigCustomFedora28() {
-        return new RealKojiXmlRpcApi(
-                "java-11-openjdk",
-                "x86_64,src",
-                "f28.*",
-                "",
-                null
         );
     }
 
@@ -460,21 +448,6 @@ public class KojiListBuildsTest {
                 10
         );
         testListMatchingBuildsCustom(worker, false);
-    }
-
-    @Test
-    public void testListMatchingBuildsCustomF28() throws Exception {
-        assumeTrue(onRhNet);
-        KojiListBuilds worker = new KojiListBuilds(
-                createHydraOnlyList(),
-                createConfigCustomFedora28(),
-                new NotProcessedNvrPredicate(new ArrayList<>()),
-                10
-        );
-        File tmpDir = temporaryFolder.newFolder();
-        tmpDir.mkdir();
-        Build build = worker.invoke(temporaryFolder.newFolder(), null);
-        Assert.assertTrue(build != null);
     }
 
     @Test
@@ -986,5 +959,24 @@ public class KojiListBuildsTest {
         }
         Assert.assertTrue(found[0]);
     }
+
+
+    @Test
+    public void testMultiproductBuilds() throws IOException, InterruptedException {
+        KojiListBuilds worker = new KojiListBuilds(
+                createKojiOnlyList(),
+                new RealKojiXmlRpcApi(
+                        "java-11-openjdk java-17-openjdk",
+                        "x86_64",
+                        ".*",
+                        null,
+                        ".*headless.*"),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
+        );
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+    }
+
 }
 
