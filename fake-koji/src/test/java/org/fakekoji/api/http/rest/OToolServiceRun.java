@@ -970,6 +970,19 @@ public class OToolServiceRun {
             "java-1.8.0-openjdk-portable-devel-1.8.0.252.b09-0.el6openjdkportable.x86_64.rpm",
             "java-1.8.0-openjdk-portable-devel-debug-1.8.0.252.b09-0.el6openjdkportable.x86_64.rpm");
 
+    List<String> portableEl8src = Arrays.asList("java-21-openjdk-portable-21.0.0.0.35-2.el8.src.rpm");
+    List<String> portableEl8x64 = Arrays.asList("java-21-openjdk-portable-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-devel-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-devel-fastdebug-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-devel-slowdebug-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-docs-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-fastdebug-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-misc-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-slowdebug-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-static-libs-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-static-libs-fastdebug-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-static-libs-slowdebug-21.0.0.0.35-2.el8.x86_64.rpm",
+            "java-21-openjdk-portable-unstripped-21.0.0.0.35-2.el8.x86_64.rpm");
 
     private static class BlackWhiteLister {
 
@@ -1157,29 +1170,33 @@ public class OToolServiceRun {
 
         portable.put("portable11x64", portable11x64);
         portable.put("portable8x64", portable8x64);
+        portable.put("portableEl8x64", portableEl8x64);
     }
 
     BlackWhiteLister sdk = new BlackWhiteLister("sdk",
-            new String[]{".*-jre-.*windows.*", ".*-portable-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"},
+            new String[]{".*-jre-.*windows.*", ".*jre.win.*", ".*-portable-[b\\d\\.\\-ea]{3,}el.*"},
             new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*openjdk-[0-9].*.win.*"},
+            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-static-libs-.*", ".*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).*", ".*openjdk-[0-9].*[^jre].win.*"},
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
-            new String[]{".*windows.*"},
+            new String[]{".*windows.*", ".*debuginfo.*"},
             new String[]{".*-headless.*"});
     BlackWhiteLister allDebugRelease = new BlackWhiteLister("allDebugRelease", new String[]{}, new String[]{});
     BlackWhiteLister release = new BlackWhiteLister("release",
-            new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*"},
+            new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*", ".*-unstripped-.*"},
             new String[]{""});
     BlackWhiteLister all = new BlackWhiteLister("all",
             new String[]{},
             new String[]{});
     BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
-            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-fastdebug-|-debuginfo-).*).*"},
+            new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-fastdebug-|-debuginfo-).*).*", ".*-unstripped-.*"},
             new String[]{});
     BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
-            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-slowdebug-|-debug-|-debuginfo-).*).*"},
+            new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*","(?!.*(-slowdebug-|-debug-|-debuginfo-).*).*", ".*-unstripped-.*"},
+            new String[]{});
+    BlackWhiteLister unstripped = new BlackWhiteLister("unstripped",
+            new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-portable[b\\d\\.\\-]{3,}.*", ".*-openjdk-portable-devel[b\\d\\.\\-]{3,}.*"},
             new String[]{});
     BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
     BlackWhiteLister portableLists = new BlackWhiteLister("portable", new String[]{"java-[\\d\\.]{2,5}-openjdk-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"}, new String[]{});
@@ -1193,7 +1210,7 @@ public class OToolServiceRun {
     BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite", new String[]{}, new String[]{});
 
     BlackWhiteLister[] jresdk = new BlackWhiteLister[]{jreHeadless, jre, sdk};
-    BlackWhiteLister[] debugMode = new BlackWhiteLister[]{all, release, fasdebug, slowdebug};
+    BlackWhiteLister[] debugMode = new BlackWhiteLister[]{all, release, unstripped, fasdebug, slowdebug};
     BlackWhiteLister[] suites = new BlackWhiteLister[]{nonDebuginfoSuite, debuginfoSuite};
 
     @Test
