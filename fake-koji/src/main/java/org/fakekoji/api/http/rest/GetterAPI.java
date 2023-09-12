@@ -680,7 +680,9 @@ public class GetterAPI implements EndpointGroup {
                         Pattern tmpRuleMatcher = Pattern.compile(".*");
                         List<JDKTestProject> testProjects = jdkTestProjectManager.readAll();
                         for (String[] rule : rulesPairList) {
-                            if (vr.matches(rule[0])) {
+                            //originally this was checking only against vr, but portbale was removed from tag/os/release and  moved
+                            // to n(ame) only. Sonow trying also whole archive?(aka nvr)
+                            if (vr.matches(rule[0]) || n.matches(rule[0]) || archive.matches(rule[0])) {
                                 tmpRuleMatcher = Pattern.compile(rule[1]);
                                 break;
                             }
