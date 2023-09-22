@@ -219,9 +219,15 @@ public class FakeBuild {
     public String[] guessTags() throws ProjectMappingExceptions.ProjectMappingException {
         List<File> files = this.getNonLogs();
         for (File file : files) {
-            if (name.endsWith("openjdk") || name.startsWith("openjdk")) {
+            if (name.contains("openjdk")) {
                 if (file.getName().toLowerCase().contains("portable")) {
-                    return new String[]{"openjdk-portable-rhel-6-candidate"};
+                    if (file.getName().toLowerCase().contains("el8")) {
+                        return new String[]{"java-openjdk-rhel-8-build"};
+                    } else if (file.getName().toLowerCase().contains("el7")) {
+                        return new String[]{"openjdk-portable-rhel-7-candidate"};
+                    } else {
+                        return new String[]{"openjdk-portable-rhel-6-candidate"};
+                    }
                 }
             }
         }
