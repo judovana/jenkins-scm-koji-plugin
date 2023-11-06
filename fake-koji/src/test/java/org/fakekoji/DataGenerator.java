@@ -1040,7 +1040,7 @@ public class DataGenerator {
         if (shortenedName==null){
             return "";
         } else {
-            return "OTOOL_" + JOB_NAME_SHORTENED + '=' + shortenedName;
+            return "OTOOL_" + JOB_NAME_SHORTENED + "=\"" + shortenedName+"\"";
         }
     }
 

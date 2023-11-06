@@ -325,22 +325,22 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
-                "export OTOOL_ARCH=" + vmPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=" + buildJob.getName() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=" + buildJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                "export OTOOL_OS=" + vmPlatform.getOs() + '.' + vmPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_OS_NAME=" + vmPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_OS_VERSION=" + vmPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + vmPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + vmPlatform.getId() + XML_NEW_LINE +
-                "export OTOOL_VM_NAME_OR_LOCAL=" + vmPlatform.getVmName() + XML_NEW_LINE +
-                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
-                "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
-                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "export OTOOL_ARCH=\"" + vmPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=\"" + buildJob.getName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=\"" + buildJob.getShortName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS=\"" + vmPlatform.getOs() + '.' + vmPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_NAME=\"" + vmPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_VERSION=\"" + vmPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=\"" + vmPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=\"" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + vmPlatform.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=\"" + vmPlatform.getVmName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_debugMode=\"" + buildVariants.get(debugMode).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jreSdk=\"" + buildVariants.get(jreSdk).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jvm=\"" + buildVariants.get(jvm).getId()+ "\"" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + buildTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
@@ -413,22 +413,22 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
-                "export OTOOL_ARCH=" + hwPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=" + buildJob.getName() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=" + buildJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                "export OTOOL_OS=" + hwPlatform.getOs() + '.' + hwPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_OS_NAME=" + hwPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_OS_VERSION=" + hwPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + hwPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + hwPlatform.getId() + XML_NEW_LINE +
-                "export OTOOL_VM_NAME_OR_LOCAL=" + LOCAL + XML_NEW_LINE +
-                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
-                "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
-                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "export OTOOL_ARCH=\"" + hwPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=\"" + buildJob.getName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=\"" + buildJob.getShortName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS=\"" + hwPlatform.getOs() + '.' + hwPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_NAME=\"" + hwPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_VERSION=\"" + hwPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=\"" + hwPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=\"" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + hwPlatform.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=\"" + LOCAL+ "\"" + XML_NEW_LINE +
+                "export OTOOL_debugMode=\"" + buildVariants.get(debugMode).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jreSdk=\"" + buildVariants.get(jreSdk).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jvm=\"" + buildVariants.get(jvm).getId()+ "\"" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + buildTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
@@ -504,31 +504,31 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
-                "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_OS_NAME=" + testPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_OS_VERSION=" + testPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + buildPlatform.getId() + XML_NEW_LINE +
-                "export OTOOL_VM_NAME_OR_LOCAL=" + LOCAL + XML_NEW_LINE +
-                "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
-                "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
-                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
-                "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
-                "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
-                "export OTOOL_jfr=" + testVariants.get(jfr).getId() + XML_NEW_LINE +
-                "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
-                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "export OTOOL_ARCH=\"" + testPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=\"" + buildPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=\"" + buildPlatform.toOsVar()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=\"" + buildPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=\"" + buildPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=\"" + testJob.getName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=\"" + testJob.getShortName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS=\"" + testPlatform.getOs() + '.' + testPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_NAME=\"" + testPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_VERSION=\"" + testPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=\"" + testPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=\"" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + buildPlatform.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=\"" + LOCAL+ "\"" + XML_NEW_LINE +
+                "export OTOOL_agent=\"" + testVariants.get(agent).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_crypto=\"" + testVariants.get(crypto).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_debugMode=\"" + buildVariants.get(debugMode).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_displayProtocol=\"" + testVariants.get(displayProtocol).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_garbageCollector=\"" + testVariants.get(garbageCollector).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jfr=\"" + testVariants.get(jfr).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jreSdk=\"" + buildVariants.get(jreSdk).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jvm=\"" + buildVariants.get(jvm).getId()+ "\"" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
@@ -604,31 +604,31 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
-                "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_OS_NAME=" + testPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_OS_VERSION=" + testPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
-                "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
-                "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
-                "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
-                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
-                "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
-                "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
-                "export OTOOL_jfr=" + testVariants.get(jfr).getId() + XML_NEW_LINE +
-                "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
-                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "export OTOOL_ARCH=\"" + testPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=\"" + buildPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=\"" + buildPlatform.toOsVar()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=\"" + buildPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=\"" + buildPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=\"" + testJob.getName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=\"" + testJob.getShortName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS=\"" + testPlatform.getOs() + '.' + testPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_NAME=\"" + testPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_VERSION=\"" + testPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=\"" + testPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=\"" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=\"" + testPlatform.getVmName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_agent=\"" + testVariants.get(agent).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_crypto=\"" + testVariants.get(crypto).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_debugMode=\"" + buildVariants.get(debugMode).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_displayProtocol=\"" + testVariants.get(displayProtocol).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_garbageCollector=\"" + testVariants.get(garbageCollector).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jfr=\"" + testVariants.get(jfr).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jreSdk=\"" + buildVariants.get(jreSdk).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jvm=\"" + buildVariants.get(jvm).getId()+ "\"" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
@@ -704,35 +704,35 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
-                "export OTOOL_AGENT=linux" + XML_NEW_LINE +
-                "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_IS_RHEL_Z_STREAM=true" + XML_NEW_LINE +
-                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_OS_NAME=" + testPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_OS_VERSION=" + testPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
-                "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
-                "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
-                "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
-                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
-                "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
-                "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
-                "export OTOOL_jfr=" + testVariants.get(jfr).getId() + XML_NEW_LINE +
-                "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
-                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
-                "export OTOOL_ystream=true" + XML_NEW_LINE +
-                "export OTOOL_zstream=false" + XML_NEW_LINE +
+                "export OTOOL_AGENT=\"linux"+ "\"" + XML_NEW_LINE +
+                "export OTOOL_ARCH=\"" + testPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=\"" + buildPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=\"" + buildPlatform.toOsVar()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=\"" + buildPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=\"" + buildPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_IS_RHEL_Z_STREAM=\"true"+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=\"" + testJob.getName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=\"" + testJob.getShortName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS=\"" + testPlatform.getOs() + '.' + testPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_NAME=\"" + testPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_VERSION=\"" + testPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=\"" + testPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=\"" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=\"" + testPlatform.getVmName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_agent=\"" + testVariants.get(agent).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_crypto=\"" + testVariants.get(crypto).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_debugMode=\"" + buildVariants.get(debugMode).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_displayProtocol=\"" + testVariants.get(displayProtocol).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_garbageCollector=\"" + testVariants.get(garbageCollector).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jfr=\"" + testVariants.get(jfr).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jreSdk=\"" + buildVariants.get(jreSdk).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jvm=\"" + buildVariants.get(jvm).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_ystream=\"true"+ "\"" + XML_NEW_LINE +
+                "export OTOOL_zstream=\"false"+ "\"" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
@@ -811,31 +811,31 @@ public class JenkinsJobTemplateBuilderTest {
                 "            <buildStep class=\"hudson.tasks.Shell\">\n" +
                 "                <command>\n" +
                 "#!/bin/bash&#13;\n" +
-                "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_OS_NAME=" + testPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_OS_VERSION=" + testPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
-                "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
-                "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
-                "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
-                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
-                "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
-                "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
-                "export OTOOL_jfr=" + testVariants.get(jfr).getId() + XML_NEW_LINE +
-                "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
-                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "export OTOOL_ARCH=\"" + testPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=\"" + buildPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=\"" + buildPlatform.toOsVar()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=\"" + buildPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=\"" + buildPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=\"" + testJob.getName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=\"" + testJob.getShortName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS=\"" + testPlatform.getOs() + '.' + testPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_NAME=\"" + testPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_VERSION=\"" + testPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=\"" + testPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=\"" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=\"" + testPlatform.getVmName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_agent=\"" + testVariants.get(agent).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_crypto=\"" + testVariants.get(crypto).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_debugMode=\"" + buildVariants.get(debugMode).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_displayProtocol=\"" + testVariants.get(displayProtocol).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_garbageCollector=\"" + testVariants.get(garbageCollector).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jfr=\"" + testVariants.get(jfr).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jreSdk=\"" + buildVariants.get(jreSdk).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jvm=\"" + buildVariants.get(jvm).getId()+ "\"" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                 "    </command>\n" +
                 "            </buildStep>\n" +
@@ -915,31 +915,31 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>\n" +
                 "#!/bin/bash&#13;\n" +
-                "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
-                "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
-                "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                "export OTOOL_OS_NAME=" + testPlatform.getOs() + XML_NEW_LINE +
-                "export OTOOL_OS_VERSION=" + testPlatform.getVersionNumber() + XML_NEW_LINE +
-                "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
-                "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
-                "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
-                "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
-                "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
-                "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
-                "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
-                "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
-                "export OTOOL_jfr=" + testVariants.get(jfr).getId() + XML_NEW_LINE +
-                "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
-                "export OTOOL_jvm=" + buildVariants.get(jvm).getId() + XML_NEW_LINE +
+                "export OTOOL_ARCH=\"" + testPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_ARCH=\"" + buildPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS=\"" + buildPlatform.toOsVar()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_NAME=\"" + buildPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_BUILD_OS_VERSION=\"" + buildPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME=\"" + testJob.getName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_JOB_NAME_SHORTENED=\"" + testJob.getShortName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS=\"" + testPlatform.getOs() + '.' + testPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_NAME=\"" + testPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_OS_VERSION=\"" + testPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PLATFORM_PROVIDER=\"" + testPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_PROJECT_NAME=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export OTOOL_RELEASE_SUFFIX=\"" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_VM_NAME_OR_LOCAL=\"" + testPlatform.getVmName()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_agent=\"" + testVariants.get(agent).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_crypto=\"" + testVariants.get(crypto).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_debugMode=\"" + buildVariants.get(debugMode).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_displayProtocol=\"" + testVariants.get(displayProtocol).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_garbageCollector=\"" + testVariants.get(garbageCollector).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jfr=\"" + testVariants.get(jfr).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jreSdk=\"" + buildVariants.get(jreSdk).getId()+ "\"" + XML_NEW_LINE +
+                "export OTOOL_jvm=\"" + buildVariants.get(jvm).getId()+ "\"" + XML_NEW_LINE +
                 "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
@@ -982,12 +982,12 @@ public class JenkinsJobTemplateBuilderTest {
                 "        <hudson.tasks.Shell>\n" +
                 "            <command>" +
                 "#!/bin/sh" + XML_NEW_LINE +
-                "#export " + NO_CHANGE_RETURN_VAR + "=-1 # any negative is enforcing pull even without changes detected" + XML_NEW_LINE +
-                "export " + OTOOL_BASH_VAR_PREFIX + JDK_VERSION_VAR + "=" + jdk8.getVersion() + XML_NEW_LINE +
-                "export " + OTOOL_BASH_VAR_PREFIX + OJDK_VAR + "=" + jdk8.getId() + XML_NEW_LINE +
-                "export " + OTOOL_BASH_VAR_PREFIX + PACKAGE_NAME_VAR + "=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_NAME_VAR + "=" + PROJECT_NAME + XML_NEW_LINE +
-                "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_PATH_VAR + "=" + Paths.get(reposRoot.getAbsolutePath(), PROJECT_NAME) + XML_NEW_LINE +
+                "#export " + NO_CHANGE_RETURN_VAR + "=\"-1\" # any negative is enforcing pull even without changes detected" + XML_NEW_LINE +
+                "export " + OTOOL_BASH_VAR_PREFIX + JDK_VERSION_VAR + "=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                "export " + OTOOL_BASH_VAR_PREFIX + OJDK_VAR + "=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                "export " + OTOOL_BASH_VAR_PREFIX + PACKAGE_NAME_VAR + "=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_NAME_VAR + "=\"" + PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                "export " + OTOOL_BASH_VAR_PREFIX + PROJECT_PATH_VAR + "=\"" + Paths.get(reposRoot.getAbsolutePath(), PROJECT_NAME)+ "\"" + XML_NEW_LINE +
                 "bash '" + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, PULL_SCRIPT_NAME) + "'" +
                 "</command>\n" +
                 "        </hudson.tasks.Shell>\n" +
@@ -1128,28 +1128,28 @@ public class JenkinsJobTemplateBuilderTest {
                         "        <hudson.tasks.Shell>\n" +
                         "            <command>\n" +
                         "#!/bin/bash&#13;\n" +
-                        "export OTOOL_ARCH=" + testPlatform.getArchitecture() + XML_NEW_LINE +
-                        "export OTOOL_BUILD_ARCH=" + buildPlatform.getArchitecture() + XML_NEW_LINE +
-                        "export OTOOL_BUILD_OS=" + buildPlatform.toOsVar() + XML_NEW_LINE +
-                        "export OTOOL_BUILD_OS_NAME=" + buildPlatform.getOs() + XML_NEW_LINE +
-                        "export OTOOL_BUILD_OS_VERSION=" + buildPlatform.getVersionNumber() + XML_NEW_LINE +
-                        "export OTOOL_JDK_VERSION=" + jdk8.getVersion() + XML_NEW_LINE +
-                        "export OTOOL_JOB_NAME=" + testJob.getName() + XML_NEW_LINE +
-                        "export OTOOL_JOB_NAME_SHORTENED=" + testJob.getShortName() + XML_NEW_LINE +
-                        "export OTOOL_OJDK=" + jdk8.getId() + XML_NEW_LINE +
-                        "export OTOOL_OS=" + testPlatform.getOs() + '.' + testPlatform.getVersion() + XML_NEW_LINE +
-                        "export OTOOL_OS_NAME=" + testPlatform.getOs() + XML_NEW_LINE +
-                        "export OTOOL_OS_VERSION=" + testPlatform.getVersionNumber() + XML_NEW_LINE +
-                        "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
-                        "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
-                        "export OTOOL_PROJECT_NAME=" + TEST_PROJECT_NAME + XML_NEW_LINE +
-                        "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
-                        "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
-                        "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
-                        "export OTOOL_debugMode=" + release.getId() + XML_NEW_LINE +
-                        "export OTOOL_displayProtocol=" + testVariants.get(displayProtocol).getId() + XML_NEW_LINE +
-                        "export OTOOL_garbageCollector=" + testVariants.get(garbageCollector).getId() + XML_NEW_LINE +
-                        "export OTOOL_jfr=" + testVariants.get(jfr).getId() + XML_NEW_LINE +
+                        "export OTOOL_ARCH=\"" + testPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_BUILD_ARCH=\"" + buildPlatform.getArchitecture()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_BUILD_OS=\"" + buildPlatform.toOsVar()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_BUILD_OS_NAME=\"" + buildPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_BUILD_OS_VERSION=\"" + buildPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_JDK_VERSION=\"" + jdk8.getVersion()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME=\"" + testJob.getName()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_JOB_NAME_SHORTENED=\"" + testJob.getShortName()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_OJDK=\"" + jdk8.getId()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_OS=\"" + testPlatform.getOs() + '.' + testPlatform.getVersion()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_OS_NAME=\"" + testPlatform.getOs()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_OS_VERSION=\"" + testPlatform.getVersionNumber()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_PACKAGE_NAME=\"" + jdk8.getPackageNames().get(0)+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_PLATFORM_PROVIDER=\"" + testPlatform.getProviders().get(0).getId()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_PROJECT_NAME=\"" + TEST_PROJECT_NAME+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_VM_NAME_OR_LOCAL=\"" + testPlatform.getVmName()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_agent=\"" + testVariants.get(agent).getId()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_crypto=\"" + testVariants.get(crypto).getId()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_debugMode=\"" + release.getId()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_displayProtocol=\"" + testVariants.get(displayProtocol).getId()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_garbageCollector=\"" + testVariants.get(garbageCollector).getId()+ "\"" + XML_NEW_LINE +
+                        "export OTOOL_jfr=\"" + testVariants.get(jfr).getId()+ "\"" + XML_NEW_LINE +
                         "\nbash " + Paths.get(scriptsRoot.getAbsolutePath(), O_TOOL, RUN_SCRIPT_NAME) + " '" + testTask.getScript() + "'&#13;\n" +
                         "</command>\n" +
                         "        </hudson.tasks.Shell>\n" +
@@ -1170,17 +1170,17 @@ public class JenkinsJobTemplateBuilderTest {
     public void testVariable() throws IOException {
         OToolVariable v1 = new OToolVariable("myVar", "myVal");
         Assert.assertEquals(
-                "export OTOOL_myVar=myVal" + XML_NEW_LINE,
+                "export OTOOL_myVar=\"myVal\"" + XML_NEW_LINE,
                 v1.getVariableString(XML_NEW_LINE)
         );
         v1 = new OToolVariable("myVar", "myVal", "comment", false, true, true);
         Assert.assertEquals(
-                "#export myVar=myVal # comment" + XML_NEW_LINE,
+                "#export myVar=\"myVal\" # comment" + XML_NEW_LINE,
                 v1.getVariableString(XML_NEW_LINE)
         );
         v1 = new OToolVariable("myVar", "myVal", "comment", false, true, false);
         Assert.assertEquals(
-                "#myVar=myVal # comment" + XML_NEW_LINE,
+                "#myVar=\"myVal\" # comment" + XML_NEW_LINE,
                 v1.getVariableString(XML_NEW_LINE)
         );
     }

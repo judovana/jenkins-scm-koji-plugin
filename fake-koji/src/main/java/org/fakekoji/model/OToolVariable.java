@@ -116,7 +116,7 @@ public class OToolVariable {
                 (this.isExported() ? EXPORT + ' ' : "") +
                 name +
                 '=' +
-                this.getValue() +
+                "\"" + this.getValue() + "\"" +
                 this.getComment().map(comment -> " # " + comment).orElse("") +
                 terminal;
     }

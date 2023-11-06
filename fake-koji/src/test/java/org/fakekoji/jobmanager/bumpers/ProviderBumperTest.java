@@ -78,10 +78,10 @@ public class ProviderBumperTest {
         };
         String po1 = Utils.readFile(new File(cs.settings.getConfigRoot(), "jdkProjects/" + DataGenerator.PROJECT_VBC_JP + ".json"));
         String so1 = Utils.readFile(cfgFile(cs.settings, bumpedBuilds[0], ".vagrant-", ".beaker-"));
-        Assert.assertTrue(so1.contains("OTOOL_PLATFORM_PROVIDER=beaker"));
+        Assert.assertTrue(so1.contains("OTOOL_PLATFORM_PROVIDER=\"beaker\""));
         Assert.assertTrue(so1.contains("<assignedNode>c||d</assignedNode>"));
         String so2 = Utils.readFile(cfgFile(cs.settings, bumpedTests[0], ".vagrant-", ".beaker-"));
-        Assert.assertTrue(so2.contains("OTOOL_PLATFORM_PROVIDER=beaker"));
+        Assert.assertTrue(so2.contains("OTOOL_PLATFORM_PROVIDER=\"beaker\""));
         Assert.assertTrue(so2.contains("<assignedNode>c||d</assignedNode>"));
 
         ProviderBumper bumper = new ProviderBumper(cs.settings, "beaker", "vagrant", Pattern.compile(".*tck.*el6.*"));
@@ -125,7 +125,7 @@ public class ProviderBumperTest {
         Assert.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, true);
         String sb1 = Utils.readFile(cfgFile(cs.settings, bumpedTests[0], "", ""));
-        Assert.assertTrue(sb1.contains("OTOOL_PLATFORM_PROVIDER=vagrant"));
+        Assert.assertTrue(sb1.contains("OTOOL_PLATFORM_PROVIDER=\"vagrant\""));
         Assert.assertTrue(sb1.contains("<assignedNode>Odin||Tyr||os-el</assignedNode>"));
         Arrays.sort(bumpedTests);
         Assert.assertEquals(r.getValue().jobsCreated.stream().map(b -> b.jobName).sorted().collect(Collectors.toList()), Arrays.asList(bumpedTests));
@@ -150,7 +150,7 @@ public class ProviderBumperTest {
         Assert.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, true);
         String sb2 = Utils.readFile(cfgFile(cs.settings, bumpedBuilds[0], "", ""));
-        Assert.assertTrue(sb2.contains("OTOOL_PLATFORM_PROVIDER=vagrant"));
+        Assert.assertTrue(sb2.contains("OTOOL_PLATFORM_PROVIDER=\"vagrant\""));
         Assert.assertTrue(sb2.contains("<assignedNode>Odin||Tyr||os-el</assignedNode>"));
         Arrays.sort(bumpedBuilds);
         Assert.assertEquals(r.getValue().jobsCreated.stream().map(b -> b.jobName).sorted().collect(Collectors.toList()), Arrays.asList(bumpedBuilds));
@@ -224,7 +224,7 @@ public class ProviderBumperTest {
         String po1 = Utils.readFile(new File(cs.settings.getConfigRoot(), "jdkTestProjects/" + DataGenerator.PROJECT_VBC_JTP + ".json"));
 
         String so2 = Utils.readFile(cfgFile(cs.settings, bumpedTests[0], ".vagrant-", ".beaker-"));
-        Assert.assertTrue(so2.contains("OTOOL_PLATFORM_PROVIDER=beaker"));
+        Assert.assertTrue(so2.contains("OTOOL_PLATFORM_PROVIDER=\"beaker\""));
         Assert.assertTrue(so2.contains("<assignedNode>c||d</assignedNode>"));
 
         ProviderBumper bumper = new ProviderBumper(cs.settings, "beaker", "vagrant", Pattern.compile(".*tck.*el6.*"));
@@ -255,7 +255,7 @@ public class ProviderBumperTest {
         Assert.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, true);
         String sb1 = Utils.readFile(cfgFile(cs.settings, bumpedTests[0], "", ""));
-        Assert.assertTrue(sb1.contains("OTOOL_PLATFORM_PROVIDER=vagrant"));
+        Assert.assertTrue(sb1.contains("OTOOL_PLATFORM_PROVIDER=\"vagrant\""));
         Assert.assertTrue(sb1.contains("<assignedNode>Odin||Tyr||os-el</assignedNode>"));
         Arrays.sort(bumpedTests);
         Assert.assertEquals(r.getValue().jobsCreated.stream().map(b -> b.jobName).sorted().collect(Collectors.toList()), Arrays.asList(bumpedTests));
@@ -368,7 +368,7 @@ public class ProviderBumperTest {
         };
         String po1 = Utils.readFile(new File(cs.settings.getConfigRoot(), "jdkProjects/" + DataGenerator.PROJECT_VBC_JP + ".json"));
         String so1 = Utils.readFile(cfgFile(cs.settings, bumpedBuilds[0], ".beaker-", ".vagrant-"));
-        Assert.assertTrue(so1.contains("OTOOL_PLATFORM_PROVIDER=vagrant"));
+        Assert.assertTrue(so1.contains("OTOOL_PLATFORM_PROVIDER=\"vagrant\""));
         Assert.assertTrue(so1.contains("<assignedNode>Odin||Tyr||os-el</assignedNode>"));
 
         ProviderBumper bumper = new ProviderBumper(cs.settings, "vagrant", "beaker", Pattern.compile(".*build.*el6.*"));
@@ -413,7 +413,7 @@ public class ProviderBumperTest {
         };
         String po1 = Utils.readFile(new File(cs.settings.getConfigRoot(), "jdkProjects/" + DataGenerator.PROJECT_VBC_JP + ".json"));
         String so1 = Utils.readFile(cfgFile(cs.settings, bumpedBuilds[0], ".beaker-", ".vagrant-"));
-        Assert.assertTrue(so1.contains("OTOOL_PLATFORM_PROVIDER=vagrant"));
+        Assert.assertTrue(so1.contains("OTOOL_PLATFORM_PROVIDER=\"vagrant\""));
         Assert.assertTrue(so1.contains("<assignedNode>Odin||Tyr||os-el</assignedNode>"));
 
         ProviderBumper bumper = new ProviderBumper(cs.settings, "vagrant", "beaker", Pattern.compile(".*el6.*"));
