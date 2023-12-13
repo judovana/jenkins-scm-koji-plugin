@@ -218,6 +218,16 @@ public class FakeBuild {
      */
     public String[] guessTags() throws ProjectMappingExceptions.ProjectMappingException {
         List<File> files = this.getNonLogs();
+        String[] set = getManualTags("setTags");
+        //build have exact set of tags provided by user
+        if (set!=null && set.length>0) {
+            return set;
+        }
+        //TODO build have some additinal tags to be added
+        String[] base = getManualTags("additionalTags");
+        //TODO build have some unwanted tags to be removed
+        String[] filter = getManualTags("removedTags");
+        //but there is so much returns...
         for (File file : files) {
             if (name.contains("openjdk")) {
                 if (file.getName().toLowerCase().contains("portable")) {
@@ -281,6 +291,26 @@ public class FakeBuild {
             }
         }
         return new String[]{"fakeKojiNoTagFound"};
+    }
+
+    /**
+     * this is untested and untried, maybe jsut experimetnal nice to have PoC.
+     * Note, that chnaging tags may need emptying of cache
+     */
+    private String[] getManualTags(String type) throws ProjectMappingExceptions.ProjectMappingException {
+        File archesFile = getBuildExpectedArches();
+        if (archesFile.exists()) {
+            try {
+                String metadata = readMetadataFrom(archesFile, type);
+                if (metadata!=null) {
+                    LOGGER.info("adding build specific tags: " + metadata);
+                    return metadata.trim().split("\\s+");
+                }
+            } catch (IOException e) {
+                throw new ProjectMappingExceptions.ProjectMappingException(e);
+            }
+        }
+        return new String[0];
     }
 
     public Set<String> getTags() {
@@ -549,9 +579,38 @@ public class FakeBuild {
                 if (line.trim().isEmpty()) {
                     continue;
                 }
+                if (line.contains("=")) {
+                    continue;
+                }
                 String[] r = line.trim().split("\\s+");
                 return r;
 
+            }
+        }
+    }
+
+    public static String readMetadataFrom(File f, String key) throws IOException {
+        try (
+                InputStream fis = new FileInputStream(f);
+                InputStreamReader isr = new InputStreamReader(fis, Charset.forName("UTF-8"));
+                BufferedReader br = new BufferedReader(isr);) {
+            while (true) {
+                String line = br.readLine();
+                if (line == null) {
+                    return null;
+                }
+                if (line.trim().startsWith("#")) {
+                    continue;
+                }
+                if (line.trim().isEmpty()) {
+                    continue;
+                }
+                if (line.contains("=")) {
+                    String[] keyAndValue=line.trim().split("=");
+                    if (keyAndValue.length == 2 && keyAndValue[0].equals(key)) {
+                        return keyAndValue[1];
+                    }
+                }
             }
         }
     }
