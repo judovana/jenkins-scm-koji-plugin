@@ -337,6 +337,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_PLATFORM_PROVIDER=" + vmPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + vmPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_TASK=build" + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + vmPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
@@ -425,6 +426,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_PLATFORM_PROVIDER=" + hwPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + hwPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_TASK=build" + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + LOCAL + XML_NEW_LINE +
                 "export OTOOL_debugMode=" + buildVariants.get(debugMode).getId() + XML_NEW_LINE +
                 "export OTOOL_jreSdk=" + buildVariants.get(jreSdk).getId() + XML_NEW_LINE +
@@ -520,6 +522,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + buildPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_TASK=tck" + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + LOCAL + XML_NEW_LINE +
                 "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
                 "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
@@ -620,6 +623,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_TASK=tck" + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
                 "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
@@ -722,6 +726,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_TASK=tck~agent" + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
                 "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
@@ -827,6 +832,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_TASK=jtreg" + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
                 "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
@@ -931,6 +937,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                 "export OTOOL_PROJECT_NAME=" + PROJECT_NAME + XML_NEW_LINE +
                 "export OTOOL_RELEASE_SUFFIX=" + RELEASE + '.' + HOTSPOT + '.' + SDK + '.' + testPlatform.getId() + XML_NEW_LINE +
+                "export OTOOL_TASK=tck" + XML_NEW_LINE +
                 "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                 "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
                 "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
@@ -1143,6 +1150,7 @@ public class JenkinsJobTemplateBuilderTest {
                         "export OTOOL_PACKAGE_NAME=" + jdk8.getPackageNames().get(0) + XML_NEW_LINE +
                         "export OTOOL_PLATFORM_PROVIDER=" + testPlatform.getProviders().get(0).getId() + XML_NEW_LINE +
                         "export OTOOL_PROJECT_NAME=" + TEST_PROJECT_NAME + XML_NEW_LINE +
+                        "export OTOOL_TASK=tck" + XML_NEW_LINE +
                         "export OTOOL_VM_NAME_OR_LOCAL=" + testPlatform.getVmName() + XML_NEW_LINE +
                         "export OTOOL_agent=" + testVariants.get(agent).getId() + XML_NEW_LINE +
                         "export OTOOL_crypto=" + testVariants.get(crypto).getId() + XML_NEW_LINE +
