@@ -321,6 +321,12 @@ public class RedeployApi implements EndpointGroup {
                                 sb.append(" - " + line.trim() + " -> " + nwVal + "\n");
                                 totalReplacements++;
                             }
+                            if (mainline.contains("<script>") && line.contains("destroy.sh")) {
+                                String nwVal = nwProvider+"/destroy.sh";
+                                mainline = mainline.replaceAll("[a-zA-Z0-9]+/destroy.sh", nwVal);
+                                sb.append(" - " + lines.get(i) + " -> " + mainline + "\n");
+                                totalReplacements++;
+                            }
                         }
                         lines.set(i, mainline);
                     }
@@ -338,9 +344,9 @@ public class RedeployApi implements EndpointGroup {
                 }
                 sb.append("true".equals(doAndHow) ? "Written " : "Would be written: " + totalFiles + " of " + jobs.size() + "\n");
                 if ("true".equals(skipSlaves)) {
-                    sb.append("Replaced " + totalReplacements + " of " + jobs.size() + "\n");
-                } else {
                     sb.append("Replaced " + totalReplacements + " of " + (jobs.size() * 2) + "\n");
+                } else {
+                    sb.append("Replaced " + totalReplacements + " of " + (jobs.size() * 3) + "\n");
                 }
                 sb.append("Invlaid nodes: " + invalidNodes + "; search for " + noneNode + "\n");
                 context.status(OToolService.OK).result(sb.toString() + "\n");
