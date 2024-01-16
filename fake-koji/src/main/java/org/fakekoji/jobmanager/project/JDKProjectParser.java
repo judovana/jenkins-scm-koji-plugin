@@ -56,7 +56,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     }
 
     @Override
-    public Set<Job> parse(Project project) throws ManagementException, StorageException {
+    public synchronized Set<Job> parse(Project project) throws ManagementException, StorageException {
         final ConfigCache configCache = new ConfigCache(configManager);
         jobBuilder = new JobBuilder(configCache, project.getType());
         final Optional<JDKVersion> jdkVersionOptional = configCache.getJdkVersion(project.getProduct().getJdk());
@@ -92,14 +92,14 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         return Collections.emptySet();
     }
 
-    private Set<Job> parse(JDKProject project) {
+    private synchronized Set<Job> parse(JDKProject project) {
         project.getJobConfiguration().getPlatforms().forEach(getPlatformsConsumer());
 
         jobBuilder.buildPullJob(project.getUrl());
         return jobBuilder.getJobs();
     }
 
-    private Set<Job> parse(JDKTestProject project) {
+    private synchronized Set<Job> parse(JDKTestProject project) {
         jobBuilder.subpackageBlacklist = project.getSubpackageBlacklist();
         jobBuilder.subpackageWhitelist = project.getSubpackageWhitelist();
         jobBuilder.buildTask = new Task();
@@ -107,7 +107,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         return jobBuilder.getJobs();
     }
 
-    private Consumer<BuildPlatformConfig> getBuildPlatformConsumer() {
+    private synchronized Consumer<BuildPlatformConfig> getBuildPlatformConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (BuildPlatformConfig config) -> {
                     jobBuilder.setPlatform(config);
@@ -117,7 +117,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         );
     }
 
-    private Consumer<PlatformConfig> getPlatformsConsumer() {
+    private synchronized Consumer<PlatformConfig> getPlatformsConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (PlatformConfig platformConfig) -> {
                     jobBuilder.setPlatform(platformConfig);
@@ -127,7 +127,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         );
     }
 
-    private Consumer<TaskConfig> getTasksConsumer() {
+    private synchronized Consumer<TaskConfig> getTasksConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (TaskConfig taskConfig) -> {
                     jobBuilder.setTask(taskConfig.getId());
@@ -137,7 +137,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         );
     }
 
-    private Consumer<VariantsConfig> getVariantsConsumer() {
+    private synchronized Consumer<VariantsConfig> getVariantsConsumer() {
         return ManagementUtils.managementConsumerWrapper(
                 (VariantsConfig variantsConfig) -> {
                     jobBuilder.setVariants(variantsConfig.getMap());
@@ -184,15 +184,15 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             testVariants = null;
         }
 
-        Set<Job> getJobs() {
+        synchronized Set<Job> getJobs() {
             return jobs;
         }
 
-        public void setProjectName(String projectName) {
+        public synchronized void setProjectName(String projectName) {
             this.projectName = projectName;
         }
 
-        public void setJDKVersion(JDKVersion jdkVersion) {
+        public synchronized void setJDKVersion(JDKVersion jdkVersion) {
             this.jdkVersion = jdkVersion;
         }
 
@@ -200,11 +200,11 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             this.product = product;
         }
 
-        public void setBuildProviders(Set<BuildProvider> buildProviders) {
+        public synchronized void setBuildProviders(Set<BuildProvider> buildProviders) {
             this.buildProviders = buildProviders;
         }
 
-        private void buildPullJob(final String repoUrl) {
+        private synchronized void buildPullJob(final String repoUrl) {
             jobs.add(new PullJob(
                     projectName,
                     repoUrl,
@@ -216,7 +216,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             ));
         }
 
-        private void buildBuildJob() {
+        private synchronized void buildBuildJob() {
             buildJob = new BuildJob(
                     buildPlatformProvider,
                     projectName,
@@ -232,7 +232,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             jobs.add(buildJob);
         }
 
-        private void buildTestJob() {
+        private synchronized void buildTestJob() {
             final TestJob tj = (buildJob == null) ?
                     new TestJob(
                             testPlatformProvider,
@@ -263,7 +263,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             jobs.add(tj);
         }
 
-        void resetPlatform() {
+        synchronized void resetPlatform() {
             if (testPlatform != null) {
                 testPlatform = null;
                 return;
@@ -275,7 +275,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Resetting platform error");
         }
 
-        void setPlatform(final BuildPlatformConfig buildPlatformConfig) {
+        synchronized void setPlatform(final BuildPlatformConfig buildPlatformConfig) {
             final Optional<Platform> platformOptional = configCache.getPlatform(buildPlatformConfig.getId());
             if (platformOptional.isPresent()) {
                 buildPlatform = platformOptional.get();
@@ -284,7 +284,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Setting build platform error");
         }
 
-        void setPlatform(final PlatformConfig platformConfig) {
+        synchronized void setPlatform(final PlatformConfig platformConfig) {
             final Optional<Platform> platformOptional = configCache.getPlatform(platformConfig.getId());
             if (platformOptional.isPresent()) {
                 final Platform platform = platformOptional.get();
@@ -303,7 +303,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Setting platform error");
         }
 
-        void resetTask() {
+        synchronized void resetTask() {
             if (testTask != null) {
                 testTask = null;
                 return;
@@ -315,7 +315,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Resetting task error");
         }
 
-        void setTask(String id) {
+        synchronized void setTask(String id) {
             final Optional<Task> taskOptional = configCache.getTask(id);
             if (taskOptional.isPresent()) {
                 final Task task = taskOptional.get();
@@ -331,7 +331,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Setting task error");
         }
 
-        void resetVariants() {
+        synchronized void resetVariants() {
             if (testVariants != null) {
                 testVariants = null;
                 return;
@@ -343,7 +343,7 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
             throw new RuntimeException("Resetting platform error");
         }
 
-        void setVariants(Map<String, String> variants) {
+        synchronized void setVariants(Map<String, String> variants) {
             if (buildVariants == null) {
                 buildVariants = new HashMap<>(variants.size());
                 variants.forEach((String key, String value) -> {
