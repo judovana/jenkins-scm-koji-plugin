@@ -1,5 +1,6 @@
 package hudson.plugins.scm.koji.client;
 
+import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.NotProcessedNvrPredicate;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
@@ -963,6 +964,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void testMultiproductBuilds() throws IOException, InterruptedException {
+        assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
                 new RealKojiXmlRpcApi(
@@ -971,6 +973,23 @@ public class KojiListBuildsTest {
                         ".*",
                         null,
                         ".*headless.*"),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
+        );
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+    }
+
+    @Test
+    public void testNewApipWithSources() throws IOException, InterruptedException {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(
+                createHydraOnlyList(),
+                new FakeKojiXmlRpcApi(
+                        "temurinLatest~bin",
+                        "debugMode=release jresdk=sdk jvm=hotspot",
+                        "src el7.x86_64",
+                        true),
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );

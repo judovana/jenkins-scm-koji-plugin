@@ -266,7 +266,104 @@ public class FakeKojiDB {
             LOGGER.severe(e.getMessage());
             return Collections.emptyList();
         }
-
+        boolean debug = false;
+        //use this when yoou need to decomposer the terrible streweam atthe bottom
+        //issue is msotly in getBuildParser at a9
+        if (debug) {
+            List a1 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a1.size());
+            List a2 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a2.size());
+            List a3 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a3.size());
+            List a4 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a4.size());
+            List a5 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .filter(buildHelper.getPackageNamePredicate())
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a5.size());
+            List a6 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .filter(buildHelper.getPackageNamePredicate())
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a6.size());
+            List a7 =  builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .filter(buildHelper.getPackageNamePredicate())
+                    .filter(buildHelper.getProjectNamePredicate())
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a7.size());
+            List a8 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .filter(buildHelper.getPackageNamePredicate())
+                    .filter(buildHelper.getProjectNamePredicate())
+                    .filter(buildHelper.getBuildPlatformPredicate())
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a8.size());
+            List a9 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .filter(buildHelper.getPackageNamePredicate())
+                    .filter(buildHelper.getProjectNamePredicate())
+                    .filter(buildHelper.getBuildPlatformPredicate())
+                    .map(buildHelper.getBuildParser())
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a9.size());
+            List a10 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .filter(buildHelper.getPackageNamePredicate())
+                    .filter(buildHelper.getProjectNamePredicate())
+                    .filter(buildHelper.getBuildPlatformPredicate())
+                    .map(buildHelper.getBuildParser())
+                    .filter(Optional::isPresent)
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a10.size());
+            List a11 = builds.stream()
+                    .map(FakeBuild::getNVR)
+                    .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
+                    .filter(Result::isOk)
+                    .map(Result::getValue)
+                    .filter(buildHelper.getPackageNamePredicate())
+                    .filter(buildHelper.getProjectNamePredicate())
+                    .filter(buildHelper.getBuildPlatformPredicate())
+                    .map(buildHelper.getBuildParser())
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
+            System.out.println("DEBUG ON! Performance down...stream intermediate size: " + a11.size());
+        }
         return builds.stream()
                 .map(FakeBuild::getNVR)
                 .map(nvr -> buildHelper.getOToolParser().parseBuild(nvr))
