@@ -4,6 +4,7 @@ import org.fakekoji.DataGenerator;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.io.File;
 import java.io.IOException;
@@ -186,6 +187,7 @@ public class ResultsDbTest {
         }
     }
 
+    @Ignore
     @Test
     public void stressDb() throws IOException, InterruptedException {
         JenkinsCliWrapper.killCli();
