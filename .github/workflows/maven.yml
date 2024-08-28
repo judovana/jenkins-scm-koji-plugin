@@ -14,10 +14,10 @@ jobs:
       - name: Download repo
         uses: actions/checkout@v2
 
-      - name: Set up JDK 1.8
+      - name: Set up JDK 17
         uses: actions/setup-java@v1
         with:
-          java-version: 1.8
+          java-version: 17
 
       - name: Cache Maven repository
         uses: actions/cache@v2
@@ -28,6 +28,18 @@ jobs:
       - name: Build with Maven
         run: |
           export MAVEN_OPTS="-Xmx4G"
+          mvn install -Dmaven.test.failure.ignore=true -DskipTests
+
+      - name: test koji-scm-lib
+        run: |
+          export MAVEN_OPTS="-Xmx4G"
+          cd koji-scm-lib
+          mvn install -Dmaven.test.failure.ignore=true
+
+      - name: test fake-koji
+        run: |
+          export MAVEN_OPTS="-Xmx4G"
+          cd fake-koji
           mvn install -Dmaven.test.failure.ignore=true
 
       - name: Store artifacts
