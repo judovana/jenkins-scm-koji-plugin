@@ -28,25 +28,25 @@ jobs:
       - name: Build with Maven
         run: |
           export MAVEN_OPTS="-Xmx4G"
-          mvn install -Dmaven.test.failure.ignore=true -DskipTests
+          mvn install -DskipTests
 
       - name: test koji-scm-lib
         run: |
           export MAVEN_OPTS="-Xmx4G"
           cd koji-scm-lib
-          mvn install -Dmaven.test.failure.ignore=true
+          mvn install
 
       - name: test fake-koji
         run: |
           export MAVEN_OPTS="-Xmx4G"
           cd fake-koji
-          mvn install -Dmaven.test.failure.ignore=true
+          mvn install -Dheadless=true #the webapp takes long and was created in original full build and we do not clean
 
       - name: Store artifacts
         run: |
           mkdir archives
-          cp fake-koji/target/fake-koji-2.0-SNAPSHOT-jar-with-dependencies.jar archives/
-          cp jenkins-scm-koji-plugin/target/jenkins-scm-koji-plugin-2.0-SNAPSHOT.hpi archives/
+          cp fake-koji/target/fake-koji-jar-with-dependencies.jar archives/
+          cp jenkins-scm-koji-plugin/target/jenkins-scm-koji-plugin.hpi archives/
         shell: bash
 
       - name: Upload artifacts
