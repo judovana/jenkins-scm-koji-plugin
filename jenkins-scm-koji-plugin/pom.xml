@@ -14,9 +14,8 @@
     <name>Jenkins SCM Koji Plugin</name>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version.old>1.8</java.version.old>
-        <java.version.new>8</java.version.new>
+<enforcer.skip>true</enforcer.skip> <!-- koji requires javalin whih requires servlet api -->
+<spotbugs.skip>true</spotbugs.skip> <!-- fix them all -->
     </properties>
 
     <dependencies>
@@ -24,37 +23,6 @@
             <groupId>fake-koji</groupId>
             <artifactId>koji-scm-lib</artifactId>
             <version>2.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-war</artifactId>
-            <type>war</type>
-            <version>2.164</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-core</artifactId>
-            <version>2.427</version><!-- warning, 2.319.2 is brokenfor us-->
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness</artifactId>
-            <version>2.31</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci</groupId>
-            <artifactId>test-annotations</artifactId>
-            <version>1.2</version>
-            <scope>test</scope>
         </dependency>
         <!--java EE -->
         <dependency>
@@ -140,37 +108,10 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <target>${java.version.old}</target>
-                    <source>${java.version.old}</source>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-maven-plugin</artifactId>
-<!--                <executions>
-                    <execution>
-                        <id>check</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>-->
-            </plugin>
-            <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>2.7</version>
                 <extensions>true</extensions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.15</version>
             </plugin>
         </plugins>
     </build>

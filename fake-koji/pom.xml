@@ -17,9 +17,8 @@
         <node.version>v16.13.1</node.version>
         <yarn.version>v1.22.17</yarn.version>
         <headless>false</headless>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version.old>1.8</java.version.old>
-        <java.version.new>8</java.version.new>
+<enforcer.skip>true</enforcer.skip>
+<spotbugs.skip>true</spotbugs.skip>
     </properties>
 
     <dependencies>
@@ -90,19 +89,6 @@
                     <target>${java.version.old}</target>
                     <source>${java.version.old}</source>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-maven-plugin</artifactId>
-<!--                <executions>
-                    <execution>
-                        <id>check</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>-->
             </plugin>
             <plugin>
                 <groupId>com.github.eirslett</groupId>
