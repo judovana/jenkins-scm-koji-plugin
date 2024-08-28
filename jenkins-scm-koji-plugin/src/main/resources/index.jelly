@@ -1,0 +1,5 @@
+<?jelly escape-by-default='true'?>
+<div>
+This is plugin able to pull binaries to jenkins from koji-like services.
+By default it contains api for http://koji.fedoraproject.org/  and for internal fake-koji server (which have its own api on top of real-koji like api)
+</div>
