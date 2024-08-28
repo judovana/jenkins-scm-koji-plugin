@@ -21,24 +21,6 @@
         </license>
     </licenses>
 
-    <developers>
-        <developer>
-            <id>baiduzhyi.devel</id>
-            <name>Stanislav Baiduzhyi</name>
-            <email>baiduzhyi.devel@gmail.com</email>
-        </developer>
-        <developer>
-            <id>judovana</id>
-            <name>Jiri Vanek</name>
-            <email>judovana@email.cz</email>
-        </developer>
-        <developer>
-            <id>okinovs</id>
-            <name>Ondrej Klinovsky</name>
-            <email>oklinov@tutanota.com</email>
-        </developer>
-    </developers>
-
     <modules>
         <module>jenkins-scm-koji-plugin</module>
         <module>fake-koji</module>
