@@ -458,6 +458,9 @@ public class ResultsDb implements EndpointGroup {
                     "} }" +
                     "</script>");
         }
+        if (!empty && html) {
+            warningForEmpty(r, formatter);
+        }
         List<String> nvrs = new ArrayList<>(db.get().keySet());
         Collections.sort(nvrs);
         for (String nvr : nvrs) {
@@ -468,7 +471,17 @@ public class ResultsDb implements EndpointGroup {
                 r.append(formatter.closeNvr(nvr));
             }
         }
+        if (!empty && !html) {
+            warningForEmpty(r, formatter);
+        }
         return r.toString();
+    }
+
+    private static void warningForEmpty(StringBuilder r, ReportFormatter formatter) {
+        r.append(formatter.openSection("nope"));
+        r.append("empty? Try to add " + REPORT_empty + "=true");
+        r.append(formatter.closeSection("nope"));
+        r.append("\n");
     }
 
     synchronized String getReportForNvr(Map<String, Map<Integer, List<ScoreWithTimeStamp>>> nvr, Pattern jobEx, boolean empty, ReportFormatter formatter, String id, int group) {
