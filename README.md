@@ -228,8 +228,7 @@ This is the frontend of fake Koji. Here you can see the latest successful builds
 ![fake-koji-preview-details](https://user-images.githubusercontent.com/31389543/43505715-198779ee-9568-11e8-95ac-cc9e87626d51.png)
 
 ## Jenkins SCM Koji Plugin
-Next to Fake Koji there is Jenkins plugin, which ensures cooperation between Jenkins and Fake Koji. Based on configuration, plugin provides builds.
-
+Next to Fake Koji there is Jenkins plugin, which ensures cooperation between Jenkins and Fake Koji. Based on configuration, plugin provides builds. `-Dhudson.remoting.ClassFilter=hudson.plugins.scm.koji.model.Build,hudson.plugins.scm.koji.model.RPM,hudson.plugins.scm.koji.model.BuildProvider` may be still necessary to add to jenkins start up.
 #### Configuration
 * `Koji top URLs`
   * URL of Kojihub, Brewhub or Fake Koji
