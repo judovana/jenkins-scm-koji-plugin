@@ -62,7 +62,7 @@ public class PriorityApi implements EndpointGroup {
     public static String getHelp() {
         return "\n"
                 + MISC + '/' + PRIORITY + " can move items in jenkins queue if simple-queue-plugin is installed. It filters as usually\n"
-                + RedeployApiWorkerBase.getHelp()
+                + RedeployApiWorkerBase.THIS_API_IS_USING_SHARED_FILTER +
                 + " Extended by  " + PRIORITY_VIEW + " which allows to manipulate items only inside selected view and main. Defautls to nothing (equals as all)\n"
                 + "  " + PRIORITY_TYPE + " which defaults to " + PRIORITY_TYPE_DEFAULT + ". \n"
                 + "  value source of truth is: https://github.com/jenkinsci/simple-queue-plugin/blob/master/src/main/java/cz/mendelu/xotradov/MoveType.java#L7 \n"

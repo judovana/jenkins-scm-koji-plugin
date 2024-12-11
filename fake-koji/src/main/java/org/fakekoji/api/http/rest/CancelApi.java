@@ -62,7 +62,7 @@ public class CancelApi implements EndpointGroup {
                 + MISC + '/' + NO + "/[enable/disable/stop/scratch] where scratch is tkaing nvr=value argumenr" + "\n"
                 + "  enable - enable selected jobs, disable - disables selcted jobs, stop - will stop selected jobs, scratch will insert nvr into jobs processed.txt" + "\n"
                 + "  without do=true will just list as usually\n"
-                + RedeployApiWorkerBase.getHelp();
+                + RedeployApiWorkerBase.THIS_API_IS_USING_SHARED_FILTER;
     }
 
     private enum DirectOp {

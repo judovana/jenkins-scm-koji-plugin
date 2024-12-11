@@ -8,6 +8,7 @@ import io.javalin.http.staticfiles.Location;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.json.JsonMapper;
 
+import org.fakekoji.api.http.rest.utils.RedeployApiWorkerBase;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.BuildEqualityFilter;
 import org.fakekoji.core.utils.matrix.MatrixGenerator;
@@ -185,7 +186,10 @@ public class OToolService {
                             + ResultsDb.getHelp()
                             + RedeployApi.getHelp()
                             + CancelApi.getHelp()
-                            + PriorityApi.getHelp());
+                            + PriorityApi.getHelp()
+                            + " Shared filter:\n"
+                            + RedeployApiWorkerBase.getHelp()
+                    );
                 }));
                 path(RESULTS_DB, new ResultsDb(settings));
                 path(BUMP, new BumperAPI(settings));

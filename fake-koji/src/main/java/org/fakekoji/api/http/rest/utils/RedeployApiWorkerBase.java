@@ -26,6 +26,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class RedeployApiWorkerBase {
+
+    public static final String THIS_API_IS_USING_SHARED_FILTER = "  This api is using shared filter\n";
+
     //other details for selection, all can be coma separated lists
     private static final String REDEPLOY_project = "project";
     private static final String REDEPLOY_os = "os";

@@ -101,7 +101,6 @@ public class RedeployApi implements EndpointGroup {
     private static final String RERUN_JOB = "job";
     private static final String RERUN_BUILD = "build";
 
-
     private final JDKProjectParser parser;
     private final JDKProjectManager jdkProjectManager;
     private final JDKTestProjectManager jdkTestProjectManager;
@@ -152,7 +151,7 @@ public class RedeployApi implements EndpointGroup {
                 + "  Use " + LATEST_count + "=number to get ore then one latest. " + PROCESSED_cmments + " applicable and " + PROCESSED_job + "=true can make sense\n"
                 + "Shared by most:\n"
                 + "  once you set " + REDEPLOY_NVR + "=nvr the jobs affected by this nvr will be printed.\n"
-                + RedeployApiWorkerBase.getHelp()
+                + RedeployApiWorkerBase.THIS_API_IS_USING_SHARED_FILTER
                 + "  once you set " + REDEPLOY_DO + "=true, the real work will happen - nvr will be removed from affected jobs.\n"
                 + "  For " + REDEPLOY_BUILD + " it also removes the affected NVRA from database. A is deducted  from other params\n"
                 + "\n"
