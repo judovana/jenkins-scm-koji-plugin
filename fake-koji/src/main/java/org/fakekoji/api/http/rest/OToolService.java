@@ -187,7 +187,8 @@ public class OToolService {
                             + RedeployApi.getHelp()
                             + CancelApi.getHelp()
                             + PriorityApi.getHelp()
-                            + " Shared filter:\n"
+                            + DuplicateCoverageApi.getHelp()
+                            + "\n Shared filter:\n"
                             + RedeployApiWorkerBase.getHelp()
                     );
                 }));
@@ -196,6 +197,7 @@ public class OToolService {
                 path(RedeployApi.REDEPLOY, new RedeployApi(settings));
                 path(CancelApi.NO, new CancelApi(settings));
                 path(PriorityApi.PRIORITY, new PriorityApi(settings));
+                path(DuplicateCoverageApi.DUPLICATE, new DuplicateCoverageApi(settings));
                 path(UPDATE_JOBS, () -> {
                     get(UPDATE_JOBS_LIST, wrapper.wrap(context -> {
                                 UpdateVmsApi ua = new UpdateVmsApi(context);
