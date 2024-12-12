@@ -14,6 +14,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -146,9 +147,23 @@ public class Utils {
         }
     }
 
-    public static void moveDir(final File source, final File target) throws IOException {
+    private static final String MOVE_OR_COPY = "hard_mv"; /*FIXME, move to initial config*/
+    public static void moveDirByConfig(final File source, final File target) throws IOException {
+        if (MOVE_OR_COPY.equals("hard_mv")) {
+            moveDirByMvUnsafe(source, target);
+        } else {
+            moveDirByCopy(source, target);
+        }
+    }
+
+    public static void moveDirByMvDefault(final File source, final File target) throws IOException {
         LOGGER.info("Moving directory " + source.getAbsolutePath() + " to " + target.getAbsolutePath());
         Files.move(source.toPath(), target.toPath());
+    }
+
+    public static void moveDirByMvUnsafe(final File source, final File target) throws IOException {
+        LOGGER.info("Moving directory " + source.getAbsolutePath() + " to (replaced)" + target.getAbsolutePath());
+        Files.move(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
     
     public static void moveDirSafe(final File src, final File dst) {
