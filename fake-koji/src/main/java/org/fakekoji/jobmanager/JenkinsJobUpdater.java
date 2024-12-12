@@ -339,7 +339,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
             return new PrimaryExceptionThrower<JobUpdateResult>(
                     () -> {
-                        Utils.moveDirByCopy(src, dst);
+                        Utils.moveDirByConfig(src, dst);
                         //regenerate conig
                         LOGGER.info("recreating file " + JENKINS_JOB_CONFIG_FILE + " in " + dst);
                         Utils.writeToFile(
@@ -358,7 +358,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             final File dst = Paths.get(jenkinsJobArchiveRoot.getAbsolutePath(), job.toString()).toFile();
             LOGGER.info("Archiving job " + jobName);
             LOGGER.info("Moving directory " + src.getAbsolutePath() + " to " + dst.getAbsolutePath());
-            Utils.moveDirByCopy(src, dst);
+            Utils.moveDirByConfig(src, dst);
             //we delte only if archivation suceed
             JenkinsCliWrapper.getCli().deleteJobs(jobName).throwIfNecessary();
             return new JobUpdateResult(jobName, true);
@@ -418,7 +418,7 @@ public class JenkinsJobUpdater implements JobUpdater {
                         return new JobUpdateResult(toName, false, "Collision: no changes done");
                 }
             }
-            Utils.moveDir(fromDir, toDir); //just move, not copying, should be the same mount in all cases, and it is huge speedup. If exception is thrown from here, better to die with it
+            Utils.moveDirByMvDefault(fromDir, toDir); //just move, not copying, should be the same mount in all cases, and it is huge speedup. If exception is thrown from here, better to die with it
             final Result<Void, String> deleteJobResult = deleteJenkinsJob(fromName);
             final Result<Void, String> updateJobConfigResult = updateJenkinsJob(jobBump.to);
             final Result<Void, String> createJobResult = createJenkinsJob(toName);
@@ -452,7 +452,7 @@ public class JenkinsJobUpdater implements JobUpdater {
             archiveFile = new File(jenkinsJobArchiveRoot, filename + '(' + counter + ')');
             counter++;
         }
-        Utils.moveDirByCopy(file, archiveFile);
+        Utils.moveDirByConfig(file, archiveFile);
     }
 
     private Result<Void, String> deleteJenkinsJob(final String jobName) {

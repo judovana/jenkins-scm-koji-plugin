@@ -100,7 +100,7 @@ public class BuildDirUpdater {
         final String dstAbs = dst.getAbsolutePath();
         try {
             LOGGER.info("Moving " + srcAbs + " to " + dstAbs);
-            Utils.moveDir(src, dst);
+            Utils.moveDirByMvDefault(src, dst);
         } catch (IOException e) {
             final String message = "Failed to move " + srcAbs + " to " + dstAbs + ": " + e.getMessage();
             LOGGER.log(Level.SEVERE, message, e);
