@@ -190,7 +190,7 @@ public class RedeployApiWorkerBase {
             super(context);
         }
 
-        protected abstract void onPass(Job job) throws IOException;
+        protected abstract void onPass(Job job, Project project) throws IOException;
 
         public void iterate(final JDKProjectManager jdkProjectManager, final JDKTestProjectManager jdkTestProjectManager, JDKProjectParser parser) throws IOException, StorageException, ManagementException {
             List<Project> allProjects = new ArrayList<>();
@@ -202,11 +202,11 @@ public class RedeployApiWorkerBase {
         public void iterate(final List<Project> allProjects, final JDKProjectParser parser) throws IOException, StorageException, ManagementException {
             for (Project project : allProjects) {
                 Set<Job> jobs = parser.parse(project);
-                iterate(jobs);
+                iterate(jobs, project);
             }
         }
 
-        public void iterate(final Collection<Job> jobs) throws IOException {
+        public void iterate(final Collection<Job> jobs, Project project) throws IOException {
             for (Job job : jobs) {
                 if (blacklisted(job)) {
                     continue;
@@ -227,18 +227,27 @@ public class RedeployApiWorkerBase {
                     }
                 }
                 if (job instanceof PullJob) {
-                    if (!"true".equals(pull)) {
+                    if (!isPull()) {
                         continue;
                     }
                 }
                 if (job instanceof BuildJob) {
-                    if (!"true".equals(build)) {
+                    if (!isBuild()) {
                         continue;
                     }
                 }
-                onPass(job);
+                onPass(job, project);
             }
         }
+
+        public boolean isPull() {
+            return "true".equals(pull);
+        }
+
+        public boolean isBuild() {
+            return "true".equals(build);
+        }
+
     }
 
     public static class RedeployApiJobListing extends RedeployApiListingWorker {
@@ -255,7 +264,7 @@ public class RedeployApiWorkerBase {
         }
 
         @Override
-        protected void onPass(Job job) {
+        protected void onPass(Job job, Project project) {
             results.add(job);
         }
     }
@@ -274,7 +283,7 @@ public class RedeployApiWorkerBase {
         }
 
         @Override
-        protected void onPass(Job job) {
+        protected void onPass(Job job, Project project) {
             results.add(job.getName());
         }
     }

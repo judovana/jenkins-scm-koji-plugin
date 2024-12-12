@@ -716,7 +716,7 @@ public class RedeployApi implements EndpointGroup {
         }
 
         @Override
-        protected void onPass(Job job) throws IOException {
+        protected void onPass(Job job, Project project) throws IOException {
             if (clazz.isInstance(job)) {
                 allRelevantJobsMap.put(job.getName(), job);
                 File processed = new File(new File(settings.getJenkinsJobsRoot(), job.getName()), Constants.PROCESSED_BUILDS_HISTORY);
