@@ -210,7 +210,7 @@ public class DuplicateCoverageApi implements EndpointGroup {
                     if (job instanceof TestJob) {
                         TestJob futureJob = TestJob.cloneJobForTask((TestJob) job, targetTask);
                         sb.append(" + ").append(futureJob.getName()).append("\n");
-                        if (copyJobs) {
+                        if (copyJobs) { //kampak to nahore zkopirovat? Musi to byt driv, nez se vygeneruje config, ale pozdjei nez secko ostatni
                             if (!new File(settings.getJenkinsJobsRoot(), job.getName()).exists()) {
                                 sb.append("   Warning, ").append(futureJob.getName()).append(" do not exists!\n");
                             }
