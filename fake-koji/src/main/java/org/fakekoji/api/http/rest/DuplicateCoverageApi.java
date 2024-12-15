@@ -22,6 +22,7 @@ import org.fakekoji.model.Task;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,10 +34,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static org.fakekoji.api.http.rest.OToolService.MISC;
+import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 
 public class DuplicateCoverageApi implements EndpointGroup {
 
@@ -46,6 +47,7 @@ public class DuplicateCoverageApi implements EndpointGroup {
     public static final String DUPLICATE_TASK = "task";
     public static final String DUPLICATE_SOURCE = "source";
     public static final String DUPLICATE_TARGET = "target";
+    public static final String DUPLICATE_COPY_JOBS = "copyJobs";
     //without do, jsut listing
     public static final String DUPLICATE_DO = "do";
     //for scratching only
@@ -68,9 +70,10 @@ public class DuplicateCoverageApi implements EndpointGroup {
 
     public static String getHelp() {
         return "\n"
-                + MISC + '/' + DUPLICATE + "/task source taskNameIn target taskNameOut\n"
+                + MISC + '/' + DUPLICATE + "/task " + DUPLICATE_SOURCE + " taskNameIn " + DUPLICATE_TARGET + " taskNameOut [" + DUPLICATE_COPY_JOBS + " true]\n"
                 + "  Will apply full shared filter, and then select all matching taskNameIn, and create same set of jobs for taskNameOut\n"
                 + "  both taskNameIn taskNameOut must beexisting tasks. Note that if you exclude taskNameIn via shared filter, you will get empty output set.\n"
+                + "  " + DUPLICATE_COPY_JOBS + " when set to true, will also copy jenkins job (if it exists). Sometimes you use this api to split job, and then it may be worthy to persists history.\n"
                 + "  without do=true will just list as usually\n"
                 + RedeployApiWorkerBase.THIS_API_IS_USING_SHARED_FILTER;
     }
@@ -112,6 +115,7 @@ public class DuplicateCoverageApi implements EndpointGroup {
         String doAndHow = context.queryParam(DUPLICATE_DO);
         String source = context.queryParam(DUPLICATE_SOURCE);
         String target = context.queryParam(DUPLICATE_TARGET);
+        boolean copyJobs = Boolean.valueOf(extractParamValue(context.queryParamMap(), DUPLICATE_COPY_JOBS).orElse("false"));
         //exit on missing source/target tasks
         if (source == null || target == null) {
             context.status(500).result(DUPLICATE_SOURCE + " and " + DUPLICATE_TARGET + " are mandatory\n");
@@ -206,6 +210,14 @@ public class DuplicateCoverageApi implements EndpointGroup {
                     if (job instanceof TestJob) {
                         TestJob futureJob = TestJob.cloneJobForTask((TestJob) job, targetTask);
                         sb.append(" + ").append(futureJob.getName()).append("\n");
+                        if (copyJobs) {
+                            if (!new File(settings.getJenkinsJobsRoot(), job.getName()).exists()) {
+                                sb.append("   Warning, ").append(futureJob.getName()).append(" do not exists!\n");
+                            }
+                            if (new File(settings.getJenkinsJobsRoot(), futureJob.getName()).exists()) {
+                                sb.append("   Big warning, ").append(futureJob.getName()).append(" DO exists!\n");
+                            }
+                        }
                     } else {
                         sb.append(" skipped, not test job:  ").append(job.getName()).append("\n");
                     }
