@@ -293,16 +293,20 @@ public class Utils {
                     }
                     if (Files.isSymbolicLink(file)) {
                         Path lnTarget = Files.readSymbolicLink(file);
-                        String nwTarget = lnTarget.toString().replace(source.getAbsolutePath(), target.getAbsolutePath());
+                        Path nwTarget = lnTarget;
+                        //todo, use some config to do this always?
+                        if (lnTarget.isAbsolute()) {
+                            nwTarget =  new File(lnTarget.toString().replace(source.getAbsolutePath(), target.getAbsolutePath())).toPath();
+                        }
                         msg = "recriating symlink " + dest + " -> " + nwTarget + " (was " + lnTarget + ")";
                         LOGGER.log(SILENCE, msg);
                         outLog.add(msg);
-                        Files.createSymbolicLink(dest.toPath(), new File(nwTarget).toPath());
+                        Files.createSymbolicLink(dest.toPath(),nwTarget);
                     } else {
                         msg = ("Copy " + file + " to " + dest);
                         LOGGER.log(SILENCE, msg);
                         outLog.add(msg);
-                        Files.copy(file, dest.toPath());
+                        Files.copy(file, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     }
                     if (dirCheck != null) {
                         msg = "Failed to create dir " + parent;

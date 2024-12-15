@@ -2,9 +2,11 @@ package org.fakekoji.api.http.rest;
 
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
+import org.fakekoji.Utils;
 import org.fakekoji.api.http.rest.utils.RedeployApiWorkerBase;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
+import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.ConfigManager;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
@@ -33,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
@@ -144,7 +147,7 @@ public class DuplicateCoverageApi implements EndpointGroup {
         }
         Map<Project, List<Job>> jobsToDuplicate = tbi.process(jdkProjectManager, jdkTestProjectManager, parser);
         if ("true".equals(doAndHow)) {
-            Map<Project, Collection<Job>> jobsToGenerate = new HashMap<>();
+            Map<Project, Collection<Tuple<Job, Job>>> jobsToGenerate = new HashMap<>();
             StringBuilder sb = new StringBuilder();
             for (Project project : jobsToDuplicate.keySet()) {
                 Set<Job> origJobs = parser.parse(project);
@@ -158,13 +161,13 @@ public class DuplicateCoverageApi implements EndpointGroup {
                 });
                 futureJobs.addAll(origJobs);
                 List<Job> sourceJobs = jobsToDuplicate.get(project);
-                Set<Job> maxAddedJobs = new HashSet<>(sourceJobs.size());
+                Set<Tuple<Job, Job>> maxAddedJobs = new HashSet<>(sourceJobs.size());
                 sb.append(" jobs to be added: " + sourceJobs.size()).append("\n");
                 for (Job job : sourceJobs) {
                     TestJob testJob = (TestJob) job;
                     TestJob futureJob = TestJob.cloneJobForTask(testJob, targetTask);
                     futureJobs.add(futureJob);
-                    maxAddedJobs.add(futureJob);
+                    maxAddedJobs.add(new Tuple<>(testJob, futureJob));
                 }
                 sb.append(" jobs at the end: " + futureJobs.size()).append("\n");
                 if (futureJobs.size() != origJobs.size() + sourceJobs.size()) {
@@ -194,10 +197,29 @@ public class DuplicateCoverageApi implements EndpointGroup {
             }
             JenkinsJobUpdater.wakeUpJenkins();
             for (Project project : jobsToGenerate.keySet()) {
-                for (Job job : jobsToGenerate.get(project)) {
+                for (Tuple<Job, Job> fromTo : jobsToGenerate.get(project)) {
                     final JobUpdater jenkinsJobUpdater = settings.getJobUpdater();
-                    sb.append(" generating: ").append(job.getName()).append("\n");
-                    jenkinsJobUpdater.regenerate(project, job.getName());
+                    Job futureJob = fromTo.y;
+                    if (copyJobs) {
+                        Job job = fromTo.x;
+                        if (!new File(settings.getJenkinsJobsRoot(), job.getName()).exists()) {
+                            sb.append("   Warning, ").append(job.getName()).append(" do not exists, can't copy!\n");
+                        } else {
+                            if (new File(settings.getJenkinsJobsRoot(), futureJob.getName()).exists()) {
+                                sb.append("   Big warning, ").append(futureJob.getName()).append(" DO exists! Doing my best.\n");
+                            }
+                            try {
+                                Utils.copyDirPreserveSymlinks(
+                                        new File(settings.getJenkinsJobsRoot(), job.getName()),
+                                        new File(settings.getJenkinsJobsRoot(), futureJob.getName()));
+                            } catch (IOException ex) {
+                                LOGGER.log(Level.INFO, "Problems during merge: ", ex);
+                                sb.append("   " + ex.getMessage() + "\n");
+                            }
+                        }
+                    }
+                    sb.append(" generating: ").append(futureJob.getName()).append("\n");
+                    jenkinsJobUpdater.regenerate(project, futureJob.getName());
                 }
             }
             context.status(OToolService.OK).result(sb.toString());
@@ -210,9 +232,9 @@ public class DuplicateCoverageApi implements EndpointGroup {
                     if (job instanceof TestJob) {
                         TestJob futureJob = TestJob.cloneJobForTask((TestJob) job, targetTask);
                         sb.append(" + ").append(futureJob.getName()).append("\n");
-                        if (copyJobs) { //kampak to nahore zkopirovat? Musi to byt driv, nez se vygeneruje config, ale pozdjei nez secko ostatni
+                        if (copyJobs) {
                             if (!new File(settings.getJenkinsJobsRoot(), job.getName()).exists()) {
-                                sb.append("   Warning, ").append(futureJob.getName()).append(" do not exists!\n");
+                                sb.append("   Warning, ").append(job.getName()).append(" do not exists!\n");
                             }
                             if (new File(settings.getJenkinsJobsRoot(), futureJob.getName()).exists()) {
                                 sb.append("   Big warning, ").append(futureJob.getName()).append(" DO exists!\n");
