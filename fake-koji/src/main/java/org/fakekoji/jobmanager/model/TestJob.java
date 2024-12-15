@@ -132,6 +132,28 @@ public class TestJob extends TaskJob {
         );
     }
 
+    public static TestJob cloneJobForTask(TestJob testJob, Task targetTask) {
+        return new TestJob(
+                testJob.getPlatformProvider(),
+                testJob.getProjectName(),
+                testJob.getProjectType(),
+                testJob.getProduct(),
+                testJob.getJdkVersion(),
+                testJob.getBuildProviders(),
+                targetTask,
+                testJob.getPlatform(),
+                testJob.getVariants(),
+                testJob.getBuildPlatform(),
+                testJob.getBuildPlatformProvider(),
+                testJob.getBuildTask(),
+                testJob.getBuildVariants(),
+                testJob.getProjectSubpackageBlacklist(),
+                testJob.getProjectSubpackageWhitelist(),
+                testJob.getScriptsRoot(),
+                testJob.getProjectVariables()
+        );
+    }
+
     @Override
     public String generateTemplate() throws IOException {
         switch (projectType) {

@@ -158,25 +158,7 @@ public class DuplicateCoverageApi implements EndpointGroup {
                 sb.append(" jobs to be added: " + sourceJobs.size()).append("\n");
                 for (Job job : sourceJobs) {
                     TestJob testJob = (TestJob) job;
-                    TestJob futureJob = new TestJob(
-                            testJob.getPlatformProvider(),
-                            testJob.getProjectName(),
-                            testJob.getProjectType(),
-                            testJob.getProduct(),
-                            testJob.getJdkVersion(),
-                            testJob.getBuildProviders(),
-                            targetTask,
-                            testJob.getPlatform(),
-                            testJob.getVariants(),
-                            testJob.getBuildPlatform(),
-                            testJob.getBuildPlatformProvider(),
-                            testJob.getBuildTask(),
-                            testJob.getBuildVariants(),
-                            testJob.getProjectSubpackageBlacklist(),
-                            testJob.getProjectSubpackageWhitelist(),
-                            testJob.getScriptsRoot(),
-                            testJob.getProjectVariables()
-                    );
+                    TestJob futureJob = TestJob.cloneJobForTask(testJob, targetTask);
                     futureJobs.add(futureJob);
                     maxAddedJobs.add(futureJob);
                 }
@@ -221,13 +203,17 @@ public class DuplicateCoverageApi implements EndpointGroup {
                 sb.append(project.getId()).append("\n");
                 List<Job> sourceJobs = jobsToDuplicate.get(project);
                 for (Job job : sourceJobs) {
-                    sb.append(" + ").append(job.getName().replaceFirst(Pattern.quote(source), target)).append("\n");
+                    if (job instanceof TestJob) {
+                        TestJob futureJob = TestJob.cloneJobForTask((TestJob) job, targetTask);
+                        sb.append(" + ").append(futureJob.getName()).append("\n");
+                    } else {
+                        sb.append(" skipped, not test job:  ").append(job.getName()).append("\n");
+                    }
                 }
             }
             context.status(OToolService.OK).result(sb.toString());
         }
     }
-
 
     @Override
     public void addEndpoints() {
