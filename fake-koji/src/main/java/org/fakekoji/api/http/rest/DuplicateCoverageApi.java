@@ -8,6 +8,7 @@ import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Result;
 import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.ConfigManager;
+import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ManagementException;
@@ -220,6 +221,12 @@ public class DuplicateCoverageApi implements EndpointGroup {
                     }
                     sb.append(" generating: ").append(futureJob.getName()).append("\n");
                     jenkinsJobUpdater.regenerate(project, futureJob.getName());
+                    JenkinsCliWrapper.ClientResponse rc = JenkinsCliWrapper.getCli().createManuallyUploadedJob(settings.getJenkinsJobsRoot(), futureJob.getName());
+                    JenkinsCliWrapper.ClientResponse ru = JenkinsCliWrapper.getCli().updateManuallyUpdatedJob(settings.getJenkinsJobsRoot(), futureJob.getName());
+                    JenkinsCliWrapper.ClientResponse rr = JenkinsCliWrapper.getCli().reloadJob(futureJob.getName());
+                    //sb.append(" " + rc.toString()).append("\n");
+                    //sb.append(" " + ru.toString()).append("\n");
+                    //sb.append(" " + rr.toString()).append("\n");
                 }
             }
             context.status(OToolService.OK).result(sb.toString());
