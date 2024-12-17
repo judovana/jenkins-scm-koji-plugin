@@ -156,15 +156,30 @@ public class DataGenerator {
 
     public static final String SCP_POLL_SCHEDULE = "H/24 * * * *";
 
-    public static final String BUILD_PROVIDER_1_TOP_URL = "http://hydra.brq.redhat.com:XPORT/RPC2/";
-    public static final String BUILD_PROVIDER_1_DOWNLOAD_URL = "http://hydra.brq.redhat.com:DPORT/";
-    public static final String BUILD_PROVIDER_1_PACKAGE_INFO_URL = "http://hydra.brq.redhat.com:9849";
+    public static final String PRODUCTION_URL = "http://hydra.brq.redhat.com";
+    public static final String TESTRUN_URL = "http://localhost";
+    public static final String USED_URL = setMainUrl();
+
+    private static String setMainUrl() {
+        if (System.getProperty("otool.test.url") != null && System.getProperty("otool.test.url").length() > 0) {
+            if (System.getProperty("otool.test.url").equals("production")) {
+                return PRODUCTION_URL;
+            } else {
+                System.getProperty("otool.test.url");
+            }
+        }
+        return TESTRUN_URL;
+    }
+
+    public static final String BUILD_PROVIDER_1_TOP_URL = USED_URL + ":XPORT/RPC2/";
+    public static final String BUILD_PROVIDER_1_DOWNLOAD_URL = USED_URL + ":DPORT/";
+    public static final String BUILD_PROVIDER_1_PACKAGE_INFO_URL = USED_URL + ":9849";
     public static final String BUILD_PROVIDER_2_TOP_URL = "brewtopUrl";
     public static final String BUILD_PROVIDER_2_DOWNLOAD_URL = "brewdownloadUrl";
     public static final String BUILD_PROVIDER_2_PACKAGE_INFO_URL = "brewPackageInfoUrl";
 
-    public static final String JENKINS_URL = "http://hydra.brq.redhat.com:8080/";
-    public static final String COMPARE_URL = "http://hydra.brq.redhat.com:9090/comp.html";
+    public static final String JENKINS_URL = USED_URL + ":8080/";
+    public static final String COMPARE_URL = USED_URL + ":9090/comp.html";
 
     private static FolderHolder folderHolder;
 
