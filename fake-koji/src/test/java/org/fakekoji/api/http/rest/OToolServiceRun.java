@@ -2,6 +2,7 @@ package org.fakekoji.api.http.rest;
 
 import org.fakekoji.DataGenerator;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
+import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,11 +17,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 public class OToolServiceRun {
 
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
+
     public static void main(String[] args) throws IOException {
-        JenkinsCliWrapper.killCli();
+        if ("keep".equals(System.getProperty("otool.test.cli"))) {
+            LOGGER.severe("otool.test.cli=keep, cli kept running. This is dangerous!");
+            LOGGER.severe(JenkinsCliWrapper.getCli().toString());
+        } else {
+            LOGGER.info("otool.test.cli!=keep, cli will be correctly repalced by no-op instance.");
+            JenkinsCliWrapper.killCli();
+            LOGGER.info("Done");
+        }
         final File oTool = Files.createTempDirectory("oTool").toFile();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
         if (System.getProperty("otool.testdb.dir") != null) {

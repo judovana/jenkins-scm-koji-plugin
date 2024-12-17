@@ -144,8 +144,10 @@ public class JenkinsCliWrapper {
 
     }
 
+
+
     ClientResponse syncSshExec(String cmd, InputStream is) throws IOException, InterruptedException {
-        LOGGER.log(Level.INFO, "Executing: ssh -p {0} " + user + "@{1} {2}", new Object[]{port, host, cmd});
+        LOGGER.log(Level.INFO, toString(cmd));
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
             //todo enable remote, customize-able server from config
@@ -183,6 +185,14 @@ public class JenkinsCliWrapper {
                 client.stop();
             }
         }
+    }
+
+    public String toString(String cmd) {
+        return "Executing: ssh -p " + port + " " + user + "@" + host + " " + cmd;
+    }
+
+    public String toString() {
+        return "Will be " + toString("future_cmd");
     }
 
     public ClientResponse help() {
