@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,6 +59,8 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JOB_NAME_SHORTEN
 
 
 public class DataGenerator {
+
+    private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
     //the CVB projects were added very late in development cycle, and many asserts works with total numbers, so enabling them only on demand
     public static boolean withCvbJobs = false;
@@ -2003,11 +2006,20 @@ public class DataGenerator {
         });
         initScriptsRoot(scriptsRoot);
         initBuildsRoot(buildsRoot);
+        File usedJenkins=jenkinsJobsRoot;
+        if (System.getProperty("otool.test.jenkins.dir") != null) {
+            File futureJenkins=new File(System.getProperty("otool.test.jenkins.dir"));
+            if (!futureJenkins.exists() || !futureJenkins.isDirectory()) {
+                throw new IOException("Set otool.test.jenkins.dir do not exists or is file: " + futureJenkins.getAbsolutePath());
+            }
+            LOGGER.severe("Test run points to real jenkins home: " + futureJenkins.getAbsolutePath() + " - that is VERY DANGEROUS");
+            usedJenkins=futureJenkins;
+        }
         folderHolder = new FolderHolder(
                 buildsRoot,
                 scriptsRoot,
                 reposRoot,
-                jenkinsJobsRoot,
+                usedJenkins,
                 jenkinsJobArchiveRoot,
                 configsRoot
         );
