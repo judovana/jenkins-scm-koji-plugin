@@ -2091,7 +2091,7 @@ public class DataGenerator {
 
     private static Integer getNullableInt(String prop) {
         String s = System.getProperty(prop);
-        if (s == null || s == "null") {
+        if (s == null || s.equals("null")) {
             return null;
         }
         return Integer.valueOf(s);
@@ -2099,7 +2099,7 @@ public class DataGenerator {
 
     private static String getNullableString(String prop) {
         String s = System.getProperty(prop);
-        if (s == null || s == "null") {
+        if (s == null || s.equals("null")) {
             return null;
         }
         return s;
