@@ -61,7 +61,14 @@ public class JenkinsCliWrapper {
 
     private static class Singleton {
 
-        private static JenkinsCliWrapper client = new JenkinsCliWrapper(originalSettings.getJenkinsSshHost(), originalSettings.getJenkinsSshPort(), originalSettings.getJenkinsSshUser(), originalSettings.getJenkinsSshPathToPrivateKey());
+        private static JenkinsCliWrapper client;
+
+        public static JenkinsCliWrapper getClient() {
+            if (client == null) {
+                client = new JenkinsCliWrapper(originalSettings.getJenkinsSshHost(), originalSettings.getJenkinsSshPort(), originalSettings.getJenkinsSshUser(), originalSettings.getJenkinsSshPathToPrivateKey());
+            }
+            return client;
+        }
 
     }
 
@@ -150,7 +157,7 @@ public class JenkinsCliWrapper {
 
 
     public static JenkinsCliWrapper getCli() {
-        return Singleton.client;
+        return Singleton.getClient();
     }
 
     public static void setCli(JenkinsCliWrapper c) {
