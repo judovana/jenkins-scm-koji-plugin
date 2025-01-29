@@ -202,7 +202,7 @@ public class JavaServer {
 
     private static Integer getNullableInt(Properties props, Property prop) {
         String s = props.getProperty(prop.value);
-        if (s == null || s == "null") {
+        if (s == null || s.equals("null")) {
             return null;
         }
         return Integer.valueOf(s);
@@ -210,7 +210,7 @@ public class JavaServer {
 
     private static String getNullableString(Properties props, Property prop) {
         String s = props.getProperty(prop.value);
-        if (s == null || s == "null") {
+        if (s == null || s.equals("null")) {
             return null;
         }
         return s;
