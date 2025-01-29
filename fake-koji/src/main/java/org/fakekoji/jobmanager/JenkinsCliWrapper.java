@@ -182,7 +182,11 @@ public class JenkinsCliWrapper {
     }
 
     private JenkinsCliWrapper(String host, Integer port, String user, String key) {
-        this.host = host;
+        if (host == null) {
+            this.host = "localhost";
+        } else {
+            this.host = host;
+        }
         if (port == null) {
             this.port=999;
         } else {
