@@ -29,12 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
-
-import org.fakekoji.DataGenerator;
 import org.fakekoji.Utils;
-import org.fakekoji.api.http.rest.OToolService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -63,16 +59,6 @@ public class JenkinsSshCliTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        if (System.getProperty("jenkins.test.ssh.port") == null){
-            System.setProperty("jenkins.test.ssh.port", "9999");
-            //Different url? authentification? Set more ^ properties to make this test pass
-        }
-        final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
-        if (System.getProperty("otool.testdb.dir") != null) {
-            Files.copy(new File(System.getProperty("otool.testdb.dir") + "/results.db").toPath(), new File(folderHolder.configsRoot, "results.db").toPath());
-        }
-        DataGenerator.getSettings(folderHolder);
         JenkinsCliWrapper.reinitCli(); //this one expects correct - non dummy instance provided by killCli
         try {
             JenkinsCliWrapper.ClientResponse r = JenkinsCliWrapper.getCli().help();
