@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
-import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.jobmanager.JenkinsJobUpdater;
 import org.fakekoji.jobmanager.JobUpdater;
 import org.fakekoji.jobmanager.ConfigManager;
@@ -69,10 +68,6 @@ public class AccessibleSettings {
     private final File scriptsRoot;
 
     private final URL jenkins;
-    private final String jenkinsSshHost;
-    private final Integer jenkinsSshPort;
-    private final String jenkinsSshUser;
-    private final String jenkinsSshPathToPrivateKey;
     private final URL compare;
 
     private final int xmlRpcPort;
@@ -96,10 +91,6 @@ public class AccessibleSettings {
             File jenkinsJobArchiveRoot,
             File scriptsRoot,
             final URL jenkins,
-            String jenkinsSshHost,
-            Integer jenkinsSshPort,
-            String jenkinsSshUser,
-            String jenkinsSshPathToPrivateKey,
             final URL compare,
             int xmlRpcPort,
             int fileDownloadPort,
@@ -116,10 +107,6 @@ public class AccessibleSettings {
         this.jenkinsJobArchiveRoot = jenkinsJobArchiveRoot;
         this.scriptsRoot = scriptsRoot;
         this.jenkins = jenkins;
-        this.jenkinsSshHost = jenkinsSshHost;
-        this.jenkinsSshPort = jenkinsSshPort;
-        this.jenkinsSshUser = jenkinsSshUser;
-        this.jenkinsSshPathToPrivateKey = jenkinsSshPathToPrivateKey;
         this.compare = compare;
         this.xmlRpcPort = xmlRpcPort;
         this.fileDownloadPort = fileDownloadPort;
@@ -141,7 +128,6 @@ public class AccessibleSettings {
         this.projectMapping = new ProjectMapping(this);
         this.reportParams = reportParams;
         this.reportChartParams = reportChartParams;
-        JenkinsCliWrapper.setMainSettings(this);
     }
 
     public File getDbFileRoot() {
@@ -176,22 +162,6 @@ public class AccessibleSettings {
     public File getScriptsRoot() {
         warn(scriptsRoot, "scriptsRoot");
         return scriptsRoot;
-    }
-
-    public Integer getJenkinsSshPort() {
-        return jenkinsSshPort;
-    }
-
-    public String getJenkinsSshHost() {
-        return jenkinsSshHost;
-    }
-
-    public String getJenkinsSshUser() {
-        return jenkinsSshUser;
-    }
-
-    public String getJenkinsSshPathToPrivateKey() {
-        return jenkinsSshPathToPrivateKey;
     }
 
     public URL getJenkins() {
