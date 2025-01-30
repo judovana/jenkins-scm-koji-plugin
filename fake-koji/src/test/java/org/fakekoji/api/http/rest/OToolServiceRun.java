@@ -26,6 +26,7 @@ public class OToolServiceRun {
     public static void main(String[] args) throws IOException {
         if ("keep".equals(System.getProperty("otool.test.cli"))) {
             LOGGER.severe("otool.test.cli=keep, cli kept running. This is dangerous!");
+            LOGGER.severe(JenkinsCliWrapper.getCli().toString());
         } else {
             LOGGER.info("otool.test.cli!=keep, cli will be correctly repalced by no-op instance.");
             JenkinsCliWrapper.killCli();
@@ -36,9 +37,7 @@ public class OToolServiceRun {
         if (System.getProperty("otool.testdb.dir") != null) {
             Files.copy(new File(System.getProperty("otool.testdb.dir") + "/results.db").toPath(), new File(folderHolder.configsRoot, "results.db").toPath());
         }
-        OToolService oToolService = new OToolService(DataGenerator.getSettings(folderHolder));
-        LOGGER.severe(JenkinsCliWrapper.getCli().toString());
-        oToolService.start();
+        new OToolService(DataGenerator.getSettings(folderHolder)).start();
     }
 
     Map<String, List<String>> winZips = new HashMap<>();
