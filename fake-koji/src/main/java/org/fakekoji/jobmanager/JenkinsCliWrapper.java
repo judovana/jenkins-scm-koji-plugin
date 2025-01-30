@@ -18,27 +18,64 @@ import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.future.CloseFuture;
 import org.apache.sshd.common.util.io.input.NoCloseInputStream;
+import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.views.JenkinsViewTemplateBuilder;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
+import org.jetbrains.annotations.NotNull;
 
 public class JenkinsCliWrapper {
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
+    private static AccessibleSettings originalSettings;
+
+    public static void setMainSettings(AccessibleSettings accessibleSettings) {
+        originalSettings = accessibleSettings;
+    }
+
     private final String host;
     private final int port;
-    private final String user = "unused_now";
+    private final UserWithShhKey user;
+
+    private static final class UserWithShhKey {
+        String user = "unused_now";
+        String pathToKey = null;
+
+        public UserWithShhKey(String user, String pathToKey) {
+            if (user == null) {
+                this.user = "unused_now";
+            } else {
+                this.user = user;
+            }
+            this.pathToKey = pathToKey;
+        }
+
+        public String toSubString() {
+            if (pathToKey == null){
+                return user;
+            } else {
+                return "-i " + pathToKey + " " + user;
+            }
+        }
+    }
 
     private static class Singleton {
 
-        private static JenkinsCliWrapper client = new JenkinsCliWrapper("localhost", 9999);
+        private static JenkinsCliWrapper client;
+
+        public static JenkinsCliWrapper getClient() {
+            if (client == null) {
+                client = new JenkinsCliWrapper(originalSettings.getJenkinsSshHost(), originalSettings.getJenkinsSshPort(), originalSettings.getJenkinsSshUser(), originalSettings.getJenkinsSshPathToPrivateKey());
+            }
+            return client;
+        }
 
     }
 
     public class ClientResponse extends  ClientResponseBase {
 
         public ClientResponse(Integer res, String so, String se, Throwable ex, String origCommand) {
-            super(res, so, se, ex, "ssh -p " + port + " " + user + "@" + host + " " + origCommand);
+            super(res, so, se, ex, "ssh -p " + port + " " + user.toSubString() + "@" + host + " " + origCommand);
         }
 
     }
@@ -65,13 +102,27 @@ public class JenkinsCliWrapper {
         }
 
         public void throwIfNecessary() throws IOException {
+            String so = getNiceOutput(sout, "(no stdout)", "stdout: ");
+            String se = getNiceOutput(serr, "(no stderr)", "stderr: ");
             if (sshEngineExeption != null) {
-                throw new IOException("Probable ssh engine fail in `" + cmd + "`", sshEngineExeption);
+                throw new IOException("Probable ssh engine fail in `" + cmd + "`" + se + ", " + so, sshEngineExeption);
             } else {
                 if (remoteCommandreturnValue != 0) {
-                    throw new IOException("ssh command `" + cmd + "` returned non zero: " + remoteCommandreturnValue);
+                    throw new IOException("ssh command `" + cmd + "` returned non zero: " + remoteCommandreturnValue + "; " + se + ", " + so);
                 }
             }
+        }
+
+        @NotNull
+        private String getNiceOutput(String sout, String alternative, String prefix) {
+            String r = sout;
+            if (r == null) {
+                r = alternative;
+            } else {
+                r = prefix + alternative;
+            }
+            r = r.substring(0, Math.min(r.length(), 50));
+            return r;
         }
 
         @Override
@@ -106,7 +157,7 @@ public class JenkinsCliWrapper {
 
 
     public static JenkinsCliWrapper getCli() {
-        return Singleton.client;
+        return Singleton.getClient();
     }
 
     public static void setCli(JenkinsCliWrapper c) {
@@ -118,22 +169,36 @@ public class JenkinsCliWrapper {
     }
 
     public static void reinitCli() {
-        Singleton.client = new JenkinsCliWrapper("localhost", 9999);
+        if (originalSettings == null) {
+            //LOGGER.log(Level.SEVERE, "No settings set, reinit would be futile");
+            throw new NullPointerException("No settings set, reinit would be futile");
+        } else {
+            Singleton.client = new JenkinsCliWrapper(originalSettings.getJenkinsSshHost(), originalSettings.getJenkinsSshPort(), originalSettings.getJenkinsSshUser(), originalSettings.getJenkinsSshPathToPrivateKey());
+        }
     }
 
     private ClientResponse syncSshExec(String cmd) throws IOException, InterruptedException {
         return syncSshExec(cmd, null);
     }
 
-    private JenkinsCliWrapper(String host, int port) {
-        this.host = host;
-        this.port = port;
+    private JenkinsCliWrapper(String host, Integer port, String user, String key) {
+        if (host == null) {
+            this.host = "localhost";
+        } else {
+            this.host = host;
+        }
+        if (port == null) {
+            this.port=999;
+        } else {
+            this.port = port;
+        }
+        this.user = new UserWithShhKey(user, key);
     }
 
     public static class NoOpWrapper extends JenkinsCliWrapper {
 
         public NoOpWrapper() {
-            super("nothing", 666);
+            super("nothing", 666, "noOne", null);
 
         }
 
@@ -150,8 +215,10 @@ public class JenkinsCliWrapper {
         LOGGER.log(Level.INFO, toString(cmd));
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
-            //todo enable remote, customize-able server from config
-            HostConfigEntry hce = new HostConfigEntry(".*", host, port, user);
+            HostConfigEntry hce = new HostConfigEntry(".*", host, port, user.user);
+            if (user.pathToKey != null) {
+                hce.addIdentity(user.pathToKey);
+            }
             ConnectFuture cu = client.connect(hce);
             cu.await();
             try (ClientSession session = cu.getSession()) {
@@ -188,7 +255,7 @@ public class JenkinsCliWrapper {
     }
 
     public String toString(String cmd) {
-        return "Executing: ssh -p " + port + " " + user + "@" + host + " " + cmd;
+        return "Executing: ssh -p " + port + " " + user.toSubString() + "@" + host + " " + cmd;
     }
 
     public String toString() {

@@ -138,6 +138,10 @@ public class JavaServer {
                 getRoot(props, Property.JENKINS_JOB_ARCHIVE_ROOT),
                 getRoot(props, Property.SCRIPTS_ROOT),
                 parseUrl(props, Property.JENKINS_URL),
+                getNullableString(props, Property.JENKINS_SSH_HOST),
+                getNullableInt(props, Property.JENKINS_SSH_PORT),
+                getNullableString(props, Property.JENKINS_SSH_USER),
+                getNullableString(props, Property.JENKINS_SSH_KEYPATH),
                 parseUrl(props, Property.COMPARE_URL),
                 xmlRpcPort,
                 fileDownloadPort,
@@ -166,6 +170,10 @@ public class JavaServer {
         FILE_DOWNLOAD_PORT("port.file.download"),
         SSH_PORT("port.ssh"),
         JENKINS_URL("url.jenkins"),
+        JENKINS_SSH_HOST("jenkins.ssh.host"),
+        JENKINS_SSH_PORT("jenkins.ssh.port"),
+        JENKINS_SSH_USER("jenkins.ssh.user"),
+        JENKINS_SSH_KEYPATH("jenkins.ssh.keypath"),
         COMPARE_URL("url.comparator"),
         WEBAPP_PORT("port.webapp"),
         REPOS_ROOT("root.repos"),
@@ -190,6 +198,22 @@ public class JavaServer {
 
     private static int getPort(Properties props, Property prop, int defaultProp) {
         return Integer.valueOf(props.getProperty(prop.value, String.valueOf(defaultProp)));
+    }
+
+    private static Integer getNullableInt(Properties props, Property prop) {
+        String s = props.getProperty(prop.value);
+        if (s == null || s.equals("null")) {
+            return null;
+        }
+        return Integer.valueOf(s);
+    }
+
+    private static String getNullableString(Properties props, Property prop) {
+        String s = props.getProperty(prop.value);
+        if (s == null || s.equals("null")) {
+            return null;
+        }
+        return s;
     }
 
     private static File getRoot(Properties props, Property prop) {
