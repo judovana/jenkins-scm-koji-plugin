@@ -28,7 +28,6 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
-import org.fakekoji.server.JavaServer;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.junit.rules.TemporaryFolder;
@@ -49,7 +48,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -2089,22 +2087,6 @@ public class DataGenerator {
         return getSettings(initFolders(temporaryFolder));
     }
 
-    private static Integer getNullableInt(String prop) {
-        String s = System.getProperty(prop);
-        if (s == null || s == "null") {
-            return null;
-        }
-        return Integer.valueOf(s);
-    }
-
-    private static String getNullableString(String prop) {
-        String s = System.getProperty(prop);
-        if (s == null || s == "null") {
-            return null;
-        }
-        return s;
-    }
-
     public static AccessibleSettings getSettings(FolderHolder folderHolder) throws MalformedURLException {
         return new AccessibleSettings(
                 folderHolder.buildsRoot,
@@ -2114,10 +2096,6 @@ public class DataGenerator {
                 folderHolder.jenkinsJobArchiveRoot,
                 folderHolder.scriptsRoot,
                 new URL(JENKINS_URL),
-                getNullableString("jenkins.test.ssh.host"),
-                getNullableInt("jenkins.test.ssh.port"),
-                getNullableString("jenkins.test.ssh.user"),
-                getNullableString("jenkins.test.ssh.keypath"),
                 new URL(COMPARE_URL),
                 JavaServerConstants.DFAULT_RP2C_PORT,
                 JavaServerConstants.DFAULT_DWNLD_PORT,
