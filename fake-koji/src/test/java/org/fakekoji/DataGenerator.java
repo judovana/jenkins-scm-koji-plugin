@@ -1030,11 +1030,11 @@ public class DataGenerator {
         String s =
                 "        <hudson.plugins.postbuildtask.PostbuildTask plugin=\"postbuild-task@1.8\">\n" +
                 "            <tasks>\n";
-        if (analyser) {
-            s = s + getAnnalyzePostTask(scriptsRoot);
-        }
         if (vm) {
             s = s + getVmShutdownPostTask(scriptsRoot, provider, shortenedName, vmPlatformName);
+        }
+        if (analyser) {
+            s = s + getAnnalyzePostTask(scriptsRoot);
         }
         s = s +
                 "            </tasks>\n" +
