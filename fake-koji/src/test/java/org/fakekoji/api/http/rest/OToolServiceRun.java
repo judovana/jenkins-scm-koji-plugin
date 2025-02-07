@@ -423,28 +423,58 @@ public class OToolServiceRun {
             "java-latest-openjdk-headless-slowdebug-debuginfo-13.0.2.8-1.rolling.fc31.x86_64.rpm",
             "java-latest-openjdk-slowdebug-debuginfo-13.0.2.8-1.rolling.fc31.x86_64.rpm");
     List<String> jdk11WinZips = Arrays.asList(
-            "java-11-openjdk-11.0.6.10-2.windows.redhat-sources.zip",
-            "java-11-openjdk-11.0.6.10-2.windows.redhat.src.zip",
-            "java-11-openjdk-11.0.6.10-2.windows.redhat.x86_64.debuginfo.zip",
-            "java-11-openjdk-11.0.6.10-2.windows.redhat.x86_64.installer_bundle.zip",
-            "java-11-openjdk-11.0.6.10-2.windows.redhat.x86_64.zip",
-            "java-11-openjdk-debug-11.0.6.10-2.windows.redhat.x86_64.zip",
-            "java-11-openjdk-jre-11.0.6.10-2.windows.redhat.x86_64.zip");
+            "java-11-openjdk-11.0.26.0.4-1.win.debuginfo.x86_64.zip",
+            "java-11-openjdk-11.0.26.0.4-1.win.jdk.x86_64.zip",
+            "java-11-openjdk-11.0.26.0.4-1.win.jre.x86_64.zip",
+            "java-11-openjdk-11.0.26.0.4-1.win.redhat.src.zip",
+            "java-11-openjdk-11.0.26.0.4-1.win-sources.zip",
+            "java-11-openjdk-11.0.26.0.4-1.win.src.zip",
+            "java-11-openjdk-11.0.26.0.4-1.win.test.x86_64.zip",
+            "java-11-openjdk-fastdebug-11.0.26.0.4-1.win.jdk.x86_64.zip",
+            "signing-logs.zip",
+            "unsigned_java-11-openjdk-11.0.26.0.4-1.win.jdk.x86_64.zip",
+            "unsigned_java-11-openjdk-11.0.26.0.4-1.win.jre.x86_64.zip",
+            "unsigned_java-11-openjdk-fastdebug-11.0.26.0.4-1.win.jdk.x86_64.zip");
     List<String> jdk8WinZips = Arrays.asList(
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.redhat.windows.src.zip",
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.redhat.windows.x86_64.debuginfo.zip",
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.redhat.windows.x86_64.installer_bundle.zip",
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.redhat.windows.x86_64.zip",
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.redhat.windows.x86.debuginfo.zip",
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.redhat.windows.x86.installer_bundle.zip",
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.redhat.windows.x86.zip",
-            "java-1.8.0-openjdk-1.8.0.242-3.b08.windows.redhat-sources.zip",
-            "java-1.8.0-openjdk-debug-1.8.0.242-3.b08.redhat.windows.x86_64.zip",
-            "java-1.8.0-openjdk-debug-1.8.0.242-3.b08.redhat.windows.x86.zip",
-            "java-1.8.0-openjdk-jre-1.8.0.242-3.b08.redhat.windows.x86_64.zip",
-            "java-1.8.0-openjdk-jre-1.8.0.242-3.b08.redhat.windows.x86.zip",
-            "openjfx-8.0.202-3.b11.redhat.windows.x86_64.zip",
-            "openjfx-8.0.202-3.b11.redhat.windows.x86.zip");
+            "java-1.8.0-openjdk-1.8.0.442.b06-2.win.debuginfo.x86_64.zip",
+            "java-1.8.0-openjdk-1.8.0.442.b06-2.win.jdk.x86_64.zip",
+            "java-1.8.0-openjdk-1.8.0.442.b06-2.win.jre.x86_64.zip",
+            "java-1.8.0-openjdk-1.8.0.442.b06-2.win.redhat.src.zip",
+            "java-1.8.0-openjdk-1.8.0.442.b06-2.win-sources.zip",
+            "java-1.8.0-openjdk-1.8.0.442.b06-2.win.src.zip",
+            "java-1.8.0-openjdk-1.8.0.442.b06-2.win.testsrc.zip",
+            "signing-logs.zip",
+            "unsigned_java-1.8.0-openjdk-1.8.0.442.b06-2.win.jdk.x86_64.zip",
+            "unsigned_java-1.8.0-openjdk-1.8.0.442.b06-2.win.jre.x86_64.zip",
+            "unsigned_java-1.8.0-openjdk-1.8.0.442.b06-2.win.x86_64.installer_bundle.zip",
+            "java-1.8.0-openjdk-jre-1.8.0.242-3.b08.redhat.windows.x86.zip");
+    List<String> jdk17WinZips = Arrays.asList(
+            "java-17-openjdk-17.0.14.0.7-1.win.debuginfo.x86_64.zip",
+            "java-17-openjdk-17.0.14.0.7-1.win.jdk.x86_64.zip",
+            "java-17-openjdk-17.0.14.0.7-1.win.jre.x86_64.zip",
+            "java-17-openjdk-17.0.14.0.7-1.win.redhat.src.zip",
+            "java-17-openjdk-17.0.14.0.7-1.win-sources.zip",
+            "java-17-openjdk-17.0.14.0.7-1.win.src.zip",
+            "java-17-openjdk-17.0.14.0.7-1.win.test.x86_64.zip",
+            "java-17-openjdk-fastdebug-17.0.14.0.7-1.win.jdk.x86_64.zip",
+            "signing-logs.zip",
+            "unsigned_java-17-openjdk-17.0.14.0.7-1.win.jdk.x86_64.zip",
+            "unsigned_java-17-openjdk-17.0.14.0.7-1.win.jre.x86_64.zip",
+            "unsigned_java-17-openjdk-fastdebug-17.0.14.0.7-1.win.jdk.x86_64.zip");
+    List<String> jdk21WinZips = Arrays.asList(
+            "java-21-openjdk-21.0.6.0.7-1.win.debuginfo.x86_64.zip",
+            "java-21-openjdk-21.0.6.0.7-1.win.jdk.x86_64.zip",
+            "java-21-openjdk-21.0.6.0.7-1.win.jre.x86_64.zip",
+            "java-21-openjdk-21.0.6.0.7-1.win.patches.zip",
+            "java-21-openjdk-21.0.6.0.7-1.win-sources.zip",
+            "java-21-openjdk-21.0.6.0.7-1.win.src.zip",
+            "java-21-openjdk-21.0.6.0.7-1.win.test.x86_64.zip",
+            "java-21-openjdk-fastdebug-21.0.6.0.7-1.win.jdk.x86_64.zip",
+            "signing-logs.zip",
+            "unsigned_java-21-openjdk-21.0.6.0.7-1.win.jdk.x86_64.zip",
+            "unsigned_java-21-openjdk-21.0.6.0.7-1.win.jre.x86_64.zip",
+            "unsigned_java-21-openjdk-fastdebug-21.0.6.0.7-1.win.jdk.x86_64.zip"
+    );
 
     List<String> jdk11El7src = Arrays.asList(
             "java-11-openjdk-11.0.6.10-3.el7.src.rpm");
@@ -1135,6 +1165,8 @@ public class OToolServiceRun {
     }
 
     public OToolServiceRun() {
+        winZips.put("jdk21WinZips", jdk21WinZips);
+        winZips.put("jdk17WinZips", jdk17WinZips);
         winZips.put("jdk11WinZips", jdk11WinZips);
         winZips.put("jdk8WinZips", jdk8WinZips);
         rpms.put("F30aarch64", jdk8F30aarch64);
@@ -1189,7 +1221,7 @@ public class OToolServiceRun {
             new String[]{".*-jre-.*windows.*", ".*jre.win.*", ".*-portable-[b\\d\\.\\-ea]{3,}el.*", ".*-portable-fastdebug-[b\\d\\.\\-ea]{3,}el.*", ".*-portable-slowdebug-[b\\d\\.\\-ea]{3,}el.*"},
             new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-static-libs-.*", ".*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).*", ".*openjdk-[0-9].*[^jre].win.*"},
+            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-static-libs-.*", ".*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).*", ".*\.jdk\..*"},
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
             new String[]{".*windows.*", ".*debuginfo.*"},
