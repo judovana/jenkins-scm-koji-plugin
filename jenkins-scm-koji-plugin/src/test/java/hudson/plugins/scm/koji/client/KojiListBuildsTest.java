@@ -718,6 +718,25 @@ public class KojiListBuildsTest {
     }
 
     @Test
+    public void testSmeru() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(
+                createHydraOnlyList(),
+                new RealKojiXmlRpcApi(
+                        "ibm-semeru-open-21-jdk",
+                        "x86_64",
+                        ".*",
+                        "",
+                        null
+                ),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
+        );
+        Build build = worker.invoke(temporaryFolder.newFolder(), null);
+        Assert.assertTrue(build != null);
+    }
+
+    @Test
     public void testListMatchingBuildsR7_oracle8() throws Exception {
         assumeTrue(onRhNet);
         KojiListBuilds worker = new KojiListBuilds(
