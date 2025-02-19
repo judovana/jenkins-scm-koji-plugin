@@ -222,8 +222,6 @@ public class JenkinsCliWrapper {
             ConnectFuture cu = client.connect(hce);
             cu.await();
             try (ClientSession session = cu.getSession()) {
-                //althoughg our jenkins is now insecure, veriy is necessary part
-                //once it will be secured, set the path to keys here
                 session.auth().verify();
 
                 try (ChannelExec channel = session.createExecChannel(cmd)) {
