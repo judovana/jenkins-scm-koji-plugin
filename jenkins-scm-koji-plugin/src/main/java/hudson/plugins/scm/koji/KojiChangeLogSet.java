@@ -6,6 +6,10 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.RPM;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.RepositoryBrowser;
+import hudson.security.Permission;
+import jenkins.model.Jenkins;
+import org.acegisecurity.Authentication;
+
 import java.io.File;
 import java.net.InetAddress;
 import java.net.URL;
@@ -16,6 +20,7 @@ import java.util.stream.Collectors;
 
 public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
+    public static final String OTOOL_ACTIONS = "Otool Actions";
     private final Build build;
     private final List<Entry> entries;
 
@@ -32,7 +37,7 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
                     new KojiChangeEntry("Build Tags", Collections.singletonList(new Hyperlink(String.join(", ", build.getTags())))),
                     new KojiChangeEntry("Build RPMs/Tarballs", getListFromRPMs(build.getRpms())),
                     new KojiChangeEntry("Build Sources", getListFromUrl(build.getSrcUrl())),
-                    new KojiChangeEntry("Otool Actions", getActions())
+                    new KojiChangeEntry(OTOOL_ACTIONS, getActions())
             );
             entries = Collections.unmodifiableList(list);
         } else {
@@ -58,6 +63,23 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
         public KojiChangeEntry(String field, List<Hyperlink> hyperlinks) {
             this.field = field;
             this.hyperlinks = hyperlinks;
+        }
+
+        public boolean canShow() {
+            if (OTOOL_ACTIONS.equals(field)){
+                Authentication auth = Jenkins.getAuthentication();
+                String userId = auth.getName();
+                if (Jenkins.getInstance().hasPermission(Permission.WRITE) ||
+                        Jenkins.getInstance().hasPermission(Permission.CREATE) ||
+                        Jenkins.getInstance().hasPermission(Permission.CONFIGURE) ||
+                        Jenkins.getInstance().hasPermission(Permission.DELETE)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } else {
+                return true;
+            }
         }
 
         public String getField() {
@@ -102,7 +124,7 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
         if (haveDualNvr()) {
             r.add(checkoutNvr(nvr2()));
         }
-        r.add(new Hyperlink("re/run", prefix("run?do=true&job="+getJobName()+"&build=" + getRun().getId()), "copy " + getRun().getId() + "/changelog.xml as build.xml and Build Now"));
+        r.add(new Hyperlink("re/run", prefix("run?do=true&job=" + getJobName() + "&build=" + getRun().getId()), "copy " + getRun().getId() + "/changelog.xml as build.xml and Build Now"));
         r.add(testNvr(nvr1()));
         if (haveDualNvr()) {
             r.add(testNvr(nvr2()));
@@ -234,6 +256,14 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
         public String getHashSum() {
             return hashSum;
+        }
+
+        public String showSum() {
+            if (hashSum.contains(" ")) {
+                return hashSum;
+            } else {
+                return "MD5: " + hashSum;
+            }
         }
 
         @Override

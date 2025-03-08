@@ -10,6 +10,8 @@
                     <tr>
                         <td><b>${changeset.field}:</b></td>
                         <td>
+                            <j:choose>
+                            <j:when test="${changeset.canShow()}">
                             <j:forEach var="hyperlink" items="${changeset.hyperlinks}" varStatus="loop">
                                 <j:choose>
                                     <j:when test="${hyperlink.containingUrl}">
@@ -17,7 +19,7 @@
                                     </j:when>
                                     <j:choose>
                                         <j:when test="${hyperlink.containingHashSum}">
-                                            <small><j:whitespace>  </j:whitespace>(MD5: ${hyperlink.hashSum})</small>
+                                            <small><j:whitespace>  </j:whitespace>(${hyperlink.showSum()})</small>
                                             <br/>
                                         </j:when>
                                     </j:choose>
@@ -26,6 +28,11 @@
                                     </j:otherwise>
                                 </j:choose>
                             </j:forEach>
+                            </j:when>
+                            <j:otherwise>
+                                  <b>You must log in to use otool actions</b>
+                           </j:otherwise>
+                           </j:choose>
                         </td>
                     </tr>
                 </j:forEach>
