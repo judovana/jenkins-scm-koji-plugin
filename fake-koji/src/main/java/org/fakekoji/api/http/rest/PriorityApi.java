@@ -17,11 +17,13 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import hudson.model.Run;
 import io.javalin.apibuilder.EndpointGroup;
 import io.javalin.http.Context;
 
@@ -38,7 +40,7 @@ public class PriorityApi implements EndpointGroup {
     private static final String PRIORITY_DELAY = "delay";
     private static final int PRIORITY_DELAY_DEFAULT = 5; //seconds
     private static final String PRIORITY_ITEM = "itemId";
-    private static final String PRIORITY_URLSTUB = /*jenkins*/"simpleMove/move?";
+    private static final String PRIORITY_URLSTUB = /*jenkins*/"simpleMoveUnsafe/move?";
 
 
     private final JDKProjectParser parser;
@@ -99,6 +101,9 @@ public class PriorityApi implements EndpointGroup {
                     c.connect();
                     System.out.println("" + c.getResponseCode());
                     c.disconnect();
+                    if (c.getResponseCode() > 399 ) {
+                        throw new IOException("server returned " + c.getResponseCode());
+                    }
                     results.add("moved " + moveType + " " + job + " in " + view + "; waiting " + (delay / 1000) + "s");
                     Thread.sleep(delay);
                 } catch (Exception ex) {
