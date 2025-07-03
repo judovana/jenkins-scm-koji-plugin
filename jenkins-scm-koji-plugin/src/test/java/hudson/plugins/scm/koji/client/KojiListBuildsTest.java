@@ -78,6 +78,13 @@ public class KojiListBuildsTest {
         );
     }
 
+    static KojiBuildProvider createNonsenseProvider() {
+        return new KojiBuildProvider(
+                "https://not.exisitng.ek56kj5k6mn5bnjk234b234.com/hub",
+                "http://not.exisitng.ek56kj5k6mn5bnjk234b234.com/packages/"
+        );
+    }
+
     static List<KojiBuildProvider> createBrewOnlyList() {
         return Collections.singletonList(createBrewHubKojiBuildProvider());
     }
@@ -97,6 +104,13 @@ public class KojiListBuildsTest {
     static List<KojiBuildProvider> createKojiBrewList() {
         return Arrays.asList(
                 createKojiHubKojiBuildProvider(),
+                createBrewHubKojiBuildProvider()
+        );
+    }
+
+    static List<KojiBuildProvider> createNonseAndBrew() {
+        return Arrays.asList(
+                createNonsenseProvider(),
                 createBrewHubKojiBuildProvider()
         );
     }
@@ -1016,5 +1030,24 @@ public class KojiListBuildsTest {
         Assert.assertTrue(build != null);
     }
 
+    /**
+     * point of this test is to ensure that if first api fails, second will be used
+     * this functionality is now broken\
+     * to fix it, one must first make tests pass, which means to align javalin/jenkins/plugin version (mostly to jetty 12)
+     * then to refactor Iterable<KojiBuildProvider> to some collection, which may not work, and you need tests
+     * once it is done, the terrible stream in  Stream<Build> listBuilds(BuildMatcher bm)
+     * may be refactored, so the 3exception from its middle donot kill it all
+     */
+    @Test
+    public void testSecondProviderIsUsedAfterFailOfFirst() throws Exception {
+        assumeTrue(onRhNet);
+        KojiListBuilds worker = new KojiListBuilds(
+                createNonseAndBrew(),
+                createConfigCustomRhel7(),
+                new NotProcessedNvrPredicate(new ArrayList<>()),
+                10
+        );
+        testListMatchingBuildsCustom(worker);
+    }
 }
 
