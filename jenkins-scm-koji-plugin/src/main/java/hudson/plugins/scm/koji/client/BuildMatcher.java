@@ -26,6 +26,7 @@ package hudson.plugins.scm.koji.client;
 import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.KojiSCM;
+import hudson.plugins.scm.koji.LoggerHelp;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
@@ -55,12 +56,14 @@ abstract class BuildMatcher {
     private final List<KojiBuildProvider> buildProviders;
     private final Predicate<String> notProcessedNvrPredicate;
     private final int maxBuilds;
+    private final LoggerHelp logger;
     private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
 
-    BuildMatcher(List<KojiBuildProvider> buildProviders, Predicate<String> notProcessedNvrPredicate, int maxBuilds) {
+    BuildMatcher(List<KojiBuildProvider> buildProviders, Predicate<String> notProcessedNvrPredicate, int maxBuilds, LoggerHelp logger) {
         this.buildProviders = buildProviders;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
         this.maxBuilds = maxBuilds;
+        this.logger = logger;
     }
 
     /**
@@ -77,14 +80,18 @@ abstract class BuildMatcher {
      *
      * you must filter after limit, otherwise strange builds will go in. The tests are covering this
      */
-    public static Stream<Build> listBuilds(BuildMatcher bm) {
+    public static Stream<Build> listBuilds(BuildMatcher bm, LoggerHelp logger) {
         for (KojiBuildProvider provider : bm.buildProviders) {
             List<Build> builds;
             try {
                 builds = bm.getBuilds(provider.getBuildProvider());
             } catch (Exception ex) {
-                LOG.error("", ex);
-                LOG.warn("Failed to read builds from " + provider.getTopUrl() + ", trying next one");
+                if (logger != null) {
+                    logger.log("", ex);
+                    logger.log("Failed to read builds from " + provider.getTopUrl() + ", trying next one");
+                }
+                LOG.warn("", ex);
+                LOG.error("Failed to read builds from " + provider.getTopUrl() + ", trying next one");
                 continue;
             }
             return builds.stream()
@@ -99,13 +106,13 @@ abstract class BuildMatcher {
     /**
      * From previous javadoc, returns 3
      */
-    public static Optional<Build> getLatestOfNewestBuilds(BuildMatcher bm) {
-        final Optional<Build> buildOptional = listBuilds(bm).max(BuildMatcher::compare);
+    public static Optional<Build> getLatestOfNewestBuilds(BuildMatcher bm, LoggerHelp logger) {
+        final Optional<Build> buildOptional = listBuilds(bm, logger).max(BuildMatcher::compare);
         return buildOptional.map(bm::getBuild);
     }
 
     public Optional<Build> getBuild() {
-        return getLatestOfNewestBuilds(this);
+        return getLatestOfNewestBuilds(this, logger);
     }
 
     abstract List<Build> getBuilds(BuildProvider buildProvider);

@@ -4,6 +4,7 @@ import hudson.FilePath;
 import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
 import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.KojiXmlRpcApi;
+import hudson.plugins.scm.koji.LoggerHelp;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.remoting.VirtualChannel;
@@ -19,17 +20,29 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
     private final KojiXmlRpcApi kojiXmlRpcApi;
     private final Predicate<String> notProcessedNvrPredicate;
     private final int maxPreviousBuilds;
+    private final LoggerHelp logger;
+
+    KojiListBuilds(
+            List<KojiBuildProvider> kojiBuildProviders,
+            KojiXmlRpcApi kojiXmlRpcApi,
+            Predicate<String> notProcessedNvrPredicate,
+            int maxPreviousBuilds
+           ) {
+        this(kojiBuildProviders, kojiXmlRpcApi, notProcessedNvrPredicate, maxPreviousBuilds, null);
+    }
 
     public KojiListBuilds(
             List<KojiBuildProvider> kojiBuildProviders,
             KojiXmlRpcApi kojiXmlRpcApi,
             Predicate<String> notProcessedNvrPredicate,
-            int maxPreviousBuilds
+            int maxPreviousBuilds,
+            LoggerHelp logger
     ) {
         this.kojiBuildProviders = kojiBuildProviders;
         this.kojiXmlRpcApi = kojiXmlRpcApi;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
         this.maxPreviousBuilds = maxPreviousBuilds;
+        this.logger = logger;
     }
 
     @Override
@@ -41,7 +54,8 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                     kojiBuildProviders,
                     notProcessedNvrPredicate,
                     maxPreviousBuilds,
-                    (RealKojiXmlRpcApi) kojiXmlRpcApi
+                    (RealKojiXmlRpcApi) kojiXmlRpcApi,
+                    logger
             );
         } else if (kojiXmlRpcApi instanceof FakeKojiXmlRpcApi) {
 
@@ -49,7 +63,8 @@ public class KojiListBuilds implements FilePath.FileCallable<Build> {
                     kojiBuildProviders,
                     notProcessedNvrPredicate,
                     maxPreviousBuilds,
-                    (FakeKojiXmlRpcApi) kojiXmlRpcApi
+                    (FakeKojiXmlRpcApi) kojiXmlRpcApi,
+                    logger
             );
         } else {
             throw new RuntimeException("Unknown XML-RPC API: " + kojiXmlRpcApi.getDescriptor().getDisplayName());

@@ -236,7 +236,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        KojiListBuilds worker = new KojiListBuilds(iterableToList(kojiBuildProviders), kojiXmlRpcApi, createNotProcessedNvrPredicate(project), maxPreviousBuilds);
+        KojiListBuilds worker = new KojiListBuilds(iterableToList(kojiBuildProviders), kojiXmlRpcApi, createNotProcessedNvrPredicate(project), maxPreviousBuilds, this);
         final Build build;
         if (!DESCRIPTOR.getKojiSCMConfig_requireWorkspace()) {
             if (skipBuildingIfDesired(project)){

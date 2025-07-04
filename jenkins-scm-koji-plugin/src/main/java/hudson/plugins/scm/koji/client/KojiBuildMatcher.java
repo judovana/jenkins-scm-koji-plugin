@@ -2,6 +2,7 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.KojiBuildProvider;
+import hudson.plugins.scm.koji.LoggerHelp;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
@@ -39,9 +40,10 @@ class KojiBuildMatcher extends BuildMatcher {
             List<KojiBuildProvider> kojiBuildProviders,
             Predicate<String> notProcessedNvrPredicate,
             int maxBuilds,
-            RealKojiXmlRpcApi kojiXmlRpcApi
+            RealKojiXmlRpcApi kojiXmlRpcApi,
+            LoggerHelp logger
     ) {
-        super(kojiBuildProviders, notProcessedNvrPredicate, maxBuilds);
+        super(kojiBuildProviders, notProcessedNvrPredicate, maxBuilds, logger);
         this.tagPredicate = new GlobPredicate(kojiXmlRpcApi.getTag(), null);
         this.pkgName = kojiXmlRpcApi.getPackageName();
         this.archs = composeArchList(kojiXmlRpcApi.getArch());

@@ -79,7 +79,7 @@ public class BuildMatcherTest {
 
     @Test
     public void singleBuildNoComparsion() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3) {
+        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
             @Override
             List<Build> getBuilds(BuildProvider buildProvider) {
                 return Arrays.asList(createBuild(1, "noDate!cha!"));
@@ -90,15 +90,15 @@ public class BuildMatcherTest {
                 return build;
             }
         };
-        List<Build> l = BuildMatcher.listBuilds(bm).collect(Collectors.toList());
+        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
         Assert.assertEquals(1, l.size());
-        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm);
+        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
         Assert.assertEquals("b-1-1", b.get().getNvr());
     }
 
     @Test(expected = DateTimeParseException.class)
     public void twoBuildsComaprsionError() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3) {
+        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
             @Override
             List<Build> getBuilds(BuildProvider buildProvider) {
                 return Arrays.asList(
@@ -111,12 +111,12 @@ public class BuildMatcherTest {
                 return build;
             }
         };
-        List<Build> l = BuildMatcher.listBuilds(bm).collect(Collectors.toList());
+        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
     }
 
     @Test
     public void twoBuilds() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3) {
+        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
             @Override
             List<Build> getBuilds(BuildProvider buildProvider) {
                 return Arrays.asList(createBuild(1, getDtfDate(10, 10)),
@@ -128,17 +128,17 @@ public class BuildMatcherTest {
                 return build;
             }
         };
-        List<Build> l = BuildMatcher.listBuilds(bm).collect(Collectors.toList());
+        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
         Assert.assertEquals(2, l.size());
         Assert.assertEquals("b-1-1", l.get(0).getNvr());
         Assert.assertEquals("b-1-2", l.get(1).getNvr());
-        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm);
+        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
         Assert.assertEquals("b-1-2", b.get().getNvr());
     }
 
     @Test
     public void threeBuilds() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3) {
+        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
             @Override
             List<Build> getBuilds(BuildProvider buildProvider) {
                 return Arrays.asList(createBuild(1, getDtfDate(10, 10)),
@@ -151,19 +151,19 @@ public class BuildMatcherTest {
                 return build;
             }
         };
-        List<Build> l = BuildMatcher.listBuilds(bm).collect(Collectors.toList());
+        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
         Assert.assertEquals(3, l.size());
         Assert.assertEquals("b-1-1", l.get(0).getNvr());
         Assert.assertEquals("b-1-2", l.get(1).getNvr());
         Assert.assertEquals("b-1-3", l.get(2).getNvr());
-        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm);
+        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
         Assert.assertEquals("b-1-3", b.get().getNvr());
     }
-    
-    
+
+
      @Test
     public void fourBuilds() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3) {
+        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
             @Override
             List<Build> getBuilds(BuildProvider buildProvider) {
                 return Arrays.asList(createBuild(1, getDtfDate(10, 10)),
@@ -177,18 +177,18 @@ public class BuildMatcherTest {
                 return build;
             }
         };
-        List<Build> l = BuildMatcher.listBuilds(bm).collect(Collectors.toList());
+        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
         Assert.assertEquals(3, l.size());
         Assert.assertEquals("b-1-1", l.get(0).getNvr());
         Assert.assertEquals("b-1-2", l.get(1).getNvr());
         Assert.assertEquals("b-1-3", l.get(2).getNvr());
-        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm);
+        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
         Assert.assertEquals("b-1-3", b.get().getNvr());
     }
-    
+
     @Test
     public void fourBuildsExcludeToOldOne() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(Arrays.asList("b-1-4")), 3) {
+        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(Arrays.asList("b-1-4")), 3, null) {
             @Override
             List<Build> getBuilds(BuildProvider buildProvider) {
                 return Arrays.asList(createBuild(1, getDtfDate(10, 10)),
@@ -202,18 +202,18 @@ public class BuildMatcherTest {
                 return build;
             }
         };
-        List<Build> l = BuildMatcher.listBuilds(bm).collect(Collectors.toList());
+        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
         Assert.assertEquals(3, l.size());
         Assert.assertEquals("b-1-1", l.get(0).getNvr());
         Assert.assertEquals("b-1-2", l.get(1).getNvr());
         Assert.assertEquals("b-1-3", l.get(2).getNvr());
-        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm);
+        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
         Assert.assertEquals("b-1-3", b.get().getNvr());
     }
-    
+
     @Test
     public void fourBuildsExcludeOkOne() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(Arrays.asList("b-1-3")), 3) {
+        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(Arrays.asList("b-1-3")), 3, null) {
             @Override
             List<Build> getBuilds(BuildProvider buildProvider) {
                 return Arrays.asList(createBuild(1, getDtfDate(10, 10)),
@@ -227,11 +227,11 @@ public class BuildMatcherTest {
                 return build;
             }
         };
-        List<Build> l = BuildMatcher.listBuilds(bm).collect(Collectors.toList());
+        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
         Assert.assertEquals(2, l.size());
         Assert.assertEquals("b-1-1", l.get(0).getNvr());
         Assert.assertEquals("b-1-2", l.get(1).getNvr());
-        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm);
+        Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
         Assert.assertEquals("b-1-2", b.get().getNvr());
     }
 }

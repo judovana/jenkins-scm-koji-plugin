@@ -96,7 +96,8 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
                     kojiBuildProviders,
                     kojiXmlRpcApi,
                     notProcessedNvrPredicate,
-                    maxPreviousBuilds
+                    maxPreviousBuilds,
+                    this
             ).invoke(workspace, channel);
             if (build == null) {
                 // if we are here - no remote changes on first build, exiting:

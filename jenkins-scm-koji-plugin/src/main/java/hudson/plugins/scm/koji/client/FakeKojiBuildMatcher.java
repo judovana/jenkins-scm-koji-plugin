@@ -2,6 +2,7 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.plugins.scm.koji.FakeKojiXmlRpcApi;
 import hudson.plugins.scm.koji.KojiBuildProvider;
+import hudson.plugins.scm.koji.LoggerHelp;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
@@ -18,9 +19,10 @@ class FakeKojiBuildMatcher extends BuildMatcher {
             List<KojiBuildProvider> buildProviders,
             Predicate<String> notProcessedNvrPredicate,
             int maxBuilds,
-            FakeKojiXmlRpcApi xmlRpcApi
+            FakeKojiXmlRpcApi xmlRpcApi,
+            LoggerHelp logger
     ) {
-        super(buildProviders, notProcessedNvrPredicate, maxBuilds);
+        super(buildProviders, notProcessedNvrPredicate, maxBuilds, logger);
         this.xmlRpcApi = xmlRpcApi;
     }
 
