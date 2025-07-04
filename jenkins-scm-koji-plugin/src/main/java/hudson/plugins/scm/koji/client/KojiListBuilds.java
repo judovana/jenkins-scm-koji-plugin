@@ -10,17 +10,18 @@ import hudson.remoting.VirtualChannel;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.File;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class KojiListBuilds implements FilePath.FileCallable<Build> {
 
-    private final Iterable<KojiBuildProvider> kojiBuildProviders;
+    private final List<KojiBuildProvider> kojiBuildProviders;
     private final KojiXmlRpcApi kojiXmlRpcApi;
     private final Predicate<String> notProcessedNvrPredicate;
     private final int maxPreviousBuilds;
 
     public KojiListBuilds(
-            Iterable<KojiBuildProvider> kojiBuildProviders,
+            List<KojiBuildProvider> kojiBuildProviders,
             KojiXmlRpcApi kojiXmlRpcApi,
             Predicate<String> notProcessedNvrPredicate,
             int maxPreviousBuilds

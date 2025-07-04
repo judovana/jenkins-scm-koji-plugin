@@ -15,7 +15,7 @@ class FakeKojiBuildMatcher extends BuildMatcher {
     private final FakeKojiXmlRpcApi xmlRpcApi;
 
     public FakeKojiBuildMatcher(
-            Iterable<KojiBuildProvider> buildProviders,
+            List<KojiBuildProvider> buildProviders,
             Predicate<String> notProcessedNvrPredicate,
             int maxBuilds,
             FakeKojiXmlRpcApi xmlRpcApi

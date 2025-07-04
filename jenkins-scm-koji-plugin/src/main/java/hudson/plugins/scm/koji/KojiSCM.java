@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Predicate;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -140,6 +142,12 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         return DESCRIPTOR;
     }
 
+    public static <T> List<T> iterableToList(Iterable<T> iterable) {
+        List<T> list = new ArrayList<>();
+        iterable.forEach(list::add);
+        return list;
+    }
+
     @Override
     public void checkout(Run<?, ?> run, Launcher launcher, FilePath workspace, TaskListener listener, File changelogFile, SCMRevisionState baseline) throws IOException, InterruptedException {
         currentListener = listener;
@@ -152,7 +160,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
         File checkoutBuildFile = new File(run.getParent().getRootDir(), BUILD_XML);
         final Build storedBuild = new BuildsSerializer().read(checkoutBuildFile);
         KojiBuildDownloader downloadWorker = new KojiBuildDownloader(
-                kojiBuildProviders,
+                iterableToList(kojiBuildProviders),
                 kojiXmlRpcApi,
                 createNotProcessedNvrPredicate(run.getParent()),
                 storedBuild,
@@ -228,7 +236,7 @@ public class KojiSCM extends SCM implements LoggerHelp, Serializable {
             throw new RuntimeException("Expected instance of KojiRevisionState, got: " + baseline);
         }
 
-        KojiListBuilds worker = new KojiListBuilds(kojiBuildProviders, kojiXmlRpcApi, createNotProcessedNvrPredicate(project), maxPreviousBuilds);
+        KojiListBuilds worker = new KojiListBuilds(iterableToList(kojiBuildProviders), kojiXmlRpcApi, createNotProcessedNvrPredicate(project), maxPreviousBuilds);
         final Build build;
         if (!DESCRIPTOR.getKojiSCMConfig_requireWorkspace()) {
             if (skipBuildingIfDesired(project)){

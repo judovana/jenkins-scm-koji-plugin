@@ -58,7 +58,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private static final int MAX_REDIRECTIONS = 10;
     private static final int BUFFER_SIZE = 8192;
 
-    private final Iterable<KojiBuildProvider> kojiBuildProviders;
+    private final List<KojiBuildProvider> kojiBuildProviders;
     private final KojiXmlRpcApi kojiXmlRpcApi;
     private final Predicate<String> notProcessedNvrPredicate;
     private TaskListener currentListener;
@@ -70,7 +70,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
     private final boolean dirPerNvr;
 
     public KojiBuildDownloader(
-            Iterable<KojiBuildProvider> kojiBuildProviders,
+            List<KojiBuildProvider> kojiBuildProviders,
             KojiXmlRpcApi kojiXmlRpcApi,
             Predicate<String> notProcessedNvrPredicate,
             Build build,
@@ -185,7 +185,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         return null;
     }
 
-    private void downloadMetadataFile(File metadataDownloadDir, Iterable<KojiBuildProvider> kojiBuildProviders, Build build) {
+    private void downloadMetadataFile(File metadataDownloadDir, List<KojiBuildProvider> kojiBuildProviders, Build build) {
         int i = 0;
         for (KojiBuildProvider provider : kojiBuildProviders) {
             String dwnlodStub = provider.getDownloadUrl();

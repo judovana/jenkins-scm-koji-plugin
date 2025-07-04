@@ -35,6 +35,7 @@ import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -51,12 +52,12 @@ abstract class BuildMatcher {
 
     private static final OrderBy orderBy = OrderBy.DATE;
 
-    private final Iterable<KojiBuildProvider> buildProviders;
+    private final List<KojiBuildProvider> buildProviders;
     private final Predicate<String> notProcessedNvrPredicate;
     private final int maxBuilds;
 
     BuildMatcher(
-            Iterable<KojiBuildProvider> buildProviders,
+            List<KojiBuildProvider> buildProviders,
             Predicate<String> notProcessedNvrPredicate,
             int maxBuilds
     ) {

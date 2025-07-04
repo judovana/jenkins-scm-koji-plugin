@@ -36,7 +36,7 @@ class KojiBuildMatcher extends BuildMatcher {
     private final List<String> archs;
 
     KojiBuildMatcher(
-            Iterable<KojiBuildProvider> kojiBuildProviders,
+            List<KojiBuildProvider> kojiBuildProviders,
             Predicate<String> notProcessedNvrPredicate,
             int maxBuilds,
             RealKojiXmlRpcApi kojiXmlRpcApi
