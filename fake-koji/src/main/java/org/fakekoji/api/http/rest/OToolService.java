@@ -1,12 +1,10 @@
 package org.fakekoji.api.http.rest;
 
 import io.javalin.Javalin;
-import io.javalin.core.JavalinConfig;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.http.staticfiles.Location;
-import io.javalin.plugin.json.JavalinJackson;
-import io.javalin.plugin.json.JsonMapper;
+import io.javalin.json.JavalinJackson;
 
 import org.fakekoji.api.http.rest.utils.RedeployApiWorkerBase;
 import org.fakekoji.core.AccessibleSettings;
@@ -147,7 +145,7 @@ public class OToolService {
         this.port = settings.getWebappPort();
         app = Javalin.create( config -> {
                     config.jsonMapper(new JavalinJackson(objectMapper));
-                    config.addStaticFiles("/webapp", Location.CLASSPATH);
+                    config.staticFiles.add("/webapp", Location.CLASSPATH);
                 }
         );
 
