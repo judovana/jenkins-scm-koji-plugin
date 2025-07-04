@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>5.17</version>
+        <version>4.87</version>
     </parent>
 
     <groupId>fake-koji</groupId>
@@ -28,7 +28,7 @@
     </modules>
 
     <properties>
-        <jenkins.baseline>2.513</jenkins.baseline>
+        <jenkins.baseline>2.461</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}</jenkins.version>
         <xmlrpc.version>3.1.3</xmlrpc.version>
     </properties>

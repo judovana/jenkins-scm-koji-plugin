@@ -99,6 +99,7 @@ public class SingleUrlResponseCache {
         bw.newLine();
     }
 
+    @SuppressFBWarnings(value = {"EI_EXPOSE_REP", "EI_EXPOSE_REP2"}, justification = "pure wrapper class")
     public static final class ResultWithTimeStamp {
 
         private final Date dateCreated;
