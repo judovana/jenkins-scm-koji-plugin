@@ -25,6 +25,7 @@ package hudson.plugins.scm.koji.client;
 
 import hudson.plugins.scm.koji.Constants;
 import hudson.plugins.scm.koji.KojiBuildProvider;
+import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.client.tools.XmlRpcHelper;
 import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
@@ -32,17 +33,16 @@ import hudson.plugins.scm.koji.model.BuildProvider;
 import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestCacheConfigKeys;
 import org.fakekoji.xmlrpc.server.expensiveobjectscache.RemoteRequestsCache;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 abstract class BuildMatcher {
 
@@ -55,12 +55,9 @@ abstract class BuildMatcher {
     private final List<KojiBuildProvider> buildProviders;
     private final Predicate<String> notProcessedNvrPredicate;
     private final int maxBuilds;
+    private static final Logger LOG = LoggerFactory.getLogger(KojiSCM.class);
 
-    BuildMatcher(
-            List<KojiBuildProvider> buildProviders,
-            Predicate<String> notProcessedNvrPredicate,
-            int maxBuilds
-    ) {
+    BuildMatcher(List<KojiBuildProvider> buildProviders, Predicate<String> notProcessedNvrPredicate, int maxBuilds) {
         this.buildProviders = buildProviders;
         this.notProcessedNvrPredicate = notProcessedNvrPredicate;
         this.maxBuilds = maxBuilds;
@@ -81,13 +78,22 @@ abstract class BuildMatcher {
      * you must filter after limit, otherwise strange builds will go in. The tests are covering this
      */
     public static Stream<Build> listBuilds(BuildMatcher bm) {
-        return StreamSupport.stream(bm.buildProviders.spliterator(), false)
-                .map(KojiBuildProvider::getBuildProvider)
-                .map(bm::getBuilds)
-                .flatMap(Collection::stream)
-                .sorted(BuildMatcher::compare)
-                .limit(bm.maxBuilds)
-                .filter(build -> bm.notProcessedNvrPredicate.test(build.getNvr()));
+        for (KojiBuildProvider provider : bm.buildProviders) {
+            List<Build> builds;
+            try {
+                builds = bm.getBuilds(provider.getBuildProvider());
+            } catch (Exception ex) {
+                LOG.error("", ex);
+                LOG.warn("Failed to read builds from " + provider.getTopUrl() + ", trying next one");
+                continue;
+            }
+            return builds.stream()
+                    .sorted(BuildMatcher::compare)
+                    .limit(bm.maxBuilds)
+                    .filter(build -> bm.notProcessedNvrPredicate.test(build.getNvr()));
+        }
+        throw new RuntimeException("All providers tried, all failed");
+
     }
 
     /**
@@ -121,7 +127,7 @@ abstract class BuildMatcher {
             (url, params) -> new XmlRpcHelper.XmlRpcExecutioner(url).execute(params));
 
     public static Object execute(String url, XmlRpcRequestParams params) {
-            return cache.obtain(url, params);
+        return cache.obtain(url, params);
     }
 
     public static int compareBuildsByCompletionTime(Build b1, Build b2) {
