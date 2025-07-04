@@ -93,7 +93,6 @@ class KojiEndpointGroup implements EndpointGroup {
     private static final String MATRIX_FORMAT = "format";
     private static final String PROJECT = "project";
 
-    private final OToolService mOToolService;
     private final AccessibleSettings mSettings;
     private final OToolService.OToolHandlerWrapper mWrapper;
     private final GetterAPI mGetterApi;
@@ -105,8 +104,7 @@ class KojiEndpointGroup implements EndpointGroup {
                 + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n" + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n" + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n" + "  names=true will chage numbers to somehow more describing texts in html formatters. With huge squezing can go wil. Is sometimes buggy with platforms\n" + "  explicitcomparsion=url by default null, unused, to load remote file with listed lates released NVRs to comapre with\n" + "  baseajax have few runtime switches: automanFilter=index sort=index readOnly=[true(visible)/false(hidden)/total]. Defaults are 0,0,false\n";
     }
 
-    public KojiEndpointGroup(OToolService oToolService, AccessibleSettings settings, OToolService.OToolHandlerWrapper wrapper, GetterAPI getterApi, JobUpdater jenkinsJobUpdater) {
-        mOToolService = oToolService;
+    public KojiEndpointGroup(AccessibleSettings settings, OToolService.OToolHandlerWrapper wrapper, GetterAPI getterApi, JobUpdater jenkinsJobUpdater) {
         mSettings = settings;
         mWrapper = wrapper;
         mGetterApi = getterApi;
@@ -317,14 +315,14 @@ class KojiEndpointGroup implements EndpointGroup {
 
         });
 
-        mOToolService.app.post(JDK_TEST_PROJECTS, mWrapper.wrap(context -> {
+        ApiBuilder.post(JDK_TEST_PROJECTS, mWrapper.wrap(context -> {
             final JDKTestProject jdkTestProject = context.bodyValidator(JDKTestProject.class).get();
             final JDKTestProject created = jdkTestProjectManager.create(jdkTestProject);
             final ManagementResult result = new ManagementResult<>(created, mJenkinsJobUpdater.update(null, jdkTestProject));
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.get(JDK_TEST_PROJECTS, mWrapper.wrap(context -> context.json(jdkTestProjectManager.readAll())));
-        mOToolService.app.put(JDK_TEST_PROJECT, mWrapper.wrap(context -> {
+        ApiBuilder.get(JDK_TEST_PROJECTS, mWrapper.wrap(context -> context.json(jdkTestProjectManager.readAll())));
+        ApiBuilder.put(JDK_TEST_PROJECT, mWrapper.wrap(context -> {
             final JDKTestProject jdkTestProject = context.bodyValidator(JDKTestProject.class).get();
             final String id = context.pathParam(ID);
             final JDKTestProject old = jdkTestProjectManager.read(id);
@@ -332,61 +330,61 @@ class KojiEndpointGroup implements EndpointGroup {
             final ManagementResult result = new ManagementResult<>(updated, mJenkinsJobUpdater.update(old, updated));
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.delete(JDK_TEST_PROJECT, mWrapper.wrap(context -> {
+        ApiBuilder.delete(JDK_TEST_PROJECT, mWrapper.wrap(context -> {
             final String id = context.pathParam(ID);
             final JDKTestProject deleted = jdkTestProjectManager.delete(id);
             final ManagementResult<JDKTestProject> result = new ManagementResult<>(deleted, mJenkinsJobUpdater.update(deleted, null));
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.get(BUILD_PROVIDERS, mWrapper.wrap(context -> context.json(buildProviderManager.readAll())));
-        mOToolService.app.get(JDK_VERSIONS, mWrapper.wrap(context -> context.json(jdkVersionManager.readAll())));
-        mOToolService.app.get(PLATFORMS, mWrapper.wrap(context -> context.json(platformManager.readAll())));
-        mOToolService.app.post(PLATFORMS, mWrapper.wrap(context -> {
+        ApiBuilder.get(BUILD_PROVIDERS, mWrapper.wrap(context -> context.json(buildProviderManager.readAll())));
+        ApiBuilder.get(JDK_VERSIONS, mWrapper.wrap(context -> context.json(jdkVersionManager.readAll())));
+        ApiBuilder.get(PLATFORMS, mWrapper.wrap(context -> context.json(platformManager.readAll())));
+        ApiBuilder.post(PLATFORMS, mWrapper.wrap(context -> {
             final Platform platform = context.bodyValidator(Platform.class).get();
             final Platform created = platformManager.create(platform);
             final ManagementResult<Platform> result = new ManagementResult<>(created);
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.put(PLATFORM, mWrapper.wrap(context -> {
+        ApiBuilder.put(PLATFORM, mWrapper.wrap(context -> {
             final String id = context.pathParam(ID);
             final Platform platform = context.bodyValidator(Platform.class).get();
             final Platform updated = platformManager.update(id, platform);
             final ManagementResult<Platform> result = new ManagementResult<>(updated, mJenkinsJobUpdater.update(updated));
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.delete(PLATFORM, mWrapper.wrap(context -> {
+        ApiBuilder.delete(PLATFORM, mWrapper.wrap(context -> {
             final String id = context.pathParam(ID);
             final Platform deleted = platformManager.delete(id);
             final ManagementResult<Platform> result = new ManagementResult<>(deleted);
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.post(TASKS, mWrapper.wrap(context -> {
+        ApiBuilder.post(TASKS, mWrapper.wrap(context -> {
             final Task task = context.bodyValidator(Task.class).get();
             final Task created = taskManager.create(task);
             final ManagementResult<Task> result = new ManagementResult<>(created);
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.get(TASKS, mWrapper.wrap(context -> context.json(taskManager.readAll())));
-        mOToolService.app.put(TASK, mWrapper.wrap(context -> {
+        ApiBuilder.get(TASKS, mWrapper.wrap(context -> context.json(taskManager.readAll())));
+        ApiBuilder.put(TASK, mWrapper.wrap(context -> {
             final String id = context.pathParam(ID);
             final Task task = context.bodyValidator(Task.class).get();
             final Task updated = taskManager.update(id, task);
             final ManagementResult<Task> result = new ManagementResult<>(updated, mJenkinsJobUpdater.update(updated));
             context.json(result).status(OToolService.OK);
         }));
-        mOToolService.app.delete(TASK, mWrapper.wrap(context -> {
+        ApiBuilder.delete(TASK, mWrapper.wrap(context -> {
             final String id = context.pathParam(ID);
             taskManager.delete(id); // not supported
         }));
-        mOToolService.app.get(TASK_VARIANTS, mWrapper.wrap(context -> context.json(taskVariantManager.readAll())));
-        mOToolService.app.post(JDK_PROJECTS, mWrapper.wrap(context -> {
+        ApiBuilder.get(TASK_VARIANTS, mWrapper.wrap(context -> context.json(taskVariantManager.readAll())));
+        ApiBuilder.post(JDK_PROJECTS, mWrapper.wrap(context -> {
             final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
             final JDKProject created = jdkProjectManager.create(jdkProject);
             final ManagementResult<JDKProject> result = new ManagementResult<>(created, mJenkinsJobUpdater.update(null, created));
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.get(JDK_PROJECTS, mWrapper.wrap(context -> context.json(jdkProjectManager.readAll())));
-        mOToolService.app.put(JDK_PROJECT, mWrapper.wrap(context -> {
+        ApiBuilder.get(JDK_PROJECTS, mWrapper.wrap(context -> context.json(jdkProjectManager.readAll())));
+        ApiBuilder.put(JDK_PROJECT, mWrapper.wrap(context -> {
             final JDKProject jdkProject = context.bodyValidator(JDKProject.class).get();
             final String id = context.pathParam(ID);
             final JDKProject old = jdkProjectManager.read(id);
@@ -394,7 +392,7 @@ class KojiEndpointGroup implements EndpointGroup {
             final ManagementResult<JDKProject> result = new ManagementResult<>(updated, mJenkinsJobUpdater.update(old, updated));
             context.status(OToolService.OK).json(result);
         }));
-        mOToolService.app.delete(JDK_PROJECT, mWrapper.wrap(context -> {
+        ApiBuilder.delete(JDK_PROJECT, mWrapper.wrap(context -> {
             final String id = context.pathParam(ID);
             final JDKProject deleted = jdkProjectManager.delete(id);
             final ManagementResult<JDKProject> result = new ManagementResult<>(deleted, mJenkinsJobUpdater.update(deleted, null));

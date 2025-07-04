@@ -33,13 +33,7 @@ public class OToolService {
 
     public OToolService(AccessibleSettings settings) {
         this.port = settings.getWebappPort();
-        app = Javalin.create( config -> {
-                    config.jsonMapper(new JavalinJackson(objectMapper));
-                    config.staticFiles.add("/webapp", Location.CLASSPATH);
-                }
-        );
-
-        final JobUpdater jenkinsJobUpdater = settings.getJobUpdater();
+         final JobUpdater jenkinsJobUpdater = settings.getJobUpdater();
         final GetterAPI getterApi = new GetterAPI(settings);
 
         final OToolHandlerWrapper wrapper = oToolHandler -> context -> {
@@ -57,8 +51,15 @@ public class OToolService {
             }
         };
 
-        app.routes(new KojiEndpointGroup(this, settings, wrapper, getterApi, jenkinsJobUpdater));
+        app = Javalin.create( config -> {
+                    config.jsonMapper(new JavalinJackson(objectMapper, false));
+                    config.staticFiles.add("/webapp", Location.CLASSPATH);
+                    config.router.apiBuilder(new KojiEndpointGroup(settings, wrapper, getterApi, jenkinsJobUpdater));
+                }
+        );
+
     }
+
 
     private String notNullMessage(Exception e) {
         if (e == null) {
