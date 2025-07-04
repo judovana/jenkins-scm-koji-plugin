@@ -52,8 +52,7 @@ public class NotProcessedNvrPredicate implements Predicate<String>, java.io.Seri
         return new NotProcessedNvrPredicate(joinedList);
     }
 
-    @SuppressFBWarnings(value="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE", justification = "Check is odne on bytecode level in try with resources")
-    private static List<String> fileToList(File processedNvrFile) throws IOException {    
+    private static List<String> fileToList(File processedNvrFile) throws IOException {
         if (processedNvrFile!= null && processedNvrFile.exists()) {
             if (processedNvrFile.isFile() && processedNvrFile.canRead()) {
                 try (Stream<String> stream = Files.lines(processedNvrFile.toPath(), StandardCharsets.UTF_8)) {
