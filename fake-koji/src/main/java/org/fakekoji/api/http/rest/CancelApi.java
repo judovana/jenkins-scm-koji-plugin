@@ -26,7 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
-import static org.fakekoji.api.http.rest.OToolService.MISC;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.MISC;
 
 public class CancelApi implements EndpointGroup {
 

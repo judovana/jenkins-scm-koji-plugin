@@ -1,7 +1,7 @@
 package org.fakekoji.api.http.rest;
 
-import static org.fakekoji.api.http.rest.OToolService.MISC;
-import static org.fakekoji.api.http.rest.OToolService.RESULTS_DB;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.MISC;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.RESULTS_DB;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 

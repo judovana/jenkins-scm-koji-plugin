@@ -40,7 +40,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
-import static org.fakekoji.api.http.rest.OToolService.MISC;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.MISC;
 import static org.fakekoji.api.http.rest.RestUtils.extractParamValue;
 
 public class DuplicateCoverageApi implements EndpointGroup {

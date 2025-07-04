@@ -61,7 +61,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
-import static org.fakekoji.api.http.rest.OToolService.MISC;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.MISC;
 
 public class RedeployApi implements EndpointGroup {
 

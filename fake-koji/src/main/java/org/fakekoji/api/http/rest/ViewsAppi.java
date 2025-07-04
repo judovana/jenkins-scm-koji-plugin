@@ -38,11 +38,11 @@ public class ViewsAppi {
     private final  JenkinsViewTemplateBuilderFactory jvtbFactory;
 
     ViewsAppi(Context context) {
-        this.filter = Pattern.compile(context.queryParam(OToolService.FILTER) == null ? ".*" : context.queryParam(OToolService.FILTER));
-        this.skipEmpty = OToolService.notNullBoolean(context, OToolService.SKIP_EMPTY, false);
-        this.nested = OToolService.notNullBoolean(context, OToolService.NESTED, false);
-        String nestedColumnsValue = context.queryParam(OToolService.NESTED_COLUMNS);
-        String listColumnsValue = context.queryParam(OToolService.CUSTOM_COLUMNS);
+        this.filter = Pattern.compile(context.queryParam(KojiEndpointGroup.FILTER) == null ? ".*" : context.queryParam(KojiEndpointGroup.FILTER));
+        this.skipEmpty = OToolService.notNullBoolean(context, KojiEndpointGroup.SKIP_EMPTY, false);
+        this.nested = OToolService.notNullBoolean(context, KojiEndpointGroup.NESTED, false);
+        String nestedColumnsValue = context.queryParam(KojiEndpointGroup.NESTED_COLUMNS);
+        String listColumnsValue = context.queryParam(KojiEndpointGroup.CUSTOM_COLUMNS);
         nestedColumnsStyle = setColumnsStyle(nestedColumnsValue);
         listColumnsStyle = setColumnsStyle(listColumnsValue);
         jvtbFactory = new JenkinsViewTemplateBuilderFactory(nestedColumnsStyle, listColumnsStyle);

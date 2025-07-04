@@ -1,6 +1,6 @@
 package org.fakekoji.api.http.rest;
 
-import static org.fakekoji.api.http.rest.OToolService.MISC;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.MISC;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 
@@ -17,7 +17,6 @@ import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;

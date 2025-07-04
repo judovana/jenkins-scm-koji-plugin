@@ -44,10 +44,10 @@ import java.util.logging.Logger;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 
-import static org.fakekoji.api.http.rest.OToolService.BUMP;
-import static org.fakekoji.api.http.rest.OToolService.MISC;
-import static org.fakekoji.api.http.rest.OToolService.PLATFORMS;
-import static org.fakekoji.api.http.rest.OToolService.PRODUCTS;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.BUMP;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.MISC;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.PLATFORMS;
+import static org.fakekoji.api.http.rest.KojiEndpointGroup.PRODUCTS;
 import static org.fakekoji.api.http.rest.RestUtils.extractProducts;
 import static org.fakekoji.api.http.rest.RestUtils.extractProjectIds;
 import static org.fakekoji.core.AccessibleSettings.objectMapper;

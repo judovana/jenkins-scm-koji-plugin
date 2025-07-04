@@ -22,9 +22,9 @@ public class UpdateVmsApi {
     private final boolean onlyVM;
 
     UpdateVmsApi(Context context) {
-        this.filter = Pattern.compile(context.queryParam(OToolService.FILTER) == null ? ".*": context.queryParam(OToolService.FILTER));
-        this.onlyHw = OToolService.notNullBoolean(context, OToolService.ONLY_HW, false);
-        this.onlyVM = OToolService.notNullBoolean(context, OToolService.ONLY_VM, false);
+        this.filter = Pattern.compile(context.queryParam(KojiEndpointGroup.FILTER) == null ? ".*": context.queryParam(KojiEndpointGroup.FILTER));
+        this.onlyHw = OToolService.notNullBoolean(context, KojiEndpointGroup.ONLY_HW, false);
+        this.onlyVM = OToolService.notNullBoolean(context, KojiEndpointGroup.ONLY_VM, false);
     }
 
     @NotNull
