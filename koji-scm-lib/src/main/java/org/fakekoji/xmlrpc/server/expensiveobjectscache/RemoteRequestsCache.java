@@ -135,7 +135,7 @@ public class RemoteRequestsCache {
         apply();
     }
 
-    private void freeOldItems() {
+    private synchronized void freeOldItems() {
         if (cacheReleaseRate > 0) {
             Date now = new Date();
             Collection<SingleUrlResponseCache> caches = cache.values();
