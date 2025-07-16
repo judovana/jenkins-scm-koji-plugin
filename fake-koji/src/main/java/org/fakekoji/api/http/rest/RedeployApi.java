@@ -322,7 +322,7 @@ public class RedeployApi implements EndpointGroup {
                             }
                             if (mainline.contains("<script>") && line.contains("destroy.sh")) {
                                 String nwVal = nwProvider+"/destroy.sh";
-                                mainline = mainline.replaceAll("[a-zA-Z0-9]+/destroy.sh", nwVal);
+                                mainline = mainline.replaceAll("[a-zA-Z0-9~]+/destroy.sh", nwVal);
                                 sb.append(" - " + lines.get(i) + " -> " + mainline + "\n");
                                 totalReplacements++;
                             }
