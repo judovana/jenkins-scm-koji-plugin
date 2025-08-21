@@ -9,7 +9,6 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 import org.fakekoji.model.OToolVariable;
-import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -304,7 +303,7 @@ public class JenkinsJobTemplateBuilder {
         return this;
     }
 
-    @NotNull
+
     public static Platform.Provider findProvider(String provider, Platform platform) {
         final Platform.Provider platformProvider = platform.getProviders()
                 .stream()
@@ -314,7 +313,6 @@ public class JenkinsJobTemplateBuilder {
         return platformProvider;
     }
 
-    @NotNull
     public static VmWithNodes getVmWithNodes(Task task, Platform platform, List<OToolVariable> exportedVariables, String platformProvider) {
         return getVmWithNodes(task, platform, exportedVariables, findProvider(platformProvider, platform));
     }

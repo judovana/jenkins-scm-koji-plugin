@@ -73,8 +73,8 @@ public class ResultsDb implements EndpointGroup {
 
         public ScoreWithTimeStamp(String from) {
             String[] srcs = from.trim().split(SCORE_DELIMITER);
-            this.score = Integer.valueOf(srcs[0]);
-            this.timestamp = Long.valueOf(srcs[1]);
+            this.score = Integer.parseInt(srcs[0]);
+            this.timestamp = Long.parseLong(srcs[1]);
             if (srcs.length > 2 && !srcs[2].trim().isEmpty()) {
                 message = Optional.of(cleanUrlBetrayers(srcs[2]));
             } else {

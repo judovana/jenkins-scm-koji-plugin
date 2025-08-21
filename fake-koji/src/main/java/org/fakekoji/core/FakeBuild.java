@@ -497,17 +497,17 @@ public class FakeBuild {
 
     private int determineRhOs(String release) {
         String stripped = release.replaceAll(".*\\.fc", "").replaceAll(".*\\.el", "");
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (int i = 0; i < stripped.length(); i++) {
             char ch = stripped.charAt(i);
             if (Character.isDigit(ch)) {
-                result = result + ch;
+                result.append(ch);
             } else {
-                return Integer.valueOf(result);
+                return Integer.parseInt(result.toString());
             }
         }
         //probaby error, so throwing no-int exception
-        return Integer.valueOf(result);
+        return Integer.parseInt(result.toString());
     }
 
     private boolean arrayContains(Object[] archs, String arch) {

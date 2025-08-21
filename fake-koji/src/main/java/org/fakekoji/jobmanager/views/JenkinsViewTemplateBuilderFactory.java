@@ -4,7 +4,6 @@ import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.model.Platform;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -237,7 +236,6 @@ public class JenkinsViewTemplateBuilderFactory {
         }
     }
 
-    @NotNull
     private static String pull(String project) {
         return "pull" + getEscapedMajorDelimiter() + ".*" + getEscapedMajorDelimiter() + project;
     }

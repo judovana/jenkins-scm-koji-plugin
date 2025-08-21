@@ -98,13 +98,13 @@ public class RemoteRequestsCache {
             }
         }
 
-        private void read() {
+        private synchronized void read() {
             try {
                 if (config != null && config.exists()) {
                     try (InputStream inputStream = new FileInputStream(config)) {
                         Properties propNew = new Properties();
                         propNew.load(inputStream);
-                        propRaw = propNew;
+                        setPropertiesNoApply(propNew);
                     } catch (Exception e) {
                         LOG.warn("Failed to read existing cache config", e);
                     }
@@ -120,19 +120,24 @@ public class RemoteRequestsCache {
                 }
             }
         }
+
     }
 
     protected long toUnits(long time) {
         return time * minutesToMillis;
     }
 
-    protected long getConfigRefreshRateMilis() {
+    protected synchronized long getConfigRefreshRateMilis() {
         return toUnits(configRefreshRateMinutes);
     }
 
-    protected void setProperties(Properties prop) {
+    protected synchronized void setProperties(Properties prop) {
         this.propRaw = prop;
         apply();
+    }
+
+    private synchronized void setPropertiesNoApply(Properties propNew) {
+        propRaw = propNew;
     }
 
     private synchronized void freeOldItems() {
@@ -151,7 +156,7 @@ public class RemoteRequestsCache {
         }
     }
 
-    private void apply() {
+    private synchronized void apply() {
         String configRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES);
         String cacheRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES);
         String cacheReleaseS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER);
@@ -260,7 +265,7 @@ public class RemoteRequestsCache {
         t.start();
     }
 
-    private String getConfigString() {
+    private synchronized String getConfigString() {
         if (config == null) {
             return "null";
         } else {
@@ -287,7 +292,7 @@ public class RemoteRequestsCache {
         ensure(u).remove(params);
     }
 
-    private Object get(final URL u, XmlRpcRequestParams params) {
+    private synchronized Object get(final URL u, XmlRpcRequestParams params) {
         if (cacheRefreshRateMinutes == 0) {
             return null;
         }
