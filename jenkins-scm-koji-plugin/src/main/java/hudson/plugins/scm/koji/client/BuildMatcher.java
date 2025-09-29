@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 abstract class BuildMatcher {
@@ -85,6 +86,17 @@ abstract class BuildMatcher {
             List<Build> builds;
             try {
                 builds = bm.getBuilds(provider.getBuildProvider());
+                if (builds.isEmpty()) {
+                    throw new RuntimeException("No builds found.");
+                }
+                List<Build> filteredBuilds = builds.stream()
+                        .sorted(BuildMatcher::compare)
+                        .limit(bm.maxBuilds)
+                        .filter(build -> bm.notProcessedNvrPredicate.test(build.getNvr())).collect(Collectors.toList());
+                if (filteredBuilds.isEmpty()) {
+                    throw new RuntimeException("No filteredBuilds found.");
+                }
+                return filteredBuilds.stream();
             } catch (Exception ex) {
                 if (logger != null) {
                     logger.log("", ex);
@@ -94,10 +106,6 @@ abstract class BuildMatcher {
                 LOG.error("Failed to read builds from " + provider.getTopUrl() + ", trying next one");
                 continue;
             }
-            return builds.stream()
-                    .sorted(BuildMatcher::compare)
-                    .limit(bm.maxBuilds)
-                    .filter(build -> bm.notProcessedNvrPredicate.test(build.getNvr()));
         }
         throw new RuntimeException("All providers tried, all failed");
 
