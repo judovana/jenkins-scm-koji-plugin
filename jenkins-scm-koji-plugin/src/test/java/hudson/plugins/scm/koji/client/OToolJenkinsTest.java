@@ -10,40 +10,37 @@ import hudson.tasks.Shell;
 import org.fakekoji.core.FakeKojiTestUtil;
 import org.fakekoji.server.JavaServer;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import static org.fakekoji.DataGenerator.*;
 import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.SOURCES;
-import static org.junit.Assert.assertEquals;
 
+@WithJenkins
 public class OToolJenkinsTest {
 
-    @ClassRule
-    public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
 
     private static JavaServer javaServer = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws Exception {
-        File tmpDir = temporaryFolder.newFolder();
-        javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
+        javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(temporaryFolder.toFile());
         javaServer.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         if (javaServer != null) {
             javaServer.stop();
@@ -51,12 +48,12 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testBuildJobFailure() throws Exception {
+    public void testBuildJobFailure(JenkinsRule j) throws Exception {
         /* Test koji scm plugin on existing fake-koji build(s)
            -> should end with success */
         final String expectedFile = JDK_8_PACKAGE_NAME + '-' + VERSION_1 + '-' + RELEASE_1 + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=release jvm=hotspot jreSdk=sdk buildPlatform=f29.x86_64",
@@ -69,10 +66,10 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testBuildJobSuccess() throws Exception {
+    public void testBuildJobSuccess(JenkinsRule j) throws Exception {
         final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_2 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=fastdebug jvm=hotspot jreSdk=sdk buildPlatform=f29.x86_64",
@@ -85,10 +82,10 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testBuildJobNotSuccessForBadRelease() throws Exception {
+    public void testBuildJobNotSuccessForBadRelease(JenkinsRule j) throws Exception {
         final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_2 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=fastdebug jvm=hotspot jreSdk=sdk buildPlatform=f29.x86_64",
@@ -101,10 +98,10 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testTestJobFailure() throws Exception {
+    public void testTestJobFailure(JenkinsRule j) throws Exception {
         final String expectedFile = "java-1.8.0-openjdk-version1-release2.uName.slowdebug.hotspot.f29.x86_64.tarxz";
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=slowdebug jvm=hotspot jreSdk=sdk",
@@ -117,10 +114,10 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testTestJobSuccess() throws Exception {
+    public void testTestJobSuccess(JenkinsRule j) throws Exception {
         final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
@@ -133,10 +130,10 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testTestJobSuccessNotForBadRelease() throws Exception {
+    public void testTestJobSuccessNotForBadRelease(JenkinsRule j) throws Exception {
         final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\n";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
@@ -149,11 +146,11 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testTestJobWithSourcesSuccess() throws Exception {
+    public void testTestJobWithSourcesSuccess(JenkinsRule j) throws Exception {
         final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         final String expectedSourceFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1 + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\nfind . | grep \"" + expectedSourceFile + "\"\n";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
@@ -166,11 +163,11 @@ public class OToolJenkinsTest {
     }
 
     @Test
-    public void testTestJobWithSourcesSuccessNotForBAdRelease() throws Exception {
+    public void testTestJobWithSourcesSuccessNotForBAdRelease(JenkinsRule j) throws Exception {
         final String expectedFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + ".fastdebug.hotspot.sdk.f29.x86_64"+SUFFIX;
         final String expectedSourceFile = JDK_8_PACKAGE_NAME + "-" + VERSION_1 + "-" + RELEASE_1_BAD + '.' + PROJECT_NAME_U + '.' + SOURCES + SUFFIX;
         String shellString = "find . | grep \"" + expectedFile + "\"\nfind . | grep \"" + expectedSourceFile + "\"\n";
-        runTest(
+        runTest(j,
                 new FakeKojiXmlRpcApi(
                         PROJECT_NAME_U,
                         "debugMode=fastdebug jvm=hotspot jreSdk=sdk",
@@ -182,7 +179,7 @@ public class OToolJenkinsTest {
         );
     }
 
-    private void runTest(FakeKojiXmlRpcApi kojiXmlRpcApi, String shellScript, boolean successExpected) throws Exception {
+    private void runTest(JenkinsRule j, FakeKojiXmlRpcApi kojiXmlRpcApi, String shellScript, boolean successExpected) throws Exception {
         FreeStyleProject project = j.createFreeStyleProject();
         KojiSCM scm = new KojiSCM(
                 Collections.singletonList(createLocalhostBuildProvider()),
@@ -210,7 +207,7 @@ public class OToolJenkinsTest {
         }
         /* get result of the build and check it it meets expectations */
         Result result = build.getResult();
-        assertEquals(successExpected, result == Result.SUCCESS);
+        Assertions.assertEquals(successExpected, result == Result.SUCCESS);
     }
 
     private KojiBuildProvider createLocalhostBuildProvider() {

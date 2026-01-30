@@ -1,7 +1,6 @@
 package hudson.plugins.scm.koji;
 
 import hudson.plugins.scm.koji.model.Build;
-import hudson.plugins.scm.koji.model.RPM;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,8 +12,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
-import org.junit.Assert;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 
 public class KojiSCMtest {
 
@@ -118,14 +119,14 @@ public class KojiSCMtest {
         tmp.deleteOnExit();
         strsToFile(s1, tmp);
         String[] t1 = fileToStrings(tmp);
-        Assert.assertArrayEquals(s1, t1);
+        Assertions.assertArrayEquals(s1, t1);
         String[] sn = new String[]{"new-nvr-a"};
         String[] s11 = new String[s1.length + 1];
         System.arraycopy(s1, 0, s11, 0, s1.length);
         System.arraycopy(sn, 0, s11, s1.length, sn.length);
         KojiSCM.appendStringProcessed(tmp, sn[0]);
         String[] t2 = fileToStrings(tmp);
-        Assert.assertArrayEquals(s11, t2);
+        Assertions.assertArrayEquals(s11, t2);
     }
 
     @Test
@@ -134,7 +135,7 @@ public class KojiSCMtest {
         tmp.deleteOnExit();
         strsToFile(s1, tmp);
         String[] t1 = fileToStrings(tmp);
-        Assert.assertArrayEquals(s1, t1);
+        Assertions.assertArrayEquals(s1, t1);
         String[] sn = new String[]{"new-nvr-a"};
         String[] s11 = new String[s1.length + 1];
         System.arraycopy(s1, 0, s11, 0, s1.length);
@@ -143,15 +144,15 @@ public class KojiSCMtest {
                 new Build(0, "new", "nvr", "a", sn[0], "now", new ArrayList<>(), new HashSet<>(), null, false)
         );
         String[] t2 = fileToStrings(tmp);
-        Assert.assertEquals(s11.length, t2.length);
+        Assertions.assertEquals(s11.length, t2.length);
         for (int x = 0; x < s11.length - 1; x++) {
-            Assert.assertEquals(s11[x], t2[x]);
+            Assertions.assertEquals(s11[x], t2[x]);
         }
         int x = s11.length - 1;
         String[] ss1 = s11[x].split(" +");
         String[] tt2 = t2[x].split(" +");
-        Assert.assertEquals(ss1[0], tt2[0]);
-        Assert.assertEquals("#", tt2[1]);
+        Assertions.assertEquals(ss1[0], tt2[0]);
+        Assertions.assertEquals("#", tt2[1]);
     }
 
 }

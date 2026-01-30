@@ -1,12 +1,14 @@
 package hudson.plugins.scm.koji;
 
-import org.junit.Test;
-
 import java.time.LocalDateTime;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
 
 public class LocalDateTimeWithDateTimeFormatterTest {
+
     @Test
     public void testDTFOptionalWithMicros() {
         assertEquals(LocalDateTime.of(2018, 12, 31, 12, 34, 56, 123456000),

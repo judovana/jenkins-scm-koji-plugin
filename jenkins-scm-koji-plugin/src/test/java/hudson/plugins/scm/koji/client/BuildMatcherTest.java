@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class BuildMatcherTest {
 
@@ -91,27 +91,26 @@ public class BuildMatcherTest {
             }
         };
         List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
-        Assert.assertEquals(1, l.size());
+        Assertions.assertEquals(1, l.size());
         Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
-        Assert.assertEquals("b-1-1", b.get().getNvr());
+        Assertions.assertEquals("b-1-1", b.get().getNvr());
     }
 
-    @Test(expected = DateTimeParseException.class)
+    @Test
     public void twoBuildsComaprsionError() throws IOException {
-        BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
-            @Override
-            List<Build> getBuilds(BuildProvider buildProvider) {
-                return Arrays.asList(
-                        createBuild(1, "error"),
-                        createBuild(2, "error"));
-            }
+        Assertions.assertThrows(DateTimeParseException.class, () -> {
+            BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
+                @Override
+                List<Build> getBuilds(BuildProvider buildProvider) {
+                    return Arrays.asList(createBuild(1, "error"), createBuild(2, "error"));
+                }
 
-            @Override
-            Build getBuild(Build build) {
-                return build;
-            }
-        };
-        List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
+                @Override
+                Build getBuild(Build build) {
+                    return build;
+                }
+            };
+        });
     }
 
     @Test
@@ -129,11 +128,11 @@ public class BuildMatcherTest {
             }
         };
         List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
-        Assert.assertEquals(2, l.size());
-        Assert.assertEquals("b-1-1", l.get(0).getNvr());
-        Assert.assertEquals("b-1-2", l.get(1).getNvr());
+        Assertions.assertEquals(2, l.size());
+        Assertions.assertEquals("b-1-1", l.get(0).getNvr());
+        Assertions.assertEquals("b-1-2", l.get(1).getNvr());
         Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
-        Assert.assertEquals("b-1-2", b.get().getNvr());
+        Assertions.assertEquals("b-1-2", b.get().getNvr());
     }
 
     @Test
@@ -152,12 +151,12 @@ public class BuildMatcherTest {
             }
         };
         List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
-        Assert.assertEquals(3, l.size());
-        Assert.assertEquals("b-1-1", l.get(0).getNvr());
-        Assert.assertEquals("b-1-2", l.get(1).getNvr());
-        Assert.assertEquals("b-1-3", l.get(2).getNvr());
+        Assertions.assertEquals(3, l.size());
+        Assertions.assertEquals("b-1-1", l.get(0).getNvr());
+        Assertions.assertEquals("b-1-2", l.get(1).getNvr());
+        Assertions.assertEquals("b-1-3", l.get(2).getNvr());
         Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
-        Assert.assertEquals("b-1-3", b.get().getNvr());
+        Assertions.assertEquals("b-1-3", b.get().getNvr());
     }
 
 
@@ -178,12 +177,12 @@ public class BuildMatcherTest {
             }
         };
         List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
-        Assert.assertEquals(3, l.size());
-        Assert.assertEquals("b-1-1", l.get(0).getNvr());
-        Assert.assertEquals("b-1-2", l.get(1).getNvr());
-        Assert.assertEquals("b-1-3", l.get(2).getNvr());
+        Assertions.assertEquals(3, l.size());
+        Assertions.assertEquals("b-1-1", l.get(0).getNvr());
+        Assertions.assertEquals("b-1-2", l.get(1).getNvr());
+        Assertions.assertEquals("b-1-3", l.get(2).getNvr());
         Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
-        Assert.assertEquals("b-1-3", b.get().getNvr());
+        Assertions.assertEquals("b-1-3", b.get().getNvr());
     }
 
     @Test
@@ -203,12 +202,12 @@ public class BuildMatcherTest {
             }
         };
         List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
-        Assert.assertEquals(3, l.size());
-        Assert.assertEquals("b-1-1", l.get(0).getNvr());
-        Assert.assertEquals("b-1-2", l.get(1).getNvr());
-        Assert.assertEquals("b-1-3", l.get(2).getNvr());
+        Assertions.assertEquals(3, l.size());
+        Assertions.assertEquals("b-1-1", l.get(0).getNvr());
+        Assertions.assertEquals("b-1-2", l.get(1).getNvr());
+        Assertions.assertEquals("b-1-3", l.get(2).getNvr());
         Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
-        Assert.assertEquals("b-1-3", b.get().getNvr());
+        Assertions.assertEquals("b-1-3", b.get().getNvr());
     }
 
     @Test
@@ -228,10 +227,10 @@ public class BuildMatcherTest {
             }
         };
         List<Build> l = BuildMatcher.listBuilds(bm, null).collect(Collectors.toList());
-        Assert.assertEquals(2, l.size());
-        Assert.assertEquals("b-1-1", l.get(0).getNvr());
-        Assert.assertEquals("b-1-2", l.get(1).getNvr());
+        Assertions.assertEquals(2, l.size());
+        Assertions.assertEquals("b-1-1", l.get(0).getNvr());
+        Assertions.assertEquals("b-1-2", l.get(1).getNvr());
         Optional<Build> b = BuildMatcher.getLatestOfNewestBuilds(bm, null);
-        Assert.assertEquals("b-1-2", b.get().getNvr());
+        Assertions.assertEquals("b-1-2", b.get().getNvr());
     }
 }

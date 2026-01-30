@@ -32,41 +32,37 @@ import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.tasks.Shell;
 import org.fakekoji.core.FakeKojiTestUtil;
 import org.fakekoji.server.JavaServer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
 import static hudson.plugins.scm.koji.client.KojiListBuildsTest.createLocalhostKojiBuildProvider;
-import static org.junit.Assert.assertEquals;
 
+@WithJenkins
 public class KojiJenkinsTest {
-
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
-    @ClassRule
-    public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
     public static JavaServer javaServer = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
-        File tmpDir = temporaryFolder.newFolder();
-        tmpDir.mkdir();
         /* create fake koji server (with data) */
-        javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
+        javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(temporaryFolder.toFile());
         /* start fake-koji server */
         javaServer.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         /* stop fake-koji */
         if (javaServer != null) {
@@ -78,7 +74,7 @@ public class KojiJenkinsTest {
         return Collections.singletonList(createLocalhostKojiBuildProvider());
     }
 
-    public void runTest(RealKojiXmlRpcApi kojiXmlRpcApi, String shellScript, boolean successExpected) throws Exception {
+    public void runTest(JenkinsRule j, RealKojiXmlRpcApi kojiXmlRpcApi, String shellScript, boolean successExpected) throws Exception {
         /* create new jenkins free style project */
         FreeStyleProject project = j.createFreeStyleProject();
 
@@ -110,16 +106,16 @@ public class KojiJenkinsTest {
         }
         /* get result of the build and check it it meets expectations */
         Result result = build.getResult();
-        assertEquals(successExpected, result == Result.SUCCESS);
+        Assertions.assertEquals(successExpected, result == Result.SUCCESS);
     }
 
     @Test
-    public void testExistingBuild() throws Exception {
+    public void testExistingBuild(JenkinsRule j) throws Exception {
         /* Test koji scm plugin on existing fake-koji build(s) 
            -> should end with success */
         String shellString = "find . | grep \"java-1.8.0-openjdk.*x86_64.tarxz\"\n"
                 + "find . | grep \"java-1.8.0-openjdk.*src.tarxz\"";
-        runTest(
+        runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
                         "x86_64 src",
@@ -133,11 +129,11 @@ public class KojiJenkinsTest {
     }
 
     @Test
-    public void testNonExistingBuild() throws Exception {
+    public void testNonExistingBuild(JenkinsRule j) throws Exception {
         /* Test koji scm plugin on non-existing fake-koji build(s)
            -> should not end with success */
         String shellString = "! find . | grep \".*tarxz\"";
-        runTest(
+        runTest(j,
                 new RealKojiXmlRpcApi(
                         "non-existing-build",
                         "x86_64,src",
@@ -151,13 +147,13 @@ public class KojiJenkinsTest {
     }
 
     @Test
-    public void testWhitelist() throws Exception {
+    public void testWhitelist(JenkinsRule j) throws Exception {
         String shellString = "! find . | grep \"ojdk\" &&"
                 + "! find . | grep \"itw\" && "
                 + "! find . | grep \"whatever\" && "
                 + "! find . | grep \"ex\" && "
                 + "find . | grep \"ojfx\"";
-        runTest(
+        runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
                         "all",
@@ -171,13 +167,13 @@ public class KojiJenkinsTest {
     }
 
     @Test
-    public void testBlackAndWhitelist() throws Exception {
+    public void testBlackAndWhitelist(JenkinsRule j) throws Exception {
                 String shellString = "! find . | grep \"itw\" && "
                 + "! find . | grep \"itw\" && "
                 + "! find . | grep \"whatever\" && "
                 + "! find . | grep \"ex\" && "
                 + "find . | grep \"ojdk.static\"";
-        runTest(
+        runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
                         "all",

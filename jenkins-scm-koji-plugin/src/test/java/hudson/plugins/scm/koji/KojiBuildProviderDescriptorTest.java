@@ -26,9 +26,9 @@ package hudson.plugins.scm.koji;
 import hudson.util.FormValidation;
 
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static hudson.plugins.scm.koji.KojiBuildProvider.KojiBuildProviderDescriptor;
 
 public class KojiBuildProviderDescriptorTest {

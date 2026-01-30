@@ -15,8 +15,8 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class RemoteRequestsCacheTest {
 
@@ -107,10 +107,10 @@ public class RemoteRequestsCacheTest {
         long r2 = (long) provider.obtainOriginal(null, null);
         long r3 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r4 = (long) provider.obtainOriginal(null, null);
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(1, r3);
-        Assert.assertEquals(3, r4);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(1, r3);
+        Assertions.assertEquals(3, r4);
         dump(cache);
     }
 
@@ -127,10 +127,10 @@ public class RemoteRequestsCacheTest {
         long r2 = (long) provider.obtainOriginal(null, null);
         long r3 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r4 = (long) provider.obtainOriginal(null, null);
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(3, r3);
-        Assert.assertEquals(4, r4);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(3, r3);
+        Assertions.assertEquals(4, r4);
         dump(cache);
     }
 
@@ -143,11 +143,11 @@ public class RemoteRequestsCacheTest {
         long r3 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p2"}));
         long r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(1, r3);
-        Assert.assertEquals(3, r4);
-        Assert.assertEquals(2, r5);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(1, r3);
+        Assertions.assertEquals(3, r4);
+        Assertions.assertEquals(2, r5);
         dump(cache);
     }
 
@@ -159,10 +159,10 @@ public class RemoteRequestsCacheTest {
         long r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r3 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r4 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(1, r3);
-        Assert.assertEquals(2, r4);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(1, r3);
+        Assertions.assertEquals(2, r4);
         dump(cache);
     }
 
@@ -180,12 +180,12 @@ public class RemoteRequestsCacheTest {
         long r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         long r6 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(3, r3);
-        Assert.assertEquals(1, r4);
-        Assert.assertEquals(4, r5);
-        Assert.assertEquals(3, r6);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(3, r3);
+        Assertions.assertEquals(1, r4);
+        Assertions.assertEquals(4, r5);
+        Assertions.assertEquals(3, r6);
         dump(cache);
     }
 
@@ -195,7 +195,7 @@ public class RemoteRequestsCacheTest {
         AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(null, provider);
         //we put firts item seqentially, so we know what is cache
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
+        Assertions.assertEquals(1, r1);
         int threadCount = 100;
         final boolean[] alive = new boolean[]{true};
         final List<Long> l = Collections.synchronizedList(new ArrayList<>());
@@ -218,9 +218,9 @@ public class RemoteRequestsCacheTest {
         alive[0] = false;
         Thread.sleep(50);
         for (int i = 0; i < l.size(); i++) {
-            Assert.assertEquals(1, l.get(i).intValue());
+            Assertions.assertEquals(1, l.get(i).intValue());
         }
-        Assert.assertTrue(l.size() > 5);
+        Assertions.assertTrue(l.size() > 5);
         dump(cache);
     }
 
@@ -247,12 +247,12 @@ public class RemoteRequestsCacheTest {
         long r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         Thread.sleep(50);
         long r6 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(1, r2);
-        Assert.assertEquals(2, r3);
-        Assert.assertEquals(3, r4);
-        Assert.assertEquals(3, r5);
-        Assert.assertEquals(3, r6);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(1, r2);
+        Assertions.assertEquals(2, r3);
+        Assertions.assertEquals(3, r4);
+        Assertions.assertEquals(3, r5);
+        Assertions.assertEquals(3, r6);
         dump(cache);
     }
 
@@ -330,7 +330,7 @@ public class RemoteRequestsCacheTest {
             }
         };
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
+        Assertions.assertEquals(1, r1);
         int threadCount = 100;
         final List<Long>[] l = new List[]{Collections.synchronizedList(new ArrayList<>())};
         IncredibleThread[] threads1 = new IncredibleThread[threadCount];
@@ -357,9 +357,9 @@ public class RemoteRequestsCacheTest {
         }
         List<Long> l3 = l[0];
         for (int i = 0; i < l1.size(); i++) {
-            Assert.assertEquals(1, l1.get(i).intValue());
+            Assertions.assertEquals(1, l1.get(i).intValue());
         }
-        Assert.assertTrue(l1.size() > 5);
+        Assertions.assertTrue(l1.size() > 5);
         //in l2 is mayhem, we do not when the trigger was pulled.
         long max = Long.MIN_VALUE;
         for (int i = 0; i < l2.size(); i++) {
@@ -367,12 +367,12 @@ public class RemoteRequestsCacheTest {
                 max = l2.get(i);
             }
         }
-        Assert.assertTrue(max > 1);
-        Assert.assertTrue(l2.size() > 5);
+        Assertions.assertTrue(max > 1);
+        Assertions.assertTrue(l2.size() > 5);
         for (int i = 0; i < l3.size(); i++) {
-            Assert.assertEquals(max, l3.get(i).intValue());
+            Assertions.assertEquals(max, l3.get(i).intValue());
         }
-        Assert.assertTrue(l3.size() > 5);
+        Assertions.assertTrue(l3.size() > 5);
         dump(cache);
     }
 
@@ -450,12 +450,12 @@ public class RemoteRequestsCacheTest {
         long r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         long r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
         long r6 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(1, r3);
-        Assert.assertEquals(2, r4);
-        Assert.assertEquals(3, r5);
-        Assert.assertEquals(4, r6);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(1, r3);
+        Assertions.assertEquals(2, r4);
+        Assertions.assertEquals(3, r5);
+        Assertions.assertEquals(4, r6);
         p = new Properties();
         p.setProperty("m1", "10");
         p.setProperty("m1@anotherurl", "2000000000");
@@ -471,12 +471,12 @@ public class RemoteRequestsCacheTest {
         r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
         r6 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(5, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(5, r3);
-        Assert.assertEquals(2, r4);
-        Assert.assertEquals(3, r5);
-        Assert.assertEquals(4, r6);
+        Assertions.assertEquals(5, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(5, r3);
+        Assertions.assertEquals(2, r4);
+        Assertions.assertEquals(3, r5);
+        Assertions.assertEquals(4, r6);
         Thread.sleep(30);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
@@ -485,12 +485,12 @@ public class RemoteRequestsCacheTest {
         r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
         r6 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(6, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(6, r3);
-        Assert.assertEquals(2, r4);
-        Assert.assertEquals(3, r5);
-        Assert.assertEquals(4, r6);
+        Assertions.assertEquals(6, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(6, r3);
+        Assertions.assertEquals(2, r4);
+        Assertions.assertEquals(3, r5);
+        Assertions.assertEquals(4, r6);
         p = new Properties();
         p.setProperty("m1", "200");
         p.setProperty("m1@anotherurl", "2000000000");
@@ -506,12 +506,12 @@ public class RemoteRequestsCacheTest {
         r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
         r6 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(6, r1);
-        Assert.assertEquals(7, r2);
-        Assert.assertEquals(6, r3);
-        Assert.assertEquals(7, r4);
-        Assert.assertEquals(3, r5);
-        Assert.assertEquals(4, r6);
+        Assertions.assertEquals(6, r1);
+        Assertions.assertEquals(7, r2);
+        Assertions.assertEquals(6, r3);
+        Assertions.assertEquals(7, r4);
+        Assertions.assertEquals(3, r5);
+        Assertions.assertEquals(4, r6);
         Thread.sleep(35);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
@@ -520,12 +520,12 @@ public class RemoteRequestsCacheTest {
         r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
         r6 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(6, r1);
-        Assert.assertEquals(8, r2);
-        Assert.assertEquals(6, r3);
-        Assert.assertEquals(8, r4);
-        Assert.assertEquals(3, r5);
-        Assert.assertEquals(4, r6);
+        Assertions.assertEquals(6, r1);
+        Assertions.assertEquals(8, r2);
+        Assertions.assertEquals(6, r3);
+        Assertions.assertEquals(8, r4);
+        Assertions.assertEquals(3, r5);
+        Assertions.assertEquals(4, r6);
         Thread.sleep(200);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
@@ -533,12 +533,12 @@ public class RemoteRequestsCacheTest {
         r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
         r6 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(9, r1);
-        Assert.assertEquals(10, r2);
-        Assert.assertEquals(9, r3);
-        Assert.assertEquals(10, r4);
-        Assert.assertEquals(11, r5);
-        Assert.assertEquals(4, r6);
+        Assertions.assertEquals(9, r1);
+        Assertions.assertEquals(10, r2);
+        Assertions.assertEquals(9, r3);
+        Assertions.assertEquals(10, r4);
+        Assertions.assertEquals(11, r5);
+        Assertions.assertEquals(4, r6);
         p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER, "0"); //disabling, it can interfere here
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES, "200");
@@ -550,12 +550,12 @@ public class RemoteRequestsCacheTest {
         r4 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r5 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
         r6 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(9, r1);
-        Assert.assertEquals(10, r2);
-        Assert.assertEquals(9, r3);
-        Assert.assertEquals(10, r4);
-        Assert.assertEquals(11, r5);
-        Assert.assertEquals(12, r6);
+        Assertions.assertEquals(9, r1);
+        Assertions.assertEquals(10, r2);
+        Assertions.assertEquals(9, r3);
+        Assertions.assertEquals(10, r4);
+        Assertions.assertEquals(11, r5);
+        Assertions.assertEquals(12, r6);
         dump(cache);
 
     }
@@ -566,32 +566,32 @@ public class RemoteRequestsCacheTest {
         AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(null, provider);
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
         Properties p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, "someGarbage .*url:2.*");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(3, r2);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(3, r2);
         p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, "someGarbage .*url:2.* .*url:1.*");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(4, r1);
-        Assert.assertEquals(5, r2);
+        Assertions.assertEquals(4, r1);
+        Assertions.assertEquals(5, r2);
         p = new Properties();
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(4, r1);
-        Assert.assertEquals(5, r2);
+        Assertions.assertEquals(4, r1);
+        Assertions.assertEquals(5, r2);
         dump(cache);
     }
 
@@ -614,13 +614,13 @@ public class RemoteRequestsCacheTest {
         };
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
         Thread.sleep(20);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
         p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, ".*url:1.*");
         fw = new FileWriter(f);
@@ -633,13 +633,13 @@ public class RemoteRequestsCacheTest {
         }
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(3, r1);
-        Assert.assertEquals(2, r2);
+        Assertions.assertEquals(3, r1);
+        Assertions.assertEquals(2, r2);
         Thread.sleep(20);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(4, r1);
-        Assert.assertEquals(2, r2);
+        Assertions.assertEquals(4, r1);
+        Assertions.assertEquals(2, r2);
         p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST, "someGarbage .*url:2.* .*url:1.*");
         fw = new FileWriter(f);
@@ -652,13 +652,13 @@ public class RemoteRequestsCacheTest {
         }
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(5, r1);
-        Assert.assertEquals(6, r2);
+        Assertions.assertEquals(5, r1);
+        Assertions.assertEquals(6, r2);
         Thread.sleep(RemoteRequestsCache.CACHE_DEFAULT); //let it expire
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(7, r1);
-        Assert.assertEquals(8, r2);
+        Assertions.assertEquals(7, r1);
+        Assertions.assertEquals(8, r2);
         p = new Properties();
         fw = new FileWriter(f);
         p.store(fw, null);
@@ -670,13 +670,13 @@ public class RemoteRequestsCacheTest {
         }
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(7, r1);
-        Assert.assertEquals(8, r2);
+        Assertions.assertEquals(7, r1);
+        Assertions.assertEquals(8, r2);
         Thread.sleep(20);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(7, r1);
-        Assert.assertEquals(8, r2);
+        Assertions.assertEquals(7, r1);
+        Assertions.assertEquals(8, r2);
         dump(cache);
     }
 
@@ -687,19 +687,19 @@ public class RemoteRequestsCacheTest {
         AccessibleRemoteRequestsCache cache = new AccessibleRemoteRequestsCache(null, provider);
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1", "p2"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(3, r2);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(3, r2);
         Properties p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.CACHE_CLEAN_COMMAND, "true");
         cache.setProperties(p);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:2/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(4, r1);
-        Assert.assertEquals(5, r2);
+        Assertions.assertEquals(4, r1);
+        Assertions.assertEquals(5, r2);
         dump(cache);
     }
 
@@ -756,8 +756,8 @@ public class RemoteRequestsCacheTest {
         l1.join();
         l2.join();
         //both attempted to get null fromdb, hard to say which was first
-        Assert.assertTrue((1 == l1.getR()) ^ (1 == l2.getR()));
-        Assert.assertTrue((2 == l1.getR()) ^ (2 == l2.getR()));
+        Assertions.assertTrue((1 == l1.getR()) ^ (1 == l2.getR()));
+        Assertions.assertTrue((2 == l1.getR()) ^ (2 == l2.getR()));
         Thread.sleep(1000);//timeout the value
         l1 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
         l2 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
@@ -770,8 +770,8 @@ public class RemoteRequestsCacheTest {
         l1.join();
         l2.join();
         //both attempting cached value, first have to wait for new one, invalidating result, but second get old vlaue again
-        Assert.assertEquals(3, l1.getR()); //new value
-        Assert.assertTrue(2 == l2.getR() || 1 == l2.getR()); //no guarantee which result was added to db; cached value obtained anyway
+        Assertions.assertEquals(3, l1.getR()); //new value
+        Assertions.assertTrue(2 == l2.getR() || 1 == l2.getR()); //no guarantee which result was added to db; cached value obtained anyway
         dump(cache);
     }
 
@@ -796,18 +796,18 @@ public class RemoteRequestsCacheTest {
         long r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         long r3 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         long r4 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(3, r3);
-        Assert.assertEquals(4, r4);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(3, r3);
+        Assertions.assertEquals(4, r4);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r3 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r4 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(3, r3);
-        Assert.assertEquals(4, r4);
+        Assertions.assertEquals(1, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(3, r3);
+        Assertions.assertEquals(4, r4);
         p = new Properties();
         p.setProperty("m1", "0");
         p.setProperty("m1@anotherurl", "20000");
@@ -819,10 +819,10 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r3 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r4 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(5, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(3, r3);
-        Assert.assertEquals(4, r4);
+        Assertions.assertEquals(5, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(3, r3);
+        Assertions.assertEquals(4, r4);
         p = new Properties();
         p.setProperty("m1", "0");
         p.setProperty("m2", "20000");
@@ -833,10 +833,10 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r3 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r4 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(6, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(7, r3);
-        Assert.assertEquals(4, r4);
+        Assertions.assertEquals(6, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(7, r3);
+        Assertions.assertEquals(4, r4);
         p = new Properties();
         p.setProperty("m1", "20000");
         p.setProperty("m1@anotherurl", "0");
@@ -848,10 +848,10 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r3 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r4 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(6, r1);
-        Assert.assertEquals(2, r2);
-        Assert.assertEquals(8, r3);
-        Assert.assertEquals(4, r4);
+        Assertions.assertEquals(6, r1);
+        Assertions.assertEquals(2, r2);
+        Assertions.assertEquals(8, r3);
+        Assertions.assertEquals(4, r4);
         p = new Properties();
         p.setProperty("m1", "20000");
         p.setProperty("m1@anotherurl", "20000");
@@ -863,10 +863,10 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r3 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r4 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(6, r1);
-        Assert.assertEquals(9, r2);
-        Assert.assertEquals(8, r3);
-        Assert.assertEquals(4, r4);
+        Assertions.assertEquals(6, r1);
+        Assertions.assertEquals(9, r2);
+        Assertions.assertEquals(8, r3);
+        Assertions.assertEquals(4, r4);
         p = new Properties();
         p.setProperty("m1", "20000");
         p.setProperty("m1@anotherurl", "20000");
@@ -878,10 +878,10 @@ public class RemoteRequestsCacheTest {
         r2 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m2", new Object[]{"p1"}));
         r3 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
         r4 = (long) cache.obtain("http://anotherurl:1/path", new DummyRequestparam("m3", new Object[]{"p1"}));
-        Assert.assertEquals(10, r1);
-        Assert.assertEquals(11, r2);
-        Assert.assertEquals(12, r3);
-        Assert.assertEquals(13, r4);
+        Assertions.assertEquals(10, r1);
+        Assertions.assertEquals(11, r2);
+        Assertions.assertEquals(12, r3);
+        Assertions.assertEquals(13, r4);
         dump(cache);
     }
 
@@ -911,8 +911,8 @@ public class RemoteRequestsCacheTest {
         l1.join();
         l2.join();
         //both attempted to get null fromdb, hard to say which was first
-        Assert.assertTrue((1 == l1.getR()) ^ (1 == l2.getR()));
-        Assert.assertTrue((2 == l1.getR()) ^ (2 == l2.getR()));
+        Assertions.assertTrue((1 == l1.getR()) ^ (1 == l2.getR()));
+        Assertions.assertTrue((2 == l1.getR()) ^ (2 == l2.getR()));
         Thread.sleep(300);//timeout the value so much, it get actually errased from cache
         l1 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
         l2 = new LongReturningThread(new DummyRequestparam("m1", new Object[]{"p1"}), cache);
@@ -925,8 +925,8 @@ public class RemoteRequestsCacheTest {
         l1.join();
         l2.join();
         //both are again trying value, which was removed from cache
-        Assert.assertEquals(3, l1.getR()); //so both get new value
-        Assert.assertEquals(4, l2.getR()); //so both get new value, compare with lazyRefreshWorks
+        Assertions.assertEquals(3, l1.getR()); //so both get new value
+        Assertions.assertEquals(4, l2.getR()); //so both get new value, compare with lazyRefreshWorks
         dump(cache);
     }
 
@@ -941,22 +941,22 @@ public class RemoteRequestsCacheTest {
             }
         };
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
+        Assertions.assertEquals(1, r1);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
+        Assertions.assertEquals(1, r1);
         f.delete();
         cache.setProperties(new Properties());
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(2, r1);
+        Assertions.assertEquals(2, r1);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(3, r1);
+        Assertions.assertEquals(3, r1);
         f.createNewFile();
         cache.setProperties(new Properties());
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(3, r1);
+        Assertions.assertEquals(3, r1);
         ;
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(3, r1);
+        Assertions.assertEquals(3, r1);
         dump(cache);
     }
 
@@ -972,22 +972,22 @@ public class RemoteRequestsCacheTest {
             }
         };
         long r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(1, r1);
+        Assertions.assertEquals(1, r1);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(2, r1);
+        Assertions.assertEquals(2, r1);
         f.createNewFile();
         cache.setProperties(new Properties());
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(2, r1);
+        Assertions.assertEquals(2, r1);
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(2, r1);
+        Assertions.assertEquals(2, r1);
         f.delete();
         cache.setProperties(new Properties());
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(3, r1);
+        Assertions.assertEquals(3, r1);
         ;
         r1 = (long) cache.obtain("http://url:1/path", new DummyRequestparam("m1", new Object[]{"p1"}));
-        Assert.assertEquals(4, r1);
+        Assertions.assertEquals(4, r1);
         dump(cache);
     }
 
@@ -1086,10 +1086,10 @@ public class RemoteRequestsCacheTest {
         f.delete();
         Properties p = new Properties();
         p.setProperty(RemoteRequestCacheConfigKeys.DUMP_COMMAND, "true");
-        Assert.assertFalse(dumpFile.exists());
+        Assertions.assertFalse(dumpFile.exists());
         cache.setProperties(p);
-        Assert.assertTrue(dumpFile.exists());
-        Assert.assertTrue(dumpFile.length() > 100);
+        Assertions.assertTrue(dumpFile.exists());
+        Assertions.assertTrue(dumpFile.length() > 100);
 
     }
 
