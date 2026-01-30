@@ -1,13 +1,14 @@
 package org.fakekoji.api.http.filehandling;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.junit.Assert;
-import org.junit.Test;
 
 
 public class FileReturningHandlerTest {
@@ -101,7 +102,7 @@ public class FileReturningHandlerTest {
         List<FileReturningHandler.FileInfo> copy = new ArrayList<>(list);
         Collections.shuffle(copy);
         copy.sort(c);
-        Assert.assertTrue(list.equals(copy));
+        Assertions.assertTrue(list.equals(copy));
     }
 
     @Test
@@ -111,7 +112,7 @@ public class FileReturningHandlerTest {
         List<FileReturningHandler.FileInfo> copy = new ArrayList<>(list);
         Collections.shuffle(copy);
         copy.sort(c);
-        Assert.assertTrue(list.equals(copy));
+        Assertions.assertTrue(list.equals(copy));
     }
 
     @Test
@@ -121,7 +122,7 @@ public class FileReturningHandlerTest {
         List<FileReturningHandler.FileInfo> copy = new ArrayList<>(list);
         Collections.shuffle(copy);
         copy.sort(c);
-        Assert.assertTrue(list.equals(copy));
+        Assertions.assertTrue(list.equals(copy));
     }
 
     @Test
@@ -133,7 +134,7 @@ public class FileReturningHandlerTest {
         FileReturningHandler.FileInfo[] fi = new FileReturningHandler.FileInfo[]{
                 fi2, fi3, fi1};
         Arrays.sort(fi, c);
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 new FileReturningHandler.FileInfo[]{
                         fi3, fi2, fi1
                 }, fi);
@@ -149,7 +150,7 @@ public class FileReturningHandlerTest {
             fi2, fi3, fi1
         };
         Arrays.sort(fi, c);
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 new FileReturningHandler.FileInfo[]{
                     fi3, fi2, fi1
                 }, fi);
@@ -183,7 +184,7 @@ public class FileReturningHandlerTest {
             fi2, fi3, fi1
         };
         Arrays.sort(fi, c);
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
                 new FileReturningHandler.FileInfo[]{
                     fi3, fi2, fi1
                 }, fi);

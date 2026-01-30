@@ -25,13 +25,12 @@ package org.fakekoji.api.ssh;
 
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -42,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.security.GeneralSecurityException;
@@ -182,12 +182,12 @@ public class TestSshApi {
     private static ScpService server;
     private static final boolean debug = true;
 
-    @ClassRule
-    public final static TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
-    @BeforeClass
+    @BeforeAll
     public static void startSshdServer() throws IOException, GeneralSecurityException {
-        final FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final FolderHolder folderHolder = DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile());
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         ServerSocket s = new ServerSocket(settings.getSshPort());
         port = s.getLocalPort();
@@ -227,7 +227,7 @@ public class TestSshApi {
         secondDir.deleteOnExit();
     }
 
-    @AfterClass
+    @AfterAll
     public static void stopSshd() throws IOException {
         server.stop();
     }
@@ -329,17 +329,17 @@ public class TestSshApi {
         return i;
     }
 
-    @After
+    @AfterEach
     public void cleanSecondDir() {
         clean(secondDir);
     }
 
-    @After
+    @AfterEach
     public void cleanSources() {
         clean(sources);
     }
 
-    @After
+    @AfterEach
     public void cleanKojiDb() {
         clean(kojiDb);
     }
@@ -349,8 +349,8 @@ public class TestSshApi {
         for (File file : content) {
             deleteRecursively(file);
         }
-        Assert.assertTrue(f.isDirectory());
-        Assert.assertTrue(f.listFiles().length == 0);
+        Assertions.assertTrue(f.isDirectory());
+        Assertions.assertTrue(f.listFiles().length == 0);
     }
 
     private void deleteRecursively(File file) {
@@ -370,7 +370,7 @@ public class TestSshApi {
                 System.out.println("content: '" + readFile(f) + "'");
             }
         }
-        Assert.assertTrue(f + " was supposed to exists. was not", f.exists());
+        Assertions.assertTrue(f.exists());
     }
 
     private static void checkFileNotExists(File f) {
@@ -380,7 +380,7 @@ public class TestSshApi {
                 System.out.println("content: '" + readFile(f) + "'");
             }
         }
-        Assert.assertFalse(f + " was supposed to NOT exists. was", f.exists());
+        Assertions.assertFalse(f.exists());
     }
 
     private static void title(int i) {
@@ -484,7 +484,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("1t1");
         nvra.createLocal();
         int r = scpTo("", nvra.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -497,7 +497,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("1f1");
         nvra.createRemote();
         int r2 = scpFrom(nvra.getLocalFile().getParent(), nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getLocalFile());
 
     }
@@ -511,7 +511,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("1f2");
         nvra.createRemote();
         int r3 = scpFrom(nvra.getLocalFile().getParent(), "/" + nvra.getName());
-        Assert.assertTrue(r3 == 0);
+        Assertions.assertTrue(r3 == 0);
         checkFileExists(nvra.getLocalFile());
     }
 
@@ -524,7 +524,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("2t1");
         nvra.createLocal();
         int r = scpTo("/" + nvra.getName(), nvra.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -537,7 +537,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("2t1");
         nvra.createRemote();
         int r1 = scpFrom(nvra.getLocalFile().getAbsolutePath(), nvra.getName());
-        Assert.assertTrue(r1 == 0);
+        Assertions.assertTrue(r1 == 0);
         checkFileExists(nvra.getLocalFile());
     }
 
@@ -550,7 +550,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("2t2");
         nvra.createRemote();
         int r2 = scpFrom(new File(nvra.getLocalFile().getParent(), "nvra2").getAbsolutePath(), nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(new File(nvra.getLocalFile().getParent(), "nvra2"));
     }
 
@@ -563,7 +563,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3t1");
         nvra.createLocal();
         int r = scpToCwd("", sources, nvra.getLocalFile().getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -576,7 +576,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3t1");
         nvra.createLocal();
         int r = scpToCwd("", sources, nvra.getLocalFile().getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -589,7 +589,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3t2");
         nvra.createLocal();
         int r = scpToCwd("/", sources, nvra.getLocalFile().getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -602,7 +602,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3f1");
         nvra.createRemote();
         int r2 = scpFromCwd(".", sources, nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getLocalFile());
 
     }
@@ -616,7 +616,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("3f2");
         nvra.createRemote();
         int r2 = scpFromCwd("./renamed", sources, nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(new File(nvra.getLocalFile().getParentFile(), "renamed"));
 
     }
@@ -630,7 +630,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4t1");
         nvra.createLocal();
         int r = scpTo("/some/garbage", nvra.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -643,7 +643,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4t2");
         nvra.createLocal();
         int r = scpTo("/some/garbage/" + nvra.getName(), nvra.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -656,7 +656,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4t3");
         nvra.createLocal();
         int r = scpToCwd("some/garbage/" + nvra.getName(), nvra.getLocalFile().getParentFile(), nvra.getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -668,7 +668,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4t3");
         nvra.createLocal();
         int r = scpToCwd("some/garbage/" + nvra.getName(), nvra.getLocalFile().getParentFile(), nvra.getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -681,7 +681,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4f1");
         nvra.createRemote();
         int r2 = scpFrom(nvra.getLocalFile().getAbsolutePath(), "/some/garbage/" + nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getLocalFile());
 
     }
@@ -695,7 +695,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("4f2");
         nvra.createRemote();
         int r2 = scpFromCwd(nvra.getName(), sources, "some/garbage/" + nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getLocalFile());
 
     }
@@ -710,7 +710,7 @@ public class TestSshApi {
         nvraSource.createLocal();
         checkFileNotExists(nvraTarget.getLocalFile());
         int r = scpTo("some/garbage/" + nvraTarget.getName(), nvraSource.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvraTarget.getRemoteFile());
         checkFileNotExists(nvraSource.getRemoteFile());
     }
@@ -725,7 +725,7 @@ public class TestSshApi {
         nvraSource.createLocal();
         checkFileNotExists(nvraTarget.getLocalFile());
         int r = scpTo("/some/garbage/" + nvraTarget.getName(), nvraSource.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvraTarget.getRemoteFile());
         checkFileNotExists(nvraSource.getRemoteFile());
     }
@@ -742,7 +742,7 @@ public class TestSshApi {
         nvraSource.createRemote();
         checkFileNotExists(nvraTarget.getRemoteFile());
         int r = scpFrom(nvraTarget.getLocalFile().getAbsolutePath(), "/some/garbage/" + nvraSource.getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvraTarget.getLocalFile());
         checkFileNotExists(nvraSource.getLocalFile());
     }
@@ -761,7 +761,7 @@ public class TestSshApi {
         checkFileExists(renamed);
         nvra.getLocalFile().renameTo(renamed);
         int r = scpTo("some/garbage/" + nvra.getName(), renamed.getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -775,7 +775,7 @@ public class TestSshApi {
         nvra.createRemote();
         File nwFile = new File(nvra.getLocalFile().getParent(), "renamed");
         int r = scpFrom(nwFile.getAbsolutePath(), "some/garbage/" + nvra.getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileNotExists(nvra.getLocalFile());
         checkFileExists(nwFile);
     }
@@ -789,7 +789,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("6t2");
         nvra.createLocal();
         int r2 = scpTo("/some/garbage/someFile", nvra.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getRemoteFile());
 
     }
@@ -804,7 +804,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("6f1");
         nvra.createRemote();
         int r = scpFrom(nvra.getLocalFile().getAbsolutePath(), "some/garbage/notExisting");
-        Assert.assertTrue(r != 0);
+        Assertions.assertTrue(r != 0);
         checkFileNotExists(nvra.getLocalFile());
     }
 
@@ -819,7 +819,7 @@ public class TestSshApi {
         nvra1.createLocal();
         nvra2.createLocal();
         int r = scpTo("", nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra1.getRemoteFile());
         checkFileExists(nvra2.getRemoteFile());
     }
@@ -835,7 +835,7 @@ public class TestSshApi {
         nvra1.createLocal();
         nvra2.createLocal();
         int r = scpTo("/some/path/", nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra1.getRemoteFile());
         checkFileExists(nvra2.getRemoteFile());
     }
@@ -851,7 +851,7 @@ public class TestSshApi {
         nvra1.createRemote();
         nvra2.createRemote();
         int r = scpFrom(sources.getAbsolutePath(), "some/garbage/" + nvra1.getName(), "/another/garbage/" + nvra2.getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra1.getLocalFile());
         checkFileExists(nvra2.getLocalFile());
     }
@@ -867,7 +867,7 @@ public class TestSshApi {
         nvra1.createRemote();
         nvra2.createRemote();
         int r = scpFrom(sources.getAbsolutePath(), nvra1.getName(), nvra2.getName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra1.getLocalFile());
         checkFileExists(nvra2.getLocalFile());
     }
@@ -930,7 +930,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data1To", "dataFile");
         nvraDataFile.createLocal();
         int r2 = scpTo(nvraDataFile.getName() + "/data", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
 
@@ -941,7 +941,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data2To", "dataFile");
         nvraDataFile.createLocal();
         int r2 = scpTo(nvraDataFile.getName() + "/data/", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
 
     }
@@ -953,7 +953,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data3To", "dataFile");
         nvraDataFile.createLocal();
         int r2 = scpTo("some/garbage/" + nvraDataFile.getName() + "/data", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
 
@@ -964,7 +964,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data4To", "dataFile");
         nvraDataFile.createLocal();
         int r2 = scpTo("some/garbage/" + nvraDataFile.getName() + "/data/", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
 
@@ -975,7 +975,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data5To", "dataFile");
         nvraDataFile.createLocal();
         int r2 = scpTo("/some/garbage/" + nvraDataFile.getName() + "/data", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
 
@@ -986,7 +986,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data6To", "dataFile", "newName");
         nvraDataFile.createLocal();
         int r2 = scpTo(nvraDataFile.getName() + "/data/newName", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
 
@@ -997,7 +997,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data7To", "dataFile", "newName");
         nvraDataFile.createLocal();
         int r2 = scpTo("some/garabge/" + nvraDataFile.getName() + "/data/newName", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
 
@@ -1008,7 +1008,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data8To", "dataFile", "newName");
         nvraDataFile.createLocal();
         int r2 = scpTo("/some/garabge/" + nvraDataFile.getName() + "/data/newName", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getRemoteFile());
     }
 
@@ -1019,7 +1019,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data9To", "dataFile");
         nvraDataFile.createLocal();
         int r2 = scpTo("data", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertFalse(r2 == 0);
+        Assertions.assertFalse(r2 == 0);
         checkFileNotExists(nvraDataFile.getRemoteFile());
     }
 
@@ -1030,7 +1030,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data10To", "dataFile", "newName");
         nvraDataFile.createLocal();
         int r2 = scpTo("/", nvraDataFile.getLocalFile().getAbsolutePath());
-        Assert.assertFalse(r2 == 0);
+        Assertions.assertFalse(r2 == 0);
         checkFileNotExists(nvraDataFile.getRemoteFile());
     }
 
@@ -1041,7 +1041,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data1f1", "dataFile");
         nvraDataFile.createRemote();
         int r2 = scpFrom(sources.getAbsolutePath(), nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getLocalFile());
     }
 
@@ -1052,7 +1052,7 @@ public class TestSshApi {
         NvraDataPathsHelper nvraDataFile = new NvraDataPathsHelper("data2f1", "dataFile");
         nvraDataFile.createRemote();
         int r2 = scpFrom(sources.getAbsolutePath(), "/" + nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvraDataFile.getLocalFile());
     }
 
@@ -1065,7 +1065,7 @@ public class TestSshApi {
         File rename = new File(sources.getAbsolutePath(), "renamed");
         checkFileNotExists(rename);
         int r2 = scpFrom(rename.getAbsolutePath(), "some/garbage/" + nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(rename);
     }
 
@@ -1078,7 +1078,7 @@ public class TestSshApi {
         File rename = new File(sources.getAbsolutePath(), "renamed");
         checkFileNotExists(rename);
         int r2 = scpFrom(rename.getAbsolutePath(), "/some/garbage/" + nvraDataFile.getName() + "/data/" + nvraDataFile.getRemoteName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(rename);
     }
 
@@ -1093,7 +1093,7 @@ public class TestSshApi {
         nvra1.createLocal();
         nvra2.createLocal();
         int r = scpTo(nvra1.getName() + "/data", nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra1.getRemoteFile());
         checkFileExists(nvra2.getRemoteFile());
     }
@@ -1109,7 +1109,7 @@ public class TestSshApi {
         nvra1.createRemote();
         nvra2.createRemote();
         int r = scpFrom(sources.getAbsolutePath(), "some/garbage/" + nvra1.getName() + "/data/" + nvra1.getRemoteName(), "/another/garbage/" + nvra2.getName() + "/data/" + nvra2.getRemoteName());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra1.getLocalFile());
         checkFileExists(nvra2.getLocalFile());
     }
@@ -1167,7 +1167,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "1To", "logFile");
             nvraLogsFile.createLocal();
             int r2 = scpTo(nvraLogsFile.getName() + "/" + log, nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1180,7 +1180,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "2To", "logFile");
             nvraLogsFile.createLocal();
             int r2 = scpTo(nvraLogsFile.getName() + "/" + log + "/", nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
 
@@ -1194,7 +1194,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "3To", "logFile");
             nvraLogsFile.createLocal();
             int r2 = scpTo("some/garbage/" + nvraLogsFile.getName() + "/" + log, nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1207,7 +1207,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "4To", "logFile");
             nvraLogsFile.createLocal();
             int r2 = scpTo("some/garbage/" + nvraLogsFile.getName() + "/" + log + "/", nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1220,7 +1220,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "5To", "logFile");
             nvraLogsFile.createLocal();
             int r2 = scpTo("/some/garbage/" + nvraLogsFile.getName() + "/" + log, nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1233,7 +1233,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "6To", "logFile", "newName");
             nvraLogsFile.createLocal();
             int r2 = scpTo(nvraLogsFile.getName() + "/" + log + "/newName", nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1246,7 +1246,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "7To", "logFile", "newName");
             nvraLogsFile.createLocal();
             int r2 = scpTo("some/garabge/" + nvraLogsFile.getName() + "/" + log + "/newName", nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1259,7 +1259,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "8To", "logFile", "newName");
             nvraLogsFile.createLocal();
             int r2 = scpTo("/some/garabge/" + nvraLogsFile.getName() + "/" + log + "/newName", nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1272,7 +1272,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "9To", "logFile");
             nvraLogsFile.createLocal();
             int r2 = scpTo(log, nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertFalse(r2 == 0);
+            Assertions.assertFalse(r2 == 0);
             checkFileNotExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1285,7 +1285,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "10To", "logFile", "newName");
             nvraLogsFile.createLocal();
             int r2 = scpTo("/", nvraLogsFile.getLocalFile().getAbsolutePath());
-            Assert.assertFalse(r2 == 0);
+            Assertions.assertFalse(r2 == 0);
             checkFileNotExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1298,7 +1298,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "1f1", "logFile");
             nvraLogsFile.createRemote();
             int r2 = scpFrom(sources.getAbsolutePath(), nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getLocalFile());
         }
     }
@@ -1311,7 +1311,7 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "2f1", "logFile");
             nvraLogsFile.createRemote();
             int r2 = scpFrom(sources.getAbsolutePath(), "/" + nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getLocalFile());
         }
     }
@@ -1327,7 +1327,7 @@ public class TestSshApi {
             rename.delete();
             checkFileNotExists(rename);
             int r2 = scpFrom(rename.getAbsolutePath(), "some/garbage/" + nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(rename);
         }
     }
@@ -1343,7 +1343,7 @@ public class TestSshApi {
             rename.delete();
             checkFileNotExists(rename);
             int r2 = scpFrom(rename.getAbsolutePath(), "/some/garbage/" + nvraLogsFile.getName() + "/" + log + "/" + nvraLogsFile.getRemoteName());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(rename);
         }
     }
@@ -1360,7 +1360,7 @@ public class TestSshApi {
             nvra1.createLocal();
             nvra2.createLocal();
             int r = scpTo(nvra1.getName() + "/" + log, nvra1.getLocalFile().getAbsolutePath(), nvra2.getLocalFile().getAbsolutePath());
-            Assert.assertTrue(r == 0);
+            Assertions.assertTrue(r == 0);
             checkFileExists(nvra1.getRemoteFile());
             checkFileExists(nvra2.getRemoteFile());
         }
@@ -1378,7 +1378,7 @@ public class TestSshApi {
             nvra1.createRemote();
             nvra2.createRemote();
             int r = scpFrom(sources.getAbsolutePath(), "some/garbage/" + nvra1.getName() + "/" + log + "/" + nvra1.getRemoteName(), "/another/garbage/" + nvra2.getName() + "/" + log + "/" + nvra2.getRemoteName());
-            Assert.assertTrue(r == 0);
+            Assertions.assertTrue(r == 0);
             checkFileExists(nvra1.getLocalFile());
             checkFileExists(nvra2.getLocalFile());
         }
@@ -1394,15 +1394,15 @@ public class TestSshApi {
         data3.createLocal();
         data4.createSecondaryLocal();
         int r1 = scpTo(data2.getName() + "/data", data2.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
+        Assertions.assertTrue(r1 == 0);
         int r2 = scpTo(data3.getName() + "/data", data3.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         int r3 = scpTo(data4.getName() + "/data", data4.getSecondaryLocalFile().getAbsolutePath());
-        Assert.assertFalse(r3 == 0);
+        Assertions.assertFalse(r3 == 0);
         checkFileExists(data2.getRemoteFile());
         checkFileExists(data3.getRemoteFile());
         checkFileExists(data4.getRemoteFile());
-        Assert.assertEquals(data3.getRemoteFile(), data4.getRemoteFile());
+        Assertions.assertEquals(data3.getRemoteFile(), data4.getRemoteFile());
     }
 
     @Test
@@ -1414,15 +1414,15 @@ public class TestSshApi {
         log3.createLocal();
         log4.createSecondaryLocal();
         int r1 = scpTo(log2.getName() + "/logs", log2.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
+        Assertions.assertTrue(r1 == 0);
         int r2 = scpTo(log3.getName() + "/logs", log3.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         int r3 = scpTo(log4.getName() + "/logs", log4.getSecondaryLocalFile().getAbsolutePath());
-        Assert.assertTrue(r3 == 0);
+        Assertions.assertTrue(r3 == 0);
         checkFileExists(log2.getRemoteFile());
         checkFileExists(log3.getRemoteFile());
         checkFileExists(log4.getRemoteFile());
-        Assert.assertNotEquals(log3.getRemoteFile(), log4.getRemoteFile());
+        Assertions.assertNotEquals(log3.getRemoteFile(), log4.getRemoteFile());
     }
 
     @Test
@@ -1434,15 +1434,15 @@ public class TestSshApi {
         log3.createLocal();
         log4.createSecondaryLocal();
         int r1 = scpTo(log2.getName(), log2.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
+        Assertions.assertTrue(r1 == 0);
         int r2 = scpTo(log3.getName(), log3.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         int r3 = scpTo(log4.getName(), log4.getSecondaryLocalFile().getAbsolutePath());
-        Assert.assertTrue(r3 == 0);
+        Assertions.assertTrue(r3 == 0);
         checkFileExists(log2.getRemoteFile());
         checkFileExists(log3.getRemoteFile());
         checkFileExists(log4.getRemoteFile());
-        Assert.assertNotEquals(log3.getRemoteFile(), log4.getRemoteFile());
+        Assertions.assertNotEquals(log3.getRemoteFile(), log4.getRemoteFile());
     }
 
     /*
@@ -1492,7 +1492,7 @@ public class TestSshApi {
         NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1t1", "some/path", "fileName1", "fileName2");
         genericFile.createLocal();
         int r2 = scpTo(genericFile.getRemoteTail() + "/" + genericFile.getRemoteName(), genericFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(genericFile.getRemoteFile());
     }
 
@@ -1503,7 +1503,7 @@ public class TestSshApi {
         NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1t2", "some/path", "fileName1");
         genericFile.createLocal();
         int r2 = scpTo(genericFile.getRemoteTail(), genericFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         //note, here koji evaluated it as rename!
         checkFileNotExists(genericFile.getRemoteFile());
         checkFileExists(genericFile.getRemoteFile().getParentFile());
@@ -1516,7 +1516,7 @@ public class TestSshApi {
         NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1f1", "some/path", "fileName1", "fileName2");
         genericFile.createRemote();
         int r2 = scpFrom(genericFile.getLocalFile().getAbsolutePath(), genericFile.getRemoteTail() + "/" + genericFile.getRemoteName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(genericFile.getLocalFile());
     }
 
@@ -1527,7 +1527,7 @@ public class TestSshApi {
         NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("generic1f2", "some/path", "fileName1");
         genericFile.createRemote();
         int r2 = scpFrom(genericFile.getLocalFile().getParentFile().getAbsolutePath(), genericFile.getRemoteTail() + "/" + genericFile.getRemoteName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(genericFile.getLocalFile());
     }
 
@@ -1545,11 +1545,11 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("dr1t1");
         nvra.createLocal();
         int r1 = scpTo("", nvra.getLocalFile().getParent());
-        Assert.assertFalse(r1 == 0);
+        Assertions.assertFalse(r1 == 0);
         checkFileNotExists(nvra.getRemoteFile());
 
         int r2 = scpTo(RECURSIVE, "", null, nvra.getLocalFile().getParent());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -1560,7 +1560,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra1 = new NvraTarballPathsHelper("dr1t2");
         nvra1.createLocal();
         int r = scpTo(RECURSIVE, nvra1.getName(), null, nvra1.getLocalFile().getParent());
-        Assert.assertTrue(r == 0);
+        Assertions.assertTrue(r == 0);
         checkFileExists(nvra1.getRemoteFile());
     }
 
@@ -1574,7 +1574,7 @@ public class TestSshApi {
         nvra1.createLocal();
         nvra11.createLocal();
         int r = scpTo(RECURSIVE, nvra2.getName(), null, nvra1.getLocalFile().getParent());
-        Assert.assertFalse(r == 0);
+        Assertions.assertFalse(r == 0);
         //must fail now, as it is copying several files to single one, and overwrite is disabled now
         //however, the file must be created
         checkFileExists(nvra2.getRemoteFile());
@@ -1592,7 +1592,7 @@ public class TestSshApi {
         nvra1.createLocal();
         nvra2.createLocal();
         int r1 = scpTo(RECURSIVE, "", null, sources.getAbsolutePath());
-        Assert.assertTrue(r1 == 0);
+        Assertions.assertTrue(r1 == 0);
         checkFileExists(nvra1.getRemoteFile());
         checkFileExists(nvra2.getRemoteFile());
     }
@@ -1611,7 +1611,7 @@ public class TestSshApi {
         subdir.mkdir();
         nvra.getLocalFile().renameTo(subdirFile);
         int r2 = scpTo(RECURSIVE, "", null, sources.getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -1628,7 +1628,7 @@ public class TestSshApi {
         subdir.mkdir();
         nvra1.getLocalFile().renameTo(subdirFile);
         int r2 = scpTo(RECURSIVE, nvra2.getName(), null, sources.getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         //not surprisingly, the target name is used
         checkFileExists(nvra2.getRemoteFile());
         checkFileNotExists(nvra11.getRemoteFile());
@@ -1647,7 +1647,7 @@ public class TestSshApi {
         subdir.mkdir();
         nvra1.getLocalFile().renameTo(subdirFile);
         int r2 = scpTo(RECURSIVE, "", null, sources.getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         //correctly, the name of file, not dir s used
         checkFileExists(nvra1.getRemoteFile());
         checkFileNotExists(nvra11.getRemoteFile());
@@ -1665,7 +1665,7 @@ public class TestSshApi {
         subdir.mkdir();
         nvra1.getLocalFile().renameTo(subdirFile);
         int r2 = scpTo(RECURSIVE, "", null, subdir.getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         //correctly, the name of file, not dir s used
         checkFileExists(nvra1.getRemoteFile());
         checkFileNotExists(nvra11.getRemoteFile());
@@ -1681,9 +1681,9 @@ public class TestSshApi {
         NvraDataPathsHelper nvra = new NvraDataPathsHelper("data1tr1", "dataFile1");
         nvra.createLocal();
         int r1 = scpTo(RECURSIVE, "", null, nvra.getLocalFile().getParent());
-        Assert.assertFalse(r1 == 0);
+        Assertions.assertFalse(r1 == 0);
         int r2 = scpTo(RECURSIVE, nvra.getName() + "/data", null, nvra.getLocalFile().getParent());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -1699,11 +1699,11 @@ public class TestSshApi {
         nvra.getLocalFile().renameTo(subfile);
         int r1 = scpTo(RECURSIVE, nvra.getName() + "/", null, subdir.getAbsolutePath());
         //data in path are ignored, and so the datafile ends as NVRA instead of DATA:(
-        Assert.assertTrue(r1 == 0);
+        Assertions.assertTrue(r1 == 0);
         checkFileNotExists(nvra.getRemoteFile());
         int r2 = scpTo(RECURSIVE, nvra.getName() + "/data/", null, subdir.getAbsolutePath());
         //this oone uploads correctly
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getRemoteFile());
     }
 
@@ -1721,7 +1721,7 @@ public class TestSshApi {
         nvra1.getLocalFile().renameTo(subfile);
         int r2 = scpTo(RECURSIVE, nvra1.getName() + "/data/", null, sources.getAbsolutePath());
         //this oone uploads correctly
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra1.getRemoteFile());
         checkFileExists(nvra2.getRemoteFile());
     }
@@ -1737,9 +1737,9 @@ public class TestSshApi {
             NvraLogsPathsHelper nvraLogsFile = new NvraLogsPathsHelper(trasnformToLogId(log) + "1tr1", "logFile1");
             nvraLogsFile.createLocal();
             int r1 = scpTo(RECURSIVE, "", null, nvraLogsFile.getLocalFile().getParent());
-            Assert.assertFalse(r1 == 0);
+            Assertions.assertFalse(r1 == 0);
             int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/" + log, null, nvraLogsFile.getLocalFile().getParent());
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1757,11 +1757,11 @@ public class TestSshApi {
             nvraLogsFile.getLocalFile().renameTo(subfile);
             int r1 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/", null, subdir.getAbsolutePath());
             //data in path are ignored, and so the datafile ends as NVRA instead of DATA:(
-            Assert.assertTrue(r1 == 0);
+            Assertions.assertTrue(r1 == 0);
             checkFileNotExists(nvraLogsFile.getRemoteFile());
             int r2 = scpTo(RECURSIVE, nvraLogsFile.getName() + "/" + log + "/", null, subdir.getAbsolutePath());
             //this oone uploads correctly
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile.getRemoteFile());
         }
     }
@@ -1781,7 +1781,7 @@ public class TestSshApi {
             nvraLogsFile1.getLocalFile().renameTo(subfile);
             int r2 = scpTo(RECURSIVE, nvraLogsFile1.getName() + "/" + log + "/", null, sources.getAbsolutePath());
             //this oone uploads correctly
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             checkFileExists(nvraLogsFile1.getRemoteFile());
             checkFileExists(nvraLogsFile2.getRemoteFile());
         }
@@ -1797,9 +1797,9 @@ public class TestSshApi {
         NvraGeneralPathsHelper nvra = new NvraGeneralPathsHelper("data1tr1", "some/path", "dataFile1");
         nvra.createLocal();
         int r1 = scpTo(RECURSIVE, "", null, nvra.getLocalFile().getParent());
-        Assert.assertFalse(r1 == 0);
+        Assertions.assertFalse(r1 == 0);
         int r2 = scpTo(RECURSIVE, nvra.getName() + "/some/path", null, nvra.getLocalFile().getParent());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         //!!broken!
         //checkFileExists(nvra.getRemoteFile());
         //this is wrong, there hsoudl be some/path/dataFile1, but is just some/path (file of path)
@@ -1820,8 +1820,8 @@ public class TestSshApi {
         nvra1.getLocalFile().renameTo(subfile);
         int r2 = scpTo(RECURSIVE, nvra1.getName() + "/some/path/", null, sources.getAbsolutePath());
         //broken! first file, although different is trying to overwrite second file
-        //Assert.assertTrue(r2 == 0);
-        Assert.assertFalse(r2 == 0);
+        //Assertions.assertTrue(r2 == 0);
+        Assertions.assertFalse(r2 == 0);
         //checkFileExists(nvra1.getRemoteFile());
         //checkFileExists(nvra2.getRemoteFile());
         checkFileExists(nvra1.getRemoteFile().getParentFile());
@@ -1840,7 +1840,7 @@ public class TestSshApi {
         NvraTarballPathsHelper nvra = new NvraTarballPathsHelper("r1f1");
         nvra.createRemote();
         int r2 = scpFrom(RECURSIVE, nvra.getLocalFile().getParent(), null, nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getLocalFile());
     }
 
@@ -1855,7 +1855,7 @@ public class TestSshApi {
         strangeFileRemote.createNewFile();
         checkFileExists(strangeFileRemote);
         int r2 = scpFrom(RECURSIVE, nvra.getLocalFile().getParent(), null, nvra.getName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(nvra.getLocalFile());
         File strangeFileLocal = new File(nvra.getLocalFile().getParent(), strangeFileRemote.getName());
         //BROKEN! scp from NVRA simply ignores -r and returns the file it got in src
@@ -1885,7 +1885,7 @@ public class TestSshApi {
         log3.createRemote();
         log4.createRemote();
         int r2 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, data1.getName() + "/data");
-        Assert.assertFalse(r2 == 0);
+        Assertions.assertFalse(r2 == 0);
         //BROKEN! but should work once this is updated ro final sshd-core version
         //fixme!
     }
@@ -1907,11 +1907,11 @@ public class TestSshApi {
             log3.createRemote();
             log4.createRemote();
             int r1 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log1.getName() + "/" + log);
-            Assert.assertTrue(r1 == 0);
+            Assertions.assertTrue(r1 == 0);
             int r2 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log3.getName() + "/" + log);
-            Assert.assertTrue(r2 == 0);
+            Assertions.assertTrue(r2 == 0);
             int r3 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log4.getName() + "/" + log);
-            Assert.assertTrue(r3 == 0);
+            Assertions.assertTrue(r3 == 0);
             //scp honors the directories
             checkFileExists(new File(new File(log1.getLocalFile().getParent(), log1.getArch()), log1.getLocalName()));
             checkFileExists(new File(new File(log2.getLocalFile().getParent(), log2.getArch()), log2.getLocalName()));
@@ -1936,11 +1936,11 @@ public class TestSshApi {
             log3.createRemote();
             log4.createRemote();
             int r1 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log1.getName() + "/" + log);
-            Assert.assertFalse(r1 == 0);
+            Assertions.assertFalse(r1 == 0);
             int r2 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log3.getName() + "/" + log);
-            Assert.assertFalse(r2 == 0);
+            Assertions.assertFalse(r2 == 0);
             int r3 = scpFrom(RECURSIVE, sources.getAbsolutePath(), null, log4.getName() + "/" + log);
-            Assert.assertFalse(r3 == 0);
+            Assertions.assertFalse(r3 == 0);
             //for some reason
             //logs works (see scpRecursciveMultipleLogsFrom1) but data/logs not
             //fixme!
@@ -1969,7 +1969,7 @@ public class TestSshApi {
         NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("failedFileT1", "", "FAILED");
         genericFile.createLocal();
         int r2 = scpTo(genericFile.getRemoteTail() + "/" + genericFile.getRemoteName(), genericFile.getLocalFile().getAbsolutePath());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(genericFile.getRemoteFile());
     }
 
@@ -1979,10 +1979,10 @@ public class TestSshApi {
         NvraGeneralPathsHelper genericFile = new NvraGeneralPathsHelper("failedFileF1", "", "FAILED");
         genericFile.createRemote();
         int r1 = scpFrom(sources.getAbsolutePath(), genericFile.getRemoteTail());
-        Assert.assertFalse(r1 == 0);
+        Assertions.assertFalse(r1 == 0);
         checkFileNotExists(genericFile.getLocalFile());
         int r2 = scpFrom(sources.getAbsolutePath(), genericFile.getRemoteTail() + "/" + genericFile.getRemoteName());
-        Assert.assertTrue(r2 == 0);
+        Assertions.assertTrue(r2 == 0);
         checkFileExists(genericFile.getLocalFile());
     }
 
@@ -2009,9 +2009,9 @@ public class TestSshApi {
         createFile(srcFileLocal, srcFileLocal.getName());
         checkFileExists(srcFileLocal);
         int r1 = scpTo("", srcFileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 1);
+        Assertions.assertTrue(r1 == 1);
         int r2 = scpTo("", x64FileLocal.getAbsolutePath());
-        Assert.assertTrue(r2 == 1);
+        Assertions.assertTrue(r2 == 1);
         checkFileNotExists(srcFile);
         checkFileNotExists(x64File);
 
@@ -2034,9 +2034,9 @@ public class TestSshApi {
         createFile(srcFile, srcFile.getName());
         checkFileExists(srcFile);
         int r1 = scpFrom(sources.getAbsolutePath(), srcFile.getName());
-        Assert.assertTrue(r1 == 1);
+        Assertions.assertTrue(r1 == 1);
         int r2 = scpFrom(sources.getAbsolutePath(), x64File.getName());
-        Assert.assertTrue(r2 == 1);
+        Assertions.assertTrue(r2 == 1);
         checkFileNotExists(srcFileLocal);
         checkFileNotExists(x64FileLocal);
 
@@ -2057,7 +2057,7 @@ public class TestSshApi {
         createFile(srcFileLocal, srcFileLocal.getName());
         checkFileExists(srcFileLocal);
         int r1 = scpTo("", srcFileLocal.getAbsolutePath(), x64FileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 1);
+        Assertions.assertTrue(r1 == 1);
         checkFileNotExists(srcFile);
         checkFileNotExists(x64File);
 
@@ -2080,7 +2080,7 @@ public class TestSshApi {
         createFile(srcFile, srcFile.getName());
         checkFileExists(srcFile);
         int r2 = scpFrom(sources.getAbsolutePath(), srcFile.getName(), x64File.getName());
-        Assert.assertTrue(r2 == 1);
+        Assertions.assertTrue(r2 == 1);
         checkFileNotExists(srcFileLocal);
         checkFileNotExists(x64FileLocal);
 
@@ -2101,10 +2101,10 @@ public class TestSshApi {
         createFile(srcFileLocal, srcFileLocal.getName());
         checkFileExists(srcFileLocal);
         int r1 = scpTo(x64File.getName(), srcFileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 1);
+        Assertions.assertTrue(r1 == 1);
         checkFileNotExists(x64File);
         int r2 = scpTo(srcFile.getName(), x64FileLocal.getAbsolutePath());
-        Assert.assertTrue(r2 == 1);
+        Assertions.assertTrue(r2 == 1);
         checkFileNotExists(srcFile);
 
     }
@@ -2127,9 +2127,9 @@ public class TestSshApi {
             createFile(srcLogFileLocal, srcNvra);
             checkFileExists(srcLogFileLocal);
             int r1 = scpTo(srcNvra + "/" + log, srcLogFileLocal.getAbsolutePath());
-            Assert.assertTrue(r1 == 1);
+            Assertions.assertTrue(r1 == 1);
             int r2 = scpTo(x64Nvra + "/" + log, x64LogFileLocal.getAbsolutePath());
-            Assert.assertTrue(r2 == 1);
+            Assertions.assertTrue(r2 == 1);
             checkFileNotExists(srcLogFile);
             checkFileNotExists(x64LogFile);
         }
@@ -2151,9 +2151,9 @@ public class TestSshApi {
         createFile(srcLogFileLocal, srcNvra);
         checkFileExists(srcLogFileLocal);
         int r1 = scpTo(srcNvra + "/data", srcLogFileLocal.getAbsolutePath());
-        Assert.assertTrue(r1 == 1);
+        Assertions.assertTrue(r1 == 1);
         int r2 = scpTo(x64Nvra + "/data", x64LogFileLocal.getAbsolutePath());
-        Assert.assertTrue(r2 == 1);
+        Assertions.assertTrue(r2 == 1);
         checkFileNotExists(srcLogFile);
         checkFileNotExists(x64LogFile);
     }
@@ -2178,9 +2178,9 @@ public class TestSshApi {
             createFile(srcLogFile, srcNvra);
             checkFileExists(srcLogFile);
             int r1 = scpFrom(sources.getAbsolutePath(), x64Nvra + "/" + log + "/" + x64LogFile.getName());
-            Assert.assertTrue(r1 == 1);
+            Assertions.assertTrue(r1 == 1);
             int r2 = scpFrom(sources.getAbsolutePath(), srcNvra + "/" + log + "/" + srcLogFile.getName());
-            Assert.assertTrue(r2 == 1);
+            Assertions.assertTrue(r2 == 1);
             checkFileNotExists(srcLogFileLocal);
             checkFileNotExists(x64LogFileLocal);
         }
@@ -2203,9 +2203,9 @@ public class TestSshApi {
         createFile(srcLogFile, srcNvra);
         checkFileExists(srcLogFile);
         int r1 = scpFrom(sources.getAbsolutePath(), srcNvra + "/data/" + srcLogFile.getName());
-        Assert.assertTrue(r1 == 1);
+        Assertions.assertTrue(r1 == 1);
         int r2 = scpFrom(sources.getAbsolutePath(), x64Nvra + "/data/" + x64LogFile.getName());
-        Assert.assertTrue(r2 == 1);
+        Assertions.assertTrue(r2 == 1);
         checkFileNotExists(srcLogFileLocal);
         checkFileNotExists(x64LogFileLocal);
     }
@@ -2232,7 +2232,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, ARCHIVE, nvra).toFile();
         checkFileExists(remoteFile);
     }
@@ -2245,7 +2245,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, ARCHIVE, nvra).toFile();
         checkFileNotExists(remoteFile);
     }
@@ -2258,7 +2258,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, ARCHIVE, nvra).toFile();
         checkFileExists(remoteFile);
     }
@@ -2272,7 +2272,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, ARCHIVE, nvra).toFile();
         checkFileNotExists(remoteFile);
     }
@@ -2285,7 +2285,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, SOURCES, nvra).toFile();
         checkFileExists(remoteFile);
     }
@@ -2298,7 +2298,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, SOURCES, nvra).toFile();
         checkFileNotExists(remoteFile);
     }
@@ -2311,7 +2311,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, SOURCES, nvra).toFile();
         checkFileExists(remoteFile);
     }
@@ -2324,7 +2324,7 @@ public class TestSshApi {
         createFile(localFile, nvra);
         checkFileExists(localFile);
         int returnCode = scpTo("", localFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, SOURCES, nvra).toFile();
         checkFileNotExists(remoteFile);
     }
@@ -2338,7 +2338,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, "data", "logs", SOURCES, logName).toFile();
         checkFileExists(remoteLogFile);
     }
@@ -2352,7 +2352,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, "data", "logs", SOURCES, logName).toFile();
         checkFileNotExists(remoteLogFile);
     }
@@ -2366,7 +2366,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", SOURCES, logName).toFile();
         checkFileExists(remoteLogFile);
     }
@@ -2380,7 +2380,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, "data", "logs", SOURCES, logName).toFile();
         checkFileNotExists(remoteLogFile);
     }
@@ -2394,7 +2394,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE, "data", "logs", ARCHIVE, logName).toFile();
         checkFileExists(remoteLogFile);
     }
@@ -2408,7 +2408,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_BAD, "data", "logs", ARCHIVE, logName).toFile();
         checkFileNotExists(remoteLogFile);
     }
@@ -2422,7 +2422,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS, "data", "logs", ARCHIVE, logName).toFile();
         checkFileExists(remoteLogFile);
     }
@@ -2436,7 +2436,7 @@ public class TestSshApi {
         createFile(logFile, logName);
         checkFileExists(logFile);
         int returnCode = scpTo(nvra + SUFFIX + "/logs", logFile.getAbsolutePath());
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         final File remoteLogFile = Paths.get(kojiDb.getAbsolutePath(), JDK_8_PACKAGE_NAME, VERSION_1, RELEASE_CHAOS_BAD, "data", "logs", ARCHIVE, logName).toFile();
         checkFileNotExists(remoteLogFile);
     }
@@ -2451,7 +2451,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localFile);
     }
 
@@ -2465,7 +2465,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localFile);
     }
 
@@ -2479,7 +2479,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localFile);
     }
 
@@ -2493,7 +2493,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localFile);
     }
     @Test
@@ -2506,7 +2506,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localFile);
     }
 
@@ -2520,7 +2520,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localFile);
     }
 
@@ -2534,7 +2534,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localFile);
     }
 
@@ -2548,7 +2548,7 @@ public class TestSshApi {
         final File localFile = new File(sources, nvra);
         checkFileExists(remoteFile);
         int returnCode = scpFrom(localFile.getAbsolutePath(), nvra);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localFile);
     }
     @Test
@@ -2561,7 +2561,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localLogFile);
     }
 
@@ -2575,7 +2575,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localLogFile);
     }
 
@@ -2589,7 +2589,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localLogFile);
     }
 
@@ -2603,7 +2603,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localLogFile);
     }
 
@@ -2617,7 +2617,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localLogFile);
     }
 
@@ -2631,7 +2631,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localLogFile);
     }
 
@@ -2645,7 +2645,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertEquals(returnCode, 0);
+        Assertions.assertEquals(returnCode, 0);
         checkFileExists(localLogFile);
     }
 
@@ -2659,7 +2659,7 @@ public class TestSshApi {
         createFile(remoteLogFile, logName);
         final File localLogFile = new File(sources, logName);
         int returnCode = scpFrom(localLogFile.getAbsolutePath(), nvra + SUFFIX + "/logs/" + logName);
-        Assert.assertNotEquals(returnCode, 0);
+        Assertions.assertNotEquals(returnCode, 0);
         checkFileNotExists(localLogFile);
     }
 }

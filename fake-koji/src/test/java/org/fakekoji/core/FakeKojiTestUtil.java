@@ -180,7 +180,7 @@ public class FakeKojiTestUtil {
     }
 
     public static JavaServer createDefaultFakeKojiServerWithData(File tmpDir) throws Exception {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(tmpDir);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(tmpDir.toPath());
         generateFakeKojiData(folderHolder.buildsRoot, folderHolder.reposRoot);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         return new JavaServer(settings);

@@ -1,8 +1,8 @@
 package org.fakekoji.jobmanager.views;
 
 import org.fakekoji.model.*;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
@@ -53,7 +53,7 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String actualTemplate = template.expand();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String actualTemplate = template.expand();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String actualTemplate = template.expand();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
 
@@ -169,7 +169,7 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String actualTemplate = template.expand();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -212,7 +212,7 @@ public class JenkinsViewTemplateBuilderTest {
 
         final String actualTemplate = template.expand();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
 

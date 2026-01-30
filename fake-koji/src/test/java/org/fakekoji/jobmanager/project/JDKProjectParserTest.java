@@ -7,26 +7,26 @@ import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.storage.StorageException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Set;
 
 
 public class JDKProjectParserTest {
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
     private AccessibleSettings settings;
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
-        settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
+        settings = DataGenerator.getSettings(DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile()));
     }
 
     @Test
@@ -34,8 +34,7 @@ public class JDKProjectParserTest {
         final JDKTestProject jdkTestProject = DataGenerator.getJDKTestProject();
         final JDKProjectParser parser = settings.getJdkProjectParser();
         final Set<Job> actualJobs = parser.parse(jdkTestProject);
-        Assert.assertEquals(
-                "ParsedProject should be equal",
+        Assertions.assertEquals(
                 DataGenerator.getJDKTestProjectJobs(),
                 actualJobs
         );
@@ -46,8 +45,7 @@ public class JDKProjectParserTest {
         final JDKProject jdkProject = DataGenerator.getJDKProject();
         final JDKProjectParser parser = settings.getJdkProjectParser();
         final Set<Job> actualJobs = parser.parse(jdkProject);
-        Assert.assertEquals(
-                "ParsedProject should be equal",
+        Assertions.assertEquals(
                 DataGenerator.getJDKProjectJobs(),
                 actualJobs
         );

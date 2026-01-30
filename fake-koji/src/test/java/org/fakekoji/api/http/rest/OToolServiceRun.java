@@ -3,8 +3,8 @@ package org.fakekoji.api.http.rest;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +32,7 @@ public class OToolServiceRun {
             LOGGER.info("Done");
         }
         final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool);
         if (System.getProperty("otool.testdb.dir") != null) {
             Files.copy(new File(System.getProperty("otool.testdb.dir") + "/results.db").toPath(), new File(folderHolder.configsRoot, "results.db").toPath());
         }
@@ -1112,26 +1112,26 @@ public class OToolServiceRun {
         bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
         List<String> e = bwl.removeBlacklisted(new String[]{"aa", "bb", "aa"});
         System.out.println(Arrays.toString(e.toArray()));
-        Assert.assertEquals(new String[]{}, e.toArray());
+        Assertions.assertEquals(new String[]{}, e.toArray());
 
         bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
         List<String> o = bwl.removeBlacklisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm"});
         System.out.println(Arrays.toString(o.toArray()));
-        Assert.assertEquals(new String[]{"kkk", "ooo", "zz", "yy", "mmm"}, o.toArray());
+        Assertions.assertEquals(new String[]{"kkk", "ooo", "zz", "yy", "mmm"}, o.toArray());
 
         List<String> oo = bwl.allowJustWhitelisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm", "zz"});
         System.out.println(Arrays.toString(oo.toArray()));
-        Assert.assertEquals(new String[]{"zz", "yy"}, oo.toArray());
+        Assertions.assertEquals(new String[]{"zz", "yy"}, oo.toArray());
 
         BlackWhiteLister onlyW = new BlackWhiteLister("test", new String[]{}, new String[]{"aa"});
         List<String> a = onlyW.match(new String[]{"aa"});
         System.out.println(Arrays.toString(a.toArray()));
-        Assert.assertEquals(new String[]{"aa"}, a.toArray());
+        Assertions.assertEquals(new String[]{"aa"}, a.toArray());
 
         BlackWhiteLister onlyB = new BlackWhiteLister("test", new String[]{"aa"}, new String[]{""});
         List<String> b = onlyB.match(new String[]{"aa", "bb"});
         System.out.println(Arrays.toString(b.toArray()));
-        Assert.assertEquals(new String[]{"bb"}, b.toArray());
+        Assertions.assertEquals(new String[]{"bb"}, b.toArray());
     }
 
     public OToolServiceRun() {
@@ -1259,7 +1259,7 @@ public class OToolServiceRun {
                     for (BlackWhiteLister s : suites) {
                         BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, containersLists);
                         List<String> r = checkMatch(bl, e.getValue(), e.getKey());
-                        Assert.assertTrue(r.size() >= 0 && r.size() <= 1);
+                        Assertions.assertTrue(r.size() >= 0 && r.size() <= 1);
                     }
                 }
             }
@@ -1273,7 +1273,7 @@ public class OToolServiceRun {
                         if (d == all){
                             //currenlty nothing intereesting
                         } else {
-                            Assert.assertTrue(r.size() >= 0 && r.size() <= 1);
+                            Assertions.assertTrue(r.size() >= 0 && r.size() <= 1);
                         }
                     }
                 }

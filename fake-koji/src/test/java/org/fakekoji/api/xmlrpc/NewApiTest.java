@@ -7,13 +7,13 @@ import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.FakeKojiDB;
 import org.fakekoji.jobmanager.JenkinsJobTemplateBuilder;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -25,14 +25,14 @@ import static org.fakekoji.DataGenerator.SUFFIX;
 
 public class NewApiTest {
 
-    @ClassRule
-    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
     private static FakeKojiDB kojiDB;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile());
         DataGenerator.initBuildsRoot(folderHolder.buildsRoot);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
 
@@ -49,8 +49,7 @@ public class NewApiTest {
                 false
         );
         List<Build> buildList = kojiDB.getBuildList(params);
-        Assert.assertEquals(
-                getBuildNumberMessage(expectedNumberOfBuilds, buildList.size()),
+        Assertions.assertEquals(
                 expectedNumberOfBuilds,
                 buildList.size()
         );
@@ -71,15 +70,14 @@ public class NewApiTest {
                 false
         );
         List<Build> buildList = kojiDB.getBuildList(params);
-        Assert.assertEquals(
-                getBuildNumberMessage(expectedNumberOfBuilds, buildList.size()),
+        Assertions.assertEquals(
                 expectedNumberOfBuilds,
                 buildList.size()
         );
         for (final Build build : buildList) {
-            Assert.assertEquals(1, build.getRpms().size());
+            Assertions.assertEquals(1, build.getRpms().size());
             final RPM rpm = build.getRpms().get(0);
-            Assert.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
+            Assertions.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
         }
     }
 
@@ -100,15 +98,14 @@ public class NewApiTest {
                 false
         );
         List<Build> buildList = kojiDB.getBuildList(params);
-        Assert.assertEquals(
-                getBuildNumberMessage(expectedNumberOfBuilds, buildList.size()),
+        Assertions.assertEquals(
                 expectedNumberOfBuilds,
                 buildList.size()
         );
         for (final Build build : buildList) {
-            Assert.assertEquals(1, build.getRpms().size());
+            Assertions.assertEquals(1, build.getRpms().size());
             final RPM rpm = build.getRpms().get(0);
-            Assert.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
+            Assertions.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
         }
     }
 
@@ -129,15 +126,14 @@ public class NewApiTest {
                 true
         );
         List<Build> buildList = kojiDB.getBuildList(params);
-        Assert.assertEquals(
-                getBuildNumberMessage(expectedNumberOfBuilds, buildList.size()),
+        Assertions.assertEquals(
                 expectedNumberOfBuilds,
                 buildList.size()
         );
         for (final Build build : buildList) {
-            Assert.assertEquals(1, build.getRpms().size());
+            Assertions.assertEquals(1, build.getRpms().size());
             final RPM rpm = build.getRpms().get(0);
-            Assert.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
+            Assertions.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
         }
     }
 
@@ -156,15 +152,14 @@ public class NewApiTest {
                 true
         );
         List<Build> buildList = kojiDB.getBuildList(params);
-        Assert.assertEquals(
-                getBuildNumberMessage(expectedNumberOfBuilds, buildList.size()),
+        Assertions.assertEquals(
                 expectedNumberOfBuilds,
                 buildList.size()
         );
         for (final Build build : buildList) {
-            Assert.assertEquals(1, build.getRpms().size());
+            Assertions.assertEquals(1, build.getRpms().size());
             final RPM rpm = build.getRpms().get(0);
-            Assert.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
+            Assertions.assertTrue(expectedArchives.contains(rpm.getFilename(SUFFIX)));
         }
     }
 
@@ -178,14 +173,10 @@ public class NewApiTest {
                 false
         );
         List<Build> buildList = kojiDB.getBuildList(params);
-        Assert.assertEquals(
-                getBuildNumberMessage(expectedNumberOfBuilds, buildList.size()),
+        Assertions.assertEquals(
                 expectedNumberOfBuilds,
                 buildList.size()
         );
     }
 
-    private String getBuildNumberMessage(final int expected, final int actual) {
-        return "Expected number of builds: " + expected + ", got: " + actual;
-    }
 }

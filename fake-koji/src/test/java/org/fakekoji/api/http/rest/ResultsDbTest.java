@@ -2,9 +2,9 @@ package org.fakekoji.api.http.rest;
 
 import org.fakekoji.DataGenerator;
 import org.fakekoji.jobmanager.JenkinsCliWrapper;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.Ignore;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 
 import java.io.File;
 import java.io.IOException;
@@ -187,12 +187,12 @@ public class ResultsDbTest {
         }
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void stressDb() throws IOException, InterruptedException {
         JenkinsCliWrapper.killCli();
         final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool.toPath());
         DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
         db = new ResultsDb(DataGenerator.getSettings(folderHolder));
 
@@ -210,15 +210,15 @@ public class ResultsDbTest {
         }
         System.out.println("exceptions: " + exs.toString() + " from " + checks.toString());
         System.out.println("failed    : " + failures.toString() + " from " + checks.toString());
-        Assert.assertEquals(0, failures.get());
-        Assert.assertEquals(0, exs.get());
+        Assertions.assertEquals(0, failures.get());
+        Assertions.assertEquals(0, exs.get());
     }
 
     @Test
     public void checkSave() throws IOException, InterruptedException {
         JenkinsCliWrapper.killCli();
         final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool.toPath());
         DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
         db = new ResultsDb(DataGenerator.getSettings(folderHolder));
         for(int i = 0; i <= ResultsDb.LIMIT_TO_SAVE; i++){
@@ -278,54 +278,58 @@ public class ResultsDbTest {
         long l0 = DataGenerator.getSettings(folderHolder).getResultsFile().length();
         System.out.println("0)"+l0);
         //878 is minimal growth of file
-        Assert.assertTrue(l1 + MIN_SIZE < l2);
-        Assert.assertTrue(l2 + MIN_SIZE < l3);
-        Assert.assertTrue(l3 + MIN_SIZE < l4);
-        Assert.assertTrue(l4 + MIN_SIZE < l5);
-        Assert.assertTrue(l5 == l6);
-        Assert.assertTrue(l6 == l7);
-        Assert.assertTrue(l7 > l8 + MIN_SIZE);
-        Assert.assertTrue(l8 > l9 + MIN_SIZE);
-        Assert.assertTrue(l9 > l0 + MIN_SIZE);
+        Assertions.assertTrue(l1 + MIN_SIZE < l2);
+        Assertions.assertTrue(l2 + MIN_SIZE < l3);
+        Assertions.assertTrue(l3 + MIN_SIZE < l4);
+        Assertions.assertTrue(l4 + MIN_SIZE < l5);
+        Assertions.assertTrue(l5 == l6);
+        Assertions.assertTrue(l6 == l7);
+        Assertions.assertTrue(l7 > l8 + MIN_SIZE);
+        Assertions.assertTrue(l8 > l9 + MIN_SIZE);
+        Assertions.assertTrue(l9 > l0 + MIN_SIZE);
     }
 
     @Test
     public void checkSaveLoad() throws IOException {
         JenkinsCliWrapper.killCli();
         final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool.toPath());
         DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
         db = new ResultsDb(DataGenerator.getSettings(folderHolder));
         String a = db.getSet("job", "nvr", "1", "1", Optional.empty(),Optional.empty());
         String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello"), Optional.empty());
         String c = db.getSet("job", "nvr", "1", "2", Optional.empty(), Optional.of("hello"));
         String e = db.getSet("job", "nvr", "2", "3", Optional.of("hello"), Optional.of("hello"));
-        Assert.assertEquals("inserted", a);
-        Assert.assertEquals("inserted", e);
-        Assert.assertTrue(b.startsWith("Not replacing 1 from "));
-        Assert.assertEquals("inserted", c);
+        Assertions.assertEquals("inserted", a);
+        Assertions.assertEquals("inserted", e);
+        Assertions.assertTrue(b.startsWith("Not replacing 1 from "));
+        Assertions.assertEquals("inserted", c);
         String d = db.getScore("nvr", "job", "1");
-        Assert.assertTrue(d.split(" ").length == 2);
+        Assertions.assertTrue(d.split(" ").length == 2);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test()
     public void checkSaveLoadBadCharsMessage() throws IOException {
-        JenkinsCliWrapper.killCli();
-        final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
-        DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
-        db = new ResultsDb(DataGenerator.getSettings(folderHolder));
-        String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello ; :"), Optional.empty());
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            JenkinsCliWrapper.killCli();
+            final File oTool = Files.createTempDirectory("oTool").toFile();
+            final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool.toPath());
+            DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
+            db = new ResultsDb(DataGenerator.getSettings(folderHolder));
+            String b = db.getSet("job", "nvr", "1", "1", Optional.of("hello ; :"), Optional.empty());
+        });
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test()
     public void checkSaveLoadBadCharsAuthir() throws IOException {
-        JenkinsCliWrapper.killCli();
-        final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
-        DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
-        db = new ResultsDb(DataGenerator.getSettings(folderHolder));
-        String b = db.getSet("job", "nvr", "1", "1", Optional.empty(), Optional.of("hello ; :"));
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            JenkinsCliWrapper.killCli();
+            final File oTool = Files.createTempDirectory("oTool").toFile();
+            final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool.toPath());
+            DataGenerator.getSettings(folderHolder).getResultsFile().createNewFile();
+            db = new ResultsDb(DataGenerator.getSettings(folderHolder));
+            String b = db.getSet("job", "nvr", "1", "1", Optional.empty(), Optional.of("hello ; :"));
+        });
     }
 
     private static final Random messages = new Random();

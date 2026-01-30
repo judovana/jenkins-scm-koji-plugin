@@ -15,14 +15,13 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,15 +81,8 @@ public class JenkinsJobTemplateBuilderTest {
     private static final Product jdk8Product = DataGenerator.getJDK8Product();
     private static final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-
     private File scriptsRoot;
 
-    @Before
-    public void setup() throws IOException {
-        scriptsRoot = temporaryFolder.newFolder("scripts");
-    }
 
     public static final String SHRT_NM = "ShrtNm";
     public static final String LONG_NAME = "Long-Name";
@@ -148,7 +140,7 @@ public class JenkinsJobTemplateBuilderTest {
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.BUILD_PROVIDERS, dummyNamesProvider)
                 .buildBuildProvidersTemplate(buildProviders).prettyPrint();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -174,7 +166,7 @@ public class JenkinsJobTemplateBuilderTest {
                         Arrays.asList("c", "d")
                 ).prettyPrint();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -199,7 +191,7 @@ public class JenkinsJobTemplateBuilderTest {
                         Arrays.asList("c", "d")
                 ).prettyPrint();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -225,7 +217,7 @@ public class JenkinsJobTemplateBuilderTest {
                         Arrays.asList("c", "d")
                 ).prettyPrint();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -252,7 +244,7 @@ public class JenkinsJobTemplateBuilderTest {
                         false
                 ).prettyPrint();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -265,7 +257,7 @@ public class JenkinsJobTemplateBuilderTest {
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(POST_BUILD_TASK_PLUGIN), dummyNamesProvider)
                 .buildPostBuildTaskTemplate(VAGRANT, vmPlatform.getVmName(), scriptsRoot, new ArrayList<>(), true, true).prettyPrint();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -354,7 +346,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</project>\n";
 
         final String actualTemplate = buildJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -443,7 +435,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</project>\n";
 
         final String actualTemplate = buildJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -544,7 +536,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</project>\n";
 
         final String actualTemplate = testJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -645,7 +637,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</project>\n";
 
         final String actualTemplate = testJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -750,7 +742,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</project>\n";
 
         final String actualTemplate = testJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -858,7 +850,7 @@ public class JenkinsJobTemplateBuilderTest {
                 "</project>\n";
 
         final String actualTemplate = testJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -959,12 +951,12 @@ public class JenkinsJobTemplateBuilderTest {
                 "</project>\n";
 
         final String actualTemplate = testJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
-    public void buildPullJobTemplate() throws IOException {
-        final File reposRoot = temporaryFolder.newFolder("repos");
+    public void buildPullJobTemplate(@TempDir Path temporaryFolder2) throws IOException {
+        final File reposRoot = temporaryFolder2.toFile();
 
         final String expectedTemplate = "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
                 "<project>\n" +
@@ -1043,7 +1035,7 @@ public class JenkinsJobTemplateBuilderTest {
         );
 
         final String actualTemplate = pullJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -1170,24 +1162,24 @@ public class JenkinsJobTemplateBuilderTest {
                         "</project>\n";
 
         final String actualTemplate = testJob.generateTemplate();
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
 
     @Test
     public void testVariable() throws IOException {
         OToolVariable v1 = new OToolVariable("myVar", "myVal");
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "export OTOOL_myVar=\"myVal\"" + XML_NEW_LINE,
                 v1.getVariableString(XML_NEW_LINE)
         );
         v1 = new OToolVariable("myVar", "myVal", "comment", false, true, true);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "#export myVar=\"myVal\" # comment" + XML_NEW_LINE,
                 v1.getVariableString(XML_NEW_LINE)
         );
         v1 = new OToolVariable("myVar", "myVal", "comment", false, true, false);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "#myVar=\"myVal\" # comment" + XML_NEW_LINE,
                 v1.getVariableString(XML_NEW_LINE)
         );

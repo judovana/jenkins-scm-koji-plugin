@@ -1,7 +1,6 @@
 package org.fakekoji.jobmanager.bumpers;
 
 import org.fakekoji.DataGenerator;
-import org.fakekoji.Utils;
 import org.fakekoji.api.http.rest.BumperAPI;
 import org.fakekoji.api.http.rest.OToolError;
 import org.fakekoji.api.http.rest.args.BumpArgs;
@@ -16,9 +15,9 @@ import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.storage.StorageException;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 public class VariantBumperTest {
 
@@ -53,12 +51,12 @@ public class VariantBumperTest {
         JenkinsCliWrapper.killCli();
         File oTool = Files.createTempDirectory("oTool").toFile();
         oTool.deleteOnExit();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(oTool);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool);
         AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         return new CurrentSetup(settings, oTool);
     }
 
-    @After
+    @AfterEach
     public void cleanCvbJobs() throws IOException {
         DataGenerator.withCvbJobs = false;
         DataGenerator.withConflictingCvbJobsConflict_Total = false;
@@ -77,7 +75,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertTrue(ex.getMessage().contains("projects is mandatory"));
+        Assertions.assertTrue(ex.getMessage().contains("projects is mandatory"));
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -86,7 +84,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertTrue(ex.getMessage().contains("filter is mandatory"));
+        Assertions.assertTrue(ex.getMessage().contains("filter is mandatory"));
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -96,7 +94,7 @@ public class VariantBumperTest {
         } catch (PatternSyntaxException eex) {
             ex = eex;
         }
-        Assert.assertNotNull(ex);
+        Assertions.assertNotNull(ex);
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -106,7 +104,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertTrue(ex.getMessage().contains("must have exactly one value"));
+        Assertions.assertTrue(ex.getMessage().contains("must have exactly one value"));
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -117,7 +115,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertTrue(ex.getMessage().contains("must be known variant"));
+        Assertions.assertTrue(ex.getMessage().contains("must be known variant"));
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -128,7 +126,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertTrue(ex.getMessage().contains("must have exactly one value"));
+        Assertions.assertTrue(ex.getMessage().contains("must have exactly one value"));
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -139,7 +137,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertTrue(ex.getMessage().contains("must have exactly one value"));
+        Assertions.assertTrue(ex.getMessage().contains("must have exactly one value"));
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -151,7 +149,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertTrue(ex.getMessage().contains("from/to variants must be from same group. Are not"));
+        Assertions.assertTrue(ex.getMessage().contains("from/to variants must be from same group. Are not"));
         ex = null;
         try {
             vba = new VariantBumpArgs(new HashMap<String, List<String>>() {{
@@ -163,7 +161,7 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertNull(ex);
+        Assertions.assertNull(ex);
     }
 
     @Test
@@ -181,19 +179,19 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertNotNull(ex);
-        Assert.assertTrue(ex.getMessage().contains("Variants must be from same group, are not"));
+        Assertions.assertNotNull(ex);
+        Assertions.assertTrue(ex.getMessage().contains("Variants must be from same group, are not"));
         ex = null;
         VariantBumper bumper = new VariantBumper(cs.settings, "x11", "wayland", Pattern.compile(".*tck.*el6.*beaker.*"));
         Result<JobUpdateResults, OToolError> r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, false));
-        Assert.assertNotNull(r);
-        Assert.assertTrue(r.isOk());
-        Assert.assertEquals(0, r.getValue().jobsCreated.size());
-        Assert.assertEquals(0, r.getValue().jobsArchived.size());
-        Assert.assertEquals(0, r.getValue().jobsRevived.size());
-        Assert.assertEquals(2, r.getValue().jobsRewritten.size());
+        Assertions.assertNotNull(r);
+        Assertions.assertTrue(r.isOk());
+        Assertions.assertEquals(0, r.getValue().jobsCreated.size());
+        Assertions.assertEquals(0, r.getValue().jobsArchived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRevived.size());
+        Assertions.assertEquals(2, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, false); //do=false
-        Assert.assertTrue(
+        Assertions.assertTrue(
                 ("tck-jdk8-vagrantBeakerConflictsProjectJdkProject-el6.x86_64-release.hotspot.sdk-el6.x86_64.beaker-zgc.x11.legacy.lnxagent.jfroff => "
                         + "tck-jdk8-vagrantBeakerConflictsProjectJdkProject-el6.x86_64-release.hotspot.sdk-el6.x86_64.beaker-zgc.wayland.legacy.lnxagent.jfroff")
                         .equals(r.getValue().jobsRewritten.get(0).jobName)
@@ -204,30 +202,30 @@ public class VariantBumperTest {
         );
         String[] nJobsO1 = cs.settings.getJenkinsJobsRoot().list();
         Arrays.sort(nJobsO1);
-        Assert.assertArrayEquals(nJobsO0, nJobsO1);
+        Assertions.assertArrayEquals(nJobsO0, nJobsO1);
 
         bumper = new VariantBumper(cs.settings, "release", "fastdebug", Pattern.compile(".*build.*el7.*"));
         r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
-        Assert.assertNotNull(r);
-        Assert.assertTrue(r.isOk());
-        Assert.assertEquals(1, r.getValue().jobsCreated.size());
-        Assert.assertEquals(0, r.getValue().jobsArchived.size());
-        Assert.assertEquals(0, r.getValue().jobsRevived.size());
-        Assert.assertEquals(0, r.getValue().jobsRewritten.size());
+        Assertions.assertNotNull(r);
+        Assertions.assertTrue(r.isOk());
+        Assertions.assertEquals(1, r.getValue().jobsCreated.size());
+        Assertions.assertEquals(0, r.getValue().jobsArchived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRevived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, false); //collision
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "build-jdk8-vagrantBeakerConflictsProjectJdkProject-el7.x86_64.vagrant-release.hotspot.sdk => build-jdk8-vagrantBeakerConflictsProjectJdkProject-el7.x86_64.vagrant-fastdebug.hotspot"
                         + ".sdk",
                 r.getValue().jobsCreated.get(0).jobName);
 
         bumper = new VariantBumper(cs.settings, "x11", "wayland", Pattern.compile(".*tck.*el6.*"));
         r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
-        Assert.assertNotNull(r);
-        Assert.assertTrue(r.isOk());
-        Assert.assertEquals(4, r.getValue().jobsCreated.size());
-        Assert.assertEquals(0, r.getValue().jobsArchived.size());
-        Assert.assertEquals(0, r.getValue().jobsRevived.size());
-        Assert.assertEquals(0, r.getValue().jobsRewritten.size());
+        Assertions.assertNotNull(r);
+        Assertions.assertTrue(r.isOk());
+        Assertions.assertEquals(4, r.getValue().jobsCreated.size());
+        Assertions.assertEquals(0, r.getValue().jobsArchived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRevived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, true);
         List<JobUpdateResult> sortableJobs = new ArrayList(r.getValue().jobsCreated);
         Collections.sort(sortableJobs, new Comparator<JobUpdateResult>() {
@@ -236,38 +234,38 @@ public class VariantBumperTest {
                 return t1.jobName.compareTo(t2.jobName);
             }
         });
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "tck-jdk8-vagrantBeakerConflictsProjectJdkProject-el6.x86_64-release.hotspot.sdk-el6.x86_64.beaker-defaultgc.wayland.legacy.lnxagent.jfroff",
                     sortableJobs.get(0).jobName);
 
 
         bumper = new VariantBumper(cs.settings, "sdk", "jre", Pattern.compile(".*build.*el7.*slowdebug.*"));
         r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
-        Assert.assertNotNull(r);
-        Assert.assertTrue(r.isOk());
-        Assert.assertEquals(1, r.getValue().jobsCreated.size());
-        Assert.assertEquals(0, r.getValue().jobsArchived.size());
-        Assert.assertEquals(0, r.getValue().jobsRevived.size());
-        Assert.assertEquals(0, r.getValue().jobsRewritten.size());
+        Assertions.assertNotNull(r);
+        Assertions.assertTrue(r.isOk());
+        Assertions.assertEquals(1, r.getValue().jobsCreated.size());
+        Assertions.assertEquals(0, r.getValue().jobsArchived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRevived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, true); //collision
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 "build-jdk8-vagrantBeakerConflictsProjectJdkProject-el7.x86_64.beaker-slowdebug.hotspot.jre",
                 r.getValue().jobsCreated.get(0).jobName);
 
 
         bumper = new VariantBumper(cs.settings, "sdk", "jre", Pattern.compile(".*tck.*el6.*"));
         r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
-        Assert.assertNotNull(r);
-        Assert.assertFalse(r.isOk());//the new job, have no builder
+        Assertions.assertNotNull(r);
+        Assertions.assertFalse(r.isOk());//the new job, have no builder
 
         bumper = new VariantBumper(cs.settings, "sdk", "jre", Pattern.compile(".*"));
         r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
-        Assert.assertNotNull(r);
-        Assert.assertTrue(r.isOk());
-        Assert.assertEquals(1, r.getValue().jobsCreated.size());
-        Assert.assertEquals(0, r.getValue().jobsArchived.size());
-        Assert.assertEquals(0, r.getValue().jobsRevived.size());
-        Assert.assertEquals(0, r.getValue().jobsRewritten.size());
+        Assertions.assertNotNull(r);
+        Assertions.assertTrue(r.isOk());
+        Assertions.assertEquals(1, r.getValue().jobsCreated.size());
+        Assertions.assertEquals(0, r.getValue().jobsArchived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRevived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, false); //at least one already existed (created a bit above)
     }
 
@@ -286,17 +284,17 @@ public class VariantBumperTest {
         } catch (RuntimeException eex) {
             ex = eex;
         }
-        Assert.assertNotNull(ex);
-        Assert.assertTrue(ex.getMessage().contains("Variants must be from same group, are not"));
+        Assertions.assertNotNull(ex);
+        Assertions.assertTrue(ex.getMessage().contains("Variants must be from same group, are not"));
         ex = null;
         VariantBumper bumper = new VariantBumper(cs.settings, "sdk", "jre", Pattern.compile(".*"));
         Result<JobUpdateResults, OToolError> r = bumper.modifyJobs(a, new BumpArgs(JobCollisionAction.STOP, true));
-        Assert.assertNotNull(r);
-        Assert.assertTrue(r.isOk());
-        Assert.assertEquals(12, r.getValue().jobsCreated.size());
-        Assert.assertEquals(0, r.getValue().jobsArchived.size());
-        Assert.assertEquals(0, r.getValue().jobsRevived.size());
-        Assert.assertEquals(0, r.getValue().jobsRewritten.size());
+        Assertions.assertNotNull(r);
+        Assertions.assertTrue(r.isOk());
+        Assertions.assertEquals(12, r.getValue().jobsCreated.size());
+        Assertions.assertEquals(0, r.getValue().jobsArchived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRevived.size());
+        Assertions.assertEquals(0, r.getValue().jobsRewritten.size());
         allAre(r.getValue().jobsCreated, true); //collision
     }
 
@@ -306,9 +304,11 @@ public class VariantBumperTest {
         for (JobUpdateResult job : jobsCreated) {
             i++;
             if (b) {
-                Assert.assertTrue("is false, should be true, for " + i + ": " + job.jobName, job.success);
+                //"is false, should be true, for " + i + ": " + job.jobName, job.success
+                Assertions.assertTrue(job.success);
             } else {
-                Assert.assertFalse("is true, should be false, for " + i + ": " + job.jobName, job.success);
+                //"is true, should be false, for " + i + ": " + job.jobName, job.success
+                Assertions.assertFalse(job.success);
             }
         }
     }

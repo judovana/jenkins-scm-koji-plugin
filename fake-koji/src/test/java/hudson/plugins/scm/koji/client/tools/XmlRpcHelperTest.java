@@ -33,9 +33,9 @@ import org.apache.xmlrpc.XmlRpcRequest;
 import org.apache.xmlrpc.server.XmlRpcHandlerMapping;
 import org.apache.xmlrpc.server.XmlRpcServerConfigImpl;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.XmlRpcRequestParams;
-import org.junit.Test;
 import org.apache.xmlrpc.webserver.WebServer;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class XmlRpcHelperTest {
 
@@ -158,7 +158,7 @@ public class XmlRpcHelperTest {
         } finally {
             w.stop();
         }
-        Assert.assertEquals(8, result);
+        Assertions.assertEquals(8, result);
 
     }
 
@@ -178,7 +178,7 @@ public class XmlRpcHelperTest {
         } finally {
             w.stop();
         }
-        Assert.assertEquals(8, result);
+        Assertions.assertEquals(8, result);
     }
 
     @Test
@@ -200,8 +200,8 @@ public class XmlRpcHelperTest {
         } finally {
             w.stop();
         }
-        Assert.assertNull(result);
-        Assert.assertNotNull(thrown);
+        Assertions.assertNull(result);
+        Assertions.assertNotNull(thrown);
     }
 
 

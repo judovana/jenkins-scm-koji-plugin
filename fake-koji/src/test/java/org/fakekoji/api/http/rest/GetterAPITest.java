@@ -6,16 +6,16 @@ import org.fakekoji.jobmanager.ManagementException;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.model.JDKVersion;
 import org.fakekoji.storage.StorageException;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,14 +23,15 @@ import java.util.stream.Stream;
 
 public class GetterAPITest {
 
-    @ClassRule
-    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
+
     private static DataGenerator.FolderHolder folderHolder;
     private static AccessibleSettings setting;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws IOException, StorageException, ManagementException {
-        folderHolder = DataGenerator.initFolders(temporaryFolder);
+        folderHolder = DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile());
         setting = DataGenerator.getSettings(folderHolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         new OToolService(settings).start();
@@ -175,8 +176,8 @@ public class GetterAPITest {
 
     private void checkBuildsListing(String cmd, int check) throws IOException {
         final HTTPResponse response = makeHTTPConnection(cmd);
-        Assert.assertEquals(200, response.status);
-        Assert.assertEquals(check, response.body.length());
+        Assertions.assertEquals(200, response.status);
+        Assertions.assertEquals(check, response.body.length());
     }
 
     private HTTPResponse makeHTTPConnection(final String path) throws IOException {
@@ -212,8 +213,8 @@ public class GetterAPITest {
         }
 
         private void check(final int status, final String body) {
-            Assert.assertEquals(status, this.status);
-            Assert.assertEquals(body + '\n', this.body);
+            Assertions.assertEquals(status, this.status);
+            Assertions.assertEquals(body + '\n', this.body);
         }
     }
 }

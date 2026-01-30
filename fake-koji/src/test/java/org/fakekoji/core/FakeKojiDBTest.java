@@ -3,13 +3,13 @@ package org.fakekoji.core;
 import hudson.plugins.scm.koji.model.Build;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.xmlrpc.server.xmlrpcrequestparams.GetBuildList;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -17,14 +17,14 @@ import static org.fakekoji.DataGenerator.PROJECT_NAME_U;
 
 public class FakeKojiDBTest {
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
     private FakeKojiDB db;
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile());
         DataGenerator.initBuildsRoot(folderHolder.buildsRoot);
         db = new FakeKojiDB(DataGenerator.getSettings(folderHolder));
     }
@@ -37,11 +37,11 @@ public class FakeKojiDBTest {
                 "src",
                 false
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 0,
                 builds.size()
         );
-        Assert.assertTrue(builds.stream().allMatch(containsArch("src")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("src")));
     }
 
     @Test
@@ -52,11 +52,11 @@ public class FakeKojiDBTest {
                 "src",
                 false
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 2,
                 builds.size()
         );
-        Assert.assertTrue(builds.stream().allMatch(containsArch("src")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("src")));
     }
 
     @Test
@@ -67,11 +67,11 @@ public class FakeKojiDBTest {
                 "src",
                 false
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 4,
                 builds.size()
         );
-        Assert.assertTrue(builds.stream().allMatch(containsArch("src")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("src")));
     }
 
     @Test
@@ -82,11 +82,11 @@ public class FakeKojiDBTest {
                 "f29.x86_64",
                 true
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 4,
                 builds.size()
         );
-        Assert.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
     }
 
     @Test
@@ -97,11 +97,11 @@ public class FakeKojiDBTest {
                 "f29.x86_64",
                 true
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 2,
                 builds.size()
         );
-        Assert.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
     }
 
     @Test
@@ -112,11 +112,11 @@ public class FakeKojiDBTest {
                 "f29.x86_64",
                 true
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 0,
                 builds.size()
         );
-        Assert.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
     }
 
     @Test
@@ -127,7 +127,7 @@ public class FakeKojiDBTest {
                 "f29.x86_64 src",
                 false
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 0,
                 builds.size()
         );
@@ -141,12 +141,12 @@ public class FakeKojiDBTest {
                 "f29.x86_64 src",
                 false
         ));
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 4,
                 builds.size()
         );
-        Assert.assertTrue(builds.stream().allMatch(containsArch("src")));
-        Assert.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("src")));
+        Assertions.assertTrue(builds.stream().allMatch(containsArch("f29.x86_64")));
     }
 
     private Predicate<Build> containsArch(final String arch) {

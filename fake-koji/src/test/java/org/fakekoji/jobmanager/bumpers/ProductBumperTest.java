@@ -6,13 +6,13 @@ import org.fakekoji.functional.Tuple;
 import org.fakekoji.jobmanager.bumpers.impl.ProductBumper;
 import org.fakekoji.jobmanager.model.Job;
 import org.fakekoji.model.JDKVersion;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -22,10 +22,10 @@ public class ProductBumperTest {
     
     private AccessibleSettings settings;
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         settings = DataGenerator.getSettings(temporaryFolder);
     }
@@ -41,8 +41,8 @@ public class ProductBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
+        Assertions.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
     }
 
     @Test
@@ -56,8 +56,8 @@ public class ProductBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(5, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertTrue(tuples.stream().allMatch(isOk(fromPackage, toPackage, fromJDKVersion, toJDKVersion)));
+        Assertions.assertEquals(5, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertTrue(tuples.stream().allMatch(isOk(fromPackage, toPackage, fromJDKVersion, toJDKVersion)));
     }
 
     @Test
@@ -71,8 +71,8 @@ public class ProductBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
+        Assertions.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
     }
 
     @Test
@@ -86,8 +86,8 @@ public class ProductBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(5, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertTrue(tuples.stream().allMatch(isOk(fromPackage, toPackage, fromJDKVersion, toJDKVersion)));
+        Assertions.assertEquals(5, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertTrue(tuples.stream().allMatch(isOk(fromPackage, toPackage, fromJDKVersion, toJDKVersion)));
     }
 
     private Predicate<Tuple<Job, Optional<Job>>> isOk(

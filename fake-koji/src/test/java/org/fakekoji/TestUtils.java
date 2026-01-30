@@ -30,9 +30,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 
 public class TestUtils {
@@ -45,9 +45,9 @@ public class TestUtils {
         String s = Utils.readFile(pt);
         List<String> l1 = Utils.readFileToLines(pt, null);
         List<String> l2 = Utils.readProcessedTxt(pt);
-        Assert.assertEquals("a #bb\nb  \n\nc #10 \n", s);
-        Assert.assertEquals(Arrays.asList("a #bb", "b  ", "", "c #10 "), l1);
-        Assert.assertEquals(Arrays.asList("a", "b", "c"), l2);
+        Assertions.assertEquals("a #bb\nb  \n\nc #10 \n", s);
+        Assertions.assertEquals(Arrays.asList("a #bb", "b  ", "", "c #10 "), l1);
+        Assertions.assertEquals(Arrays.asList("a", "b", "c"), l2);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class TestUtils {
         Utils.writeToFile(pt, "bb# comment\na #bb\nb  \n\nc #10 \nbb\n\n  \na #10");
         final Utils.RemovedNvrsResult r = Utils.removeNvrFromProcessed(pt, "bb");
         String s = Utils.readFile(pt);
-        Assert.assertEquals("a #bb\nb  \nc #10 \na #10\n", s);
+        Assertions.assertEquals("a #bb\nb  \nc #10 \na #10\n", s);
         List<String> removedNvras = Arrays.asList(
                 "bb# comment",
                 "bb");
@@ -77,10 +77,10 @@ public class TestUtils {
                 "c #10 ",
                 "a #10"
         );
-        Assert.assertEquals(removedNvras, r.removedNVRs);
-        Assert.assertEquals(removedNvrasUniq, r.removedNVRsUniq);
-        Assert.assertEquals(allRead, r.allRead);
-        Assert.assertEquals(saved, r.saved);
+        Assertions.assertEquals(removedNvras, r.removedNVRs);
+        Assertions.assertEquals(removedNvrasUniq, r.removedNVRsUniq);
+        Assertions.assertEquals(allRead, r.allRead);
+        Assertions.assertEquals(saved, r.saved);
 
     }
 

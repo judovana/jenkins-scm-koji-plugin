@@ -12,14 +12,14 @@ import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.storage.StorageException;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -37,17 +37,17 @@ public class BumperApiTest {
     private final static String taskVariantId = "newtestvariant";
     private final static String defaultValue = "abcdefgh";
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         JenkinsCliWrapper.killCli();
     }
 
     @Test
     public void addBuildVariant() throws IOException, ManagementException, StorageException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         DataGenerator.initBuildsRoot(settings.getDbFileRoot());
         final File jobsRoot = settings.getJenkinsJobsRoot();
@@ -65,31 +65,31 @@ public class BumperApiTest {
                 .map(Task::getId)
                 .collect(Collectors.toSet());
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(params);
-        Assert.assertFalse(result.isError());
+        Assertions.assertFalse(result.isError());
         final TaskVariant taskVariant = settings.getConfigManager().taskVariantManager.read(taskVariantId);
-        Assert.assertEquals(taskVariantId, taskVariant.getId());
-        Assert.assertEquals(defaultValue, taskVariant.getDefaultValue());
-        Assert.assertEquals(3, taskVariant.getOrder());
+        Assertions.assertEquals(taskVariantId, taskVariant.getId());
+        Assertions.assertEquals(defaultValue, taskVariant.getDefaultValue());
+        Assertions.assertEquals(3, taskVariant.getOrder());
         final JobUpdateResults results = result.getValue().getJobResults();
-        Assert.assertEquals(47, results.jobsCreated.size());
-        Assert.assertTrue(results.jobsArchived.isEmpty());
-        Assert.assertTrue(results.jobsRevived.isEmpty());
-        Assert.assertTrue(results.jobsRewritten.isEmpty());
+        Assertions.assertEquals(47, results.jobsCreated.size());
+        Assertions.assertTrue(results.jobsArchived.isEmpty());
+        Assertions.assertTrue(results.jobsRevived.isEmpty());
+        Assertions.assertTrue(results.jobsRewritten.isEmpty());
         for (final JobUpdateResult jobResult : results.jobsCreated) {
             final String[] parts = jobResult.message.split(" ");
             final String prevJobName = parts[2];
             final String currJobName = parts[4];
             final String prevJobTaskId = prevJobName.split("-")[0];
             final String currJobTaskId = currJobName.split("-")[0];
-            Assert.assertTrue(jobResult.success);
+            Assertions.assertTrue(jobResult.success);
             final String buildVariants = prevJobName.split("-")[4];
-            Assert.assertEquals(prevJobTaskId, currJobTaskId);
-            Assert.assertTrue(taskIds.contains(prevJobTaskId));
-            Assert.assertEquals(prevJobName.replace(buildVariants, buildVariants + "." + defaultValue), currJobName);
-            Assert.assertTrue(new File(jobsRoot, currJobName).exists());
-            Assert.assertFalse(new File(jobsRoot, prevJobName).exists());
+            Assertions.assertEquals(prevJobTaskId, currJobTaskId);
+            Assertions.assertTrue(taskIds.contains(prevJobTaskId));
+            Assertions.assertEquals(prevJobName.replace(buildVariants, buildVariants + "." + defaultValue), currJobName);
+            Assertions.assertTrue(new File(jobsRoot, currJobName).exists());
+            Assertions.assertFalse(new File(jobsRoot, prevJobName).exists());
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Utils.readResource("org/fakekoji/api/http/rest/post-add-variant-builds-tree"),
                 toTree(settings.getDbFileRoot())
         );
@@ -97,7 +97,7 @@ public class BumperApiTest {
 
     @Test
     public void addTestVariant() throws IOException, ManagementException, StorageException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final File jobsRoot = settings.getJenkinsJobsRoot();
         DataGenerator.createProjectJobs(settings);
@@ -112,40 +112,40 @@ public class BumperApiTest {
 
         }).collect(Collectors.toMap(data -> data[0], data -> Collections.singletonList(data[1])));
         final Result<BumpResult, OToolError> result = bumperApi.addTaskVariant(params);
-        Assert.assertFalse(result.isError());
+        Assertions.assertFalse(result.isError());
         final JobUpdateResults results = result.getValue().getJobResults();
         final Set<String> testTaskIds = DataGenerator.getTasks()
                 .stream()
                 .filter(task -> task.getType().equals(Task.Type.TEST))
                 .map(Task::getId)
                 .collect(Collectors.toSet());
-        Assert.assertTrue(settings.getConfigManager().taskVariantManager.contains(taskVariantId));
+        Assertions.assertTrue(settings.getConfigManager().taskVariantManager.contains(taskVariantId));
         final TaskVariant taskVariant = settings.getConfigManager().taskVariantManager.read(taskVariantId);
-        Assert.assertEquals(taskVariantId, taskVariant.getId());
-        Assert.assertEquals(defaultValue, taskVariant.getDefaultValue());
-        Assert.assertEquals(5, taskVariant.getOrder());
-        Assert.assertEquals(39, results.jobsCreated.size());
-        Assert.assertTrue(results.jobsArchived.isEmpty());
-        Assert.assertTrue(results.jobsRevived.isEmpty());
-        Assert.assertTrue(results.jobsRewritten.isEmpty());
+        Assertions.assertEquals(taskVariantId, taskVariant.getId());
+        Assertions.assertEquals(defaultValue, taskVariant.getDefaultValue());
+        Assertions.assertEquals(5, taskVariant.getOrder());
+        Assertions.assertEquals(39, results.jobsCreated.size());
+        Assertions.assertTrue(results.jobsArchived.isEmpty());
+        Assertions.assertTrue(results.jobsRevived.isEmpty());
+        Assertions.assertTrue(results.jobsRewritten.isEmpty());
         for (final JobUpdateResult jobResult : results.jobsCreated) {
             final String[] parts = jobResult.message.split(" ");
             final String prevJobName = parts[2];
             final String currJobName = parts[4];
             final String prevJobTaskId = prevJobName.split("-")[0];
             final String currJobTaskId = currJobName.split("-")[0];
-            Assert.assertTrue(jobResult.success);
-            Assert.assertEquals(prevJobTaskId, currJobTaskId);
-            Assert.assertTrue(testTaskIds.contains(prevJobTaskId));
-            Assert.assertEquals(currJobName, prevJobName + "." + defaultValue);
-            Assert.assertTrue(new File(jobsRoot, currJobName).exists());
-            Assert.assertFalse(new File(jobsRoot, prevJobName).exists());
+            Assertions.assertTrue(jobResult.success);
+            Assertions.assertEquals(prevJobTaskId, currJobTaskId);
+            Assertions.assertTrue(testTaskIds.contains(prevJobTaskId));
+            Assertions.assertEquals(currJobName, prevJobName + "." + defaultValue);
+            Assertions.assertTrue(new File(jobsRoot, currJobName).exists());
+            Assertions.assertFalse(new File(jobsRoot, prevJobName).exists());
         }
     }
 
     @Test
     public void addVariantWithExistingName() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -155,12 +155,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithExistingValue() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -170,12 +170,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq," + DataGenerator.HOTSPOT}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithInvalidType() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -185,12 +185,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithDuplicateValues() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -200,12 +200,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz,rstuvwxyz"}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithMissingDefaultValueInValues() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -215,12 +215,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", "ijklmnopq,rstuvwxyz"}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithEmptyValues() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -230,12 +230,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", ""}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithMissingName() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -244,12 +244,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithMissingType() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -258,12 +258,12 @@ public class BumperApiTest {
                 {"defaultValue", defaultValue},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void addVariantWithMissingDefaultValue() throws IOException {
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
         DataGenerator.createProjectJobs(settings);
@@ -272,13 +272,13 @@ public class BumperApiTest {
                 {"type", Task.Type.BUILD.getValue()},
                 {"values", defaultValue + ",ijklmnopq,rstuvwxyz"}
         }));
-        Assert.assertTrue(result.isError());
+        Assertions.assertTrue(result.isError());
     }
 
     @Test
     public void removeBuildVariant() throws IOException {
         final String taskVariantId = JRE_SDK;
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFolders(temporaryFolder);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         DataGenerator.initBuildsRoot(settings.getDbFileRoot());
         final File jobsRoot = settings.getJenkinsJobsRoot();
@@ -293,27 +293,27 @@ public class BumperApiTest {
                 .map(Task::getId)
                 .collect(Collectors.toSet());
         final Result<BumpResult, OToolError> result = bumperApi.removeTaskVariant(params);
-        Assert.assertFalse(result.isError());
-        Assert.assertFalse(settings.getConfigManager().taskVariantManager.contains(taskVariantId));
+        Assertions.assertFalse(result.isError());
+        Assertions.assertFalse(settings.getConfigManager().taskVariantManager.contains(taskVariantId));
         final JobUpdateResults results = result.getValue().getJobResults();
-        Assert.assertEquals(47, results.jobsCreated.size());
-        Assert.assertTrue(results.jobsArchived.isEmpty());
-        Assert.assertTrue(results.jobsRevived.isEmpty());
-        Assert.assertTrue(results.jobsRewritten.isEmpty());
+        Assertions.assertEquals(47, results.jobsCreated.size());
+        Assertions.assertTrue(results.jobsArchived.isEmpty());
+        Assertions.assertTrue(results.jobsRevived.isEmpty());
+        Assertions.assertTrue(results.jobsRewritten.isEmpty());
         for (final JobUpdateResult jobResult : results.jobsCreated) {
             final String[] parts = jobResult.message.split(" ");
             final String prevJobName = parts[2];
             final String currJobName = parts[4];
             final String prevJobTaskId = prevJobName.split("-")[0];
             final String currJobTaskId = currJobName.split("-")[0];
-            Assert.assertTrue(jobResult.success);
-            Assert.assertEquals(prevJobTaskId, currJobTaskId);
-            Assert.assertTrue(taskIds.contains(prevJobTaskId));
-            Assert.assertEquals(prevJobName.replace("." + SDK, ""), currJobName);
-            Assert.assertTrue(new File(jobsRoot, currJobName).exists());
-            Assert.assertFalse(new File(jobsRoot, prevJobName).exists());
+            Assertions.assertTrue(jobResult.success);
+            Assertions.assertEquals(prevJobTaskId, currJobTaskId);
+            Assertions.assertTrue(taskIds.contains(prevJobTaskId));
+            Assertions.assertEquals(prevJobName.replace("." + SDK, ""), currJobName);
+            Assertions.assertTrue(new File(jobsRoot, currJobName).exists());
+            Assertions.assertFalse(new File(jobsRoot, prevJobName).exists());
         }
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 Utils.readResource("org/fakekoji/api/http/rest/post-remove-variant-builds-tree"),
                 toTree(settings.getDbFileRoot())
         );

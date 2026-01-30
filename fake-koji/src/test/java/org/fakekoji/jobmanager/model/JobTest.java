@@ -30,8 +30,8 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Arrays;
@@ -47,53 +47,53 @@ public class JobTest {
     @Test
     public void testSumTrims() throws Exception {
         String res = Job.truncatedSha("aaaa", 1);
-        Assert.assertEquals("4", res);
+        Assertions.assertEquals("4", res);
     }
 
     @Test
     public void testSumTrimsFromEnd() throws Exception {
         String res = Job.truncatedSha("aaaa", 10);
-        Assert.assertEquals("f27b9af0b4", res);
+        Assertions.assertEquals("f27b9af0b4", res);
     }
 
     @Test
     public void testSumTrimDoNotProlong() throws Exception {
         String res = Job.truncatedSha("aaaa", 1000000);
-        Assert.assertEquals(64, res.length());
+        Assertions.assertEquals(64, res.length());
     }
 
     @Test
     public void testFirstLetterAcceptNothing() throws Exception {
-        Assert.assertEquals("", Job.firstLetter(null));
-        Assert.assertEquals("", Job.firstLetter(""));
-        Assert.assertEquals("", Job.firstLetter("     "));
+        Assertions.assertEquals("", Job.firstLetter(null));
+        Assertions.assertEquals("", Job.firstLetter(""));
+        Assertions.assertEquals("", Job.firstLetter("     "));
         ;
     }
 
     @Test
     public void testFirstLetterWorks() throws Exception {
-        Assert.assertEquals("a", Job.firstLetter("a"));
-        Assert.assertEquals("a", Job.firstLetter("ab"));
-        Assert.assertEquals("c", Job.firstLetter("    cde "));
+        Assertions.assertEquals("a", Job.firstLetter("a"));
+        Assertions.assertEquals("a", Job.firstLetter("ab"));
+        Assertions.assertEquals("c", Job.firstLetter("    cde "));
         ;
     }
 
     @Test
     public void testSanitize() throws Exception {
-        Assert.assertEquals("a-b", Job.sanitizeNames("a-b"));
-        Assert.assertEquals("a-b", Job.sanitizeNames("a--b"));
-        Assert.assertEquals("    -c-d-e- ", Job.sanitizeNames("    -c-d---e-- "));
-        Assert.assertEquals("a.b", Job.sanitizeNames("a.b"));
-        Assert.assertEquals("a.b", Job.sanitizeNames("a.b"));
-        Assert.assertEquals("    .c.d.e. ", Job.sanitizeNames("    .c.d.e. "));
-        Assert.assertEquals("    -c.-d-.-.-e-.- ", Job.sanitizeNames("    -c..--d-..-.-e-..- "));
+        Assertions.assertEquals("a-b", Job.sanitizeNames("a-b"));
+        Assertions.assertEquals("a-b", Job.sanitizeNames("a--b"));
+        Assertions.assertEquals("    -c-d-e- ", Job.sanitizeNames("    -c-d---e-- "));
+        Assertions.assertEquals("a.b", Job.sanitizeNames("a.b"));
+        Assertions.assertEquals("a.b", Job.sanitizeNames("a.b"));
+        Assertions.assertEquals("    .c.d.e. ", Job.sanitizeNames("    .c.d.e. "));
+        Assertions.assertEquals("    -c.-d-.-.-e-.- ", Job.sanitizeNames("    -c..--d-..-.-e-..- "));
         ;
     }
 
     @Test
     public void testShortenedNameCornerCases() throws Exception {
         //this is testing corenrcases, so we relay on 59 chars
-        Assert.assertEquals(59,  Job.MAX_JOBNAME_LENGTH);
+        Assertions.assertEquals(59,  Job.MAX_JOBNAME_LENGTH);
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getTestTaskRequiringSourcesAndBinaries();
@@ -125,9 +125,9 @@ public class JobTest {
         System.out.println(sl1.length());
         System.out.println(ss1);
         System.out.println(ss1.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss1.length());
-//        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, sl1.length()); it is no longer possible - with so much variants - to have not shortened test name
-        Assert.assertNotEquals(ss1, sl1); //so they can not even be same
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss1.length());
+//        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, sl1.length()); it is no longer possible - with so much variants - to have not shortened test name
+        Assertions.assertNotEquals(ss1, sl1); //so they can not even be same
 
         final TestJob buildJob2 = new TestJob(
                 "",
@@ -152,8 +152,8 @@ public class JobTest {
         System.out.println(sl2.length());
         System.out.println(ss2);
         System.out.println(ss2.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
-        Assert.assertEquals("tck-nameA-rhs-pr.1-swflj-737762821238584da15c77f1de32ba334e", ss2);
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
+        Assertions.assertEquals("tck-nameA-rhs-pr.1-swflj-737762821238584da15c77f1de32ba334e", ss2);
 
 
         final TestJob buildJob3 = new TestJob(
@@ -178,8 +178,8 @@ public class JobTest {
         System.out.println(sl3.length());
         System.out.println(ss3);
         System.out.println(ss3.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
-        Assert.assertEquals("tck-nameA012345678901234567890123456789012-rhs-pr.1-swflj-e", ss3);
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
+        Assertions.assertEquals("tck-nameA012345678901234567890123456789012-rhs-pr.1-swflj-e", ss3);
 
         final TestJob buildJob4 = new TestJob(
                 "",
@@ -203,15 +203,15 @@ public class JobTest {
         System.out.println(sl4.length());
         System.out.println(ss4);
         System.out.println(ss4.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
-        Assert.assertEquals("1a567b4123766bcc701339dabb5379efc93ba3a8a4376618778564e45a6", ss4);
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
+        Assertions.assertEquals("1a567b4123766bcc701339dabb5379efc93ba3a8a4376618778564e45a6", ss4);
     }
 
 
     @Test
     public void buildShortenedNameCornerCases() throws Exception {
         //this is testing corenrcases, so we relay on 59 chars
-        Assert.assertEquals(59,  Job.MAX_JOBNAME_LENGTH);
+        Assertions.assertEquals(59,  Job.MAX_JOBNAME_LENGTH);
         final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final Task testTask = DataGenerator.getBuildTask();
@@ -238,9 +238,9 @@ public class JobTest {
         System.out.println(sl1.length());
         System.out.println(ss1);
         System.out.println(ss1.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss1.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, sl1.length());
-        Assert.assertEquals(ss1, sl1);
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss1.length());
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, sl1.length());
+        Assertions.assertEquals(ss1, sl1);
 
         final BuildJob buildJob2 = new BuildJob(
                 "",
@@ -262,8 +262,8 @@ public class JobTest {
         System.out.println(sl2.length());
         System.out.println(ss2);
         System.out.println(ss2.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
-        Assert.assertEquals("build-nameNameNameNameNameNameNamA-pb.1-rhs-8605ebf98b0e790", ss2);
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss2.length());
+        Assertions.assertEquals("build-nameNameNameNameNameNameNamA-pb.1-rhs-8605ebf98b0e790", ss2);
 
 
         final BuildJob buildJob3 = new BuildJob(
@@ -285,8 +285,8 @@ public class JobTest {
         System.out.println(sl3.length());
         System.out.println(ss3);
         System.out.println(ss3.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
-        Assert.assertEquals("build-nameNameNameNameNameNameNamA012345678-pb.1-rhs-9cfea6", ss3);
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss3.length());
+        Assertions.assertEquals("build-nameNameNameNameNameNameNamA012345678-pb.1-rhs-9cfea6", ss3);
 
         final BuildJob buildJob4 = new BuildJob(
                 "",
@@ -307,8 +307,8 @@ public class JobTest {
         System.out.println(sl4.length());
         System.out.println(ss4);
         System.out.println(ss4.length());
-        Assert.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
-        Assert.assertEquals("61a6548f8bed43b6b1af78604c1c1c6bf8ac9a529fdc869d487913a3c22", ss4);
+        Assertions.assertEquals(Job.MAX_JOBNAME_LENGTH, ss4.length());
+        Assertions.assertEquals("61a6548f8bed43b6b1af78604c1c1c6bf8ac9a529fdc869d487913a3c22", ss4);
     }
 
 }

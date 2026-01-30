@@ -10,13 +10,13 @@ import org.fakekoji.jobmanager.model.PlatformBumpVariant;
 import org.fakekoji.jobmanager.model.TaskJob;
 import org.fakekoji.jobmanager.model.TestJob;
 import org.fakekoji.model.Platform;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -27,10 +27,10 @@ public class PlatformBumperTest {
 
     private AccessibleSettings settings;
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         settings = DataGenerator.getSettings(temporaryFolder);
     }
@@ -48,8 +48,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
+        Assertions.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
     }
 
     @Test
@@ -62,8 +62,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertTrue(tuples.stream().allMatch(isOk(from, to)));
+        Assertions.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertTrue(tuples.stream().allMatch(isOk(from, to)));
     }
 
     @Test
@@ -76,8 +76,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertTrue(tuples.stream().allMatch(tuple -> {
+        Assertions.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertTrue(tuples.stream().allMatch(tuple -> {
             if (tuple.x instanceof BuildJob) {
                 // is build job
                 final BuildJob buildJob = (BuildJob) tuple.x;
@@ -115,8 +115,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(2, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertTrue(tuples.stream().allMatch(tuple -> {
+        Assertions.assertEquals(2, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertTrue(tuples.stream().allMatch(tuple -> {
             if (tuple.x instanceof TestJob) {
                 // is test job
                 final TestJob testJob = (TestJob) tuple.x;
@@ -146,8 +146,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
+        Assertions.assertEquals(0, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertEquals(jobs, tuples.stream().map(tuple -> tuple.y.orElse(tuple.x)).collect(Collectors.toSet()));
     }
 
     @Test
@@ -159,8 +159,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(5, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertTrue(tuples.stream().allMatch(isOk(from, to)));
+        Assertions.assertEquals(5, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertTrue(tuples.stream().allMatch(isOk(from, to)));
     }
 
     @Test
@@ -172,8 +172,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertFalse(tuples.stream().allMatch(isOk(from, to)));
+        Assertions.assertEquals(4, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertFalse(tuples.stream().allMatch(isOk(from, to)));
     }
 
 
@@ -186,8 +186,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(2, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertTrue(tuples.stream().allMatch(isOk(from, to)));
+        Assertions.assertEquals(2, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertTrue(tuples.stream().allMatch(isOk(from, to)));
     }
 
     @Test
@@ -199,8 +199,8 @@ public class PlatformBumperTest {
         final Set<Tuple<Job, Optional<Job>>> tuples = jobs.stream()
                 .map(bumper.getTransformFunction())
                 .collect(Collectors.toSet());
-        Assert.assertEquals(1, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
-        Assert.assertFalse(tuples.stream().allMatch(isOk(from, to)));
+        Assertions.assertEquals(1, tuples.stream().filter(tuple -> tuple.y.isPresent()).count());
+        Assertions.assertFalse(tuples.stream().allMatch(isOk(from, to)));
     }
 
 

@@ -21,10 +21,12 @@ import org.fakekoji.jobmanager.model.JDKProject;
 import org.fakekoji.jobmanager.model.JDKTestProject;
 import org.fakekoji.jobmanager.model.Project;
 import org.fakekoji.storage.StorageException;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
@@ -32,6 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -41,15 +44,15 @@ public class MatrixGeneratorTest {
 
     private static final String BLANK = "target='_blank'";
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
     private AccessibleSettings settings;
     private final Formatter tf = new PlainTextFormatter();
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
-        settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
+        settings = DataGenerator.getSettings(DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile()));
     }
 
     @Test
@@ -94,7 +97,7 @@ public class MatrixGeneratorTest {
                 + "Row1  3     1     1     Row1  \n"
                 + "Row2  2     1     1     Row2  \n"
                 + summary + "  Col1  Col2  Col3  " + summary + "  \n";
-        Assert.assertEquals(plainTextOutput, expectedPlainTextOutput);
+        Assertions.assertEquals(plainTextOutput, expectedPlainTextOutput);
 
         final String anchor = "<a "+BLANK+" href=\"" + url + "\">";
         final String expectedHtmlOutput = "<table class=\"resultsTable\" >\n"
@@ -104,10 +107,10 @@ public class MatrixGeneratorTest {
                 + "<tr>" + summaryTd + "<td>Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
                 + "</table>";
         final String htmlOutput = m.printMatrix(matrix, new HtmlFormatter(false, projects), 0, 0, total);
-        Assert.assertEquals(expectedHtmlOutput, htmlOutput);
+        Assertions.assertEquals(expectedHtmlOutput, htmlOutput);
 
         final String expandedHtmlOutput = m.printMatrix(matrix, new HtmlFormatter(true, projects), 0, 0, total);
-        Assert.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
+        Assertions.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
 
         final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
         final String expectedSpanningHtmlOutput = "<table class=\"resultsTable\" >\n"
@@ -116,7 +119,7 @@ public class MatrixGeneratorTest {
                 + "<tr><td>Row2</td><td>" + anchor + "[1]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[2]</a></td><td>" + anchor + "[1]</a></td><td>" + anchor + "[1]</a></td><td></td><td>Row2</td></tr>\n"
                 + "<tr>" + summaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + summaryTd + "</tr>\n"
                 + "</table>";
-        Assert.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
+        Assertions.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
     }
     
     @Test
@@ -168,10 +171,10 @@ public class MatrixGeneratorTest {
                 + "<tr>" + summaryTd + "<td>Col1</td><td>Col2</td><td>Col3</td>" + summaryTd + "</tr>\n"
                 + "</table>";
         final String htmlOutput = m.printMatrix(matrix, new HtmlFormatter(false, projects), 0, 0, total);
-        Assert.assertEquals(expectedHtmlOutput, htmlOutput);
+        Assertions.assertEquals(expectedHtmlOutput, htmlOutput);
 
         final String expandedHtmlOutput = m.printMatrix(matrix, new HtmlFormatter(true, projects), 0, 0, total);
-        Assert.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
+        Assertions.assertEquals(expectedHtmlOutput, expandedHtmlOutput);
 
         final String spanningSummaryTd = "<td colspan=\"2\">" + summary + "</td>";
         final String expectedProjectsCells = projectList.stream()
@@ -184,7 +187,7 @@ public class MatrixGeneratorTest {
                 + "<tr>" + spanningSummaryTd + "<td colspan=\"3\">Col1</td><td>Col2</td><td colspan=\"2\">Col3</td>" + spanningSummaryTd + "</tr>\n"
                 + "</table>";
         final String spanningHtmlOutput = m.printMatrix(matrix, new HtmlSpanningFormatter(true, projects), 0, 0, total);
-        Assert.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
+        Assertions.assertEquals(expectedSpanningHtmlOutput, spanningHtmlOutput);
     }
 
     @Test
@@ -280,7 +283,7 @@ public class MatrixGeneratorTest {
                 new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray())),
                 String::trim
         ));
-        Assert.assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     private String readResource(final String name) throws IOException {

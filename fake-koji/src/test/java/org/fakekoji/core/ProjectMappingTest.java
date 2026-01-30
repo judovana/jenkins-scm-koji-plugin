@@ -3,14 +3,14 @@ package org.fakekoji.core;
 import org.fakekoji.core.ProjectMapping;
 import org.fakekoji.core.ProjectMappingExceptions;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.ExpectedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ProjectMappingTest {
 
@@ -88,7 +88,7 @@ public class ProjectMappingTest {
         }
         actualProjects.sort(String::compareTo);
         expectedProjects.sort(String::compareTo);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedProjects, actualProjects);
+        assertEquals(expectedProjects, actualProjects);
     }
 
     @Test
@@ -118,7 +118,7 @@ public class ProjectMappingTest {
         }
         actualProducts.sort(String::compareTo);
         expectedProducts.sort(String::compareTo);
-        assertEquals("The actual list of products doesn\'t match the expected", expectedProducts, actualProducts);
+        assertEquals(expectedProducts, actualProducts);
 
         expectedException.expect(ProjectMappingExceptions.ProductOfNvraNotFoundException.class);
         projectMapping.getProductOfNvra("wrong nvra", products);
@@ -150,7 +150,7 @@ public class ProjectMappingTest {
         }
         actualProducts.sort(String::compareTo);
         expectedProductsOfProjects.sort(String::compareTo);
-        assertEquals("The actual list of products doesn\'t match the expected", expectedProductsOfProjects, actualProducts);
+        assertEquals(expectedProductsOfProjects, actualProducts);
 
         expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
         projectMapping.getProductOfProject("wrong project", products, projects);

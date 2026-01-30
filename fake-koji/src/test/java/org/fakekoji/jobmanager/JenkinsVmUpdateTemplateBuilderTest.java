@@ -1,7 +1,7 @@
 package org.fakekoji.jobmanager;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,7 +68,7 @@ public class JenkinsVmUpdateTemplateBuilderTest {
 
         final String actualTemplate = template.expand();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class JenkinsVmUpdateTemplateBuilderTest {
 
         final String actualTemplate = template.expand();
 
-        Assert.assertEquals(expectedTemplate, actualTemplate);
+        Assertions.assertEquals(expectedTemplate, actualTemplate);
     }
 
 }

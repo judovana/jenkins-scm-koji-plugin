@@ -23,35 +23,34 @@
  */
 package org.fakekoji.api.http.filehandling;
 
-import java.io.File;
 import java.net.HttpURLConnection;
+import java.nio.file.Path;
+
 import org.fakekoji.server.JavaServer;
 import org.fakekoji.core.FakeKojiTestUtil;
-import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.io.TempDir;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 
 public class TestPreview {
 
-    @ClassRule
-    public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
+
     public static JavaServer javaServer = null;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
-        /* prepare directory structure for fake-koji with some dummy builds */
-        File tmpDir = temporaryFolder.newFolder();
-        tmpDir.mkdir();
         /* create fake koji server */
-        javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(tmpDir);
+        javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(temporaryFolder.toFile());
         /* start fake-koji server */
         javaServer.start();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         /* stop fake-koji */
         if (javaServer != null) {

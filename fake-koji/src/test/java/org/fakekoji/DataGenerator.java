@@ -1,5 +1,6 @@
 package org.fakekoji;
 
+import org.apache.commons.io.FileUtils;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.core.utils.matrix.SummaryReportRunner;
 import org.fakekoji.functional.Result;
@@ -28,16 +29,16 @@ import org.fakekoji.model.Platform;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
-import org.fakekoji.server.JavaServer;
 import org.fakekoji.storage.StorageException;
 import org.fakekoji.xmlrpc.server.JavaServerConstants;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +50,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -61,6 +61,9 @@ import static org.fakekoji.jobmanager.JenkinsJobTemplateBuilder.JOB_NAME_SHORTEN
 
 
 public class DataGenerator {
+
+    @TempDir
+    static Path temporaryFolder;
 
     private static final Logger LOGGER = Logger.getLogger(JavaServerConstants.FAKE_KOJI_LOGGER);
 
@@ -1970,24 +1973,34 @@ public class DataGenerator {
         );
     }
 
-    public static FolderHolder initFolders(TemporaryFolder temporaryFolder) throws IOException {
-        final File buildsRoot = temporaryFolder.newFolder("builds");
-        final File configsRoot = temporaryFolder.newFolder("configs");
-        final File scriptsRoot = temporaryFolder.newFolder("scripts");
-        initScriptsRoot(scriptsRoot);
+    public static FolderHolder initFoldersFromTmpFolder(File temporaryFolder) throws IOException {
+        File[] filesToClean = new File[] {
+                new File(temporaryFolder, "builds"),
+                new File(temporaryFolder, "scripts"),
+                new File(temporaryFolder, "configs"),
+                //?
+                new File(temporaryFolder, "repos"),
+                new File(temporaryFolder, "jenkinsJobs"),
+                new File(temporaryFolder, "jenkinsJobArchive")
+        };
+        for (File file: filesToClean) {
+            FileUtils.deleteDirectory(file);
+        }
+        initScriptsRoot(filesToClean[1]);
         folderHolder = new FolderHolder(
-                buildsRoot,
-                scriptsRoot,
-                temporaryFolder.newFolder("repos"),
-                temporaryFolder.newFolder("jenkinsJobs"),
-                temporaryFolder.newFolder("jenkinsJobArchive"),
-                configsRoot
+                filesToClean[0],
+                filesToClean[1],
+                filesToClean[3],
+                filesToClean[4],
+                filesToClean[5],
+                filesToClean[2]
         );
         initConfigsRoot(getSettings(folderHolder));
         return folderHolder;
     }
 
-    public static FolderHolder initFolders(File root) throws IOException {
+    public static FolderHolder initFoldersOnFileRoot(Path temporaryFolder) throws IOException {
+        File root = temporaryFolder.toFile();
         final String rootPath = root.getAbsolutePath();
         final File buildsRoot = Paths.get(rootPath, "builds").toFile();
         final File configsRoot = Paths.get(rootPath, "configs").toFile();
@@ -2002,8 +2015,13 @@ public class DataGenerator {
                 jenkinsJobsRoot,
                 jenkinsJobArchiveRoot
         ).forEach(file -> {
+            try {
+                FileUtils.deleteDirectory(file);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             if (!file.mkdir()) {
-                throw new RuntimeException("Couldn't create file " + file.getAbsolutePath());
+                throw new RuntimeException("Couldn't create dir " + file.getAbsolutePath());
             }
         });
         initScriptsRoot(scriptsRoot);
@@ -2085,8 +2103,8 @@ public class DataGenerator {
         };
     }
     
-    public static AccessibleSettings getSettings(final TemporaryFolder temporaryFolder) throws IOException {
-        return getSettings(initFolders(temporaryFolder));
+    public static AccessibleSettings getSettings(Path tmpf) throws IOException {
+        return getSettings(initFoldersFromTmpFolder(tmpf.toFile()));
     }
 
     private static Integer getNullableInt(String prop) {

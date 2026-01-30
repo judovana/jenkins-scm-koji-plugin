@@ -5,7 +5,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assertions.assertEquals;
 
 public class ProjectMappingFileSystemTest {
 
@@ -79,7 +79,7 @@ public class ProjectMappingFileSystemTest {
     @BeforeClass
     public static void setUp() {
         try {
-            settings = DataGenerator.getSettings(DataGenerator.initFolders(temporaryFolder));
+            settings = DataGenerator.getSettings(DataGenerator.initFoldersFromTmpFlder(temporaryFolder));
 
             File productFile = settings.getDbFileRoot();
             File reposFile = settings.getLocalReposRoot();

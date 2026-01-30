@@ -9,10 +9,8 @@ import org.fakekoji.model.OToolArchive;
 import org.fakekoji.model.OToolBuild;
 import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -32,8 +30,6 @@ import static org.fakekoji.DataGenerator.SDK;
 
 public class OToolParserTest {
 
-    @Rule
-    public final ExpectedException expectedException = ExpectedException.none();
 
     private static final List<JDKVersion> jdkVersions = new ArrayList<>(DataGenerator.getJDKVersions());
 
@@ -67,7 +63,7 @@ public class OToolParserTest {
     public void parseValidNVRWithNoGarbage() {
         final String nvr = VALID_NAME_VERSION + "-" + VALID_RELEASE;
         final Result<OToolBuild, String> result = parser.parseBuild(nvr);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 new OToolBuild(
                         JDK_8_PACKAGE_NAME,
                         VERSION,
@@ -84,7 +80,7 @@ public class OToolParserTest {
 
         final String nvr = VALID_NAME_VERSION + "-" + VALID_RELEASE_WITH_CHAOS;
         final Result<OToolBuild, String> result = parser.parseBuild(nvr);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 new OToolBuild(
                         JDK_8_PACKAGE_NAME,
                         VERSION,
@@ -100,7 +96,7 @@ public class OToolParserTest {
     public void parseNVRWithInvalidPackageName() {
         final String nvr = INVALID_PACKAGE_NAME + "-" + VERSION + "-" + VALID_RELEASE;
         final Result<OToolBuild, String> result = parser.parseBuild(nvr);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 OToolParser.UNKNOWN_PACKAGE_NAME_ERROR,
                 result.getError()
         );
@@ -110,7 +106,7 @@ public class OToolParserTest {
     public void parseNVRWithMissingPackageName() {
         final String nvr = VERSION + "-" + VALID_RELEASE;
         final Result<OToolBuild, String> result = parser.parseBuild(nvr);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 OToolParser.UNKNOWN_PACKAGE_NAME_ERROR,
                 result.getError()
         );
@@ -120,7 +116,7 @@ public class OToolParserTest {
     public void parseNVRWithMissingVersion() {
         final String nvr = JDK_8_PACKAGE_NAME + "-" + VALID_RELEASE;
         final Result<OToolBuild, String> result = parser.parseBuild(nvr);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 OToolParser.DASH_SPLIT_ERROR,
                 result.getError()
         );
@@ -130,7 +126,7 @@ public class OToolParserTest {
     public void parseNVRWithInvalidRelease() {
         final String nvr = VALID_NAME_VERSION + "-" + PROJECT_NAME_U;
         final Result<OToolBuild, String> result = parser.parseBuild(nvr);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 OToolParser.CHANGE_SET_OR_PROJECT_NAME_MISSING_ERROR,
                 result.getError()
         );
@@ -140,7 +136,7 @@ public class OToolParserTest {
     public void parseValidNVRAWithoutGarbage() {
         final String nvra = VALID_NAME_VERSION + "-" + VALID_RELEASE + "." + VALID_ARCHIVE_FULL;
         final Result<OToolArchive, String> result = parser.parseArchive(nvra);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 new OToolArchive(
                         JDK_8_PACKAGE_NAME,
                         VERSION,
@@ -163,7 +159,7 @@ public class OToolParserTest {
     public void parseValidNVRAWithoutGarbageWithMissingVariant() {
         final String nvra = VALID_NAME_VERSION + "-" + VALID_RELEASE + "." + VALID_ARCHIVE_MISSING;
         final Result<OToolArchive, String> result = parser.parseArchive(nvra);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 new OToolArchive(
                         JDK_8_PACKAGE_NAME,
                         VERSION,
@@ -186,7 +182,7 @@ public class OToolParserTest {
     public void parseValidNVRAWithGarbage() {
         final String nvra = VALID_NAME_VERSION + "-" + VALID_RELEASE_WITH_CHAOS + "." + VALID_ARCHIVE_FULL;
         final Result<OToolArchive, String> result = parser.parseArchive(nvra);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 new OToolArchive(
                         JDK_8_PACKAGE_NAME,
                         VERSION,
@@ -209,7 +205,7 @@ public class OToolParserTest {
     public void parseValidNVRWithGarbageAndMissingVariant() {
         final String nvra = VALID_NAME_VERSION + "-" + VALID_RELEASE_WITH_CHAOS + "." + VALID_ARCHIVE_MISSING;
         final Result<OToolArchive, String> result = parser.parseArchive(nvra);
-        Assert.assertEquals(
+        Assertions.assertEquals(
                 new OToolArchive(
                         JDK_8_PACKAGE_NAME,
                         VERSION,
@@ -231,53 +227,53 @@ public class OToolParserTest {
     @Test
     public void parseLegacyNVR() {
         OToolParser.LegacyNVR nvr = new OToolParser.LegacyNVR("some-nice-name-some.version-some.release");
-        Assert.assertEquals("some-nice-name", nvr.getN());
-        Assert.assertEquals("some.version", nvr.getV());
-        Assert.assertEquals("some.release", nvr.getR());
-        Assert.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
-        Assert.assertEquals("some-nice-name-some.version", nvr.getNV());
-        Assert.assertEquals("some.version-some.release", nvr.getVR());
-        Assert.assertEquals("some-nice-name-some.release", nvr.getNR());
-        Assert.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
+        Assertions.assertEquals("some-nice-name", nvr.getN());
+        Assertions.assertEquals("some.version", nvr.getV());
+        Assertions.assertEquals("some.release", nvr.getR());
+        Assertions.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
+        Assertions.assertEquals("some-nice-name-some.version", nvr.getNV());
+        Assertions.assertEquals("some.version-some.release", nvr.getVR());
+        Assertions.assertEquals("some-nice-name-some.release", nvr.getNR());
+        Assertions.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
 
     }
 
     @Test
     public void parseLegacyNVRA() {
         OToolParser.LegacyNVRA nvr = new OToolParser.LegacyNVRA("some-nice-name-some.version-some.release.os.arch");
-        Assert.assertEquals("some-nice-name-some.version-some.release.os.arch", nvr.getNVRA());
-        Assert.assertEquals("os", nvr.getOs());
-        Assert.assertEquals("arch", nvr.getArch());
-        Assert.assertEquals("os.arch", nvr.getA());
-        Assert.assertEquals("some-nice-name", nvr.getN());
-        Assert.assertEquals("some.version", nvr.getV());
-        Assert.assertEquals("some.release", nvr.getR());
-        Assert.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
-        Assert.assertEquals("some-nice-name-some.version", nvr.getNV());
-        Assert.assertEquals("some.version-some.release", nvr.getVR());
-        Assert.assertEquals("some-nice-name-some.release", nvr.getNR());
-        Assert.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
-        Assert.assertEquals("some-nice-name/some.version/some.release.os/arch", nvr.getFullPath());
+        Assertions.assertEquals("some-nice-name-some.version-some.release.os.arch", nvr.getNVRA());
+        Assertions.assertEquals("os", nvr.getOs());
+        Assertions.assertEquals("arch", nvr.getArch());
+        Assertions.assertEquals("os.arch", nvr.getA());
+        Assertions.assertEquals("some-nice-name", nvr.getN());
+        Assertions.assertEquals("some.version", nvr.getV());
+        Assertions.assertEquals("some.release", nvr.getR());
+        Assertions.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
+        Assertions.assertEquals("some-nice-name-some.version", nvr.getNV());
+        Assertions.assertEquals("some.version-some.release", nvr.getVR());
+        Assertions.assertEquals("some-nice-name-some.release", nvr.getNR());
+        Assertions.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
+        Assertions.assertEquals("some-nice-name/some.version/some.release.os/arch", nvr.getFullPath());
     }
 
     @Test
     public void parseLegacyNVRAS() {
         OToolParser.LegacyNVRASuffix nvr = new OToolParser.LegacyNVRASuffix("some-nice-name-some.version-some.release.os.arch.suffix");
-        Assert.assertEquals("some-nice-name-some.version-some.release.os.arch.suffix", nvr.getNvras());
-        Assert.assertEquals("suffix", nvr.getSuffix());
-        Assert.assertEquals("some-nice-name-some.version-some.release.os.arch", nvr.getNVRA());
-        Assert.assertEquals("os", nvr.getOs());
-        Assert.assertEquals("arch", nvr.getArch());
-        Assert.assertEquals("os.arch", nvr.getA());
-        Assert.assertEquals("some-nice-name", nvr.getN());
-        Assert.assertEquals("some.version", nvr.getV());
-        Assert.assertEquals("some.release", nvr.getR());
-        Assert.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
-        Assert.assertEquals("some-nice-name-some.version", nvr.getNV());
-        Assert.assertEquals("some.version-some.release", nvr.getVR());
-        Assert.assertEquals("some-nice-name-some.release", nvr.getNR());
-        Assert.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
-        Assert.assertEquals("some-nice-name/some.version/some.release.os/arch", nvr.getFullPath());
+        Assertions.assertEquals("some-nice-name-some.version-some.release.os.arch.suffix", nvr.getNvras());
+        Assertions.assertEquals("suffix", nvr.getSuffix());
+        Assertions.assertEquals("some-nice-name-some.version-some.release.os.arch", nvr.getNVRA());
+        Assertions.assertEquals("os", nvr.getOs());
+        Assertions.assertEquals("arch", nvr.getArch());
+        Assertions.assertEquals("os.arch", nvr.getA());
+        Assertions.assertEquals("some-nice-name", nvr.getN());
+        Assertions.assertEquals("some.version", nvr.getV());
+        Assertions.assertEquals("some.release", nvr.getR());
+        Assertions.assertEquals("some-nice-name-some.version-some.release", nvr.getNVR());
+        Assertions.assertEquals("some-nice-name-some.version", nvr.getNV());
+        Assertions.assertEquals("some.version-some.release", nvr.getVR());
+        Assertions.assertEquals("some-nice-name-some.release", nvr.getNR());
+        Assertions.assertEquals("some-nice-name/some.version", nvr.getPartialPath());
+        Assertions.assertEquals("some-nice-name/some.version/some.release.os/arch", nvr.getFullPath());
     }
 
 }

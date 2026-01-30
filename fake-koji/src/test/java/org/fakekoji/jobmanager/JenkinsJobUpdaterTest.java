@@ -32,14 +32,14 @@ import org.fakekoji.jobmanager.model.JobCollisionAction;
 import org.fakekoji.jobmanager.model.JobUpdateResult;
 import org.fakekoji.jobmanager.model.JobUpdateResults;
 import org.fakekoji.storage.StorageException;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import static org.fakekoji.jobmanager.JenkinsJobUpdater.JENKINS_JOB_CONFIG_FILE;
 
@@ -52,8 +52,8 @@ public class JenkinsJobUpdaterTest {
 
     boolean wasFinallyRun = false;
 
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
     private AccessibleSettings settings;
     private DataGenerator.FolderHolder folderHolder;
@@ -69,9 +69,9 @@ public class JenkinsJobUpdaterTest {
     File toFile;
     File toConfig;
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
-        folderHolder = DataGenerator.initFolders(temporaryFolder);
+        folderHolder = DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile());
         settings = DataGenerator.getSettings(folderHolder);
         jobUpdater = settings.getJobUpdater();
         updater = (JenkinsJobUpdater) jobUpdater;
@@ -83,26 +83,29 @@ public class JenkinsJobUpdaterTest {
         toConfig = new File(toFile, JENKINS_JOB_CONFIG_FILE);
     }
 
-    @Test(expected = IOException.class)
+    @Test()
     public void firtsWin() throws Throwable {
-        wasFinallyRun = false;
-        try {
-            String r = new JenkinsJobUpdater.PrimaryExceptionThrower<String>(new JenkinsJobUpdater.Rummable() {
-                @Override
-                public void rum() throws Exception {
-                    throw new IOException();
-                }
-            }, new JenkinsJobUpdater.Rummable() {
-                @Override
-                public void rum() throws Exception {
-                    wasFinallyRun = true;
-                    throw new InterruptedException();
-                }
-            }, "returned").call();
-            Assert.assertNull(r);
-        } finally {
-            Assert.assertTrue(wasFinallyRun);
-        }
+        Assertions.assertThrows(IOException.class, () -> {
+
+            wasFinallyRun = false;
+            try {
+                String r = new JenkinsJobUpdater.PrimaryExceptionThrower<String>(new JenkinsJobUpdater.Rummable() {
+                    @Override
+                    public void rum() throws Exception {
+                        throw new IOException();
+                    }
+                }, new JenkinsJobUpdater.Rummable() {
+                    @Override
+                    public void rum() throws Exception {
+                        wasFinallyRun = true;
+                        throw new InterruptedException();
+                    }
+                }, "returned").call();
+                Assertions.assertNull(r);
+            } finally {
+                Assertions.assertTrue(wasFinallyRun);
+            }
+        });
     }
 
     @Test()
@@ -121,53 +124,56 @@ public class JenkinsJobUpdaterTest {
 
                 }
             }, "returned").call();
-            Assert.assertEquals("returned", r);
+            Assertions.assertEquals("returned", r);
         } finally {
-            Assert.assertTrue(wasFinallyRun);
+            Assertions.assertTrue(wasFinallyRun);
         }
     }
 
-    @Test(expected = IOException.class)
+    @Test()
     public void firstExceptionKills() throws Throwable {
-        wasFinallyRun = false;
-        try {
-            String r = new JenkinsJobUpdater.PrimaryExceptionThrower<String>(new JenkinsJobUpdater.Rummable() {
-                @Override
-                public void rum() throws Exception {
-                    throw new IOException();
-                }
-            }, new JenkinsJobUpdater.Rummable() {
-                @Override
-                public void rum() throws Exception {
-                    wasFinallyRun = true;
-                }
-            }, "returned").call();
-            Assert.assertNull(r);
-        } finally {
-            Assert.assertTrue(wasFinallyRun);
-        }
+        Assertions.assertThrows(IOException.class, () -> {
+            wasFinallyRun = false;
+            try {
+                String r = new JenkinsJobUpdater.PrimaryExceptionThrower<String>(new JenkinsJobUpdater.Rummable() {
+                    @Override
+                    public void rum() throws Exception {
+                        throw new IOException();
+                    }
+                }, new JenkinsJobUpdater.Rummable() {
+                    @Override
+                    public void rum() throws Exception {
+                        wasFinallyRun = true;
+                    }
+                }, "returned").call();
+                Assertions.assertNull(r);
+            } finally {
+                Assertions.assertTrue(wasFinallyRun);
+            }
+        });
     }
 
-    @Test(expected = InterruptedException.class)
     public void secondExceptionAlsoKills() throws Throwable {
-        wasFinallyRun = false;
-        try {
-            String r = new JenkinsJobUpdater.PrimaryExceptionThrower<String>(new JenkinsJobUpdater.Rummable() {
-                @Override
-                public void rum() throws Exception {
+        Assertions.assertThrows(InterruptedException.class, () -> {
+            wasFinallyRun = false;
+            try {
+                String r = new JenkinsJobUpdater.PrimaryExceptionThrower<String>(new JenkinsJobUpdater.Rummable() {
+                    @Override
+                    public void rum() throws Exception {
 
-                }
-            }, new JenkinsJobUpdater.Rummable() {
-                @Override
-                public void rum() throws Exception {
-                    wasFinallyRun = true;
-                    throw new InterruptedException();
-                }
-            }, "returned").call();
-            Assert.assertNull(r);
-        } finally {
-            Assert.assertTrue(wasFinallyRun);
-        }
+                    }
+                }, new JenkinsJobUpdater.Rummable() {
+                    @Override
+                    public void rum() throws Exception {
+                        wasFinallyRun = true;
+                        throw new InterruptedException();
+                    }
+                }, "returned").call();
+                Assertions.assertNull(r);
+            } finally {
+                Assertions.assertTrue(wasFinallyRun);
+            }
+        });
     }
 
     @Test
@@ -176,10 +182,10 @@ public class JenkinsJobUpdaterTest {
         try {
             JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager,null);//create all
             JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager, null);//re create all
-            Assert.assertEquals(0, r1.jobsRewritten.size());
-            Assert.assertNotEquals(0, r1.jobsCreated.size());
-            Assert.assertNotEquals(0, r2.jobsRewritten.size());
-            Assert.assertEquals(0, r2.jobsCreated.size());
+            Assertions.assertEquals(0, r1.jobsRewritten.size());
+            Assertions.assertNotEquals(0, r1.jobsCreated.size());
+            Assertions.assertNotEquals(0, r2.jobsRewritten.size());
+            Assertions.assertEquals(0, r2.jobsCreated.size());
         } finally {
             JenkinsCliWrapper.reinitCli();
         }
@@ -191,10 +197,10 @@ public class JenkinsJobUpdaterTest {
         try {
             JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager, "somethingNotExisting");//create nothing
             JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager, null);//re create all
-            Assert.assertEquals(0, r1.jobsRewritten.size());
-            Assert.assertEquals(0, r1.jobsCreated.size());
-            Assert.assertEquals(0, r2.jobsRewritten.size());
-            Assert.assertNotEquals(0, r2.jobsCreated.size());
+            Assertions.assertEquals(0, r1.jobsRewritten.size());
+            Assertions.assertEquals(0, r1.jobsCreated.size());
+            Assertions.assertEquals(0, r2.jobsRewritten.size());
+            Assertions.assertNotEquals(0, r2.jobsCreated.size());
         } finally {
             JenkinsCliWrapper.reinitCli();
         }
@@ -206,10 +212,10 @@ public class JenkinsJobUpdaterTest {
         try {
             JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, null);//create all
             JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, null);//re create all
-            Assert.assertEquals(0, r1.jobsRewritten.size());
-            Assert.assertEquals(5, r1.jobsCreated.size());
-            Assert.assertEquals(5, r2.jobsRewritten.size());
-            Assert.assertEquals(0, r2.jobsCreated.size());
+            Assertions.assertEquals(0, r1.jobsRewritten.size());
+            Assertions.assertEquals(5, r1.jobsCreated.size());
+            Assertions.assertEquals(5, r2.jobsRewritten.size());
+            Assertions.assertEquals(0, r2.jobsCreated.size());
         } finally {
             JenkinsCliWrapper.reinitCli();
         }
@@ -221,10 +227,10 @@ public class JenkinsJobUpdaterTest {
         try {
             JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, "tck-.*");//create tck
             JobUpdateResults r2 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, null);//re create rest
-            Assert.assertEquals(0, r1.jobsRewritten.size());
-            Assert.assertEquals(4, r1.jobsCreated.size());
-            Assert.assertEquals(4, r2.jobsRewritten.size());
-            Assert.assertEquals(1,  r2.jobsCreated.size());
+            Assertions.assertEquals(0, r1.jobsRewritten.size());
+            Assertions.assertEquals(4, r1.jobsCreated.size());
+            Assertions.assertEquals(4, r2.jobsRewritten.size());
+            Assertions.assertEquals(1,  r2.jobsCreated.size());
         } finally {
             JenkinsCliWrapper.reinitCli();
         }
@@ -237,11 +243,11 @@ public class JenkinsJobUpdaterTest {
         Utils.writeToFile(fromConfig, "fromOriginal");
         final JobBump jobBump = new JobBump(from, to, false);
         final JobUpdateResult result = updater.getBumpFunction(JobCollisionAction.STOP).apply(jobBump);
-        Assert.assertTrue(result.success);
-        Assert.assertFalse(fromFile.exists());
-        Assert.assertTrue(toFile.exists());
-        Assert.assertEquals("bumped from " + from.getName() + " to " + to.getName(), result.message);
-        Assert.assertEquals(to.getName() + '\n', Utils.readFile(toConfig));
+        Assertions.assertTrue(result.success);
+        Assertions.assertFalse(fromFile.exists());
+        Assertions.assertTrue(toFile.exists());
+        Assertions.assertEquals("bumped from " + from.getName() + " to " + to.getName(), result.message);
+        Assertions.assertEquals(to.getName() + '\n', Utils.readFile(toConfig));
     }
 
     @Test
@@ -253,12 +259,12 @@ public class JenkinsJobUpdaterTest {
         Utils.writeToFile(toConfig, "toOriginal");
         final JobBump jobBump = new JobBump(from, to, true);
         final JobUpdateResult result = updater.getBumpFunction(JobCollisionAction.STOP).apply(jobBump);
-        Assert.assertFalse(result.success);
-        Assert.assertEquals("Collision: no changes done", result.message);
-        Assert.assertTrue(fromFile.exists());
-        Assert.assertTrue(toFile.exists());
-        Assert.assertEquals("fromOriginal\n", Utils.readFile(fromConfig));
-        Assert.assertEquals("toOriginal\n", Utils.readFile(toConfig));
+        Assertions.assertFalse(result.success);
+        Assertions.assertEquals("Collision: no changes done", result.message);
+        Assertions.assertTrue(fromFile.exists());
+        Assertions.assertTrue(toFile.exists());
+        Assertions.assertEquals("fromOriginal\n", Utils.readFile(fromConfig));
+        Assertions.assertEquals("toOriginal\n", Utils.readFile(toConfig));
     }
 
     @Test
@@ -271,12 +277,12 @@ public class JenkinsJobUpdaterTest {
         final File archivedFromFile = new File(archive, from.getName());
         final JobBump jobBump = new JobBump(from, to, true);
         final JobUpdateResult result = updater.getBumpFunction(JobCollisionAction.KEEP_EXISTING).apply(jobBump);
-        Assert.assertTrue(result.success);
-        Assert.assertEquals("Collision: the existing config was kept", result.message);
-        Assert.assertFalse(fromFile.exists());
-        Assert.assertTrue(archivedFromFile.exists());
-        Assert.assertTrue(toFile.exists());
-        Assert.assertEquals("toOriginal\n", Utils.readFile(toConfig));
+        Assertions.assertTrue(result.success);
+        Assertions.assertEquals("Collision: the existing config was kept", result.message);
+        Assertions.assertFalse(fromFile.exists());
+        Assertions.assertTrue(archivedFromFile.exists());
+        Assertions.assertTrue(toFile.exists());
+        Assertions.assertEquals("toOriginal\n", Utils.readFile(toConfig));
     }
 
     @Test
@@ -290,21 +296,21 @@ public class JenkinsJobUpdaterTest {
         final JobUpdateResult result = updater.getBumpFunction(JobCollisionAction.KEEP_BUMPED).apply(jobBump);
         final File archivedToFile = new File(archive, to.getName());
         final File archivedConfig = new File(archivedToFile, JENKINS_JOB_CONFIG_FILE);
-        Assert.assertTrue(result.success);
-        Assert.assertEquals("bumped from " + from.getName() + " to " + to.getName(), result.message);
-        Assert.assertFalse(fromFile.exists());
-        Assert.assertTrue(toFile.exists());
-        Assert.assertTrue(archivedToFile.exists());
-        Assert.assertEquals("toOriginal\n", Utils.readFile(archivedConfig));
-        Assert.assertEquals("to\n", Utils.readFile(toConfig));
+        Assertions.assertTrue(result.success);
+        Assertions.assertEquals("bumped from " + from.getName() + " to " + to.getName(), result.message);
+        Assertions.assertFalse(fromFile.exists());
+        Assertions.assertTrue(toFile.exists());
+        Assertions.assertTrue(archivedToFile.exists());
+        Assertions.assertEquals("toOriginal\n", Utils.readFile(archivedConfig));
+        Assertions.assertEquals("to\n", Utils.readFile(toConfig));
     }
 
     @Test
     public void archiveWithoutDuplicates() throws IOException {
         mkdir(fromFile);
         updater.archive(fromFile);
-        Assert.assertFalse(fromFile.exists());
-        Assert.assertTrue(new File(archive, fromFile.getName()).exists());
+        Assertions.assertFalse(fromFile.exists());
+        Assertions.assertTrue(new File(archive, fromFile.getName()).exists());
     }
 
     @Test
@@ -313,8 +319,8 @@ public class JenkinsJobUpdaterTest {
         mkdir(fromFile);
         mkdir(archived);
         updater.archive(fromFile);
-        Assert.assertFalse(fromFile.exists());
-        Assert.assertTrue(new File(archive, fromFile.getName() + "(1)").exists());
+        Assertions.assertFalse(fromFile.exists());
+        Assertions.assertTrue(new File(archive, fromFile.getName() + "(1)").exists());
     }
 
     @Test
@@ -328,8 +334,8 @@ public class JenkinsJobUpdaterTest {
             mkdir(file);
         }
         updater.archive(fromFile);
-        Assert.assertFalse(fromFile.exists());
-        Assert.assertTrue(new File(archive, fromFile.getName() + '(' + n + ')').exists());
+        Assertions.assertFalse(fromFile.exists());
+        Assertions.assertTrue(new File(archive, fromFile.getName() + '(' + n + ')').exists());
     }
 
     void mkdir(final File dir) {
