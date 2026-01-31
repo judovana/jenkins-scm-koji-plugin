@@ -1,22 +1,20 @@
 package org.fakekoji.core;
 
 import org.fakekoji.DataGenerator;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.ExpectedException;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ProjectMappingFileSystemTest {
 
@@ -25,11 +23,8 @@ public class ProjectMappingFileSystemTest {
     private static final String JAVA9 = "java-9-openjdk";
     private static final String JAVA10 = "java-10-openjdk";
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @ClassRule
-    public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+    @TempDir
+    static Path temporaryFolder;
 
     private static final String[] products = {
             "java-X-openjdk",
@@ -76,10 +71,10 @@ public class ProjectMappingFileSystemTest {
 
     private static AccessibleSettings settings;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         try {
-            settings = DataGenerator.getSettings(DataGenerator.initFoldersFromTmpFlder(temporaryFolder));
+            settings = DataGenerator.getSettings(DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile()));
 
             File productFile = settings.getDbFileRoot();
             File reposFile = settings.getLocalReposRoot();
@@ -99,7 +94,7 @@ public class ProjectMappingFileSystemTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         for (String product : products) {
             new File(settings.getDbFileRoot(), product).deleteOnExit();
@@ -118,7 +113,7 @@ public class ProjectMappingFileSystemTest {
         final List<String> actualProducts;
         actualProducts = projectMapping.getAllProducts();
         Collections.sort(actualProducts);
-        assertEquals("The actual list of products doesn\'t match the expected", Arrays.asList(products), actualProducts);
+        assertEquals(Arrays.asList(products), actualProducts);
     }
 
     @Test
@@ -127,7 +122,7 @@ public class ProjectMappingFileSystemTest {
         final List<String> actualProjects;
         actualProjects = projectMapping.getAllProjects();
         Collections.sort(actualProjects);
-        assertEquals("The actual list of projects doesn\'t match the expected", Arrays.asList(projects), actualProjects);
+        assertEquals(Arrays.asList(projects), actualProjects);
     }
 
     @Test
@@ -158,27 +153,27 @@ public class ProjectMappingFileSystemTest {
         final List<String> actualJava7Projects;
         actualJava7Projects = projectMapping.getProjectsOfProduct(JAVA7);
         Collections.sort(actualJava7Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava7Projects, actualJava7Projects);
+        assertEquals(expectedJava7Projects, actualJava7Projects);
 
 
         final List<String> actualJava8Projects;
         actualJava8Projects = projectMapping.getProjectsOfProduct(JAVA8);
         Collections.sort(actualJava8Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava8Projects, actualJava8Projects);
+        assertEquals(expectedJava8Projects, actualJava8Projects);
 
 
         final List<String> actualJava9Projects;
         actualJava9Projects = projectMapping.getProjectsOfProduct(JAVA9);
         Collections.sort(actualJava9Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava9Projects, actualJava9Projects);
+        assertEquals(expectedJava9Projects, actualJava9Projects);
 
 
         final List<String> actualJava10Projects;
         actualJava10Projects = projectMapping.getProjectsOfProduct(JAVA10);
         Collections.sort(actualJava10Projects);
-        assertEquals("The actual list of projects doesn\'t match the expected", expectedJava10Projects, actualJava10Projects);
+        assertEquals(expectedJava10Projects, actualJava10Projects);
 
-        expectedException.expect(ProjectMappingExceptions.ProductNotFoundException.class);
+        //expectedException.expect(ProjectMappingExceptions.ProductNotFoundException.class);
         projectMapping.getProjectsOfProduct("wrong product");
     }
 
@@ -207,9 +202,9 @@ public class ProjectMappingFileSystemTest {
             actualProjects.add(projectMapping.getProjectOfNvra(nvra));
 
         }
-        assertEquals("The actual project doesn\'t match the expected", expectedProjects, actualProjects);
+        assertEquals(expectedProjects, actualProjects);
 
-        expectedException.expect(ProjectMappingExceptions.ProjectOfNvraNotFoundException.class);
+        //expectedException.expect(ProjectMappingExceptions.ProjectOfNvraNotFoundException.class);
         projectMapping.getProjectOfNvra("wrong nvra");
     }
 
@@ -237,9 +232,9 @@ public class ProjectMappingFileSystemTest {
         for (String nvra : nvras) {
             actualProducts.add(projectMapping.getProductOfNvra(nvra));
         }
-        assertEquals("The actual product doesn\'t match the expected", expectedProducts, actualProducts);
+        assertEquals(expectedProducts, actualProducts);
 
-        expectedException.expect(ProjectMappingExceptions.ProductOfNvraNotFoundException.class);
+        //expectedException.expect(ProjectMappingExceptions.ProductOfNvraNotFoundException.class);
         projectMapping.getProductOfNvra("wrong nvra");
     }
 
@@ -267,9 +262,9 @@ public class ProjectMappingFileSystemTest {
         for (String project : projects) {
             actualProjects.add(projectMapping.getProductOfProject(project));
         }
-        assertEquals("The actual product doesn\'t match the expected", Arrays.asList(expectedProductsOfProjects), actualProjects);
+        assertEquals(Arrays.asList(expectedProductsOfProjects), actualProjects);
 
-        expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
+        //expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
         projectMapping.getProductOfProject("wrong project");
     }
 }

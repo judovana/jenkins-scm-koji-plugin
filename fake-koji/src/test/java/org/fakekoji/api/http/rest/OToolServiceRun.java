@@ -32,7 +32,7 @@ public class OToolServiceRun {
             LOGGER.info("Done");
         }
         final File oTool = Files.createTempDirectory("oTool").toFile();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool.toPath());
         if (System.getProperty("otool.testdb.dir") != null) {
             Files.copy(new File(System.getProperty("otool.testdb.dir") + "/results.db").toPath(), new File(folderHolder.configsRoot, "results.db").toPath());
         }

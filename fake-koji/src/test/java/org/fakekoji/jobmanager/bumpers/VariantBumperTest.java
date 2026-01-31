@@ -51,7 +51,7 @@ public class VariantBumperTest {
         JenkinsCliWrapper.killCli();
         File oTool = Files.createTempDirectory("oTool").toFile();
         oTool.deleteOnExit();
-        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool);
+        final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(oTool.toPath());
         AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         return new CurrentSetup(settings, oTool);
     }
