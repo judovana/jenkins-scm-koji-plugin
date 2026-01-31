@@ -1986,6 +1986,9 @@ public class DataGenerator {
         for (File file: filesToClean) {
             FileUtils.deleteDirectory(file);
         }
+        for (File file: filesToClean) {
+            file.mkdir();
+        }
         initScriptsRoot(filesToClean[1]);
         folderHolder = new FolderHolder(
                 filesToClean[0],

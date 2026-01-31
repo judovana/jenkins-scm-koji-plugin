@@ -187,6 +187,7 @@ public class TestSshApi {
 
     @BeforeAll
     public static void startSshdServer() throws IOException, GeneralSecurityException {
+        temporaryFolder.toFile().mkdir();
         final FolderHolder folderHolder = DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile());
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         ServerSocket s = new ServerSocket(settings.getSshPort());
