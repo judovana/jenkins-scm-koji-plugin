@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager;
 
+import org.apache.commons.io.FileUtils;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.jobmanager.model.BuildJob;
@@ -16,11 +17,13 @@ import org.fakekoji.model.Task;
 import org.fakekoji.model.TaskVariant;
 import org.fakekoji.model.TaskVariantValue;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -81,7 +84,17 @@ public class JenkinsJobTemplateBuilderTest {
     private static final Product jdk8Product = DataGenerator.getJDK8Product();
     private static final JDKVersion jdk8 = DataGenerator.getJDKVersion8();
 
+    @TempDir
+    static Path temporaryFolder;
+
     private File scriptsRoot;
+
+    @BeforeEach
+    public void setup() throws IOException {
+        scriptsRoot = temporaryFolder.toFile();
+        FileUtils.deleteDirectory(scriptsRoot);
+        scriptsRoot.mkdirs();
+    }
 
 
     public static final String SHRT_NM = "ShrtNm";

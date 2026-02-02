@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ProjectMappingFileSystemTest {
 
@@ -173,8 +174,9 @@ public class ProjectMappingFileSystemTest {
         Collections.sort(actualJava10Projects);
         assertEquals(expectedJava10Projects, actualJava10Projects);
 
-        //expectedException.expect(ProjectMappingExceptions.ProductNotFoundException.class);
-        projectMapping.getProjectsOfProduct("wrong product");
+        Exception exception = assertThrows(ProjectMappingExceptions.ProductNotFoundException.class, () -> {
+            projectMapping.getProjectsOfProduct("wrong product");
+        });
     }
 
     @Test
@@ -204,8 +206,9 @@ public class ProjectMappingFileSystemTest {
         }
         assertEquals(expectedProjects, actualProjects);
 
-        //expectedException.expect(ProjectMappingExceptions.ProjectOfNvraNotFoundException.class);
-        projectMapping.getProjectOfNvra("wrong nvra");
+        Exception exception = assertThrows(ProjectMappingExceptions.ProjectOfNvraNotFoundException.class, () -> {
+            projectMapping.getProjectOfNvra("wrong nvra");
+        });
     }
 
     @Test
@@ -234,8 +237,9 @@ public class ProjectMappingFileSystemTest {
         }
         assertEquals(expectedProducts, actualProducts);
 
-        //expectedException.expect(ProjectMappingExceptions.ProductOfNvraNotFoundException.class);
-        projectMapping.getProductOfNvra("wrong nvra");
+        Exception exception = assertThrows(ProjectMappingExceptions.ProductOfNvraNotFoundException.class, () -> {
+            projectMapping.getProductOfNvra("wrong nvra");
+        });
     }
 
     @Test
@@ -264,7 +268,8 @@ public class ProjectMappingFileSystemTest {
         }
         assertEquals(Arrays.asList(expectedProductsOfProjects), actualProjects);
 
-        //expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
-        projectMapping.getProductOfProject("wrong project");
+        Exception exception = assertThrows(ProjectMappingExceptions.ProjectNotFoundException.class, () -> {
+            projectMapping.getProductOfProject("wrong project");
+        });
     }
 }
