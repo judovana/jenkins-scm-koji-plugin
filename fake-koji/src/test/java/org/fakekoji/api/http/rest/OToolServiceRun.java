@@ -1112,7 +1112,7 @@ public class OToolServiceRun {
         bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
         List<String> e = bwl.removeBlacklisted(new String[]{"aa", "bb", "aa"});
         System.out.println(Arrays.toString(e.toArray()));
-        Assertions.assertEquals(new String[]{}, e.toArray());
+        Assertions.assertArrayEquals(new String[]{}, e.toArray());
 
         bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
         List<String> o = bwl.removeBlacklisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm"});

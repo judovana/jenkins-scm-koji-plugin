@@ -37,16 +37,14 @@ public class BumperApiTest {
     private final static String taskVariantId = "newtestvariant";
     private final static String defaultValue = "abcdefgh";
 
-    @TempDir
-    static Path temporaryFolder;
-
     @BeforeAll
     public static void setup() {
         JenkinsCliWrapper.killCli();
     }
 
     @Test
-    public void addBuildVariant() throws IOException, ManagementException, StorageException {
+    public void addBuildVariant(@TempDir Path temporaryFolder) throws IOException, ManagementException, StorageException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         DataGenerator.initBuildsRoot(settings.getDbFileRoot());
@@ -96,7 +94,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addTestVariant() throws IOException, ManagementException, StorageException {
+    public void addTestVariant(@TempDir Path temporaryFolder) throws IOException, ManagementException, StorageException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final File jobsRoot = settings.getJenkinsJobsRoot();
@@ -144,7 +143,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithExistingName() throws IOException {
+    public void addVariantWithExistingName(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -159,7 +159,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithExistingValue() throws IOException {
+    public void addVariantWithExistingValue(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -174,7 +175,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithInvalidType() throws IOException {
+    public void addVariantWithInvalidType(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -189,7 +191,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithDuplicateValues() throws IOException {
+    public void addVariantWithDuplicateValues(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -204,7 +207,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithMissingDefaultValueInValues() throws IOException {
+    public void addVariantWithMissingDefaultValueInValues(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -219,7 +223,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithEmptyValues() throws IOException {
+    public void addVariantWithEmptyValues(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -234,7 +239,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithMissingName() throws IOException {
+    public void addVariantWithMissingName(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -248,7 +254,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithMissingType() throws IOException {
+    public void addVariantWithMissingType(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -262,7 +269,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void addVariantWithMissingDefaultValue() throws IOException {
+    public void addVariantWithMissingDefaultValue(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);
         final BumperAPI bumperApi = new BumperAPI(settings);
@@ -276,7 +284,8 @@ public class BumperApiTest {
     }
 
     @Test
-    public void removeBuildVariant() throws IOException {
+    public void removeBuildVariant(@TempDir Path temporaryFolder) throws IOException {
+        temporaryFolder.toFile().mkdirs();
         final String taskVariantId = JRE_SDK;
         final DataGenerator.FolderHolder folderHolder = DataGenerator.initFoldersOnFileRoot(temporaryFolder);
         final AccessibleSettings settings = DataGenerator.getSettings(folderHolder);

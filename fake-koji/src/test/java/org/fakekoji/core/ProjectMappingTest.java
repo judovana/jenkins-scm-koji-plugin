@@ -1,7 +1,9 @@
 package org.fakekoji.core;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -113,8 +115,9 @@ public class ProjectMappingTest {
         expectedProducts.sort(String::compareTo);
         assertEquals(expectedProducts, actualProducts);
 
-        //expectedException.expect(ProjectMappingExceptions.ProductOfNvraNotFoundException.class);
-        projectMapping.getProductOfNvra("wrong nvra", products);
+        Assertions.assertThrows(ProjectMappingExceptions.ProductOfNvraNotFoundException.class, () -> {
+            projectMapping.getProductOfNvra("wrong nvra", products);
+        });
     }
 
     @Test
@@ -145,8 +148,9 @@ public class ProjectMappingTest {
         expectedProductsOfProjects.sort(String::compareTo);
         assertEquals(expectedProductsOfProjects, actualProducts);
 
-        //expectedException.expect(ProjectMappingExceptions.ProjectNotFoundException.class);
-        projectMapping.getProductOfProject("wrong project", products, projects);
+        Assertions.assertThrows(ProjectMappingExceptions.ProjectNotFoundException.class, () -> {
+            projectMapping.getProductOfProject("wrong project", products, projects);
+        });
     }
 
     private ProjectMapping createProjectMapping() {
