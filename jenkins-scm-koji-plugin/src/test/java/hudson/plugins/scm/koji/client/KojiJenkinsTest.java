@@ -30,6 +30,7 @@ import hudson.plugins.scm.koji.KojiBuildProvider;
 import hudson.plugins.scm.koji.KojiSCM;
 import hudson.plugins.scm.koji.RealKojiXmlRpcApi;
 import hudson.tasks.Shell;
+
 import org.fakekoji.core.FakeKojiTestUtil;
 import org.fakekoji.server.JavaServer;
 import org.junit.jupiter.api.AfterAll;
@@ -40,7 +41,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -57,6 +57,7 @@ public class KojiJenkinsTest {
     @BeforeAll
     public static void beforeClass() throws Exception {
         /* create fake koji server (with data) */
+        temporaryFolder.toFile().mkdirs();
         javaServer = FakeKojiTestUtil.createDefaultFakeKojiServerWithData(temporaryFolder.toFile());
         /* start fake-koji server */
         javaServer.start();
