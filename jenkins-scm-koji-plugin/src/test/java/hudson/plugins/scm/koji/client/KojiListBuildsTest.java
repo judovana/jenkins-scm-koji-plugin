@@ -73,7 +73,7 @@ public class KojiListBuildsTest {
     static KojiBuildProvider createBrewHubKojiBuildProvider() {
         return new KojiBuildProvider(
                 "https://brewhub.engineering.redhat.com/brewhub",
-                "http://download.eng.bos.redhat.com/brewroot/packages/"
+                "http://download.eng.brq.redhat.com/brewroot/packages/"
         );
     }
 
