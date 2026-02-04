@@ -102,6 +102,18 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!-- Define the location of your custom whitelist/blacklist file -->
+                        <hudson.remoting.ClassFilter>
+                            hudson.plugins.scm.koji.model.Build,hudson.plugins.scm.koji.model.RPM,hudson.plugins.scm.koji.model.BuildProvider
+                        </hudson.remoting.ClassFilter>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
 
         </plugins>
     </build>
