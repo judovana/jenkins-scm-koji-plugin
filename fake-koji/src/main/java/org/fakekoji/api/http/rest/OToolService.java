@@ -54,7 +54,7 @@ public class OToolService {
         app = Javalin.create( config -> {
                     config.jsonMapper(new JavalinJackson(objectMapper, false));
                     config.staticFiles.add("/webapp", Location.CLASSPATH);
-                    config.router.apiBuilder(new KojiEndpointGroup(settings, wrapper, getterApi, jenkinsJobUpdater));
+                    config.routes.apiBuilder(new KojiEndpointGroup(settings, wrapper, getterApi, jenkinsJobUpdater));
                 }
         );
 
