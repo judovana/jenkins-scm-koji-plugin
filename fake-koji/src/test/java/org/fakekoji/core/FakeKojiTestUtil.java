@@ -141,7 +141,7 @@ public class FakeKojiTestUtil {
         generateBuilds(localBuilds, n, v2, r21, a2, build221);
         generateBuilds(localBuilds, n, v2, r22, a2, build222);
         generateBuilds(localBuilds, n, v2, r21, a1, build223);
-        generateBuilds(localBuilds, n, v2, r22, a2, build224);
+        generateBuilds(localBuilds, n, v2, r22, a1, build224);
 
 
         /* upstream builds */

@@ -75,7 +75,7 @@ public class KojiJenkinsTest {
         return Collections.singletonList(createLocalhostKojiBuildProvider());
     }
 
-    public void runTest(JenkinsRule j, RealKojiXmlRpcApi kojiXmlRpcApi, String shellScript, boolean successExpected) throws Exception {
+    public void runTest(JenkinsRule j, RealKojiXmlRpcApi kojiXmlRpcApi, String shellScript, boolean successExpected, String id) throws Exception {
         /* create new jenkins free style project */
         FreeStyleProject project = j.createFreeStyleProject();
 
@@ -84,8 +84,8 @@ public class KojiJenkinsTest {
         KojiSCM scm = new KojiSCM(
                 createKojiBuildProviders(),
                 kojiXmlRpcApi,
-                null,
-                false,
+                "rpms",
+                true,
                 false,
                 10
         );
@@ -105,8 +105,13 @@ public class KojiJenkinsTest {
                 System.out.write(readByte);
             }
         }
-        /* get result of the build and check it it meets expectations */
+        System.out.flush();
+        /* get result of the build and check it meets expectations */
         Result result = build.getResult();
+        for(int x = 0; x < 3; x++){
+            Thread.sleep(50);//time for stream to flush
+            System.out.println("Evaluating " + id + " in " + x + ". Is " + result + ", should be " + successExpected);
+        }
         Assertions.assertEquals(successExpected, result == Result.SUCCESS);
     }
 
@@ -114,8 +119,8 @@ public class KojiJenkinsTest {
     public void testExistingBuild(JenkinsRule j) throws Exception {
         /* Test koji scm plugin on existing fake-koji build(s) 
            -> should end with success */
-        String shellString = "find . | grep \"java-1.8.0-openjdk.*x86_64.tarxz\"\n"
-                + "find . | grep \"java-1.8.0-openjdk.*src.tarxz\"";
+        String shellString = "find rpms | grep \"java-1.8.0-openjdk.*x86_64.tarxz\"\n"
+                + "find rpms | grep \"java-1.8.0-openjdk.*src.tarxz\"";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
@@ -125,7 +130,8 @@ public class KojiJenkinsTest {
                         null
                 ),
                 shellString,
-                false
+                false,
+                "testExistingBuild"
         );
     }
 
@@ -133,7 +139,7 @@ public class KojiJenkinsTest {
     public void testNonExistingBuild(JenkinsRule j) throws Exception {
         /* Test koji scm plugin on non-existing fake-koji build(s)
            -> should not end with success */
-        String shellString = "! find . | grep \".*tarxz\"";
+        String shellString = "! find rpms | grep \".*tarxz\"";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "non-existing-build",
@@ -143,13 +149,14 @@ public class KojiJenkinsTest {
                         null
                 ),
                 shellString,
-                false
+                false,
+                "testNonExistingBuild"
         );
     }
 
     @Test
     public void testNoWhitelistWorks(JenkinsRule j) throws Exception {
-        String shellString = " a=`find . | wc -l ` ; test $a -eq 2 ";
+        String shellString = "find rpms ;  a=`find rpms | wc -l ` ; test $a -eq 2 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
@@ -159,13 +166,14 @@ public class KojiJenkinsTest {
                         ""
                 ),
                 shellString,
-                true
+                true,
+                "testNoWhitelistWorks"
         );
     }
 
     @Test
     public void testWhitelistWorks(JenkinsRule j) throws Exception {
-        String shellString = " a=`find . | wc -l ` ; test $a -eq 1 ";
+        String shellString = "find rpms ; a=`find rpms | wc -l ` ; test $a -eq 1 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
@@ -175,13 +183,14 @@ public class KojiJenkinsTest {
                         ".*nothing.*"
                 ),
                 shellString,
-                true
+                true,
+                "testWhitelistWorks"
         );
     }
 
     @Test
     public void testBlackListExcludesNothing(JenkinsRule j) throws Exception {
-        String shellString = "a=`find . | wc -l ` ; test $a -eq 2 ";
+        String shellString = "find rpms ; a=`find rpms | wc -l ` ; test $a -eq 2 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
@@ -191,13 +200,14 @@ public class KojiJenkinsTest {
                         ".*"
                 ),
                 shellString,
-                true
+                true,
+                "testBlacklistExcludesNothing"
         );
     }
 
     @Test
     public void testBlackListExcludes(JenkinsRule j) throws Exception {
-        String shellString = "a=`find . | wc -l ` ; test $a -eq 1 ";
+        String shellString = "find rpms; a=`find rpms | wc -l ` ; test $a -eq 1 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
@@ -207,7 +217,8 @@ public class KojiJenkinsTest {
                         ".*"
                 ),
                 shellString,
-                true
+                true,
+                "testBlackListExcludes"
         );
     }
 
