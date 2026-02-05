@@ -128,8 +128,18 @@ public class KojiListBuildsTest {
         return new RealKojiXmlRpcApi(
                 "java-1.8.0-openjdk",
                 "x86_64",
-                "slowdebug-f24-.*",
-                "",
+                ".*",
+                ".*slowdebug.*",
+                null
+        );
+    }
+
+    RealKojiXmlRpcApi createConfigCustomFedoraInvalid() {
+        return new RealKojiXmlRpcApi(
+                "java-nonsense-openjdk",
+                "x86_64",
+                ".*",
+                ".*slowdebug.*",
                 null
         );
     }
@@ -446,7 +456,20 @@ public class KojiListBuildsTest {
                 new NotProcessedNvrPredicate(new ArrayList<>()),
                 10
         );
-        testListMatchingBuildsCustom(temporaryFolder, worker, true);
+        testListMatchingBuildsCustom(temporaryFolder, worker, false);
+    }
+
+    @Test
+    public void testListMatchingBuildsCustomInvalid(@TempDir Path temporaryFolder) throws Exception {
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            KojiListBuilds worker = new KojiListBuilds(
+                    createLocalhostOnlyList(),
+                    createConfigCustomFedoraInvalid(),
+                    new NotProcessedNvrPredicate(new ArrayList<>()),
+                    10);
+            //the invertedAsser have no longer reasonable meaning. The core throws exception if nothing is found on all providers
+            testListMatchingBuildsCustom(temporaryFolder, worker, false);
+        });
     }
 
     @Test
@@ -810,22 +833,24 @@ public class KojiListBuildsTest {
 
     @Test
     public void testNonExistingBuilds(@TempDir Path temporaryFolder) throws IOException, InterruptedException {
-        assumeTrue(onRhNet);
-        RealKojiXmlRpcApi config = new RealKojiXmlRpcApi(
-                "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
-                null,
-                ".*",
-                null,
-                null
-        );
-        KojiListBuilds worker = new KojiListBuilds(
-                createKojiOnlyList(),
-                config,
-                new NotProcessedNvrPredicate(new ArrayList<>()),
-                10
-        );
-        Build build = worker.invoke(temporaryFolder.toFile(), null);
-        Assertions.assertFalse(build != null);
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            assumeTrue(onRhNet);
+            RealKojiXmlRpcApi config = new RealKojiXmlRpcApi(
+                    "some_random_package_name_that_does_not_exist some_other_package_that_hopefully_also_does_not_exist",
+                    null,
+                    ".*",
+                    null,
+                    null
+            );
+            KojiListBuilds worker = new KojiListBuilds(
+                    createKojiOnlyList(),
+                    config,
+                    new NotProcessedNvrPredicate(new ArrayList<>()),
+                    10
+            );
+            Build build = worker.invoke(temporaryFolder.toFile(), null);
+            Assertions.assertFalse(build != null);
+        });
     }
 
     private  final String[] containersUbi8Now = new String[] {
@@ -994,7 +1019,7 @@ public class KojiListBuildsTest {
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
                 new RealKojiXmlRpcApi(
-                        "java-11-openjdk java-17-openjdk",
+                        "java-latest-openjdk java-25-openjdk",
                         "x86_64",
                         ".*",
                         null,
