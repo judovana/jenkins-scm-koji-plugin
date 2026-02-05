@@ -1221,7 +1221,7 @@ public class OToolServiceRun {
             new String[]{".*-jre-.*windows.*", ".*jre.win.*", ".*-portable-[b\\d\\.\\-ea]{3,}el.*", ".*-portable-fastdebug-[b\\d\\.\\-ea]{3,}el.*", ".*-portable-slowdebug-[b\\d\\.\\-ea]{3,}el.*"},
             new String[]{});
     BlackWhiteLister jre = new BlackWhiteLister("jre",
-            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-static-libs-.*", ".*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).*", ".*\.jdk\..*"},
+            new String[]{".*-devel-.*", ".*-jmods-.*", ".*-static-libs-.*", ".*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).*", ".*\\.jdk\\..*"},
             new String[]{});
     BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
             new String[]{".*windows.*", ".*debuginfo.*"},
