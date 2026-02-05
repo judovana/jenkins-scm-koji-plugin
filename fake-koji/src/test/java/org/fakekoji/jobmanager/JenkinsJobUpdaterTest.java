@@ -23,6 +23,7 @@
  */
 package org.fakekoji.jobmanager;
 
+import org.apache.commons.io.FileUtils;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.Utils;
 import org.fakekoji.core.AccessibleSettings;
@@ -71,6 +72,8 @@ public class JenkinsJobUpdaterTest {
 
     @BeforeEach
     public void setup() throws IOException {
+        FileUtils.deleteDirectory(temporaryFolder.toFile());
+        temporaryFolder.toFile().mkdirs();
         folderHolder = DataGenerator.initFoldersFromTmpFolder(temporaryFolder.toFile());
         settings = DataGenerator.getSettings(folderHolder);
         jobUpdater = settings.getJobUpdater();
