@@ -156,13 +156,14 @@ public class KojiJenkinsTest {
                         "x86_64",
                         ".*",
                         null,
-                        ".*slow.*"
+                        ""
                 ),
                 shellString,
                 true
         );
     }
 
+    @Test
     public void testWhitelistWorks(JenkinsRule j) throws Exception {
         String shellString = " a=`find . | wc -l ` ; test $a -eq 1 ";
         runTest(j,
