@@ -148,19 +148,30 @@ public class KojiJenkinsTest {
     }
 
     @Test
-    public void testWhitelist(JenkinsRule j) throws Exception {
-        String shellString = "! find . | grep \"ojdk\" &&"
-                + "! find . | grep \"itw\" && "
-                + "! find . | grep \"whatever\" && "
-                + "! find . | grep \"ex\" && "
-                + "find . | grep \"ojfx\"";
+    public void testNoWhitelistWorks(JenkinsRule j) throws Exception {
+        String shellString = " a=`find . | wc -l ` ; test $a -eq 2 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
-                        "all",
+                        "x86_64",
                         ".*",
                         null,
-                        ".*\\.ojfx.*"
+                        ".*slow.*"
+                ),
+                shellString,
+                true
+        );
+    }
+
+    public void testWhitelistWorks(JenkinsRule j) throws Exception {
+        String shellString = " a=`find . | wc -l ` ; test $a -eq 1 ";
+        runTest(j,
+                new RealKojiXmlRpcApi(
+                        "java-1.8.0-openjdk",
+                        "x86_64",
+                        ".*",
+                        null,
+                        ".*nothing.*"
                 ),
                 shellString,
                 true
@@ -168,22 +179,38 @@ public class KojiJenkinsTest {
     }
 
     @Test
-    public void testBlackAndWhitelist(JenkinsRule j) throws Exception {
-                String shellString = "! find . | grep \"itw\" && "
-                + "! find . | grep \"itw\" && "
-                + "! find . | grep \"whatever\" && "
-                + "! find . | grep \"ex\" && "
-                + "find . | grep \"ojdk.static\"";
+    public void testBlackListExcludesNothing(JenkinsRule j) throws Exception {
+        String shellString = "a=`find . | wc -l ` ; test $a -eq 2 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
                         "java-1.8.0-openjdk",
-                        "all",
+                        "x86_64",
                         ".*",
-                        ".*ex.*",
-                        ".*ojdk.*"
+                        ".*nothing.*",
+                        ".*"
                 ),
                 shellString,
                 true
         );
     }
+
+    @Test
+    public void testBlackListExcludes(JenkinsRule j) throws Exception {
+        String shellString = "a=`find . | wc -l ` ; test $a -eq 1 ";
+        runTest(j,
+                new RealKojiXmlRpcApi(
+                        "java-1.8.0-openjdk",
+                        "x86_64",
+                        ".*",
+                        ".*java.*",
+                        ".*"
+                ),
+                shellString,
+                true
+        );
+    }
+
+    //TODO add test which will test that blacklist and whitelist are acting in proper order
+    //the order is crucial, the  oposite direction do not have meaning
+    //it seesm that we do nothave enough data for this in generator
 }
