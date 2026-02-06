@@ -1,5 +1,6 @@
 package org.fakekoji.jobmanager.bumpers;
 
+import org.apache.commons.io.FileUtils;
 import org.fakekoji.DataGenerator;
 import org.fakekoji.core.AccessibleSettings;
 import org.fakekoji.functional.Tuple;
@@ -32,6 +33,8 @@ public class PlatformBumperTest {
 
     @BeforeEach
     public void setup() throws IOException {
+        FileUtils.deleteDirectory(temporaryFolder.toFile());
+        temporaryFolder.toFile().mkdirs();
         settings = DataGenerator.getSettings(temporaryFolder);
     }
 
