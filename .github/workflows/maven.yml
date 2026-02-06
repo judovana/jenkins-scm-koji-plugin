@@ -14,12 +14,9 @@ jobs:
       fail-fast: false
       matrix:
         jdkconf:
-          - JDK 17
           - JDK 21
           - JDK Latest
         include:
-          - jdkconf: JDK 17
-            jdkver: "17"
           - jdkconf: JDK 21
             jdkver: "21"
           - jdkconf: JDK Latest
