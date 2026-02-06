@@ -156,7 +156,7 @@ public class FakeKojiTestUtil {
         generateBuilds(localBuilds, n, v, r2, a3, build23);
         generateBuilds(localBuilds, n, v, r2, a4, build24);
 
-        /* multiple files to test exclude list and whitelist */
+        /* multiple files to test exclude list and allowlist */
         generateBuilds(localBuilds, n, v, r3, allArch, build31, build32, build33, build34, build35, build36);
 
         /* create link for windows builds */

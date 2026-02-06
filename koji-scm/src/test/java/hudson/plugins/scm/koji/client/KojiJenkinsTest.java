@@ -155,7 +155,7 @@ public class KojiJenkinsTest {
     }
 
     @Test
-    public void testNoWhitelistWorks(JenkinsRule j) throws Exception {
+    public void testNoAllowlistWorks(JenkinsRule j) throws Exception {
         String shellString = "find rpms ;  a=`find rpms | wc -l ` ; test $a -eq 2 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
@@ -167,12 +167,12 @@ public class KojiJenkinsTest {
                 ),
                 shellString,
                 true,
-                "testNoWhitelistWorks"
+                "testNoAllowlistWorks"
         );
     }
 
     @Test
-    public void testWhitelistWorks(JenkinsRule j) throws Exception {
+    public void testAllowlistWorks(JenkinsRule j) throws Exception {
         String shellString = "find rpms ; a=`find rpms | wc -l ` ; test $a -eq 1 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
@@ -184,12 +184,12 @@ public class KojiJenkinsTest {
                 ),
                 shellString,
                 true,
-                "testWhitelistWorks"
+                "testAllowlistWorks"
         );
     }
 
     @Test
-    public void testBlackListExcludesNothing(JenkinsRule j) throws Exception {
+    public void testDenyListExcludesNothing(JenkinsRule j) throws Exception {
         String shellString = "find rpms ; a=`find rpms | wc -l ` ; test $a -eq 2 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
@@ -201,12 +201,12 @@ public class KojiJenkinsTest {
                 ),
                 shellString,
                 true,
-                "testBlacklistExcludesNothing"
+                "testDenylistExcludesNothing"
         );
     }
 
     @Test
-    public void testBlackListExcludes(JenkinsRule j) throws Exception {
+    public void testDenyListExcludes(JenkinsRule j) throws Exception {
         String shellString = "find rpms; a=`find rpms | wc -l ` ; test $a -eq 1 ";
         runTest(j,
                 new RealKojiXmlRpcApi(
@@ -218,11 +218,11 @@ public class KojiJenkinsTest {
                 ),
                 shellString,
                 true,
-                "testBlackListExcludes"
+                "testDenyListExcludes"
         );
     }
 
-    //TODO add test which will test that blacklist and whitelist are acting in proper order
+    //TODO add test which will test that denylist and allowlist are acting in proper order
     //the order is crucial, the  oposite direction do not have meaning
     //it seesm that we do nothave enough data for this in generator
 }

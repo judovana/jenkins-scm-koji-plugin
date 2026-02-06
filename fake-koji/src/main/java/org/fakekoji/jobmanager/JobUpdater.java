@@ -17,12 +17,12 @@ public interface JobUpdater {
 
     JobUpdateResults update(Project oldProject, Project newProject) throws StorageException, ManagementException;
 
-    JobUpdateResults regenerate(Project project, String whitelist) throws StorageException, ManagementException;
+    JobUpdateResults regenerate(Project project, String allowlist) throws StorageException, ManagementException;
 
     <T extends Project> JobUpdateResults regenerateAll(
             String projectId,
             Manager<T> projectManager,
-            String whitelist
+            String allowlist
     ) throws StorageException, ManagementException;
 
     JobUpdateResults update(Platform platform) throws StorageException;

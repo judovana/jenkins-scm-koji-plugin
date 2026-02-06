@@ -208,8 +208,8 @@ public class ReverseJDKProjectParser {
                             projectRepresentingJob.getProjectName(),
                             projectRepresentingJob.getProduct(),
                             projectRepresentingJob.getBuildProviders().stream().map(BuildProvider::getId).collect(Collectors.toSet()),
-                            projectRepresentingJob.getProjectSubpackageBlacklist(),
-                            projectRepresentingJob.getProjectSubpackageWhitelist(),
+                            projectRepresentingJob.getProjectSubpackageDenylist(),
+                            projectRepresentingJob.getProjectSubpackageAllowlist(),
                             new TestJobConfiguration(buildPlatforms),
                             projectRepresentingJob.getProjectVariables()
                     ));
@@ -330,14 +330,14 @@ public class ReverseJDKProjectParser {
             final Function<TaskJob, String> taskJobValidator = getTaskJobValidator().apply(randomJob);
             return job -> taskJobValidator.apply(job) +
                     validateJobField(
-                            "project subpackage blacklist",
-                            job.getProjectSubpackageBlacklist(),
-                            randomJob.getProjectSubpackageBlacklist()
+                            "project subpackage denylist",
+                            job.getProjectSubpackageDenylist(),
+                            randomJob.getProjectSubpackageDenylist()
                     ) +
                     validateJobField(
-                            "project subpackage whitelist",
-                            job.getProjectSubpackageWhitelist(),
-                            randomJob.getProjectSubpackageWhitelist()
+                            "project subpackage allowlist",
+                            job.getProjectSubpackageAllowlist(),
+                            randomJob.getProjectSubpackageAllowlist()
                     );
         };
     }

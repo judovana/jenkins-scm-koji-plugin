@@ -195,7 +195,7 @@ public class JenkinsJobUpdaterTest {
     }
 
     @Test
-    public void regenerateAllJDKProjectWithWhitelist() throws ManagementException, StorageException {
+    public void regenerateAllJDKProjectWithAllowlist() throws ManagementException, StorageException {
         JenkinsCliWrapper.killCli();
         try {
             JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkProjectManager, "somethingNotExisting");//create nothing
@@ -225,7 +225,7 @@ public class JenkinsJobUpdaterTest {
     }
 
     @Test
-    public void regenerateAllJDKTestProjectWithWhitelist() throws ManagementException, StorageException {
+    public void regenerateAllJDKTestProjectWithAllowlist() throws ManagementException, StorageException {
         JenkinsCliWrapper.killCli();
         try {
             JobUpdateResults r1 = jobUpdater.regenerateAll(null, settings.getConfigManager().jdkTestProjectManager, "tck-.*");//create tck

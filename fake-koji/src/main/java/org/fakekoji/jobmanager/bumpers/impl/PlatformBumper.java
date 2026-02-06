@@ -115,8 +115,8 @@ public class PlatformBumper extends JobModifier {
                 job.getBuildPlatformProvider(),
                 job.getBuildTask(),
                 job.getBuildVariants(),
-                job.getProjectSubpackageBlacklist(),
-                job.getProjectSubpackageWhitelist(),
+                job.getProjectSubpackageDenylist(),
+                job.getProjectSubpackageAllowlist(),
                 job.getScriptsRoot(),
                 job.getProjectVariables()
         );

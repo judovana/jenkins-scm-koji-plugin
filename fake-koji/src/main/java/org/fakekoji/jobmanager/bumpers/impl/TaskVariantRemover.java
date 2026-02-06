@@ -84,8 +84,8 @@ public class TaskVariantRemover extends JobModifier implements BuildDirUpdater.A
                 job.getBuildPlatformProvider(),
                 job.getBuildTask(),
                 getBuildVariants(job.getBuildVariants()),
-                job.getProjectSubpackageBlacklist(),
-                job.getProjectSubpackageWhitelist(),
+                job.getProjectSubpackageDenylist(),
+                job.getProjectSubpackageAllowlist(),
                 job.getScriptsRoot(),
                 job.getProjectVariables()
         );

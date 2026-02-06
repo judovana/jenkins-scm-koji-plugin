@@ -30,8 +30,8 @@ const createDefaultJDKTestProject = (): JDKTestProject => ({
         jdk: "",
         packageName: ""
     },
-    subpackageBlacklist: [],
-    subpackageWhitelist: [],
+    subpackageDenylist: [],
+    subpackageAllowlist: [],
     type: "JDK_TEST_PROJECT",
     variables: []
 })
@@ -67,8 +67,8 @@ const createDefaultTask = (): Task => ({
         list: []
     },
     rpmLimitation: {
-        blacklist: [],
-        whitelist: []
+        denylist: [],
+        allowlist: []
     },
     scmPollSchedule: "",
     script: "",

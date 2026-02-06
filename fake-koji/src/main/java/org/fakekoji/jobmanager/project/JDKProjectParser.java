@@ -100,8 +100,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
     }
 
     private synchronized Set<Job> parse(JDKTestProject project) {
-        jobBuilder.subpackageBlacklist = project.getSubpackageBlacklist();
-        jobBuilder.subpackageWhitelist = project.getSubpackageWhitelist();
+        jobBuilder.subpackageDenylist = project.getSubpackageDenylist();
+        jobBuilder.subpackageAllowlist = project.getSubpackageAllowlist();
         jobBuilder.buildTask = new Task();
         project.getJobConfiguration().getPlatforms().forEach(getBuildPlatformConsumer());
         return jobBuilder.getJobs();
@@ -152,8 +152,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
         private final Project.ProjectType projectType;
         private final ConfigCache configCache;
 
-        private List<String> subpackageBlacklist = Collections.emptyList();
-        private List<String> subpackageWhitelist = Collections.emptyList();
+        private List<String> subpackageDenylist = Collections.emptyList();
+        private List<String> subpackageAllowlist = Collections.emptyList();
 
         private final Set<Job> jobs;
 
@@ -248,8 +248,8 @@ public class JDKProjectParser implements Parser<Project, Set<Job>> {
                             buildPlatformProvider,
                             buildTask,
                             buildVariants,
-                            subpackageBlacklist,
-                            subpackageWhitelist,
+                            subpackageDenylist,
+                            subpackageAllowlist,
                             scriptsRoot,
                             projectVariables
                     ) :

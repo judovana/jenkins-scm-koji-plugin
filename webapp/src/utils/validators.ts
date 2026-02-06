@@ -116,16 +116,16 @@ const jdkProjectValidator = ({ id, product, url, variables }: JDKProject) => ({
 const jdkTestProjectValidator = ({
     id,
     product,
-    subpackageBlacklist,
-    subpackageWhitelist,
+    subpackageDenylist,
+    subpackageAllowlist,
     variables
 }: JDKTestProject) => ({
     buildProviders: "ok",
     id: requiredStringValidator(id),
     jobConfiguration: "ok",
     product: productValidator(product),
-    subpackageBlacklist: optionalStringListValidator(subpackageBlacklist),
-    subpackageWhitelist: optionalStringListValidator(subpackageWhitelist),
+    subpackageDenylist: optionalStringListValidator(subpackageDenylist),
+    subpackageAllowlist: optionalStringListValidator(subpackageAllowlist),
     type: "ok",
     variables: variablesValidator(variables)
 })

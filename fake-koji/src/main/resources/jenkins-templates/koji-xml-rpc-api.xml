@@ -3,6 +3,6 @@
     <packageName>%{PACKAGE_NAME}</packageName>
     <arch>%{ARCH}</arch>
     <tag>%{TAGS}</tag>
-    <subpackageBlacklist>%{SUBPACKAGE_BLACKLIST}</subpackageBlacklist>
-    <subpackageWhitelist>%{SUBPACKAGE_WHITELIST}</subpackageWhitelist>
+    <subpackageDenylist>%{SUBPACKAGE_BLACKLIST}</subpackageDenylist>
+    <subpackageAllowlist>%{SUBPACKAGE_WHITELIST}</subpackageAllowlist>
 </kojiXmlRpcApi>

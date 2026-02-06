@@ -36,19 +36,19 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
             project.buildProviders = value
         }
 
-        const onSubpackageBlacklistChange = (value: string) => {
-            project.subpackageBlacklist = value.split(" ")
+        const onSubpackageDenylistChange = (value: string) => {
+            project.subpackageDenylist = value.split(" ")
         }
 
-        const onSubpackageWhitelistChange = (value: string) => {
-            project.subpackageWhitelist = value.split(" ")
+        const onSubpackageAllowlistChange = (value: string) => {
+            project.subpackageAllowlist = value.split(" ")
         }
 
         const {
             id,
             product,
-            subpackageBlacklist,
-            subpackageWhitelist,
+            subpackageDenylist,
+            subpackageAllowlist,
         } = validation || ({} as JDKTestProjectValidation)
 
         const variablesValidation = setDefaultValidations<VariableValidation>(
@@ -77,16 +77,16 @@ const JDKTestProjectForm: React.FC<JDKTestProjectFormProps> = props => {
                     validation={product}
                 />
                 <TextInput
-                    label={"subpackage blacklist"}
-                    validation={subpackageBlacklist}
-                    value={project.subpackageBlacklist.join(" ")}
-                    onChange={onSubpackageBlacklistChange}
+                    label={"subpackage denylist"}
+                    validation={subpackageDenylist}
+                    value={project.subpackageDenylist.join(" ")}
+                    onChange={onSubpackageDenylistChange}
                 />
                 <TextInput
-                    label={"subpackage whitelist"}
-                    validation={subpackageWhitelist}
-                    value={project.subpackageWhitelist.join(" ")}
-                    onChange={onSubpackageWhitelistChange}
+                    label={"subpackage allowlist"}
+                    validation={subpackageAllowlist}
+                    value={project.subpackageAllowlist.join(" ")}
+                    onChange={onSubpackageAllowlistChange}
                 />
                 <JobConfigComponent
                     jdkId={project.product.jdk}

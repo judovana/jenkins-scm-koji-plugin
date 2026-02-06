@@ -301,28 +301,28 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
 
     public List<String> downloadRPMs(File targetDir, Build build, RealKojiXmlRpcApi realKojiXmlRpcApi) {
         Predicate<RPM> nvrPredicate = i -> true;
-        final String subpackageBlacklist = realKojiXmlRpcApi.getSubpackageBlacklist();
-        if (subpackageBlacklist != null && !subpackageBlacklist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageBlacklist, this);
+        final String subpackageDenylist = realKojiXmlRpcApi.getSubpackageDenylist();
+        if (subpackageDenylist != null && !subpackageDenylist.isEmpty()) {
+            GlobPredicate glob = new GlobPredicate(subpackageDenylist, this);
             nvrPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")) {
                     return true;
                 } else {
-                    log("[KojiSCM] Matching blacklist ...");
+                    log("[KojiSCM] Matching denylist ...");
                     return !glob.test(rpm.getNvr());
                 }
             };
         }
 
-        Predicate<RPM> whitelistPredicate = i -> true;
-        final String subpackageWhitelist = realKojiXmlRpcApi.getSubpackageWhitelist();
-        if (subpackageWhitelist != null && !subpackageWhitelist.isEmpty()) {
-            GlobPredicate glob = new GlobPredicate(subpackageWhitelist, this);
-            whitelistPredicate = (RPM rpm) -> {
+        Predicate<RPM> allowlistPredicate = i -> true;
+        final String subpackageAllowlist = realKojiXmlRpcApi.getSubpackageAllowlist();
+        if (subpackageAllowlist != null && !subpackageAllowlist.isEmpty()) {
+            GlobPredicate glob = new GlobPredicate(subpackageAllowlist, this);
+            allowlistPredicate = (RPM rpm) -> {
                 if (rpm.getArch().equals("src")) {
                     return true;
                 } else {
-                    log("[KojiSCM] Matching whitelist ...");
+                    log("[KojiSCM] Matching allowlist ...");
                     return glob.test(rpm.getNvr());
                 }
             };
@@ -331,7 +331,7 @@ public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownl
         List<String> l = build.getRpms()
                 .stream()
                 .filter(nvrPredicate)
-                .filter(whitelistPredicate)
+                .filter(allowlistPredicate)
                 .map(r -> downloadRPM(targetDir, build, r))
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());

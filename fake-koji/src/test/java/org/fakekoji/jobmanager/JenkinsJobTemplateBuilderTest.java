@@ -166,8 +166,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
                 "    <arch>" + vmPlatform.getArchitecture() + "</arch>\n" +
                 "    <tag>" + String.join(" ", vmPlatform.getTags()) + "</tag>\n" +
-                "    <subpackageBlacklist>a b</subpackageBlacklist>\n" +
-                "    <subpackageWhitelist>c d</subpackageWhitelist>\n" +
+                "    <subpackageDenylist>a b</subpackageDenylist>\n" +
+                "    <subpackageAllowlist>c d</subpackageAllowlist>\n" +
                 "</kojiXmlRpcApi>\n";
 
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
@@ -191,8 +191,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
                 "    <arch/>\n" +
                 "    <tag>" + String.join(" ", vmPlatform.getTags()) + "</tag>\n" +
-                "    <subpackageBlacklist>a b</subpackageBlacklist>\n" +
-                "    <subpackageWhitelist>c d</subpackageWhitelist>\n" +
+                "    <subpackageDenylist>a b</subpackageDenylist>\n" +
+                "    <subpackageAllowlist>c d</subpackageAllowlist>\n" +
                 "</kojiXmlRpcApi>\n";
 
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
@@ -217,8 +217,8 @@ public class JenkinsJobTemplateBuilderTest {
                 "    <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
                 "    <arch>" + win.getKojiArch().get() + "</arch>\n" +
                 "    <tag>" + String.join(" ", win.getTags()) + "</tag>\n" +
-                "    <subpackageBlacklist>a b</subpackageBlacklist>\n" +
-                "    <subpackageWhitelist>c d</subpackageWhitelist>\n" +
+                "    <subpackageDenylist>a b</subpackageDenylist>\n" +
+                "    <subpackageAllowlist>c d</subpackageAllowlist>\n" +
                 "</kojiXmlRpcApi>\n";
 
         final String actualTemplate = new JenkinsJobTemplateBuilder(JenkinsJobTemplateBuilder.loadTemplate(KOJI_XML_RPC_API_TEMPLATE), dummyNamesProvider)
@@ -1066,10 +1066,10 @@ public class JenkinsJobTemplateBuilderTest {
         }};
         final Map<TaskVariant, TaskVariantValue> testVariants = DataGenerator.getTestVariants();
 
-        final List<String> blacklist = Arrays.asList(
+        final List<String> denylist = Arrays.asList(
                 "pckgA", "pckgB"
         );
-        final List<String> whitelist = Arrays.asList(
+        final List<String> allowlist = Arrays.asList(
                 "pckgC", "pckgD"
         );
 
@@ -1087,20 +1087,20 @@ public class JenkinsJobTemplateBuilderTest {
                 null,
                 null,
                 buildVariants,
-                blacklist,
-                whitelist,
+                denylist,
+                allowlist,
                 scriptsRoot,
                 null
         );
 
-        final List<String> expectedBlacklist = new ArrayList<>();
-        expectedBlacklist.addAll(blacklist);
-        expectedBlacklist.addAll(testTask.getRpmLimitation().getBlacklist());
-        expectedBlacklist.addAll(release.getSubpackageBlacklist().get());
-        final List<String> expectedWhitelist = new ArrayList<>();
-        expectedWhitelist.addAll(whitelist);
-        expectedWhitelist.addAll(testTask.getRpmLimitation().getWhitelist());
-        expectedWhitelist.addAll(release.getSubpackageWhitelist().get());
+        final List<String> expectedDenylist = new ArrayList<>();
+        expectedDenylist.addAll(denylist);
+        expectedDenylist.addAll(testTask.getRpmLimitation().getDenylist());
+        expectedDenylist.addAll(release.getSubpackageDenylist().get());
+        final List<String> expectedAllowlist = new ArrayList<>();
+        expectedAllowlist.addAll(allowlist);
+        expectedAllowlist.addAll(testTask.getRpmLimitation().getAllowlist());
+        expectedAllowlist.addAll(release.getSubpackageAllowlist().get());
 
         final String expectedTemplate =
                 "<?xml version=\"1.1\" encoding=\"UTF-8\" ?>\n" +
@@ -1116,8 +1116,8 @@ public class JenkinsJobTemplateBuilderTest {
                         "            <packageName>" + jdk8.getPackageNames().get(0) + "</packageName>\n" +
                         "            <arch>" + buildPlatform.getArchitecture() + "</arch>\n" +
                         "            <tag>" + String.join(" ", buildPlatform.getTags()) + "</tag>\n" +
-                        "            <subpackageBlacklist>" + String.join(" ", expectedBlacklist) + "</subpackageBlacklist>\n" +
-                        "            <subpackageWhitelist>" + String.join(" ", expectedWhitelist) + "</subpackageWhitelist>\n" +
+                        "            <subpackageDenylist>" + String.join(" ", expectedDenylist) + "</subpackageDenylist>\n" +
+                        "            <subpackageAllowlist>" + String.join(" ", expectedAllowlist) + "</subpackageAllowlist>\n" +
                         "        </kojiXmlRpcApi>\n" +
                         "        <downloadDir>rpms</downloadDir>\n" +
                         "        <cleanDownloadDir>true</cleanDownloadDir>\n" +

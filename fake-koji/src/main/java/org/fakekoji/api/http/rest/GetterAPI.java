@@ -147,15 +147,15 @@ public class GetterAPI implements EndpointGroup {
                 }
 
                 if (excludeParam.isPresent()) {
-                    onJenkins = onJenkins.stream().filter(new BlacklistPredicate(excludeParam.get())).collect(Collectors.toList());
-                    jdkProjects = jdkProjects.stream().filter(new BlacklistPredicate(excludeParam.get())).collect(Collectors.toList());
-                    testProjects = testProjects.stream().filter(new BlacklistPredicate(excludeParam.get())).collect(Collectors.toList());
+                    onJenkins = onJenkins.stream().filter(new DenylistPredicate(excludeParam.get())).collect(Collectors.toList());
+                    jdkProjects = jdkProjects.stream().filter(new DenylistPredicate(excludeParam.get())).collect(Collectors.toList());
+                    testProjects = testProjects.stream().filter(new DenylistPredicate(excludeParam.get())).collect(Collectors.toList());
                 }
 
                 if (includeParam.isPresent()) {
-                    onJenkins = onJenkins.stream().filter(new BlacklistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
-                    jdkProjects = jdkProjects.stream().filter(new BlacklistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
-                    testProjects = testProjects.stream().filter(new BlacklistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
+                    onJenkins = onJenkins.stream().filter(new DenylistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
+                    jdkProjects = jdkProjects.stream().filter(new DenylistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
+                    testProjects = testProjects.stream().filter(new DenylistPredicate(includeParam.get()).negate()).collect(Collectors.toList());
                 }
 
                 if (allInJenkinsOpt.isPresent()) {
@@ -1229,10 +1229,10 @@ public class GetterAPI implements EndpointGroup {
         String about();
     }
 
-    private class BlacklistPredicate implements Predicate<String> {
+    private class DenylistPredicate implements Predicate<String> {
         List<Pattern> patterns = new ArrayList<>();
 
-        public BlacklistPredicate(String s) {
+        public DenylistPredicate(String s) {
             String[] q = s.split(",");
             for (String regex : q) {
                 patterns.add(Pattern.compile(regex));

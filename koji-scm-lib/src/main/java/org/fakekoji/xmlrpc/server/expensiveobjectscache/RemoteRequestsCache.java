@@ -43,7 +43,7 @@ public class RemoteRequestsCache {
     private long cacheReleaseRate = RELEASE_DEFAULT;
     private Properties propRaw = new Properties();
     private final OriginalObjectProvider originalProvider;
-    private List<Pattern> blackListedUrlsList = new ArrayList<>();
+    private List<Pattern> denyListedUrlsList = new ArrayList<>();
     private boolean loaded = false;
 
     public Object obtain(String url, XmlRpcRequestParams params) {
@@ -160,7 +160,7 @@ public class RemoteRequestsCache {
         String configRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES);
         String cacheRefreshRateMinutesS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_REFRESH_RATE_MINUTES);
         String cacheReleaseS = propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_RELEASE_TIMEOUT_MULTIPLIER);
-        String blackListedUrlsListS = propRaw.getProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST);
+        String denyListedUrlsListS = propRaw.getProperty(RemoteRequestCacheConfigKeys.BLACK_LISTED_URLS_LIST);
         if (configRefreshRateMinutesS != null) {
             try {
                 configRefreshRateMinutes = Long.parseLong(configRefreshRateMinutesS);
@@ -192,14 +192,14 @@ public class RemoteRequestsCache {
         } else {
             cacheReleaseRate = CACHE_DEFAULT;
         }
-        if (blackListedUrlsListS != null && blackListedUrlsListS.trim().length() > 0) {
+        if (denyListedUrlsListS != null && denyListedUrlsListS.trim().length() > 0) {
             try {
-                blackListedUrlsList = Arrays.stream(blackListedUrlsListS.split("\\s+")).map(Pattern::compile).collect(Collectors.toList());
+                denyListedUrlsList = Arrays.stream(denyListedUrlsListS.split("\\s+")).map(Pattern::compile).collect(Collectors.toList());
             } catch (Exception ex) {
                 LOG.warn("Failed to read or apply custom value  of (" + configRefreshRateMinutesS + ") for " + RemoteRequestCacheConfigKeys.CONFIG_REFRESH_RATE_MINUTES + "", ex);
             }
         } else {
-            blackListedUrlsList = new ArrayList<>();
+            denyListedUrlsList = new ArrayList<>();
         }
         if ("true".equals(propRaw.getProperty(RemoteRequestCacheConfigKeys.CACHE_CLEAN_COMMAND))) {
             cache.clear();
@@ -227,7 +227,7 @@ public class RemoteRequestsCache {
                 bw.newLine();
                 bw.write("  originalProvider: " + originalProvider.getClass().getName());
                 bw.newLine();
-                bw.write("  blackListedUrlsList: " + blackListedUrlsList.stream().map(Pattern::pattern).collect(Collectors.joining(",")));
+                bw.write("  denyListedUrlsList: " + denyListedUrlsList.stream().map(Pattern::pattern).collect(Collectors.joining(",")));
                 bw.newLine();
                 bw.write("  loaded: " + isLoaded());
                 bw.newLine();
@@ -296,7 +296,7 @@ public class RemoteRequestsCache {
         if (cacheRefreshRateMinutes == 0) {
             return null;
         }
-        if (isBlacklisted(u)) {
+        if (isDenylisted(u)) {
             return null;
         }
         SingleUrlResponseCache cached = cache.get(u.toExternalForm());
@@ -325,9 +325,9 @@ public class RemoteRequestsCache {
         }
     }
 
-    private boolean isBlacklisted(URL u) {
+    private boolean isDenylisted(URL u) {
         String url = u.toExternalForm();
-        for (Pattern p : blackListedUrlsList) {
+        for (Pattern p : denyListedUrlsList) {
             if (p.matcher(url).matches()) {
                 return true;
             }

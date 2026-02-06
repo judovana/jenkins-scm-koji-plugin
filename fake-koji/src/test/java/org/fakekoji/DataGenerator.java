@@ -1106,8 +1106,8 @@ public class DataGenerator {
                     "        </hudson.plugins.report.rpms.RpmsReportPublisher>\n" +
                     "        <hudson.plugins.report.jck.JckReportPublisher plugin=\"jenkins-report-jck@0.1-SNAPSHOT\">\n" +
                     "            <reportFileGlob>report-{runtime,devtools,compiler}.xml.gz</reportFileGlob>\n" +
-                    "            <resultsBlackList/>\n" +
-                    "            <resultsWhiteList/>\n" +
+                    "            <resultsDenyList/>\n" +
+                    "            <resultsAllowList/>\n" +
                     "            <maxBuilds>10</maxBuilds>\n" +
                     "        </hudson.plugins.report.jck.JckReportPublisher>\n" +
                     "        <hudson.plugins.report.genericchart.GenericChartPublisher plugin=\"jenkins-report-generic-chart-column@0.1-SNAPSHOT\">\n" +
@@ -1117,8 +1117,8 @@ public class DataGenerator {
                     "                    <fileNameGlob>cached-summ-results.properties</fileNameGlob>\n" +
                     "                    <key>jrp.failedAndErrors</key>\n" +
                     "                    <limit>20</limit>\n" +
-                    "                    <resultsBlackList>.*upstream.* .*static.*</resultsBlackList>\n" +
-                    "                    <resultsWhiteList/>\n" +
+                    "                    <resultsDenyList>.*upstream.* .*static.*</resultsDenyList>\n" +
+                    "                    <resultsAllowList/>\n" +
                     "                    <chartColor>#DF7401</chartColor>\n" +
                     "                </hudson.plugins.report.genericchart.ChartModel>\n" +
                     "                <hudson.plugins.report.genericchart.ChartModel>\n" +
@@ -1126,8 +1126,8 @@ public class DataGenerator {
                     "                    <fileNameGlob>cached-summ-results.properties</fileNameGlob>\n" +
                     "                    <key>jrp.failedAndErrors</key>\n" +
                     "                    <limit>20</limit>\n" +
-                    "                    <resultsBlackList>.*el.* .*fc.*</resultsBlackList>\n" +
-                    "                    <resultsWhiteList/>\n" +
+                    "                    <resultsDenyList>.*el.* .*fc.*</resultsDenyList>\n" +
+                    "                    <resultsAllowList/>\n" +
                     "                    <chartColor>#FE9A2E</chartColor>\n" +
                     "                </hudson.plugins.report.genericchart.ChartModel>\n" +
                     "            </charts>\n" +
@@ -1364,14 +1364,14 @@ public class DataGenerator {
         );
     }
 
-    public static List<String> getSubpackageBlacklist() {
+    public static List<String> getSubpackageDenylist() {
         return Arrays.asList(
                 "subpackage1",
                 "subpackage2"
         );
     }
 
-    public static List<String> getSubpackageWhitelist() {
+    public static List<String> getSubpackageAllowlist() {
         return Arrays.asList(
                 "subpackage3",
                 "subpackage4"
@@ -1383,8 +1383,8 @@ public class DataGenerator {
                 TEST_PROJECT_NAME,
                 new Product(JDK_8, JDK_8_PACKAGE_NAME),
                 getBuildProvidersIds(),
-                getSubpackageBlacklist(),
-                getSubpackageWhitelist(),
+                getSubpackageDenylist(),
+                getSubpackageAllowlist(),
                 new TestJobConfiguration(new HashSet<>(Arrays.asList(
                         new BuildPlatformConfig(
                                 RHEL_7_X64,
@@ -1611,8 +1611,8 @@ public class DataGenerator {
         final JDKTestProject jdkTestProject = DataGenerator.getJDKTestProject();
         final Set<BuildProvider> buildProviders = DataGenerator.getBuildProviders();
         final JDKVersion jdkVersion = DataGenerator.getJDKVersion8();
-        final List<String> blacklist = jdkTestProject.getSubpackageBlacklist();
-        final List<String> whitelist = jdkTestProject.getSubpackageWhitelist();
+        final List<String> denylist = jdkTestProject.getSubpackageDenylist();
+        final List<String> allowlist = jdkTestProject.getSubpackageAllowlist();
         final Platform rhel7x64 = DataGenerator.getRHEL7x64();
         final Platform f29x64 = DataGenerator.getF29x64();
         final Task tckTask = DataGenerator.getTCK();
@@ -1660,8 +1660,8 @@ public class DataGenerator {
                                     put(jreSdk, jreSdkDefault);
                                 }}
                         ),
-                        blacklist,
-                        whitelist,
+                        denylist,
+                        allowlist,
                         scriptsRoot,
                         Collections.emptyList()
                 ),
@@ -1692,8 +1692,8 @@ public class DataGenerator {
                                     put(jreSdk, jreSdkDefault);
                                 }}
                         ),
-                        blacklist,
-                        whitelist,
+                        denylist,
+                        allowlist,
                         scriptsRoot,
                         Collections.emptyList()
                 ),
@@ -1724,8 +1724,8 @@ public class DataGenerator {
                                     put(jreSdk, jreSdkDefault);
                                 }}
                         ),
-                        blacklist,
-                        whitelist,
+                        denylist,
+                        allowlist,
                         scriptsRoot,
                         Collections.emptyList()
                 ),
@@ -1756,8 +1756,8 @@ public class DataGenerator {
                                     put(jreSdk, jreSdkDefault);
                                 }}
                         ),
-                        blacklist,
-                        whitelist,
+                        denylist,
+                        allowlist,
                         scriptsRoot,
                         Collections.emptyList()
                 ),
@@ -1788,8 +1788,8 @@ public class DataGenerator {
                                     put(jreSdk, jreSdkDefault);
                                 }}
                         ),
-                        blacklist,
-                        whitelist,
+                        denylist,
+                        allowlist,
                         scriptsRoot,
                         Collections.emptyList()
                 )
@@ -2386,8 +2386,8 @@ public class DataGenerator {
                 PROJECT_VBC_JTP,
                 new Product(JDK_8, JDK_8_PACKAGE_NAME),
                 getBuildProvidersIds(),
-                getSubpackageBlacklist(),
-                getSubpackageWhitelist(),
+                getSubpackageDenylist(),
+                getSubpackageAllowlist(),
                 new TestJobConfiguration(new HashSet<>(Arrays.asList(
                           new BuildPlatformConfig(
                                 getRHEL6x64().getId(), //beaker+vagrant, no conflict on build level

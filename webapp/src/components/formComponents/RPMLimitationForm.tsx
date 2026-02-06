@@ -11,12 +11,12 @@ interface Props {
 
 const RPMLimitationForm: React.FunctionComponent<Props> = ({ rpmLimitation }) => {
 
-    const onRPMLimitationBlacklistChange = (value: string) => {
-        rpmLimitation.blacklist = value.split(" ")
+    const onRPMLimitationDenylistChange = (value: string) => {
+        rpmLimitation.denylist = value.split(" ")
     }
 
-    const onRPMLimitationWhitelistChange = (value: string) => {
-        rpmLimitation.whitelist = value.split(" ")
+    const onRPMLimitationAllowlistChange = (value: string) => {
+        rpmLimitation.allowlist = value.split(" ")
     }
 
     return useObserver(() => {
@@ -24,13 +24,13 @@ const RPMLimitationForm: React.FunctionComponent<Props> = ({ rpmLimitation }) =>
             <React.Fragment>
                 <Grid container item xs={12}>
                     <TextInput
-                        label={"subpackage blacklist"}
-                        onChange={onRPMLimitationBlacklistChange}
-                        value={rpmLimitation.blacklist.join(" ")} />
+                        label={"subpackage denylist"}
+                        onChange={onRPMLimitationDenylistChange}
+                        value={rpmLimitation.denylist.join(" ")} />
                     <TextInput
-                        label={"subpackage whitelist"}
-                        onChange={onRPMLimitationWhitelistChange}
-                        value={rpmLimitation.whitelist.join(" ")} />
+                        label={"subpackage allowlist"}
+                        onChange={onRPMLimitationAllowlistChange}
+                        value={rpmLimitation.allowlist.join(" ")} />
                 </Grid>
 
             </React.Fragment>
