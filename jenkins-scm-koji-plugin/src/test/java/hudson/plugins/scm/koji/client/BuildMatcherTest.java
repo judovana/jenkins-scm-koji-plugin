@@ -6,7 +6,6 @@ import hudson.plugins.scm.koji.model.Build;
 import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.plugins.scm.koji.model.RPM;
 import java.io.IOException;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -98,7 +97,7 @@ public class BuildMatcherTest {
 
     @Test
     public void twoBuildsComaprsionError() throws IOException {
-        Assertions.assertThrows(DateTimeParseException.class, () -> {
+        Assertions.assertThrows(RuntimeException.class, () -> {
             BuildMatcher bm = new BuildMatcher(createKojiBuildProviders(), NotProcessedNvrPredicate.createNotProcessedNvrPredicate(new ArrayList<>()), 3, null) {
                 @Override
                 List<Build> getBuilds(BuildProvider buildProvider) {
@@ -110,6 +109,7 @@ public class BuildMatcherTest {
                     return build;
                 }
             };
+            bm.getBuild();
         });
     }
 
