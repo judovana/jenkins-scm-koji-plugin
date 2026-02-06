@@ -3,8 +3,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>fake-koji</groupId>
-        <artifactId>koji-scm</artifactId>
+        <groupId>io.jenkins.plugins</groupId>
+        <artifactId>koji-scm-parent</artifactId>
         <version>2.2-SNAPSHOT</version>
     </parent>
 

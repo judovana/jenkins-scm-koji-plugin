@@ -56,14 +56,14 @@ jobs:
       - name: test jenkins-scm-koji-plugin
         run: |
           export MAVEN_OPTS="-Xmx4G"
-          cd jenkins-scm-koji-plugin
+          cd koji-scm
           mvn test
 
       - name: Store artifacts
         run: |
           mkdir archives
           cp fake-koji/target/fake-koji-jar-with-dependencies.jar archives/
-          cp jenkins-scm-koji-plugin/target/jenkins-scm-koji-plugin.hpi archives/
+          cp koji-scm/target/koji-scm.hpi archives/
         shell: bash
 
       - name: Upload artifacts

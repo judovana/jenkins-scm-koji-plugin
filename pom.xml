@@ -8,8 +8,8 @@
         <version>6.2116.v7501b_67dc517</version>
     </parent>
 
-    <groupId>fake-koji</groupId>
-    <artifactId>koji-scm</artifactId>
+    <groupId>io.jenkins.plugins</groupId>
+    <artifactId>koji-scm-parent</artifactId>
     <version>2.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -31,7 +31,7 @@
     </scm>
 
     <modules>
-        <module>jenkins-scm-koji-plugin</module>
+        <module>koji-scm</module>
         <module>fake-koji</module>
         <module>koji-scm-lib</module>
     </modules>
