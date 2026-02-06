@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class KojiListBuildsTest {
@@ -339,6 +340,7 @@ public class KojiListBuildsTest {
     private static File e61;
 
     private static boolean onRhNet;
+    private static boolean onGHAs;
 
     @BeforeAll
     public static void initProcessed() throws IOException {
@@ -425,6 +427,11 @@ public class KojiListBuildsTest {
             onRhNet = (response == HttpURLConnection.HTTP_OK);
         } catch (Exception e) {
             onRhNet = false;
+        }
+        if (System.getenv().containsKey("GITHUB_REPOSITORY")){
+            onGHAs = true;
+        } else {
+            onGHAs = false;
         }
     }
 
@@ -589,6 +596,8 @@ public class KojiListBuildsTest {
 
     @Test
     public void testListMatchingBuildsF(@TempDir Path temporaryFolder) throws Exception {
+        //when koji is pulled from GHAs, it often refuses to talk
+        assumeFalse(onGHAs);
         KojiListBuilds worker = new KojiListBuilds(
                 createKojiOnlyList(),
                 createConfigF(),
