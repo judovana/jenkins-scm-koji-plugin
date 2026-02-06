@@ -19,11 +19,11 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Blacklisted subpackages" field="subpackageBlacklist">
+    <f:entry title="Denylisted subpackages" field="subpackageDenylist">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Whitelisted subpackages" field="subpackageWhitelist">
+    <f:entry title="Allowlisted subpackages" field="subpackageAllowlist">
         <f:textbox/>
     </f:entry>
 

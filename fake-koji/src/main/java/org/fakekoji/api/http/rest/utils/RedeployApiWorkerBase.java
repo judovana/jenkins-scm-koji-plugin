@@ -46,8 +46,8 @@ public class RedeployApiWorkerBase {
     private static final String REDEPLOY_bvariant = "bvariant";
 
     //is needed at the end?
-    private static final String REDEPLOY_whitelist = "whitelist";
-    private static final String REDEPLOY_blacklist = "blacklist";
+    private static final String REDEPLOY_allowlist = "allowlist";
+    private static final String REDEPLOY_denylist = "denylist";
     //pull and build
     private static final String REDEPLOY_pull = "pull"; //false
     private static final String REDEPLOY_build = "build"; //false
@@ -64,8 +64,8 @@ public class RedeployApiWorkerBase {
     protected final Matcher barch;
     protected final Matcher bversion;
     protected final Matcher bvariant;
-    protected final Pattern blacklist;
-    protected final Pattern whitelist;
+    protected final Pattern denylist;
+    protected final Pattern allowlist;
     protected String pull;
     protected String build;
 
@@ -78,11 +78,11 @@ public class RedeployApiWorkerBase {
             Matcher variant,
             Matcher provider,
             Matcher jp,
-            Pattern blacklist,
-            Pattern whitelist,
+            Pattern denylist,
+            Pattern allowlist,
             String pull,
             String build) {
-        this(project, os, arch, version, task, variant, provider, jp, null, null, null, null, blacklist, whitelist, pull, build);
+        this(project, os, arch, version, task, variant, provider, jp, null, null, null, null, denylist, allowlist, pull, build);
     }
 
     public RedeployApiWorkerBase(
@@ -98,8 +98,8 @@ public class RedeployApiWorkerBase {
             Matcher barch,
             Matcher bversion,
             Matcher bvariant,
-            Pattern blacklist,
-            Pattern whitelist,
+            Pattern denylist,
+            Pattern allowlist,
             String pull,
             String build) {
         this.project = project;
@@ -114,8 +114,8 @@ public class RedeployApiWorkerBase {
         this.barch = barch;
         this.bversion = bversion;
         this.bvariant = bvariant;
-        this.blacklist = blacklist;
-        this.whitelist = whitelist;
+        this.denylist = denylist;
+        this.allowlist = allowlist;
         this.pull = pull;
         this.build = build;
     }
@@ -133,8 +133,8 @@ public class RedeployApiWorkerBase {
                 new Matcher(context.queryParam(REDEPLOY_barch)),
                 new Matcher(context.queryParam(REDEPLOY_bversion)),
                 new Matcher(context.queryParam(REDEPLOY_bvariant)),
-                context.queryParam(REDEPLOY_blacklist) == null ? Pattern.compile("NothingNeverEverCanMatchMe!") : Pattern.compile(context.queryParam(REDEPLOY_blacklist)),
-                context.queryParam(REDEPLOY_whitelist) == null ? Pattern.compile(".*") : Pattern.compile(context.queryParam(REDEPLOY_whitelist)),
+                context.queryParam(REDEPLOY_denylist) == null ? Pattern.compile("NothingNeverEverCanMatchMe!") : Pattern.compile(context.queryParam(REDEPLOY_denylist)),
+                context.queryParam(REDEPLOY_allowlist) == null ? Pattern.compile(".*") : Pattern.compile(context.queryParam(REDEPLOY_allowlist)),
                 context.queryParam(REDEPLOY_pull),
                 context.queryParam(REDEPLOY_build)
         );
@@ -144,16 +144,16 @@ public class RedeployApiWorkerBase {
         return "  You can narrow your search by [" + REDEPLOY_os + "," + REDEPLOY_arch + "," + REDEPLOY_version + "," + REDEPLOY_task + "," + REDEPLOY_variant + "," + REDEPLOY_provider + "," + REDEPLOY_jp + "," + REDEPLOY_project + "]\n"
                 + "  For test-task only, to narrow by its build: [" + REDEPLOY_bos + "," + REDEPLOY_barch + "," + REDEPLOY_bversion + "," + REDEPLOY_bvariant + "]\n"
                 + "    Those are coma separated lists. eg variant=shenandoah,zgc&bvarinat=jre,fastdebug&bos=el&bversion=6,7&version=8\n"
-                + "  you can use " + REDEPLOY_whitelist + "=regex and " + REDEPLOY_blacklist + "=regex to do some more wide/narrow filtering.\n"
+                + "  you can use " + REDEPLOY_allowlist + "=regex and " + REDEPLOY_denylist + "=regex to do some more wide/narrow filtering.\n"
                 + "  by default only the warhorses are listed. To include also pull and build jobs use " + REDEPLOY_pull + "=true and " + REDEPLOY_build + "=true.\n";
     }
 
-    public boolean blacklisted(Job job) {
-        return blacklist.matcher(job.getName()).matches();
+    public boolean denylisted(Job job) {
+        return denylist.matcher(job.getName()).matches();
     }
 
-    public boolean whitelisted(Job job) {
-        return whitelist.matcher(job.getName()).matches();
+    public boolean allowlisted(Job job) {
+        return allowlist.matcher(job.getName()).matches();
     }
 
     public boolean isNotMyBuildJob(BuildJob bjob) {
@@ -208,10 +208,10 @@ public class RedeployApiWorkerBase {
 
         public void iterate(final Collection<Job> jobs, Project project) throws IOException {
             for (Job job : jobs) {
-                if (blacklisted(job)) {
+                if (denylisted(job)) {
                     continue;
                 }
-                if (!whitelisted(job)) {
+                if (!allowlisted(job)) {
                     continue;
                 }
                 if (job instanceof BuildJob) {

@@ -8,33 +8,33 @@ public class TaskVariantValue {
 
     private final String id;
     private final String label;
-    private final List<String> subpackageBlacklist;
-    private final List<String> subpackageWhitelist;
+    private final List<String> subpackageDenylist;
+    private final List<String> subpackageAllowlist;
 
     public TaskVariantValue() {
         id = null;
         label = null;
-        subpackageBlacklist = null;
-        subpackageWhitelist = null;
+        subpackageDenylist = null;
+        subpackageAllowlist = null;
     }
 
     public TaskVariantValue(String id, String label) {
         this.id = id;
         this.label = label;
-        subpackageBlacklist = null;
-        subpackageWhitelist = null;
+        subpackageDenylist = null;
+        subpackageAllowlist = null;
     }
 
     public TaskVariantValue(
             String id,
             String label,
-            List<String> subpackageBlacklist,
-            List<String> subpackageWhitelist
+            List<String> subpackageDenylist,
+            List<String> subpackageAllowlist
     ) {
         this.id = id;
         this.label = label;
-        this.subpackageBlacklist = subpackageBlacklist;
-        this.subpackageWhitelist = subpackageWhitelist;
+        this.subpackageDenylist = subpackageDenylist;
+        this.subpackageAllowlist = subpackageAllowlist;
     }
 
     public String getId() {
@@ -45,12 +45,12 @@ public class TaskVariantValue {
         return label;
     }
 
-    public Optional<List<String>> getSubpackageBlacklist() {
-        return Optional.ofNullable(subpackageBlacklist);
+    public Optional<List<String>> getSubpackageDenylist() {
+        return Optional.ofNullable(subpackageDenylist);
     }
 
-    public Optional<List<String>> getSubpackageWhitelist() {
-        return Optional.ofNullable(subpackageWhitelist);
+    public Optional<List<String>> getSubpackageAllowlist() {
+        return Optional.ofNullable(subpackageAllowlist);
     }
 
     @Override
@@ -60,13 +60,13 @@ public class TaskVariantValue {
         TaskVariantValue that = (TaskVariantValue) o;
         return Objects.equals(id, that.id) &&
                 Objects.equals(label, that.label) &&
-                Objects.equals(subpackageBlacklist, that.subpackageBlacklist) &&
-                Objects.equals(subpackageWhitelist, that.subpackageWhitelist);
+                Objects.equals(subpackageDenylist, that.subpackageDenylist) &&
+                Objects.equals(subpackageAllowlist, that.subpackageAllowlist);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, label, subpackageBlacklist, subpackageWhitelist);
+        return Objects.hash(id, label, subpackageDenylist, subpackageAllowlist);
     }
 
     @Override
@@ -74,8 +74,8 @@ public class TaskVariantValue {
         return "TaskVariantValue{" +
                 "id='" + id + '\'' +
                 ", label='" + label + '\'' +
-                ", subpackageBlacklist=" + subpackageBlacklist +
-                ", subpackageWhitelist=" + subpackageWhitelist +
+                ", subpackageDenylist=" + subpackageDenylist +
+                ", subpackageAllowlist=" + subpackageAllowlist +
                 '}';
     }
 }

@@ -40,7 +40,7 @@ public class RemoteRequestCacheConfigKeys {
      * space separated list of regexex of  urls
      * matching urls are NOT cached
      */
-    public static final String BLACK_LISTED_URLS_LIST = "blackListedUrlsList";
+    public static final String BLACK_LISTED_URLS_LIST = "denyListedUrlsList";
     /**
      * Cache is cleared any momnet, clean=true occure in config file
      */

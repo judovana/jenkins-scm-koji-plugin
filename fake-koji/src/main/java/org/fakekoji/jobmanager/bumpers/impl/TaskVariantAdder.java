@@ -86,8 +86,8 @@ public class TaskVariantAdder extends JobModifier implements BuildDirUpdater.Arc
                 job.getBuildPlatformProvider(),
                 job.getBuildTask(),
                 getBuildVariants(job.getBuildVariants()),
-                job.getProjectSubpackageBlacklist(),
-                job.getProjectSubpackageWhitelist(),
+                job.getProjectSubpackageDenylist(),
+                job.getProjectSubpackageAllowlist(),
                 job.getScriptsRoot(),
                 job.getProjectVariables()
         );

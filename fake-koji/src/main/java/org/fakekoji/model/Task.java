@@ -264,25 +264,25 @@ public class Task implements  Comparable<Task> {
 
     public static class RpmLimitation {
 
-        private final List<String> blacklist;
-        private final List<String> whitelist;
+        private final List<String> denylist;
+        private final List<String> allowlist;
 
         public RpmLimitation() {
-            blacklist = null;
-            whitelist = null;
+            denylist = null;
+            allowlist = null;
         }
 
-        public RpmLimitation(List<String> blacklist, List<String> whitelist) {
-            this.blacklist = blacklist;
-            this.whitelist = whitelist;
+        public RpmLimitation(List<String> denylist, List<String> allowlist) {
+            this.denylist = denylist;
+            this.allowlist = allowlist;
         }
 
-        public List<String> getBlacklist() {
-            return blacklist;
+        public List<String> getDenylist() {
+            return denylist;
         }
 
-        public List<String> getWhitelist() {
-            return whitelist;
+        public List<String> getAllowlist() {
+            return allowlist;
         }
 
         @Override
@@ -290,20 +290,20 @@ public class Task implements  Comparable<Task> {
             if (this == o) return true;
             if (!(o instanceof RpmLimitation)) return false;
             RpmLimitation that = (RpmLimitation) o;
-            return Objects.equals(blacklist, that.blacklist) &&
-                    Objects.equals(whitelist, that.whitelist);
+            return Objects.equals(denylist, that.denylist) &&
+                    Objects.equals(allowlist, that.allowlist);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(blacklist, whitelist);
+            return Objects.hash(denylist, allowlist);
         }
 
         @Override
         public String toString() {
             return "RpmLimitation{" +
-                    "subpackageBlacklist=" + blacklist +
-                    ", subpackageWhitelist=" + whitelist +
+                    "subpackageDenylist=" + denylist +
+                    ", subpackageAllowlist=" + allowlist +
                     '}';
         }
     }

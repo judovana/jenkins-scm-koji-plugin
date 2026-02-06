@@ -24,8 +24,8 @@ export interface Product {
 }
 
 export interface JDKTestProject extends Project {
-    subpackageBlacklist: string[]
-    subpackageWhitelist: string[]
+    subpackageDenylist: string[]
+    subpackageAllowlist: string[]
     jobConfiguration: JobConfig
 }
 
@@ -101,8 +101,8 @@ export interface Limitation {
 }
 
 export interface RPMLimitation {
-    whitelist: string[]
-    blacklist: string[]
+    allowlist: string[]
+    denylist: string[]
 }
 
 export interface PlatformProvider extends Item {

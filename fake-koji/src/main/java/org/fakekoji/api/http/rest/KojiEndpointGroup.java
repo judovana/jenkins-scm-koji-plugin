@@ -99,7 +99,7 @@ class KojiEndpointGroup implements EndpointGroup {
     private final JobUpdater mJenkinsJobUpdater;
 
     private String getMiscHelp() {
-        return "" + MISC + "/" + REGENERATE_ALL + JDK_TEST_PROJECTS + "\n" + MISC + "/" + REGENERATE_ALL + JDK_PROJECTS + "\n" + "                mandatory arguments project=    to regenerate only single project     \n" + "                and whitelist=regex to limit the search even more  \n" + "\n" + MISC + "/" + UPDATE_JOBS + "/{" + UPDATE_JOBS_LIST + "," + UPDATE_JOBS_XMLS + "," + UPDATE_JOBS_CREATE + "," + UPDATE_JOBS_REMOVE + "," + UPDATE_JOBS_UPDATE + "}\n" + "                will affect update machines jobs\n" + "                params: " + FILTER + "=regex " + ONLY_HW + "=bool " + ONLY_VM + "=bool\n" + "\n" + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL + "," + VIEWS_DETAILS + "," + VIEWS_XMLS + "," + VIEWS_CREATE + "," + VIEWS_REMOVE + "," + VIEWS_UPDATE + "," + VIEWS_MATCHES + "," + VIEWS_MATCHES_JENKINS + "}\n" + "                will affect jenkins views\n" + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false " + NESTED + "=true/false "
+        return "" + MISC + "/" + REGENERATE_ALL + JDK_TEST_PROJECTS + "\n" + MISC + "/" + REGENERATE_ALL + JDK_PROJECTS + "\n" + "                mandatory arguments project=    to regenerate only single project     \n" + "                and allowlist=regex to limit the search even more  \n" + "\n" + MISC + "/" + UPDATE_JOBS + "/{" + UPDATE_JOBS_LIST + "," + UPDATE_JOBS_XMLS + "," + UPDATE_JOBS_CREATE + "," + UPDATE_JOBS_REMOVE + "," + UPDATE_JOBS_UPDATE + "}\n" + "                will affect update machines jobs\n" + "                params: " + FILTER + "=regex " + ONLY_HW + "=bool " + ONLY_VM + "=bool\n" + "\n" + MISC + "/" + VIEWS + "/{" + VIEWS_LIST_OTOOL + "," + VIEWS_DETAILS + "," + VIEWS_XMLS + "," + VIEWS_CREATE + "," + VIEWS_REMOVE + "," + VIEWS_UPDATE + "," + VIEWS_MATCHES + "," + VIEWS_MATCHES_JENKINS + "}\n" + "                will affect jenkins views\n" + "                params: " + FILTER + "=regex " + SKIP_EMPTY + "=true/false " + NESTED + "=true/false "
                 + NESTED_COLUMNS + "=true/false/number  if number is put, then the default columns(true) are generated for views withh less then number of matches\n" + "                similar param is e " + CUSTOM_COLUMNS + "=true/false/number  if number is put, then the CUSTOM columns(true) are generated for list-views with less then number of jobs\n" + "                Note, nested=true requires jenkins nested-view-plugin. Warning, in nested-views, filter matches only top level component (tasks, paltforms..)\n" + "\n" + MISC + "/" + MATRIX + "\n" + "  where parameters for matrix are (with defaults):\n" + "  " + MATRIX_ORIENTATION + "=1 " + MATRIX_BREGEX + "=.* " + MATRIX_TREGEX + "=.* " + MATRIX_CREGEX + "=.* " + MATRIX_FORMAT + "=baseajax/htmlspan/html/plain/fill (baseajax have optional nvr; fill requires vr=>nvr time=number alsoReport=false and optional chartDir=path>\n" + "  "
                 + "tos=true tarch=true tprovider=false tsuite=true tvars=false bos=true barch=true bprovider=false bproject=true bjdk=true bvars=false\n" + "  dropRows=true dropColumns=true  project=p1,p2,...,pn /*to generate matrix only for given projects*/\n" + "                                                                                                    WARNING! chartDir is directory on SERVER and is deleted if exists!/\n" + "  names=true will chage numbers to somehow more describing texts in html formatters. With huge squezing can go wil. Is sometimes buggy with platforms\n" + "  explicitcomparsion=url by default null, unused, to load remote file with listed lates released NVRs to comapre with\n" + "  baseajax have few runtime switches: automanFilter=index sort=index readOnly=[true(visible)/false(hidden)/total]. Defaults are 0,0,false\n";
     }
@@ -227,27 +227,27 @@ class KojiEndpointGroup implements EndpointGroup {
             path(REGENERATE_ALL, () -> {
                 ApiBuilder.get(JDK_TEST_PROJECTS, mWrapper.wrap(context -> {
                     String project = context.queryParam("project");
-                    String whitelist = context.queryParam("whitelist");
-                    if (whitelist == null || project == null) {
-                        context.status(OToolService.BAD).result("project and whitelist are mandatory. use ?whitelist=.*&project=ALL if yo are reall sure\n");
+                    String allowlist = context.queryParam("allowlist");
+                    if (allowlist == null || project == null) {
+                        context.status(OToolService.BAD).result("project and allowlist are mandatory. use ?allowlist=.*&project=ALL if yo are reall sure\n");
                     } else {
                         if (project.equals("ALL")) {
                             project = null;
                         }
-                        JobUpdateResults r1 = mJenkinsJobUpdater.regenerateAll(project, jdkTestProjectManager, whitelist);
+                        JobUpdateResults r1 = mJenkinsJobUpdater.regenerateAll(project, jdkTestProjectManager, allowlist);
                         context.status(OToolService.OK).json(r1);
                     }
                 }));
                 ApiBuilder.get(JDK_PROJECTS, mWrapper.wrap(context -> {
                     String project = context.queryParam("project");
-                    String whitelist = context.queryParam("whitelist");
-                    if (whitelist == null || project == null) {
-                        context.status(OToolService.BAD).result("project and whitelist are mandatory. use ?whitelist=.*&project=ALL if yo are reall sure\n");
+                    String allowlist = context.queryParam("allowlist");
+                    if (allowlist == null || project == null) {
+                        context.status(OToolService.BAD).result("project and allowlist are mandatory. use ?allowlist=.*&project=ALL if yo are reall sure\n");
                     } else {
                         if (project.equals("ALL")) {
                             project = null;
                         }
-                        JobUpdateResults r2 = mJenkinsJobUpdater.regenerateAll(project, jdkProjectManager, whitelist);
+                        JobUpdateResults r2 = mJenkinsJobUpdater.regenerateAll(project, jdkProjectManager, allowlist);
                         context.status(OToolService.OK).json(r2);
                     }
                 }));

@@ -35,8 +35,8 @@ public class TestJob extends TaskJob {
     private final String buildPlatformProvider;
     private final Task buildTask;
     private final Map<TaskVariant, TaskVariantValue> buildVariants;
-    private final List<String> projectSubpackageBlacklist;
-    private final List<String> projectSubpackageWhitelist;
+    private final List<String> projectSubpackageDenylist;
+    private final List<String> projectSubpackageAllowlist;
 
     public TestJob(
             String platformProvider,
@@ -52,8 +52,8 @@ public class TestJob extends TaskJob {
             String buildPlatformProvider,
             Task buildTask,
             Map<TaskVariant, TaskVariantValue> buildVariants,
-            List<String> projectSubpackageBlacklist,
-            List<String> projectSubpackageWhitelist,
+            List<String> projectSubpackageDenylist,
+            List<String> projectSubpackageAllowlist,
             File scriptsRoot,
             List<OToolVariable> projectVariables
     ) {
@@ -63,8 +63,8 @@ public class TestJob extends TaskJob {
         this.buildPlatformProvider = buildPlatformProvider;
         this.buildTask = buildTask;
         this.buildVariants = buildVariants;
-        this.projectSubpackageBlacklist = projectSubpackageBlacklist;
-        this.projectSubpackageWhitelist = projectSubpackageWhitelist;
+        this.projectSubpackageDenylist = projectSubpackageDenylist;
+        this.projectSubpackageAllowlist = projectSubpackageAllowlist;
     }
 
     public TestJob(
@@ -147,8 +147,8 @@ public class TestJob extends TaskJob {
                 testJob.getBuildPlatformProvider(),
                 testJob.getBuildTask(),
                 testJob.getBuildVariants(),
-                testJob.getProjectSubpackageBlacklist(),
-                testJob.getProjectSubpackageWhitelist(),
+                testJob.getProjectSubpackageDenylist(),
+                testJob.getProjectSubpackageAllowlist(),
                 testJob.getScriptsRoot(),
                 testJob.getProjectVariables()
         );
@@ -186,23 +186,23 @@ public class TestJob extends TaskJob {
     }
 
     private String generateKojiTemplate() throws IOException {
-        final List<String> subpackageBlacklist;
-        final List<String> subpackageWhitelist;
+        final List<String> subpackageDenylist;
+        final List<String> subpackageAllowlist;
         if (getTask().getFileRequirements().getBinary().equals(Task.BinaryRequirements.BINARIES)) {
             //this is workaround
             //only one task is known to require binaries, and that requires them all
             //if ever listing will need filtering also on BINARIES
             //BINARIES and BINARIES_ALL mayb need to be introduced
-            subpackageBlacklist = Arrays.asList();
-            subpackageWhitelist = Arrays.asList(".*");
+            subpackageDenylist = Arrays.asList();
+            subpackageAllowlist = Arrays.asList(".*");
         } else {
-            subpackageBlacklist = Stream.of(
-                    projectSubpackageBlacklist,
-                    getTask().getRpmLimitation().getBlacklist(),
+            subpackageDenylist = Stream.of(
+                    projectSubpackageDenylist,
+                    getTask().getRpmLimitation().getDenylist(),
                     getBuildVariants()
                             .values()
                             .stream()
-                            .map(TaskVariantValue::getSubpackageBlacklist)
+                            .map(TaskVariantValue::getSubpackageDenylist)
                             .map(list -> list.orElse(Collections.emptyList()))
                             .flatMap(List::stream)
                             .collect(Collectors.toList())
@@ -211,13 +211,13 @@ public class TestJob extends TaskJob {
                     .distinct()
                     .collect(Collectors.toList());
 
-            subpackageWhitelist = Stream.of(
-                    projectSubpackageWhitelist,
-                    getTask().getRpmLimitation().getWhitelist(),
+            subpackageAllowlist = Stream.of(
+                    projectSubpackageAllowlist,
+                    getTask().getRpmLimitation().getAllowlist(),
                     getBuildVariants()
                             .values()
                             .stream()
-                            .map(TaskVariantValue::getSubpackageWhitelist)
+                            .map(TaskVariantValue::getSubpackageAllowlist)
                             .map(list -> list.orElse(Collections.emptyList()))
                             .flatMap(List::stream)
                             .collect(Collectors.toList())
@@ -233,8 +233,8 @@ public class TestJob extends TaskJob {
                         getProduct().getPackageName(),
                         getBuildPlatform(),
                         getTask().getFileRequirements(),
-                        subpackageBlacklist,
-                        subpackageWhitelist
+                        subpackageDenylist,
+                        subpackageAllowlist
                 )
                 .buildScriptTemplate(
                         getTask(),
@@ -285,12 +285,12 @@ public class TestJob extends TaskJob {
         return buildVariants;
     }
 
-    public List<String> getProjectSubpackageBlacklist() {
-        return projectSubpackageBlacklist;
+    public List<String> getProjectSubpackageDenylist() {
+        return projectSubpackageDenylist;
     }
 
-    public List<String> getProjectSubpackageWhitelist() {
-        return projectSubpackageWhitelist;
+    public List<String> getProjectSubpackageAllowlist() {
+        return projectSubpackageAllowlist;
     }
 
     public Project.ProjectType getProjectType() {
@@ -373,8 +373,8 @@ public class TestJob extends TaskJob {
                 Objects.equals(buildPlatformProvider, testJob.buildPlatformProvider) &&
                 Objects.equals(buildTask, testJob.buildTask) &&
                 Objects.equals(buildVariants, testJob.buildVariants) &&
-                Objects.equals(projectSubpackageBlacklist, testJob.projectSubpackageBlacklist) &&
-                Objects.equals(projectSubpackageWhitelist, testJob.projectSubpackageWhitelist);
+                Objects.equals(projectSubpackageDenylist, testJob.projectSubpackageDenylist) &&
+                Objects.equals(projectSubpackageAllowlist, testJob.projectSubpackageAllowlist);
     }
 
     @Override
@@ -386,8 +386,8 @@ public class TestJob extends TaskJob {
                 buildPlatformProvider,
                 buildTask,
                 buildVariants,
-                projectSubpackageBlacklist,
-                projectSubpackageWhitelist
+                projectSubpackageDenylist,
+                projectSubpackageAllowlist
         );
     }
 }

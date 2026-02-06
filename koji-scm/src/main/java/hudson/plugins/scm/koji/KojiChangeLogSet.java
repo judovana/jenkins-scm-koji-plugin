@@ -153,9 +153,9 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
     private Hyperlink testNvr(String nvr) {
         if (getJobName().startsWith("build-")) {
-            return new Hyperlink("re/build?nvr=", prefix("build?nvr=" + nvr + "&whitelist=" + getJobName() + "&do=true"), "remove " + nvr + " from processed.txt Build Now");
+            return new Hyperlink("re/build?nvr=", prefix("build?nvr=" + nvr + "&allowlist=" + getJobName() + "&do=true"), "remove " + nvr + " from processed.txt Build Now");
         } else {
-            return new Hyperlink("re/test?nvr=", prefix("test?nvr=" + nvr + "&whitelist=" + getJobName() + "&do=true"), "remove " + nvr + " from processed.txt Build Now");
+            return new Hyperlink("re/test?nvr=", prefix("test?nvr=" + nvr + "&allowlist=" + getJobName() + "&do=true"), "remove " + nvr + " from processed.txt Build Now");
         }
     }
 

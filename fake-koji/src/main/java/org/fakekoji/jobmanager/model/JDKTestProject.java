@@ -8,13 +8,13 @@ import java.util.Set;
 
 public class JDKTestProject extends Project {
 
-    private final List<String> subpackageBlacklist;
-    private final List<String> subpackageWhitelist;
+    private final List<String> subpackageDenylist;
+    private final List<String> subpackageAllowlist;
     private final TestJobConfiguration jobConfiguration;
 
     public JDKTestProject() {
-        this.subpackageBlacklist = null;
-        this.subpackageWhitelist = null;
+        this.subpackageDenylist = null;
+        this.subpackageAllowlist = null;
         this.jobConfiguration = null;
     }
 
@@ -22,23 +22,23 @@ public class JDKTestProject extends Project {
             String id,
             Product product,
             Set<String> buildProviders,
-            List<String> subpackageBlacklist,
-            List<String> subpackageWhitelist,
+            List<String> subpackageDenylist,
+            List<String> subpackageAllowlist,
             TestJobConfiguration jobConfiguration,
             List<OToolVariable> variables
     ) {
         super(id, product, ProjectType.JDK_TEST_PROJECT, buildProviders, variables);
-        this.subpackageBlacklist = subpackageBlacklist;
-        this.subpackageWhitelist = subpackageWhitelist;
+        this.subpackageDenylist = subpackageDenylist;
+        this.subpackageAllowlist = subpackageAllowlist;
         this.jobConfiguration = jobConfiguration;
     }
 
-    public List<String> getSubpackageBlacklist() {
-        return subpackageBlacklist;
+    public List<String> getSubpackageDenylist() {
+        return subpackageDenylist;
     }
 
-    public List<String> getSubpackageWhitelist() {
-        return subpackageWhitelist;
+    public List<String> getSubpackageAllowlist() {
+        return subpackageAllowlist;
     }
 
     public TestJobConfiguration getJobConfiguration() {
@@ -51,21 +51,21 @@ public class JDKTestProject extends Project {
         if (!(o instanceof JDKTestProject)) return false;
         if (!super.equals(o)) return false;
         JDKTestProject that = (JDKTestProject) o;
-        return Objects.equals(subpackageBlacklist, that.subpackageBlacklist) &&
-                Objects.equals(subpackageWhitelist, that.subpackageWhitelist) &&
+        return Objects.equals(subpackageDenylist, that.subpackageDenylist) &&
+                Objects.equals(subpackageAllowlist, that.subpackageAllowlist) &&
                 Objects.equals(jobConfiguration, that.jobConfiguration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), subpackageBlacklist, subpackageWhitelist, jobConfiguration);
+        return Objects.hash(super.hashCode(), subpackageDenylist, subpackageAllowlist, jobConfiguration);
     }
 
     @Override
     public String toString() {
         return "JDKTestProject{" +
-                ", subpackageBlacklist='" + subpackageBlacklist + '\'' +
-                ", subpackageWhitelist='" + subpackageWhitelist + '\'' +
+                ", subpackageDenylist='" + subpackageDenylist + '\'' +
+                ", subpackageAllowlist='" + subpackageAllowlist + '\'' +
                 ", jobConfiguration=" + jobConfiguration +
                 '}';
     }

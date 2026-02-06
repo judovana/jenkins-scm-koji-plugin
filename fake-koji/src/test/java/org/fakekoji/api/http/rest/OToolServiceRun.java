@@ -1026,10 +1026,10 @@ public class OToolServiceRun {
             "java-21-openjdk-portable-static-libs-slowdebug-21.0.0.0.35-2.el8.x86_64.rpm",
             "java-21-openjdk-portable-unstripped-21.0.0.0.35-2.el8.x86_64.rpm");
 
-    private static class BlackWhiteLister {
+    private static class BlackAllowLister {
 
-        private final List<String> blackList;
-        private final List<String> whiteList;
+        private final List<String> denyList;
+        private final List<String> allowList;
         private final String name;
         public StringBuilder looger;
 
@@ -1037,32 +1037,32 @@ public class OToolServiceRun {
             return name;
         }
 
-        public static BlackWhiteLister build(BlackWhiteLister... toJoin) {
+        public static BlackAllowLister build(BlackAllowLister... toJoin) {
             String name = "";
-            final List<String> blackList = new ArrayList<>();
-            final List<String> whiteList = new ArrayList<>();
-            for (BlackWhiteLister blackWhiteLister : toJoin) {
-                name = name + "-" + blackWhiteLister.getName();
-                if (!isSkipped(blackWhiteLister.blackList)) {
-                    blackList.addAll(blackWhiteLister.blackList);
+            final List<String> denyList = new ArrayList<>();
+            final List<String> allowList = new ArrayList<>();
+            for (BlackAllowLister blackAllowLister : toJoin) {
+                name = name + "-" + blackAllowLister.getName();
+                if (!isSkipped(blackAllowLister.denyList)) {
+                    denyList.addAll(blackAllowLister.denyList);
                 }
-                if (!isSkipped(blackWhiteLister.whiteList)) {
-                    whiteList.addAll(blackWhiteLister.whiteList);
+                if (!isSkipped(blackAllowLister.allowList)) {
+                    allowList.addAll(blackAllowLister.allowList);
                 }
             }
             name = name.replaceFirst("-", "");
-            return new BlackWhiteLister(name, new ArrayList<>(new HashSet<>(blackList)), new ArrayList<>(new HashSet<>(whiteList)));
+            return new BlackAllowLister(name, new ArrayList<>(new HashSet<>(denyList)), new ArrayList<>(new HashSet<>(allowList)));
         }
 
-        public BlackWhiteLister(String name, String[] blackList, String[] whiteList) {
-            this.blackList = Collections.unmodifiableList(Arrays.asList(blackList));
-            this.whiteList = Collections.unmodifiableList(Arrays.asList(whiteList));
+        public BlackAllowLister(String name, String[] denyList, String[] allowList) {
+            this.denyList = Collections.unmodifiableList(Arrays.asList(denyList));
+            this.allowList = Collections.unmodifiableList(Arrays.asList(allowList));
             this.name = name;
         }
 
-        public BlackWhiteLister(String name, List<String> blackList, List<String> whiteList) {
-            this.blackList = Collections.unmodifiableList(blackList);
-            this.whiteList = Collections.unmodifiableList(whiteList);
+        public BlackAllowLister(String name, List<String> denyList, List<String> allowList) {
+            this.denyList = Collections.unmodifiableList(denyList);
+            this.allowList = Collections.unmodifiableList(allowList);
             this.name = name;
         }
 
@@ -1070,19 +1070,19 @@ public class OToolServiceRun {
             return l == null || l.isEmpty() || (l.size() == 1 && l.get(0).trim().isEmpty());
         }
 
-        public List<String> removeBlacklisted(String[] s) {
-            return removeBlacklisted(Arrays.asList(s));
+        public List<String> removeDenylisted(String[] s) {
+            return removeDenylisted(Arrays.asList(s));
         }
 
-        public List<String> removeBlacklisted(List<String> s) {
+        public List<String> removeDenylisted(List<String> s) {
             List<String> r = new ArrayList<>(s);
-            if (isSkipped(blackList)) {
+            if (isSkipped(denyList)) {
                 if (looger != null) {
                     looger.append(s.size() + " allowed by missing balcklist \n");
                 }
                 return r;
             }
-            for (String w : blackList) {
+            for (String w : denyList) {
                 for (int i = 0; i < r.size(); i++) {
                     if (r.get(i).matches(w)) {
                         if (looger != null) {
@@ -1096,20 +1096,20 @@ public class OToolServiceRun {
             return r;
         }
 
-        public List<String> allowJustWhitelisted(String[] s) {
-            return allowJustWhitelisted(Arrays.asList(s));
+        public List<String> allowJustAllowlisted(String[] s) {
+            return allowJustAllowlisted(Arrays.asList(s));
         }
 
-        public List<String> allowJustWhitelisted(List<String> s) {
-            if (isSkipped(whiteList)) {
+        public List<String> allowJustAllowlisted(List<String> s) {
+            if (isSkipped(allowList)) {
                 if (looger != null) {
-                    looger.append(s.size() + " allowed by missing whitelist \n");
+                    looger.append(s.size() + " allowed by missing allowlist \n");
                 }
                 return new ArrayList<>(s);
             }
             Set<String> r = new HashSet<>(s.size());
             for (int i = 0; i < s.size(); i++) {
-                for (String w : whiteList) {
+                for (String w : allowList) {
                     if (s.get(i).matches(w)) {
                         r.add(s.get(i));
                         if (looger != null) {
@@ -1126,39 +1126,39 @@ public class OToolServiceRun {
         }
 
         public List<String> match(List<String> s) {
-            //first balcklist, and then whitelist
-            return allowJustWhitelisted(removeBlacklisted(s));
+            //first balcklist, and then allowlist
+            return allowJustAllowlisted(removeDenylisted(s));
         }
 
         public String listsToString() {
-            return "  B: [" + String.join(" ", blackList) + "]\n"
-                    + "  W: [" + String.join(" ", whiteList) + "]";
+            return "  B: [" + String.join(" ", denyList) + "]\n"
+                    + "  W: [" + String.join(" ", allowList) + "]";
         }
     }
 
     @Test
     public void bwlWorks() {
-        BlackWhiteLister bwl;
-        bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
-        List<String> e = bwl.removeBlacklisted(new String[]{"aa", "bb", "aa"});
+        BlackAllowLister bwl;
+        bwl = new BlackAllowLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
+        List<String> e = bwl.removeDenylisted(new String[]{"aa", "bb", "aa"});
         System.out.println(Arrays.toString(e.toArray()));
         Assertions.assertArrayEquals(new String[]{}, e.toArray());
 
-        bwl = new BlackWhiteLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
-        List<String> o = bwl.removeBlacklisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm"});
+        bwl = new BlackAllowLister("test", new String[]{"aa", "bb"}, new String[]{"zz", "yy"});
+        List<String> o = bwl.removeDenylisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm"});
         System.out.println(Arrays.toString(o.toArray()));
         Assertions.assertEquals(new String[]{"kkk", "ooo", "zz", "yy", "mmm"}, o.toArray());
 
-        List<String> oo = bwl.allowJustWhitelisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm", "zz"});
+        List<String> oo = bwl.allowJustAllowlisted(new String[]{"kkk", "aa", "bb", "ooo", "aa", "zz", "yy", "mmm", "zz"});
         System.out.println(Arrays.toString(oo.toArray()));
         Assertions.assertEquals(new String[]{"zz", "yy"}, oo.toArray());
 
-        BlackWhiteLister onlyW = new BlackWhiteLister("test", new String[]{}, new String[]{"aa"});
+        BlackAllowLister onlyW = new BlackAllowLister("test", new String[]{}, new String[]{"aa"});
         List<String> a = onlyW.match(new String[]{"aa"});
         System.out.println(Arrays.toString(a.toArray()));
         Assertions.assertEquals(new String[]{"aa"}, a.toArray());
 
-        BlackWhiteLister onlyB = new BlackWhiteLister("test", new String[]{"aa"}, new String[]{""});
+        BlackAllowLister onlyB = new BlackAllowLister("test", new String[]{"aa"}, new String[]{""});
         List<String> b = onlyB.match(new String[]{"aa", "bb"});
         System.out.println(Arrays.toString(b.toArray()));
         Assertions.assertEquals(new String[]{"bb"}, b.toArray());
@@ -1217,58 +1217,58 @@ public class OToolServiceRun {
         portable.put("portableEl8x64", portableEl8x64);
     }
 
-    BlackWhiteLister sdk = new BlackWhiteLister("sdk",
+    BlackAllowLister sdk = new BlackAllowLister("sdk",
             new String[]{".*-jre-.*windows.*", ".*jre.win.*", ".*-portable-[b\\d\\.\\-ea]{3,}el.*", ".*-portable-fastdebug-[b\\d\\.\\-ea]{3,}el.*", ".*-portable-slowdebug-[b\\d\\.\\-ea]{3,}el.*"},
             new String[]{});
-    BlackWhiteLister jre = new BlackWhiteLister("jre",
+    BlackAllowLister jre = new BlackAllowLister("jre",
             new String[]{".*-devel-.*", ".*-jmods-.*", ".*-static-libs-.*", ".*-openjdk[b\\d\\.\\-]{3,}(ea.windows.redhat|ea.redhat.windows).*", ".*\\.jdk\\..*"},
             new String[]{});
-    BlackWhiteLister jreHeadless = new BlackWhiteLister("jreHeadless",
+    BlackAllowLister jreHeadless = new BlackAllowLister("jreHeadless",
             new String[]{".*windows.*", ".*debuginfo.*"},
             new String[]{".*-headless.*"});
-    BlackWhiteLister allDebugRelease = new BlackWhiteLister("allDebugRelease", new String[]{}, new String[]{});
-    BlackWhiteLister release = new BlackWhiteLister("release",
+    BlackAllowLister allDebugRelease = new BlackAllowLister("allDebugRelease", new String[]{}, new String[]{});
+    BlackAllowLister release = new BlackAllowLister("release",
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*", ".*-unstripped-.*"},
             new String[]{""});
-    BlackWhiteLister all = new BlackWhiteLister("all",
+    BlackAllowLister all = new BlackAllowLister("all",
             new String[]{},
             new String[]{});
-    BlackWhiteLister fasdebug = new BlackWhiteLister("fastdebug",
+    BlackAllowLister fasdebug = new BlackAllowLister("fastdebug",
             new String[]{".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", "(?!.*(-fastdebug-|-debuginfo-).*).*", ".*-unstripped-.*"},
             new String[]{});
-    BlackWhiteLister slowdebug = new BlackWhiteLister("slowdebug",
+    BlackAllowLister slowdebug = new BlackAllowLister("slowdebug",
             new String[]{".*-fastdebug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*","(?!.*(-slowdebug-|-debug-|-debuginfo-).*).*", ".*-unstripped-.*"},
             new String[]{});
-    BlackWhiteLister unstripped = new BlackWhiteLister("unstripped",
+    BlackAllowLister unstripped = new BlackAllowLister("unstripped",
             new String[]{".*-fastdebug-.*", ".*-slowdebug-.*", ".*-debug-.*", ".*-openjdk[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-jre[b\\d\\.\\-]{3,}(windows.redhat|redhat.windows).*", ".*-openjdk-portable[b\\d\\.\\-]{3,}.*", ".*-openjdk-portable-devel[b\\d\\.\\-]{3,}.*"},
             new String[]{});
-    BlackWhiteLister containersLists = new BlackWhiteLister("containers", new String[]{}, new String[]{});
-    BlackWhiteLister portableLists = new BlackWhiteLister("portable", new String[]{"java-[\\d\\.]{2,5}-openjdk-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"}, new String[]{});
-    BlackWhiteLister rpmsLists = new BlackWhiteLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
-    BlackWhiteLister win64ZipsLists = new BlackWhiteLister("win64zips",
+    BlackAllowLister containersLists = new BlackAllowLister("containers", new String[]{}, new String[]{});
+    BlackAllowLister portableLists = new BlackAllowLister("portable", new String[]{"java-[\\d\\.]{2,5}-openjdk-[b\\d\\.\\-ea]{3,}el6openjdkportable.*"}, new String[]{});
+    BlackAllowLister rpmsLists = new BlackAllowLister("rpms", new String[]{".*accessibility.*", ".*src.*", ".*demo.*", ".*openjfx.*"}, new String[]{});
+    BlackAllowLister win64ZipsLists = new BlackAllowLister("win64zips",
             new String[]{".*txt.*", ".*openjfx.*", ".*\\.msi$", ".*\\.json$", ".*(redhat.windows|windows.redhat).x86.zip$"},
             new String[]{".*x86_64.zip$", ".*static.*"});
-    BlackWhiteLister nonDebuginfoSuite = new BlackWhiteLister("nonDebuginfoSuite",
+    BlackAllowLister nonDebuginfoSuite = new BlackAllowLister("nonDebuginfoSuite",
             new String[]{".*-debuginfo-.*", ".*-debugsource-.*"},
             new String[]{});
-    BlackWhiteLister debuginfoSuite = new BlackWhiteLister("debuginfoSuite", new String[]{}, new String[]{});
+    BlackAllowLister debuginfoSuite = new BlackAllowLister("debuginfoSuite", new String[]{}, new String[]{});
 
-    BlackWhiteLister[] jresdk = new BlackWhiteLister[]{jreHeadless, jre, sdk};
-    BlackWhiteLister[] debugMode = new BlackWhiteLister[]{all, release, unstripped, fasdebug, slowdebug};
-    BlackWhiteLister[] suites = new BlackWhiteLister[]{nonDebuginfoSuite, debuginfoSuite};
+    BlackAllowLister[] jresdk = new BlackAllowLister[]{jreHeadless, jre, sdk};
+    BlackAllowLister[] debugMode = new BlackAllowLister[]{all, release, unstripped, fasdebug, slowdebug};
+    BlackAllowLister[] suites = new BlackAllowLister[]{nonDebuginfoSuite, debuginfoSuite};
 
     @Test
     //for paste to json file, you can copy the declarations itself
     public void printListsFrOtoolGui() {
-        for (BlackWhiteLister j : jresdk) {
+        for (BlackAllowLister j : jresdk) {
             System.out.println(" ** " + j.getName());
             System.out.println(j.listsToString());
         }
-        for (BlackWhiteLister d : debugMode) {
+        for (BlackAllowLister d : debugMode) {
             System.out.println(" ** " + d.getName());
             System.out.println(d.listsToString());
         }
-        for (BlackWhiteLister s : suites) {
+        for (BlackAllowLister s : suites) {
             System.out.println(" ** " + s.getName());
             System.out.println(s.listsToString());
         }
@@ -1286,10 +1286,10 @@ public class OToolServiceRun {
     @Test
     public void regexgame() {
         for (Map.Entry<String, List<String>> e : containers.entrySet()) {
-            for (BlackWhiteLister j : jresdk) {
-                for (BlackWhiteLister d : debugMode) {
-                    for (BlackWhiteLister s : suites) {
-                        BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, containersLists);
+            for (BlackAllowLister j : jresdk) {
+                for (BlackAllowLister d : debugMode) {
+                    for (BlackAllowLister s : suites) {
+                        BlackAllowLister bl = BlackAllowLister.build(j, d, s, containersLists);
                         List<String> r = checkMatch(bl, e.getValue(), e.getKey());
                         Assertions.assertTrue(r.size() >= 0 && r.size() <= 1);
                     }
@@ -1297,10 +1297,10 @@ public class OToolServiceRun {
             }
         }
         for (Map.Entry<String, List<String>> e : winZips.entrySet()) {
-            for (BlackWhiteLister j : jresdk) {
-                for (BlackWhiteLister d : debugMode) {
-                    for (BlackWhiteLister s : suites) {
-                        BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, win64ZipsLists);
+            for (BlackAllowLister j : jresdk) {
+                for (BlackAllowLister d : debugMode) {
+                    for (BlackAllowLister s : suites) {
+                        BlackAllowLister bl = BlackAllowLister.build(j, d, s, win64ZipsLists);
                         List<String> r = checkMatch(bl, e.getValue(), e.getKey());
                         if (d == all){
                             //currenlty nothing intereesting
@@ -1312,10 +1312,10 @@ public class OToolServiceRun {
             }
         }
         for (Map.Entry<String, List<String>> e : rpms.entrySet()) {
-            for (BlackWhiteLister j : jresdk) {
-                for (BlackWhiteLister d : debugMode) {
-                    for (BlackWhiteLister s : suites) {
-                        BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, rpmsLists);
+            for (BlackAllowLister j : jresdk) {
+                for (BlackAllowLister d : debugMode) {
+                    for (BlackAllowLister s : suites) {
+                        BlackAllowLister bl = BlackAllowLister.build(j, d, s, rpmsLists);
                         checkMatch(bl, e.getValue(), e.getKey());
                     }
                 }
@@ -1326,10 +1326,10 @@ public class OToolServiceRun {
     @Test
     public void regexgamePortable() {
         for (Map.Entry<String, List<String>> e : portable.entrySet()) {
-            for (BlackWhiteLister j : jresdk) {
-                for (BlackWhiteLister d : debugMode) {
-                    for (BlackWhiteLister s : suites) {
-                        BlackWhiteLister bl = BlackWhiteLister.build(j, d, s, portableLists);
+            for (BlackAllowLister j : jresdk) {
+                for (BlackAllowLister d : debugMode) {
+                    for (BlackAllowLister s : suites) {
+                        BlackAllowLister bl = BlackAllowLister.build(j, d, s, portableLists);
                         checkMatch(bl, e.getValue(), e.getKey());
                     }
                 }
@@ -1339,7 +1339,7 @@ public class OToolServiceRun {
 
     }
 
-    private List<String> checkMatch(BlackWhiteLister bl, List<String> orig, String id) {
+    private List<String> checkMatch(BlackAllowLister bl, List<String> orig, String id) {
         bl.looger = new StringBuilder();
         List<String> r = bl.match(orig);
         System.out.println(" ** " + bl.getName() + " x " + id);

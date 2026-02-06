@@ -61,9 +61,9 @@ public class JenkinsJobUpdater implements JobUpdater {
     }
 
     @Override
-    public JobUpdateResults regenerate(Project project, String whitelist) throws StorageException, ManagementException {
+    public JobUpdateResults regenerate(Project project, String allowlist) throws StorageException, ManagementException {
         final Set<Job> jobs = project == null ? Collections.emptySet() : jdkProjectParser.parse(project);
-        return regenerate(jobs, whitelist);
+        return regenerate(jobs, allowlist);
     }
 
     @Override
@@ -151,11 +151,11 @@ public class JenkinsJobUpdater implements JobUpdater {
      * @param jobs
      * @return
      */
-    JobUpdateResults regenerate(Set<Job> jobs, String whitelist) {
-        if (whitelist == null || whitelist.trim().isEmpty()) {
-            whitelist = ".*";
+    JobUpdateResults regenerate(Set<Job> jobs, String allowlist) {
+        if (allowlist == null || allowlist.trim().isEmpty()) {
+            allowlist = ".*";
         }
-        Pattern whitelistPattern = Pattern.compile(whitelist);
+        Pattern allowlistPattern = Pattern.compile(allowlist);
         final Function<Job, JobUpdateResult> rewriteFunction = jobUpdateFunctionWrapper(getRewriteFunction());
         final Function<Job, JobUpdateResult> createFunction = jobUpdateFunctionWrapper(getCreateFunction());
         final Function<Job, JobUpdateResult> reviveFunction = jobUpdateFunctionWrapper(getReviveFunction());
@@ -168,7 +168,7 @@ public class JenkinsJobUpdater implements JobUpdater {
         final Set<String> existingJobs = new HashSet<>(Arrays.asList(Objects.requireNonNull(jenkinsJobsRoot.list())));
 
         for (final Job job : jobs) {
-            if (!whitelistPattern.matcher(job.getName()).matches()) {
+            if (!allowlistPattern.matcher(job.getName()).matches()) {
                 continue;
             }
             if (archivedJobs.contains(job.toString()) && existingJobs.contains(job.toString())) {
@@ -199,14 +199,14 @@ public class JenkinsJobUpdater implements JobUpdater {
     public <T extends Project> JobUpdateResults regenerateAll(
             String projectId,
             Manager<T> projectManager,
-            String whitelist
+            String allowlist
     ) throws StorageException, ManagementException {
         JobUpdateResults sum = new JobUpdateResults();
         JenkinsJobUpdater.wakeUpJenkins();
         final List<T> projects = projectManager.readAll();
         for (final Project project : projects) {
             if (projectId == null || project.getId().equals(projectId)) {
-                JobUpdateResults r = regenerate(project, whitelist);
+                JobUpdateResults r = regenerate(project, allowlist);
                 sum = sum.add(r);
             }
 

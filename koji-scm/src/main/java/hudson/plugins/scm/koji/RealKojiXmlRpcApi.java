@@ -13,23 +13,23 @@ public class RealKojiXmlRpcApi extends KojiXmlRpcApi {
     private final String packageName;
     private final String arch;
     private final String tag;
-    private final String subpackageBlacklist;
-    private final String subpackageWhitelist;
+    private final String subpackageDenylist;
+    private final String subpackageAllowlist;
 
     @DataBoundConstructor
     public RealKojiXmlRpcApi(
             String packageName,
             String arch,
             String tag,
-            String subpackageBlacklist,
-            String subpackageWhitelist
+            String subpackageDenylist,
+            String subpackageAllowlist
     ) {
         super(KojiXmlRpcApiType.REAL_KOJI);
         this.packageName = packageName;
         this.arch = arch;
         this.tag = tag;
-        this.subpackageBlacklist = subpackageBlacklist;
-        this.subpackageWhitelist = subpackageWhitelist;
+        this.subpackageDenylist = subpackageDenylist;
+        this.subpackageAllowlist = subpackageAllowlist;
     }
 
     @Extension
@@ -56,13 +56,13 @@ public class RealKojiXmlRpcApi extends KojiXmlRpcApi {
     }
 
     @Exported
-    public String getSubpackageBlacklist() {
-        return subpackageBlacklist;
+    public String getSubpackageDenylist() {
+        return subpackageDenylist;
     }
 
     @Exported
-    public String getSubpackageWhitelist() {
-        return subpackageWhitelist;
+    public String getSubpackageAllowlist() {
+        return subpackageAllowlist;
     }
 
     @Override
@@ -73,13 +73,13 @@ public class RealKojiXmlRpcApi extends KojiXmlRpcApi {
         return Objects.equals(packageName, that.packageName) &&
                 Objects.equals(arch, that.arch) &&
                 Objects.equals(tag, that.tag) &&
-                Objects.equals(subpackageBlacklist, that.subpackageBlacklist) &&
-                Objects.equals(subpackageWhitelist, that.subpackageWhitelist);
+                Objects.equals(subpackageDenylist, that.subpackageDenylist) &&
+                Objects.equals(subpackageAllowlist, that.subpackageAllowlist);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(packageName, arch, tag, subpackageBlacklist, subpackageWhitelist);
+        return Objects.hash(packageName, arch, tag, subpackageDenylist, subpackageAllowlist);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class RealKojiXmlRpcApi extends KojiXmlRpcApi {
                 "  packageName: " + packageName + '\n' +
                 "  arch: " + arch + '\n' +
                 "  tag: " + tag + '\n' +
-                "  subpackageBlacklist: " + subpackageBlacklist + '\n' +
-                "  subpackageWhitelist: " + subpackageWhitelist + '\n';
+                "  subpackageDenylist: " + subpackageDenylist + '\n' +
+                "  subpackageAllowlist: " + subpackageAllowlist + '\n';
     }
 }

@@ -96,8 +96,8 @@ public class VariantBumper extends JobModifier {
                 job.getBuildPlatformProvider(),
                 job.getBuildTask(),
                 (sharedParent.getType().equals(Task.Type.BUILD))?modifyVariant(job.getBuildVariants(), from, to):job.getBuildVariants(),
-                job.getProjectSubpackageBlacklist(),
-                job.getProjectSubpackageWhitelist(),
+                job.getProjectSubpackageDenylist(),
+                job.getProjectSubpackageAllowlist(),
                 job.getScriptsRoot(),
                 job.getProjectVariables()
         );

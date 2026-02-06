@@ -918,21 +918,21 @@
     function waiveRe(lnvr, ljob, action) {
       putNewRecord(lnvr, ljob, 100)
       if (action == "re-now") {
-        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + otoolsDo(lnvr, ljob)
+        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&allowlist=" + ljob + otoolsDo(lnvr, ljob)
         if (ljob.startsWith("build-")) {
-          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
+          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&allowlist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
         }
         otoolCall(lurl, false)
         var lurl2 = reCheckout + "?job=" + ljob + otoolsDo(lnvr, "faked-non-build-we-need-just-true-not-forcw")
         otoolCall(lurl2, true)
       } else if (action == "re") {
-        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + otoolsDo(lnvr, ljob)
+        var lurl = reTest + "?nvr=" + getSelectedNvr() + "&allowlist=" + ljob + otoolsDo(lnvr, ljob)
         if (ljob.startsWith("build-")) {
-          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&whitelist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
+          lurl = reBuild + "?nvr=" + getSelectedNvr() + "&allowlist=" + ljob + "&build=true" + otoolsDo(lnvr, ljob)
         }
         otoolCall(lurl, true)
       } else if (action == "now") {
-        otoolCall(reNow + "?whitelist=" + ljob + otoolsDo(lnvr, ljob), true)
+        otoolCall(reNow + "?allowlist=" + ljob + otoolsDo(lnvr, ljob), true)
       }
     }
 

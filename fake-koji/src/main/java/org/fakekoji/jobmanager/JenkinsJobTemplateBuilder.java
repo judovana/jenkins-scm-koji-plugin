@@ -153,16 +153,16 @@ public class JenkinsJobTemplateBuilder {
             String packageName,
             Platform platform,
             Task.FileRequirements fileRequirements,
-            List<String> subpackageBlacklist,
-            List<String> subpackageWhitelist
+            List<String> subpackageDenylist,
+            List<String> subpackageAllowlist
     ) throws IOException {
         template = template
                 .replace(XML_RPC_API, loadTemplate(JenkinsTemplate.KOJI_XML_RPC_API_TEMPLATE))
                 .replace(PACKAGE_NAME, packageName)
                 .replace(ARCH, fillArch(platform, fileRequirements))
                 .replace(TAGS, String.join(" ", platform.getTags()))
-                .replace(SUBPACKAGE_BLACKLIST, String.join(" ", subpackageBlacklist))
-                .replace(SUBPACKAGE_WHITELIST, String.join(" ", subpackageWhitelist));
+                .replace(SUBPACKAGE_BLACKLIST, String.join(" ", subpackageDenylist))
+                .replace(SUBPACKAGE_WHITELIST, String.join(" ", subpackageAllowlist));
         return this;
     }
 
