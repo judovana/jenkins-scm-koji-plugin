@@ -60,7 +60,7 @@ jobs:
         run: |
           export MAVEN_OPTS="-Xmx4G"
           cd jenkins-scm-koji-plugin
-          mvn test || echo "This fails now because of duplicate netty on class-path. It seems plugin works fine, but it is worthy to check those test resulsts manually"
+          mvn test
 
       - name: Store artifacts
         run: |
