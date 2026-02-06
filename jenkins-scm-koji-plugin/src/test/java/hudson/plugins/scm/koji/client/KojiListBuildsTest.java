@@ -909,6 +909,7 @@ public class KojiListBuildsTest {
 
     @Test
     public void ubi8jdk11containerRuntime(@TempDir Path temporaryFolder) throws Exception {
+        assumeTrue(onRhNet);
         RealKojiXmlRpcApi description = new RealKojiXmlRpcApi(
                 "openjdk-11-runtime-ubi8-container",
                 "ppc64le",

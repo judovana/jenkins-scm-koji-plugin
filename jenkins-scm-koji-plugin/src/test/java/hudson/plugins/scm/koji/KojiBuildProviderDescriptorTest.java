@@ -33,6 +33,9 @@ import static hudson.plugins.scm.koji.KojiBuildProvider.KojiBuildProviderDescrip
 
 public class KojiBuildProviderDescriptorTest {
 
+
+    private static final int JDK_MAJOR = Runtime.version().feature();
+
     @Test
     public void simpelValidValue() {
         final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
@@ -66,27 +69,42 @@ public class KojiBuildProviderDescriptorTest {
     }
 
     @Test
-    //multiple urls are no longer supported
     public void advacnedValidValues() {
         final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
         FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz http://aaa.cz:"+JavaServerConstants.DFAULT_DWNLD_PORT);
         FormValidation r2 = descriptor.doCheckTopUrl("http://aaa.cz http:///bbb.com:"+JavaServerConstants.DFAULT_RP2C_PORT+"/aaa");
-        assertEquals(FormValidation.Kind.ERROR, r1.kind);
-        assertEquals(FormValidation.Kind.ERROR, r2.kind);
+        if (JDK_MAJOR > 17) {
+            assertEquals(FormValidation.Kind.ERROR, r1.kind);
+            assertEquals(FormValidation.Kind.ERROR, r2.kind);
+        } else {
+            //jdk17 and down incorrectly accepts space
+            assertEquals(FormValidation.Kind.OK, r1.kind);
+            assertEquals(FormValidation.Kind.OK, r2.kind);
+        }
     }
 
     @Test
     public void advacnedInvalidValues1() {
         final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
         FormValidation r1 = descriptor.doCheckDownloadUrl("http://aaa.cz aaa");
-        assertEquals(FormValidation.Kind.ERROR, r1.kind);
+        if (JDK_MAJOR > 17) {
+            assertEquals(FormValidation.Kind.ERROR, r1.kind);
+        } else {
+            //jdk17 and down incorrectly accepts space
+            assertEquals(FormValidation.Kind.OK, r1.kind);
+        }
     }
 
     @Test
     public void advacnedInvalidValues2() {
         final KojiBuildProviderDescriptor descriptor = new KojiBuildProviderDescriptor();
         FormValidation r2 = descriptor.doCheckTopUrl("http://aaa.cz aaa");
-        assertEquals(FormValidation.Kind.ERROR, r2.kind);
+        if (JDK_MAJOR > 17) {
+            assertEquals(FormValidation.Kind.ERROR, r2.kind);
+        } else {
+            //jdk17 and down incorrectly accepts space
+            assertEquals(FormValidation.Kind.OK, r2.kind);
+        }
     }
 
     @Test
