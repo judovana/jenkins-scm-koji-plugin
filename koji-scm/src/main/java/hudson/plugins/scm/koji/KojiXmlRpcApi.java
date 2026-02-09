@@ -7,7 +7,7 @@ import hudson.model.Descriptor;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.export.Exported;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 
 public abstract class KojiXmlRpcApi implements Describable<KojiXmlRpcApi>, ExtensionPoint, Serializable {
@@ -43,7 +43,7 @@ public abstract class KojiXmlRpcApi implements Describable<KojiXmlRpcApi>, Exten
             this.xmlRpcApiName = xmlRpcApiName;
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getDisplayName() {
             return xmlRpcApiName;

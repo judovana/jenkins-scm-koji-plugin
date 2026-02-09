@@ -6,11 +6,10 @@ import hudson.model.Descriptor;
 import hudson.plugins.scm.koji.model.BuildProvider;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
-import org.fakekoji.xmlrpc.server.JavaServerConstants;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -50,7 +49,7 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
         private static final String URL_INVALID = "The URL is invalid";
         private static final String PROTOCOL_NOT_SUPPORTED = "Only " + SUPPORTED_PROTOCOL + " protocol is supported";
 
-        @Nonnull
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Koji build provider";
