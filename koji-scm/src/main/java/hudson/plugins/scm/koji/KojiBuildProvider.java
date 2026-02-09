@@ -55,7 +55,7 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
             return "Koji build provider";
         }
 
-        FormValidation doCheckTopUrl(@QueryParameter String value) {
+        public FormValidation doCheckTopUrl(@QueryParameter String value) {
             try {
                 new URL(value);
             } catch (MalformedURLException e) {
@@ -64,7 +64,7 @@ public class KojiBuildProvider implements Describable<KojiBuildProvider>, Serial
             return FormValidation.ok();
         }
 
-        FormValidation doCheckDownloadUrl(@QueryParameter String value) {
+        public FormValidation doCheckDownloadUrl(@QueryParameter String value) {
             try {
                 final URL url = new URL(value);
                 if (!url.getProtocol().equals(SUPPORTED_PROTOCOL.toLowerCase())) {
