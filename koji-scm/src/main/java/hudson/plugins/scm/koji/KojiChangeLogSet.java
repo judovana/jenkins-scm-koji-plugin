@@ -69,10 +69,10 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
             if (OTOOL_ACTIONS.equals(field)){
                 Authentication auth = Jenkins.getAuthentication();
                 String userId = auth.getName();
-                if (Jenkins.getInstance().hasPermission(Permission.WRITE) ||
-                        Jenkins.getInstance().hasPermission(Permission.CREATE) ||
-                        Jenkins.getInstance().hasPermission(Permission.CONFIGURE) ||
-                        Jenkins.getInstance().hasPermission(Permission.DELETE)) {
+                if (Jenkins.get().hasPermission(Permission.WRITE) ||
+                        Jenkins.get().hasPermission(Permission.CREATE) ||
+                        Jenkins.get().hasPermission(Permission.CONFIGURE) ||
+                        Jenkins.get().hasPermission(Permission.DELETE)) {
                     return true;
                 } else {
                     return false;

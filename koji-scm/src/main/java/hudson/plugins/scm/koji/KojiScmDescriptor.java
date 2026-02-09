@@ -5,7 +5,7 @@ import hudson.scm.SCMDescriptor;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +36,7 @@ public class KojiScmDescriptor extends SCMDescriptor<KojiSCM> {
     }
 
     @Override
-    public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
+    public boolean configure(StaplerRequest2 req, JSONObject json) throws FormException {
         this.KojiSCMConfig_requireWorkspace = json.getBoolean("KojiSCMConfig_requireWorkspace");
         this.KojiSCMConfig_skipPoolingIfJobRuns = json.getBoolean("KojiSCMConfig_skipPoolingIfJobRuns");
         LOG.info("KojiSCMConfig_requireWorkspace configured to: " + KojiSCMConfig_requireWorkspace);
