@@ -27,6 +27,7 @@
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
             <version>4.5.3</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
           <groupId>jakarta.xml.bind</groupId>
