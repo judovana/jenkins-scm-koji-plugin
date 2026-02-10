@@ -27,11 +27,6 @@
 
           <input
                   type="button"
-                  value="Add provider"
-                  class="repeatable-add show-if-last"/>
-
-          <input
-                  type="button"
                   value="Delete provider"
                   class="repeatable-delete show-if-not-only"
                   style="margin-left: 1em;" />
