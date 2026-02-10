@@ -183,7 +183,7 @@ public class SummaryReportRunner {
         } catch (Exception ex) {
             LOGGER.log(Level.WARNING, ex.getMessage(), ex);
         }
-        if (result.trim().isEmpty()) {
+        if (result.isBlank()) {
             result = "Some error to generate report - " + pb.command();
         }
         return new Tuple(result, f);

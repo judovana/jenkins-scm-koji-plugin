@@ -224,7 +224,7 @@ class KojiBuildMatcher extends BuildMatcher {
     }
 
     private static List<String> composeArchList(String arch) {
-        if (arch == null || arch.trim().isEmpty()) {
+        if (arch == null || arch.isBlank()) {
             return Collections.emptyList();
         }
         final List<String> list = new ArrayList<>();

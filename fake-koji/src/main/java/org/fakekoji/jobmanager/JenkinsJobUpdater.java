@@ -152,7 +152,7 @@ public class JenkinsJobUpdater implements JobUpdater {
      * @return
      */
     JobUpdateResults regenerate(Set<Job> jobs, String allowlist) {
-        if (allowlist == null || allowlist.trim().isEmpty()) {
+        if (allowlist == null || allowlist.isBlank()) {
             allowlist = ".*";
         }
         Pattern allowlistPattern = Pattern.compile(allowlist);

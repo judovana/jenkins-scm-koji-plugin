@@ -342,7 +342,7 @@ public class Utils {
         List<String> toSave = new ArrayList<>(allRead.size());
         int empty = 0;
         for (String origLine : allRead) {
-            if (origLine.trim().isEmpty()) {
+            if (origLine.isBlank()) {
                 empty++;
                 continue;
             }

@@ -75,12 +75,12 @@ public class ResultsDb implements EndpointGroup {
             String[] srcs = from.trim().split(SCORE_DELIMITER);
             this.score = Integer.parseInt(srcs[0]);
             this.timestamp = Long.parseLong(srcs[1]);
-            if (srcs.length > 2 && !srcs[2].trim().isEmpty()) {
+            if (srcs.length > 2 && !srcs[2].isBlank()) {
                 message = Optional.of(cleanUrlBetrayers(srcs[2]));
             } else {
                 message = Optional.empty();
             }
-            if (srcs.length > 3 && !srcs[3].trim().isEmpty()) {
+            if (srcs.length > 3 && !srcs[3].isBlank()) {
                 author = Optional.of(cleanUrlBetrayers(srcs[3]));
             } else {
                 author = Optional.empty();
@@ -495,7 +495,7 @@ public class ResultsDb implements EndpointGroup {
                 String job = jobs.get(i);
                 if (jobEx.matcher(job).matches()) {
                     String content = getReportForJob(nvr.get(job), job, mark, empty, formatter, nvr, jobs, group);
-                    if (!content.trim().isEmpty()) {
+                    if (!content.isBlank()) {
                         r.append(formatter.job(job, id, settings.getJenkinsUrl() + "/job")).append("\n");
                         r.append(content);
                     }

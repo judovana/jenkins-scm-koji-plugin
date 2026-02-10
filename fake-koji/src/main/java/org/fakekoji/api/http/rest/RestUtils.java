@@ -39,7 +39,7 @@ public class RestUtils {
 
     static Result<Product, OToolError> extractProduct(final String paramValue) {
         final String[] split = paramValue.split(",");
-        if (split.length != 2 || split[0].trim().isEmpty() || split[1].trim().isEmpty()) {
+        if (split.length != 2 || split[0].isBlank() || split[1].isBlank()) {
             return Result.err(new OToolError("Expected format jdkVersionId,packageName", 400));
         }
         return Result.ok(new Product(split[0], split[1]));

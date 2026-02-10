@@ -50,7 +50,7 @@ public class ViewsAppi {
 
     @NotNull
     private JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle setColumnsStyle(String nestedColumnsValue) {
-        if (nestedColumnsValue == null || nestedColumnsValue.trim().isEmpty() || nestedColumnsValue.equals("false")) {
+        if (nestedColumnsValue == null || nestedColumnsValue.isBlank() || nestedColumnsValue.equals("false")) {
             return new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle(JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.NONE, 0);
         } else if (nestedColumnsValue.equals("true")) {
             return new JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle(JenkinsViewTemplateBuilder.JenkinsViewTemplateBuilderFolder.ColumnsStyle.ColumnsType.ALL, 0);

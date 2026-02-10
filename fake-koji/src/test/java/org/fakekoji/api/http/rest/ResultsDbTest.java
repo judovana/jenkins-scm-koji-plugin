@@ -53,7 +53,7 @@ public class ResultsDbTest {
         }
 
         private static void checkCheck(String check) {
-            if (check.trim().isEmpty()) {
+            if (check.isBlank()) {
                 return;
             }
             checks.incrementAndGet();

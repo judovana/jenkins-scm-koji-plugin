@@ -23,7 +23,7 @@ public class GlobPredicate implements Predicate<CharSequence>, java.io.Serializa
         List<Pattern> tofinal = new ArrayList<>(origs.length);
         for (int i = 0; i < origs.length; i++) {
             String orig = origs[i];
-            if (!orig.trim().isEmpty()) {
+            if (!orig.isBlank()) {
                 tofinal.add(Pattern.compile(orig));
             }
         }

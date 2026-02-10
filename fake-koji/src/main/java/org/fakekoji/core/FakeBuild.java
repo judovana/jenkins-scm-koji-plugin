@@ -576,7 +576,7 @@ public class FakeBuild {
                 if (line.trim().startsWith("#")) {
                     continue;
                 }
-                if (line.trim().isEmpty()) {
+                if (line.isBlank()) {
                     continue;
                 }
                 if (line.contains("=")) {
@@ -602,7 +602,7 @@ public class FakeBuild {
                 if (line.trim().startsWith("#")) {
                     continue;
                 }
-                if (line.trim().isEmpty()) {
+                if (line.isBlank()) {
                     continue;
                 }
                 if (line.contains("=")) {

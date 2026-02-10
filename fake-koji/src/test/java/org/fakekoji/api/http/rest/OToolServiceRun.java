@@ -1067,7 +1067,7 @@ public class OToolServiceRun {
         }
 
         private static boolean isSkipped(List<String> l) {
-            return l == null || l.isEmpty() || (l.size() == 1 && l.get(0).trim().isEmpty());
+            return l == null || l.isEmpty() || (l.size() == 1 && l.get(0).isBlank());
         }
 
         public List<String> removeDenylisted(String[] s) {

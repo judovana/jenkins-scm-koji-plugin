@@ -118,7 +118,7 @@ public class Task implements  Comparable<Task> {
     }
 
     public static Optional<String> getViewColumnsAsOptional(Task t) {
-        if (t.xmlViewTemplate == null || t.xmlViewTemplate.trim().isEmpty()){
+        if (t.xmlViewTemplate == null || t.xmlViewTemplate.isBlank()){
             return Optional.empty();
         } else {
             return Optional.of(t.xmlViewTemplate);

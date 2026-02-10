@@ -353,7 +353,7 @@ public class ReverseJDKProjectParser {
         return getRandomJob(jobs).flatMap(randomJob -> {
             final List<String> errors = jobs.stream()
                     .map(validator.apply(randomJob))
-                    .filter(s -> !s.trim().isEmpty())
+                    .filter(s -> !s.isBlank())
                     .collect(Collectors.toList());
             if (errors.isEmpty()) {
                 return Result.ok(randomJob);

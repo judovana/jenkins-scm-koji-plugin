@@ -257,7 +257,7 @@ public class RedeployApi implements EndpointGroup {
                 String doAndHow = context.queryParam(REDEPLOY_DO);
                 String nwProvider = context.queryParam(REPROVIDERARG);
                 String skipSlaves = context.queryParam(SKIP_SLAVES);
-                if (nwProvider == null || nwProvider.trim().isEmpty()) {
+                if (nwProvider == null || nwProvider.isBlank()) {
                     throw new RuntimeException(REPROVIDERARG + " is mandatory\n");
                 }
                 Set<String> providers = GetterAPI.getProviders(settings.getConfigManager().platformManager);
@@ -359,7 +359,7 @@ public class RedeployApi implements EndpointGroup {
                 List<String> jobs = new RedeployApiWorkerBase.RedeployApiStringListing(context).process(jdkProjectManager, jdkTestProjectManager, parser);
                 String doAndHow = context.queryParam(REDEPLOY_DO);
                 String nwSlaves = context.queryParam(RESLAVES);
-                if (nwSlaves == null || nwSlaves.trim().isEmpty()) {
+                if (nwSlaves == null || nwSlaves.isBlank()) {
                     throw new RuntimeException(RESLAVES + " is mandatory\n");
                 }
                 StringBuilder sb = new StringBuilder();

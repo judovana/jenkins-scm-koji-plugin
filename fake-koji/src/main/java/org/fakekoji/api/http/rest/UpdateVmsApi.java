@@ -36,7 +36,7 @@ public class UpdateVmsApi {
         List<JenkinsUpdateVmTemplateBuilder> vagrantVmUpdates = new ArrayList<>(platforms.size());
         List<JenkinsUpdateVmTemplateBuilder> vagrantHwUpdates = new ArrayList<>(platforms.size());
         for (Platform platform : platforms) {
-            if (platform == null || platform.getVmName() == null || platform.getVmName().trim().isEmpty() || platform.getVmName().equals("noVm")){
+            if (platform == null || platform.getVmName() == null || platform.getVmName().isBlank() || platform.getVmName().equals("noVm")){
                 continue;
             }
             for (Platform.Provider provider : platform.getProviders()) {

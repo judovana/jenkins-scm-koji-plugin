@@ -115,7 +115,7 @@ public abstract class Job implements NamesProvider {
     }
 
     public static String firstLetter(String n) {
-        if (n == null || n.trim().isEmpty()) {
+        if (n == null || n.isBlank()) {
             return "";
         } else {
             return n.trim().substring(0, 1);

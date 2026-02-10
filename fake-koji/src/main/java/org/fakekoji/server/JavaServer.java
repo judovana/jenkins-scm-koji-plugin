@@ -158,7 +158,7 @@ public class JavaServer {
 
     private static List<String> asList(Properties props, String key) {
         String args = props.getProperty(key);
-        if (args == null || args.trim().isEmpty()){
+        if (args == null || args.isBlank()){
             return new ArrayList<>();
         }
         String[] split = args.trim().split("\\s+");
