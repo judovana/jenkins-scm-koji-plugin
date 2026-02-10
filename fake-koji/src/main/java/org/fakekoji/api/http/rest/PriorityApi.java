@@ -93,7 +93,7 @@ public class PriorityApi implements EndpointGroup {
                 String url = job;
                 try {
                     url = getUrlString(moveType, job, view);
-                    LOGGER.log(Level.INFO, "priority: " + url);
+                    LOGGER.log(Level.FINE, "priority: " + url);
                     URL u = new URL(url);
                     HttpURLConnection c = (HttpURLConnection) u.openConnection();
                     c.setInstanceFollowRedirects(false);// this is crucial, e are mssuing api, which is supopsed to redirect back, where it come from. Here, we come from nowhere, and redirect would stop the world.

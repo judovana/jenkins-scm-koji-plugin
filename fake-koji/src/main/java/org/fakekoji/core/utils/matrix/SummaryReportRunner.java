@@ -147,7 +147,7 @@ public class SummaryReportRunner {
     public int getJobReportSummary(final String jobName) {
         final List<String> args = getArgs(jobName, "DONE");
         final ProcessBuilder pb = new ProcessBuilder(args);
-        LOGGER.log(Level.INFO, pb.command().toString());
+        LOGGER.log(Level.FINE, pb.command().toString());
         if (System.getProperty("debugSummaryProcess") != null) {
             pb.redirectError(ProcessBuilder.Redirect.INHERIT);
             pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
@@ -162,12 +162,12 @@ public class SummaryReportRunner {
     }
 
     private Tuple<String, File> executeAndWaitForOutput(ProcessBuilder pb) {
-        LOGGER.log(Level.INFO, pb.command().toString());
+        LOGGER.log(Level.FINE, pb.command().toString());
         String result = "Failed to generate report - " + pb.command();
         File f = new File("not_created");
         try {
             f = File.createTempFile("SummaryReportRunner","err");
-            LOGGER.log(Level.INFO, "Errors in: "+f.getAbsolutePath());
+            LOGGER.log(Level.WARNING, "Errors in: "+f.getAbsolutePath());
             final Process p = pb.start();
             final StreamToFileGobbler err = new StreamToFileGobbler(p.getErrorStream(), f);
             Thread outE = new Thread(err);

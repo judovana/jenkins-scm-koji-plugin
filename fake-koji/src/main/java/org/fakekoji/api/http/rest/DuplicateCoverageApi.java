@@ -214,7 +214,7 @@ public class DuplicateCoverageApi implements EndpointGroup {
                                         new File(settings.getJenkinsJobsRoot(), job.getName()),
                                         new File(settings.getJenkinsJobsRoot(), futureJob.getName()));
                             } catch (IOException ex) {
-                                LOGGER.log(Level.INFO, "Problems during merge: ", ex);
+                                LOGGER.log(Level.WARNING, "Problems during merge: ", ex);
                                 sb.append("   " + ex.getMessage() + "\n");
                             }
                         }

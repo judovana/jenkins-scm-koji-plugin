@@ -210,7 +210,7 @@ public class Utils {
                             LOGGER.log(SILENCE, msg);
                             Files.delete(file);
                         } catch (Exception ex) {
-                            LOGGER.log(Level.INFO, "issue while " + msg, ex);
+                            LOGGER.log(Level.FINER, "issue while " + msg, ex);
                             errLog.add(ex);
                         }
                         return FileVisitResult.CONTINUE;
@@ -218,7 +218,7 @@ public class Utils {
 
                     @Override
                     public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                        LOGGER.log(Level.INFO, "Failed to visit " + file);
+                        LOGGER.log(Level.FINER, "Failed to visit " + file);
                         return FileVisitResult.CONTINUE;
                     }
 
@@ -230,7 +230,7 @@ public class Utils {
                             LOGGER.log(SILENCE, msg);
                             Files.delete(dir);
                         } catch (Exception ex) {
-                            LOGGER.log(Level.INFO, "issue while " + msg, ex);
+                            LOGGER.log(Level.WARNING, "issue while " + msg, ex);
                             errLog.add(ex);
                         }
                         return FileVisitResult.CONTINUE;
@@ -268,7 +268,7 @@ public class Utils {
                     if (!dirOk) {
                         String msg = "Failed to create dir " + dir;
                         IOException ee = new IOException(msg);
-                        LOGGER.log(Level.INFO, msg, ee);
+                        LOGGER.log(Level.WARNING, msg, ee);
                         return msg;
                     }
                 }
@@ -313,7 +313,7 @@ public class Utils {
                         throw new IOException(msg);
                     }
                 } catch (Exception ex) {
-                    LOGGER.log(Level.INFO, "issue while " + msg, ex);
+                    LOGGER.log(Level.WARNING, "issue while " + msg, ex);
                     errLog.add(ex);
                 }
                 return FileVisitResult.CONTINUE;
@@ -321,7 +321,7 @@ public class Utils {
 
             @Override
             public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                LOGGER.log(Level.INFO, "Failed to visit " + file);
+                LOGGER.log(Level.FINER, "Failed to visit " + file);
                 return FileVisitResult.CONTINUE;
             }
 

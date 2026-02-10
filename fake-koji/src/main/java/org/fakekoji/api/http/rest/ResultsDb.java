@@ -556,7 +556,7 @@ public class ResultsDb implements EndpointGroup {
             try {
                 return getSeriousnessToColorFromHealth() + " " + getDate() + " (" + getDaysAgo() + " days ago" + getAuthorString() + "): " + URLDecoder.decode(message.orElse(""), "utf-8");
             } catch (UnsupportedEncodingException ex) {
-                LOGGER.log(Level.INFO, ex, null);
+                LOGGER.log(Level.WARNING, ex, null);
                 return ex.toString();
             }
         }

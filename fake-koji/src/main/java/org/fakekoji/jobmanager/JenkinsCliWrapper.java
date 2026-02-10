@@ -212,7 +212,7 @@ public class JenkinsCliWrapper {
 
 
     ClientResponse syncSshExec(String cmd, InputStream is) throws IOException, InterruptedException {
-        LOGGER.log(Level.INFO, toString(cmd));
+        LOGGER.log(Level.FINE, toString(cmd));
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
             HostConfigEntry hce = new HostConfigEntry(".*", host, port, user.user);
