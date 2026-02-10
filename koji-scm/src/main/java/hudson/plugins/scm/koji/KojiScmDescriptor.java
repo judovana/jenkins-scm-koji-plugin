@@ -32,7 +32,7 @@ public class KojiScmDescriptor extends SCMDescriptor<KojiSCM> {
 
     @Override
     public String getDisplayName() {
-        return "Koji-scm";
+        return "Koji";
     }
 
     @Override
