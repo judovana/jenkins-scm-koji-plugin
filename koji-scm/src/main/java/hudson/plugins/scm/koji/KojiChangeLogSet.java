@@ -67,8 +67,6 @@ public class KojiChangeLogSet extends ChangeLogSet<ChangeLogSet.Entry> {
 
         public boolean canShow() {
             if (OTOOL_ACTIONS.equals(field)){
-                Authentication auth = Jenkins.getAuthentication();
-                String userId = auth.getName();
                 if (Jenkins.get().hasPermission(Permission.WRITE) ||
                         Jenkins.get().hasPermission(Permission.CREATE) ||
                         Jenkins.get().hasPermission(Permission.CONFIGURE) ||
