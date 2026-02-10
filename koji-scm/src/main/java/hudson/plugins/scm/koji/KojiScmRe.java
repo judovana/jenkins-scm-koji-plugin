@@ -27,17 +27,22 @@ import hudson.Extension;
 import hudson.model.RootAction;
 
 @Extension
-//accessible via http://...:1234/kojiScmRe/
+/*
+    This is future class for operating koji-puled jobs without need of fake-koji
+ */
 public class KojiScmRe implements RootAction {
 
     @Override
     public String getIconFileName() {
-        return "clipboard.png";
+        //return "clipboard.png";
+        return null;
+
     }
 
     @Override
     public String getDisplayName() {
-        return "koji-scm plugin re-run api gate";
+        //return "koji-scm plugin re-run api gate";
+        return null;
     }
 
     @Override
