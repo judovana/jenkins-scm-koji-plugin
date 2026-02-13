@@ -72,15 +72,8 @@
             <artifactId>jakarta-activation-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>3.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>3.0.1</version>
-            <scope>runtime</scope>
+            <groupId>io.jenkins.plugins</groupId>
+             <artifactId>jakarta-xml-bind-api</artifactId>
         </dependency>
         <!--java EE -->
 
@@ -102,9 +95,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>tools.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>3.0.4</version>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>jackson2-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -140,6 +132,7 @@
                 <artifactId>maven-hpi-plugin</artifactId>
                 <configuration>
                     <warSourceExcludes>WEB-INF/lib/spotbugs-annotations*.jar</warSourceExcludes>
+                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
                 </configuration>
             </plugin>
         </plugins>

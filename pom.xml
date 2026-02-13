@@ -40,8 +40,9 @@
         <jenkins.baseline>2.528</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <xmlrpc.version>3.1.3</xmlrpc.version>
-        <!-- The error message claims that two identical lists are different. Todo, investigate -->
-        <!--<hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>-->
+        <hpi.pluginFirstClassLoader>true</hpi.pluginFirstClassLoader>
+        <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
+        <hpi.bundledArtifacts>koji-scm-lib,ws-commons-util,xmlrpc-client,xmlrpc-common</hpi.bundledArtifacts>
         <ban-commons-lang-2.skip>false</ban-commons-lang-2.skip>
         <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
     </properties>

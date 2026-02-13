@@ -1,5 +1,6 @@
 package hudson.plugins.scm.koji.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
 
 import hudson.FilePath;
@@ -50,7 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jakarta.xml.bind.DatatypeConverter;
-import tools.jackson.databind.ObjectMapper;
 
 public class KojiBuildDownloader implements FilePath.FileCallable<KojiBuildDownloadResult>, LoggerHelp, TaskListenerLogTransporter {
 
