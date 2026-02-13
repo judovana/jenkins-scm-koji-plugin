@@ -132,6 +132,7 @@
                 <artifactId>maven-hpi-plugin</artifactId>
                 <configuration>
                     <warSourceExcludes>WEB-INF/lib/spotbugs-annotations*.jar</warSourceExcludes>
+                    <pluginFirstClassLoader>true</pluginFirstClassLoader>
                 </configuration>
             </plugin>
         </plugins>
